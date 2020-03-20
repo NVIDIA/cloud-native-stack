@@ -1,0 +1,30 @@
+- hosts: localhost
+  gather_facts: yes
+  tasks:
+   - name: Reset Kubernetes component
+     shell: "kubeadm reset --force"
+     ignore_errors: yes
+
+   - name: remove etcd and helm
+     ignore_errors: yes
+     file:
+       path: "{{ item }}"
+       state: absent
+     with_items:
+        - /var/lib/etcd
+        - /usr/local/bin/helm
+
+   - name: Remove installed packages for Ubuntu
+     when: " ansible_distribution == 'Ubuntu' "
+     ignore_errors: yes
+     apt:
+       name: ['kubectl', 'kubeadm','kubelet', 'docker-ce*']
+       state: absent
+       purge: yes
+
+   - name: Remove installed packages for RHEL/CentOS
+     when:  "ansible_distribution in ['RedHat', 'CentOS']"
+     ignore_errors: yes
+     yum:
+       name: ['kubectl', 'kubeadm','kubelet', 'docker*']
+       state: absent

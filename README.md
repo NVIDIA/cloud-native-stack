@@ -6,7 +6,7 @@ Interested in using the NVIDIA EGX Platform? This repository has [install guides
 
 #### Getting Help or Providing Feeback
 
-Please open an issue on the GitHub project for any questions. Your feedback is appreciated!
+Please [open an issue on the GitHub project](https://github.com/NVIDIA/egx-platform/issues) for any questions. Your feedback is appreciated.
 
 #### Useful Links
 - [EGX Landing Page](https://www.nvidia.com/en-us/data-center/products/egx-edge-computing/)

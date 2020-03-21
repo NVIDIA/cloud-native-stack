@@ -1,6 +1,6 @@
 # NVIDIA EGX Platform
 
-The NVIDIA EGX Stack is an optimized software stack for AI workloads running at the edge which includes the NVIDIA GPU Operator for deploying and managing the GPU components necessary for GPU-enabled Kubernetes.
+The NVIDIA EGX Platform is an optimized software stack for AI workloads running at the edge which includes the NVIDIA GPU Operator for deploying and managing the GPU components necessary for GPU-enabled Kubernetes.
 
 Interested in using the NVIDIA EGX Platform? This repository has [install guides](https://github.com/NVIDIA/egx-platform/tree/master/Install%20Guides) for manual installations and [ansible playbooks](https://github.com/NVIDIA/egx-platform/tree/master/Playbooks) for automated installations.
 

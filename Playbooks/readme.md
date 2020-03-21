@@ -2,7 +2,7 @@
 
 <h2> Available Ansible Playbooks </h2>
 
-- [Ubuntu(x86-64)_2020.02.25](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/Playbooks/Ubuntu(x86-64)_2020.02.25.md)
+- [Ubuntu(x86-64)_2020.02.25](https://github.com/NVIDIA/egx-platform/blob/master/Playbooks/Ubuntu(x86-64)_2020.02.25.md)
 
 <h2> Ansible Playbook Descriptions </h2>
 
@@ -60,4 +60,4 @@ The Ansible EGX Platform uninstall playbook will do the following:
 
 ### Getting Help
 
-Please [open an issue on the GitHub project](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/issues) for any questions. Your feedback is appreciated.
+Please [open an issue on the GitHub project](https://github.com/NVIDIA/egx-platform/issues) for any questions. Your feedback is appreciated.

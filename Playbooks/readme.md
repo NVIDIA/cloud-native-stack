@@ -1,4 +1,4 @@
-<h1>Ansible playbooks for EGX DIY Node Stack</h1>
+<h1>Ansible playbooks for EGX Platform</h1>
 
 <h2> Available Ansible Playbooks </h2>
 
@@ -6,13 +6,13 @@
 
 <h2> Ansible Playbook Descriptions </h2>
 
-- [Install EGX DIY Stack](#Install-EGX-DIY-Stack)
-- [Validate EGX DIY Stack](#Validate-EGX-DIY-Stack)
-- [Uninstall EGX DIY Stack](#Uninstall-EGX-DIY-Stack)
+- [Install EGX Platform](#Install-EGX-Platform)
+- [Validate EGX Platform](#Validate-EGX-Platform)
+- [Uninstall EGX Platform](#Uninstall-EGX-Platform)
 
-### Install EGX DIY Stack
+### Install EGX Platform
 
-The Ansible EGX DIY Node Stack installation playbook will do the following:
+The Ansible EGX Platform installation playbook will do the following:
 
 - Validate if Kubernetes is already installed
 - Setup the Kubernetes repository
@@ -35,9 +35,9 @@ The Ansible EGX DIY Node Stack installation playbook will do the following:
 - Initialize Helm with service account
 - Install the NVIDIA GPU Operator
 
-### Validate EGX DIY Stack
+### Validate EGX Platform
 
-The Ansible EGX DIY Node Stack validation playbook will do the following:
+The Ansible EGX Platform validation playbook will do the following:
 
 - Validate if Kubernetes cluster is up
 - Check if node is up and running
@@ -50,9 +50,9 @@ The Ansible EGX DIY Node Stack validation playbook will do the following:
 - Validate the GPU Operator pods state
 - Report Operating System, Docker, Kubernetes, Helm, GPU Operator versions
 
-### Uninstall EGX DIY Stack
+### Uninstall EGX Platform
 
-The Ansible EGX DIY Node Stack uninstall playbook will do the following:
+The Ansible EGX Platform uninstall playbook will do the following:
 
 - Reset the Kubernetes cluster
 - Remove the Helm package

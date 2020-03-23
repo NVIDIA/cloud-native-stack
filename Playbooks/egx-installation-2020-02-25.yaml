@@ -219,4 +219,4 @@
         - helm repo add nvidia https://nvidia.github.io/gpu-operator
         - sudo helm repo update
         - sleep 45
-        - helm install --devel https://nvidia.github.io/gpu-operator/gpu-operator-1.0.0-beta.0.tgz -n test-operator --wait  
+        - helm install --devel nvidia/gpu-operator -n test-operator --wait  

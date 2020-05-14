@@ -2,7 +2,7 @@
 
 <h2> Available Ansible Playbooks </h2>
 
-- [Ubuntu(x86-64)_2020.02.25](https://github.com/NVIDIA/egx-platform/blob/master/Playbooks/Ubuntu(x86-64)_2020.02.25.md)
+- [Ubuntu(x86-64)_v1.1](https://github.com/NVIDIA/egx-platform/blob/master/Playbooks/Ubuntu%20Server%20v1.1.md)
 
 <h2> Ansible Playbook Descriptions </h2>
 

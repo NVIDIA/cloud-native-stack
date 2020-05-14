@@ -1,4 +1,4 @@
-<h1> EGX DIY Node Stack 2020/02/25 Ubuntu (x86-64) </h1>
+<h1> EGX DIY Node Stack Ubuntu Server (x86-64) v1.1 </h1>
 
 This page describes the steps required to use Ansible to install the EGX DIY Node Stack.
 
@@ -17,11 +17,11 @@ The final EGX DIY Node Stack will include:
 
 ### The following Ansible Playbooks are available
 
-- [Install EGX DIY Node Stack](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/Playbooks/egx-installation-2020-02-25.yaml)
+- [Install EGX DIY Node Stack](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/Playbooks/egx-installation-v1.1.yaml)
 
-- [Validate EGX DIY Node Stack ](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/Playbooks/egx-validation-2020-02-25.yaml)
+- [Validate EGX DIY Node Stack ](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/Playbooks/egx-validation-v1.1.yaml)
 
-- [Uninstall EGX DIY Node Stack](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/Playbooks/egx-uninstall-2020-02-25.yaml)
+- [Uninstall EGX DIY Node Stack](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/Playbooks/egx-uninstall-v1.1.yaml)
 
  ## Prerequisites
 
@@ -88,7 +88,7 @@ $ cd egx-platform/Playbooks
 Install the EGX stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
 
 ```
-$ sudo ansible-playbook egx-installation-2020-02-25.yaml
+$ sudo ansible-playbook egx-installation-v1.1.yaml
 ```
 
 ### Validation
@@ -98,7 +98,7 @@ Run the below command to check if the installed versions are match with predefin
 Run the validation playbook 5 minutes after completing the EGX DIY Node Stack Installation.
 
 ```
-$ sudo ansible-playbook egx-validation-2020-02-25.yaml
+$ sudo ansible-playbook egx-validation-v1.1.yaml
 ```
 
 ### Uninstall
@@ -106,5 +106,5 @@ $ sudo ansible-playbook egx-validation-2020-02-25.yaml
 Run the below command to uninstall the EGX Stack. Taks being "ignored" refers to no kubernetes cluster being available.
 
 ```
-$ sudo ansible-playbook egx-uninstall-2020-02-25.yaml
+$ sudo ansible-playbook egx-uninstall-v1.1.yaml
 ```

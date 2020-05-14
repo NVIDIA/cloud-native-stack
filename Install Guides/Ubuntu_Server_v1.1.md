@@ -1,7 +1,7 @@
-<h1>EGX Platform 2020/02/25 Install Guide (Ubuntu x86-64)</h1>
+<h1>EGX Stack v1.1 - Install Guide for Ubuntu Server x86-64</h1>
 <h2>Introduction</h2>
 
-This document describes how to set up the EGX Stack on a single node to enable the deployment of AI applications via Helm charts from NGC. The final environment will include:
+This document describes how to set up the EGX Stack v1.1 on a single node to enable the deployment of AI applications via Helm charts from NGC. The final environment will include:
 
 - Ubuntu 18.04.3 LTS
 - Docker CE 19.03.1 

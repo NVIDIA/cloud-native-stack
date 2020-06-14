@@ -1,3 +1,5 @@
+### Deprecated, please refer to [Ubuntu Server 1.2](https://github.com/NVIDIA/egx-platform/blob/master/Install%20Guides/Ubuntu_Server_v1.2.md)
+
 <h1>EGX Stack v1.1 - Install Guide for Ubuntu Server x86-64</h1>
 <h2>Introduction</h2>
 
@@ -355,7 +357,7 @@ $ helm repo update
 To install the GPU Operator for Tesla T4 or RTX6000/8000 GPUs:
 
 ```
-$ helm install --devel nvidia/gpu-operator -n test-operator --wait
+$ helm install --version 1.0.0 --devel nvidia/gpu-operator -n test-operator --wait
 ```
 
 #### Validate the state of the GPU Operator:

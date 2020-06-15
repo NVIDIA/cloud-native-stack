@@ -51,7 +51,7 @@ $ cd egx-platform/playbooks
 
 Update EGX DIY Stack Version as per below, currently supported versions are
 
-- [1.2](https://github.com/NVIDIA/egx-platform/playbooks/Ubuntu_Server_v1.2.md)
+- [1.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.2.md)
 
 ```
 sudo nano egx_version.yaml

@@ -32,8 +32,6 @@ The Ansible EGX Platform installation playbook will do the following:
 - Taint the control plane node to run all pods on single node
 - Check if Helm installed
 - Install Helm, if not already installed
-- Create a RBAC for Helm Tiller
-- Initialize Helm with service account
 - Install the NVIDIA GPU Operator
 
 ### Validate EGX Platform

@@ -6,6 +6,9 @@
        dest: /etc/ansible/ansible.cfg
        line: 'command_warnings = False'
 
+   - name: Include EGX Version 
+     include_vars: egx_version.yaml
+
    - name: Add an Kubernetes apt signing key for Ubuntu
      when: "ansible_distribution == 'Ubuntu'"
      apt_key:
@@ -19,11 +22,27 @@
       state: present
       filename: kubernetes
 
-   - name: install kubernetes components for Ubuntu
-     when: "ansible_distribution == 'Ubuntu'"
+   - name: Install kubernetes components for Ubuntu on EGX Stack 1.2
+     when: "ansible_distribution == 'Ubuntu' and egx_version == 1.2"
      apt:
        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.15.3-00', 'kubeadm=1.15.3-00', 'kubectl=1.15.3-00']
        state: present
+
+   - name: Install kubernetes components for Ubuntu on EGX Stack 2.0
+     when: "ansible_distribution == 'Ubuntu' and egx_version == 2.0"
+     apt:
+       name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.17.5-00', 'kubeadm=1.17.5-00', 'kubectl=1.17.5-00']
+       state: present
+
+   - name: Hold the installed Packages
+     when: "ansible_distribution == 'Ubuntu'"
+     dpkg_selections:
+       name: "{{ item }}"
+       selection: hold
+     with_items:
+      - kubelet
+      - kubectl
+      - kubeadm       
 
    - name: Creating a Kubernetes repository file for RHEL/CentOS
      when: "ansible_distribution in ['RedHat', 'CentOS']"
@@ -46,9 +65,9 @@
          https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 
    - name: Installing required packages for RHEL/CentOS
-     when: "ansible_distribution in ['RedHat', 'CentOS']"
+     when: "ansible_distribution in ['RedHat', 'CentOS'] and egx_version == 2.0"
      yum:
-      name: ['bind-utils', 'yum-utils', 'device-mapper-persistent-data', 'lvm2', 'telnet', 'kubelet-1.15.5', 'kubeadm-1.15.5', 'kubectl-1.15.5', 'firewalld', 'curl']
+      name: ['bind-utils', 'yum-utils', 'device-mapper-persistent-data', 'lvm2', 'telnet', 'kubelet-1.17.5', 'kubeadm-1.17.5', 'kubectl-1.17.5', 'firewalld', 'curl']
       state: present
 
    - name: Validate whether Kubernetes cluster installed
@@ -65,8 +84,15 @@
      apt_repository:
        repo: deb [arch=amd64] https://download.docker.com/linux/{{ansible_distribution|lower}} {{ansible_distribution_release}} stable
 
-   - name: Install Docker-CE Engine on Ubuntu
-     when: " ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+   - name: Install Docker-CE Engine for Ubuntu on EGX Stack 2.0
+     when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout and egx_version == 2.0"
+     become: root
+     apt:
+       name: [ 'docker-ce=5:19.03.5~3-0~ubuntu-bionic' ]
+       update_cache: yes
+
+   - name: Install Docker-CE Engine for Ubuntu on EGX Stack 1.2
+     when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout and egx_version == 1.2"
      become: root
      apt:
        name: [ 'docker-ce=5:19.03.1~3-0~ubuntu-bionic' ]
@@ -167,8 +193,12 @@
        dest:  $HOME/.kube/config
        mode: '0644'
 
-   - name: Install networking plugin to kubernetes cluster
-     when: "'running' not in k8sup.stdout"
+   - name: Install networking plugin to kubernetes cluster on EGX Stack 2.0
+     when: "'running' not in k8sup.stdout and egx_version == 2.0"
+     command: kubectl apply -f https://docs.projectcalico.org/v3.11/manifests/calico.yaml
+
+   - name: Install networking plugin to kubernetes cluster on EGX Stack 1.2
+     when: "'running' not in k8sup.stdout and egx_version == 1.2"
      command: kubectl apply -f https://docs.projectcalico.org/v3.9/manifests/calico.yaml
 
    - name: Taint the Kubernetes Control Plane node
@@ -185,30 +215,12 @@
      args:
        warn: false
      with_items:
-       - curl -O https://get.helm.sh/helm-v2.14.3-linux-amd64.tar.gz
-       - tar -xvzf helm-v2.14.3-linux-amd64.tar.gz
+       - curl -O https://get.helm.sh/helm-v3.1.0-linux-amd64.tar.gz
+       - tar -xvzf helm-v3.1.0-linux-amd64.tar.gz
        - cp linux-amd64/helm /usr/local/bin/
-       - cp linux-amd64/helm /usr/bin/
-       - rm -rf helm-v2.14.3-linux-amd64.tar.gz linux-amd64
+       - rm -rf helm-v3.1.0-linux-amd64.tar.gz linux-amd64
 
-     when: helm_exists.rc > 0
-
-   - name: "Tiller RBAC configuration"
-     when: "'running' not in k8sup.stdout"
-     command: "{{ item }}"
-     args:
-       warn: false
-     with_items:
-       - kubectl create serviceaccount -n kube-system tiller
-       - kubectl create clusterrolebinding tiller-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-
-   - name: "Initialize Helm"
-     when: "'running' not in k8sup.stdout"
-     shell: "{{ item }}"
-     with_items:
-       - helm init --service-account tiller
-       - sleep 5
-       - kubectl --namespace kube-system patch deploy tiller-deploy -p '{"spec":{"template":{"spec":{"serviceaccount":"tiller"}}}}'
+     when: "helm_exists.rc > 0"
 
    - name: Installing the GPU Operator
      when: "'running' not in k8sup.stdout"
@@ -218,5 +230,4 @@
      with_items:
         - helm repo add nvidia https://nvidia.github.io/gpu-operator
         - sudo helm repo update
-        - sleep 45
-        - helm install --devel nvidia/gpu-operator -n test-operator --wait  
+        - helm install --version 1.1.7 --devel nvidia/gpu-operator --wait --generate-name

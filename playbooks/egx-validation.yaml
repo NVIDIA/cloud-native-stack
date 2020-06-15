@@ -23,7 +23,7 @@
       ignore_errors: yes
 
     - name: Check Helm Version
-      shell: helm version -s --short | awk '{print $2}' | sed 's/v//g;s/\+.*//g'
+      shell: helm version --short | sed 's/v//g;s/\+.*//g'
       register: helmversion
       ignore_errors: yes
 
@@ -43,7 +43,7 @@
       ignore_errors: yes
 
     - name: Check Nvidia GPU Operator versions
-      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'gpu-operator'  | awk -F':' '{print $2}'
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'nvidia/gpu-operator'  | awk -F':' '{print $2}'
       register: gpuoperator
       ignore_errors: yes
 
@@ -65,29 +65,6 @@
       failed_when: helmls.rc == 1
       ignore_errors: yes
 
-    - name: Check whether cluster role is created for Helm
-      shell: kubectl get clusterrole cluster-admin -n kube-system | grep cluster-admin
-      register: clusterrole
-      failed_when: clusterrole.rc == 1
-      ignore_errors: yes
-
-    - name: Check whether clusterrolebinding is created for Helm
-      shell: kubectl get clusterrolebinding -n kube-system | grep tiller
-      register: clusterrolebinding
-      failed_when: clusterrolebinding.rc == 1
-      ignore_errors: yes
-
-    - name: Check whether Tiller Service Account is Created for Helm
-      shell:  kubectl get sa -n kube-system |grep tiller
-      register: sa
-      failed_when: sa.rc == 1
-      ignore_errors: yes
-
-    - name: Check whether Tiller Service Account is added to Helm
-      shell: kubectl get deploy -n kube-system | grep tiller| awk '{print $1}' | xargs -L1 -I {} sudo kubectl get deploy/{} -n kube-system -o=jsonpath='{.spec.template.spec.serviceAccount}{"\n"}'
-      register: sahelm
-      failed_when: sahelm.rc == 1
-      ignore_errors: yes
 
     - name: Validate the GPU Operator pods State
       shell: kubectl get pods --all-namespaces | egrep -v 'kube-system|NAME'
@@ -95,13 +72,18 @@
       failed_when: pods.rc == 1
       ignore_errors: yes
 
+    - name: Collecting Number of GPU's
+      shell: "kubectl describe nodes | grep -A 6 Capacity | grep 'nvidia.com/gpu' | awk '{print $2}'"
+      register: gpus
+      ignore_errors: yes
+
     - name: Validating the GPU Operator installation
-      shell: timeout 30 kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda --limits=nvidia.com/gpu=1 -- nvidia-smi
+      shell: "timeout 45 kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
       register: smi
       ignore_errors: yes
 
     - name: Validating the CUDA with GPU
-      shell: timeout 30 kubectl run cuda-vector-add --rm -t -i --restart=Never --image=k8s.gcr.io/cuda-vector-add:v0.1
+      shell: timeout 45 kubectl run cuda-vector-add --rm -t -i --restart=Never --image=k8s.gcr.io/cuda-vector-add:v0.1
       register: cuda
       ignore_errors: yes
 
@@ -151,10 +133,6 @@
       ignore_errors: yes
       debug:
         msg: "Nvidia GPU Operator versions {{ gpuoperator.stdout }}"
-
-    - name: Report Tiller Service Account Added to Helm
-      debug:
-        msg: "{{ sahelm.stdout_lines }}"
 
     - name: Report GPU Operator Pods
       debug:

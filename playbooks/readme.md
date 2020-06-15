@@ -3,6 +3,7 @@
 <h2> Available Ansible Playbooks </h2>
 
 - [Ubuntu(x86-64)_v1.1](https://github.com/NVIDIA/egx-platform/blob/master/Playbooks/Ubuntu%20Server%20v1.1.md)
+- [Ubuntu(x86-64)_v1.2](https://github.com/NVIDIA/egx-platform/blob/master/Playbooks/Ubuntu%20Server%20v1.2.md)
 
 <h2> Ansible Playbook Descriptions </h2>
 
@@ -43,12 +44,9 @@ The Ansible EGX Platform validation playbook will do the following:
 - Check if node is up and running
 - Check if all pods are in running state
 - Validate that Helm installed
-- Validate cluster role is created for Helm
-- Validate cluster rolebinding is created for Helm
-- Validate Tiller Service Account is created for Helm
-- Validate Tiller Service Account is added to Helm
 - Validate the GPU Operator pods state
 - Report Operating System, Docker, Kubernetes, Helm, GPU Operator versions
+- Validate nvidia-smi and cuda liberaries on kubernetes
 
 ### Uninstall EGX Platform
 

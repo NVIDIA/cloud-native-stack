@@ -13,6 +13,7 @@
      with_items:
         - /var/lib/etcd
         - /usr/local/bin/helm
+        - /usr/bin/helm
 
    - name: Remove installed packages for Ubuntu
      when: " ansible_distribution == 'Ubuntu' "
@@ -21,6 +22,7 @@
        name: ['kubectl', 'kubeadm','kubelet', 'docker-ce*']
        state: absent
        purge: yes
+       force: yes
 
    - name: Remove installed packages for RHEL/CentOS
      when:  "ansible_distribution in ['RedHat', 'CentOS']"
@@ -28,3 +30,4 @@
      yum:
        name: ['kubectl', 'kubeadm','kubelet', 'docker*']
        state: absent
+       force: yes

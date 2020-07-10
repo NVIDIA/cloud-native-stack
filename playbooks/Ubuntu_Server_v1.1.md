@@ -1,4 +1,4 @@
-# This version is Deprecated, Please refer [Ubuntu Server 1.2](https://github.com/NVIDIA/egx-platform/blob/master/Playbooks/Ubuntu_Server_v1.2.md)
+# This version is Deprecated, Please refer [Ubuntu Server 1.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.2.md)
 
 <h1> EGX DIY Node Stack Ubuntu Server (x86-64) v1.1 </h1>
 

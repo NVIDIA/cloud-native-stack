@@ -13,7 +13,7 @@ This document describes how to set up the EGX Stack v2.0 on a single node to ena
   - NV K8S device plug-in: 1.0.0-beta6
   - Data Center GPU Manager (DCGM): 1.7.2
 
-<h2>Table of Contents</h2>
+<h2>Table of Contents</h2> 
 
 - [Prerequisites](#Prerequisites)
 - [Installing the Ubuntu Operating System](#Installing-the-Ubuntu-Operating-System)

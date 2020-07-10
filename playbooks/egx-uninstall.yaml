@@ -15,7 +15,7 @@
         - /usr/local/bin/helm
         - /usr/bin/helm
 
-   - name: Remove installed packages for Ubuntu
+   - name: Remove installed packages for Ubuntu 
      when: " ansible_distribution == 'Ubuntu' "
      ignore_errors: yes
      apt:

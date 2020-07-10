@@ -6,7 +6,7 @@ if [ -z $1 ]; then
 	exit 1
 fi
 
-
+# Ansible Install
 ansible_install() {
 	os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}') 
 	if [ $os == "ubuntu" ]; then 

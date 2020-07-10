@@ -129,7 +129,7 @@
       debug:
         msg: "Nvidia Container Driver Version {{ nvcdriver.stdout }}"
 
-    - name: Report Nvidia GPU Operator version
+    - name: Report Nvidia GPU Operator version 
       ignore_errors: yes
       debug:
         msg: "Nvidia GPU Operator versions {{ gpuoperator.stdout }}"

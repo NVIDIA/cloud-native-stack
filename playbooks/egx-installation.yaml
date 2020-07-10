@@ -193,11 +193,11 @@
        dest:  $HOME/.kube/config
        mode: '0644'
 
-   - name: Install networking plugin to kubernetes cluster on EGX Stack 2.0
+   - name: Install networking plugin to kubernetes cluster on EGX DIY Stack 2.0
      when: "'running' not in k8sup.stdout and egx_version == 2.0"
      command: kubectl apply -f https://docs.projectcalico.org/v3.11/manifests/calico.yaml
 
-   - name: Install networking plugin to kubernetes cluster on EGX Stack 1.2
+   - name: Install networking plugin to kubernetes cluster on EGX DIY Stack 1.2
      when: "'running' not in k8sup.stdout and egx_version == 1.2"
      command: kubectl apply -f https://docs.projectcalico.org/v3.9/manifests/calico.yaml
 

@@ -24,7 +24,7 @@ The final EGX DIY Node Stack will include:
 - [Uninstall EGX DIY Node Stack](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/egx-uninstall.yaml)
 
 
- ## Prerequisites
+## Prerequisites
 
 - NGC-Ready Server
 - Ubuntu 18.04.3 LTS installed

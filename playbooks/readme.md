@@ -2,7 +2,7 @@
 
 <h2> Available Ansible Playbooks </h2>
 
-- [Ubuntu(x86-64)_v1.1](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.1.md)(Deprecated)
+- [Ubuntu(x86-64)_v1.1](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.1.md)(DEPRECATED)
 - [Ubuntu(x86-64)_v1.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.2.md)
 - [Ubuntu(x86-64) v2.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v2.0.md)
 <h2> Ansible Playbook Descriptions </h2>

@@ -2,7 +2,7 @@
 
 <h2>Introduction</h2>
 
-This document describes how to set up the EGX Stack Version 2.0 on a Jetson Xavier NX DevKit to enable the deployment of AI applications via Helm charts from NGC.
+This document describes how to set up the EGX Stack Version 2.0 on a Jetson Xavier NX DevKit to enable the deployment of AI applications via Helm charts from NGC. 
 
 The final environment will include:
 

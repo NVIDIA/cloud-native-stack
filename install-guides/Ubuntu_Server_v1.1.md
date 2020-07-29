@@ -67,6 +67,7 @@ For more information on installing Ubuntu server please reference the [Ubuntu Se
 
 ### Installing Docker-CE
 Set up the repository
+
 Update the apt package index:
 
 ```

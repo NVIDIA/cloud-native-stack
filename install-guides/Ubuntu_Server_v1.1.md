@@ -28,8 +28,9 @@ This document describes how to set up the EGX Stack v1.1 on a single node to ena
 ### Prerequisites
  
 These following instructions assume the following:
-NGC-Ready for Edge Server.
-You will perform a clean install of all components.
+- You have a NGC-Ready for Edge Server.
+- You will perform a clean install.
+- The server has internet connectivity.
 
 To determine if your system is NGC-Ready for Edge Servers, please review the list of validated systems on the NGC-Ready Systems documentation page: https://docs.nvidia.com/ngc/ngc-ready-systems/index.html 
 

@@ -35,6 +35,7 @@ The following instructions assume the following:
 
 - You have a NGC-Ready for Edge Server.
 - You will perform a clean install.
+- The server has internet connectivity.
 
 To determine if your system qualifies as a NGC-Ready for Edge Server, review the list of NGC-Ready for Edge Systems at https://docs.nvidia.com/ngc/ngc-ready-systems/index.html. NGC-Ready for Edge Servers based on T4 and RTX 6000/8000 are supported with this EGX Stack version. 
 

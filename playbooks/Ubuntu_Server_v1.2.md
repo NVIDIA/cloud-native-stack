@@ -26,9 +26,10 @@ The final EGX DIY Node Stack will include:
 
 ## Prerequisites
 
-- NGC-Ready Server
-- Ubuntu 18.04.3 LTS installed
-- Internet connectivity
+- You have a NGC-Ready for Edge Server.
+- You have Ubuntu Server 18.04.3 LTS installed.
+- You will perform a clean install.
+- The server has internet connectivity.
 
 To determine if your system is NGC-Ready for Edge Servers, please review the list of validated systems on the NGC-Ready Systems documentation page: https://docs.nvidia.com/ngc/ngc-ready-systems/index.html
 

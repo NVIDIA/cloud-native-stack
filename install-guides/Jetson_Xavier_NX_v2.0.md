@@ -25,6 +25,9 @@ The final environment will include:
  
 These instructions assume you have a Jetson Xavier or Xavier NX Developer Kit.
 
+- You will perform a clean install.
+- The server has internet connectivity.
+
 ### Installing JetPack 4.4
 
 JetPack (the Jetson SDK) is an on-demand all-in-one package that bundles developer software for the NVIDIA® Jetson platform. Use the SDK Manager installer to flash your Jetson Developer Kit with the latest OS image, to install developer tools for both host PC and Developer Kit, and to install the libraries and APIs, samples, and documentation needed to jumpstart your development environment.

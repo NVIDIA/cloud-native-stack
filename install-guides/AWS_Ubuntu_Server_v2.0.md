@@ -442,7 +442,7 @@ Once the helm chart is deployed, access the application with the VLC player. See
 If you don’t have a camera input, please run the below commands to use the default video which is already integrated in the application. 
 
 ```
-$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.4.tgz
+$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.5.tgz
 
 $ helm install video-analytics-demo-0.1.5 --name-template iva
 ```

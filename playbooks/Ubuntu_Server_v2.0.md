@@ -14,6 +14,10 @@ The final EGX DIY Node Stack will include:
   - NV container toolkit: 1.0.2
   - NV K8S device plug-in: 1.0.0-beta6
   - Data Center GPU Manager (DCGM): 1.7.2
+  
+### Release Notes
+
+- Added section: "Installing the Ubuntu Operating System"
 
 ### The following Ansible Playbooks are available
 
@@ -33,7 +37,36 @@ The final EGX DIY Node Stack will include:
 To determine if your system is NGC-Ready for Edge Servers, please review the list of validated systems on the NGC-Ready Systems documentation page: https://docs.nvidia.com/ngc/ngc-ready-systems/index.html
 
 Please note that the EGX Stack is only validated on Intel based NGC-Ready systems with the default kernel (not HWE). Using an AMD EPYC 2nd generation (ROME) NGC-Ready server is not validated yet and will require the HWE kernel and manually disabling nouveau.
- 
+
+### Installing the Ubuntu Operating System
+These instructions require having Ubuntu Server LTS 18.04.3 on your NGC-Ready system. The Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/bionic/release/.
+
+Disabling nouveau (not validated and only required with Ubuntu 18.04.3 LTS HWE Kernel): 
+
+```
+$ sudo nano /etc/modprobe.d/blacklist-nouveau.conf
+```
+
+Insert the following:
+
+```
+blacklist nouveau
+options nouveau modeset=0
+```
+
+Regenerate the kernel initramfs:
+
+```
+$ sudo update-initramfs -u
+```
+
+And reboot your system:
+
+```
+$ sudo reboot
+```
+
+For more information on installing Ubuntu server please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
  
 ## Using the Ansible playbooks 
 This section describes how to use the ansible playbooks.

@@ -389,7 +389,7 @@ The EGX stack works as expected if the get pods command shows the pod status as 
 
 Another option to validate the EGX Stack is by running a demo application that is hosted on NGC. NGC is NVIDIA's hub for GPU-optimized software. The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm Chart. The Application can be used to validate the full EGX Stack and test the connectivity of the EGX Stack to remote sensors. DeepStream delivers real-time AI based video and image understanding and multi-sensor processing on GPUs. For more information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo)
 
-There are two ways to configure the DeepStream - Intelligent Video Analytics Demo Application on your EGX DIY Stack
+There are two ways to configure the DeepStream - Intelligent Video Analytics Demo Application on your EGX Stack
 
 - Using a camera
 - Using the integrated video file (no camera required)

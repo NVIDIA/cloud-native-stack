@@ -42,7 +42,7 @@ $ helm install ChartName-Version.tgz
 
 ### Add a Helm Chart to NGC Private Registry
 
-The Below instructions are based on the assumption that you've a NGC Private Registry if not please refer to [NGC Private Registry](#Create-NGC-Private-Registry). The instructions assume that you have Helm installed on your machine. 
+The Below instructions are based on the assumption that you've a NGC Private Registry if not please refer to [NGC Private Registry](#NGC-Private-Registry). The instructions assume that you have Helm installed on your machine. 
 
 - Obtain a NGC API Key from [NGC](https://ngc.nvidia.com/setup/api-key)
 - Run the below command to export the API Key for future use. Replace <your-api-key> with your personal API key

@@ -1,21 +1,15 @@
 - hosts: localhost
   gather_facts: yes
+  become: true
+  vars_files:
+    - egx_version.yaml
   tasks:
+
    - name: Reset Kubernetes component
      shell: "kubeadm reset --force"
      ignore_errors: yes
 
-   - name: remove etcd and helm
-     ignore_errors: yes
-     file:
-       path: "{{ item }}"
-       state: absent
-     with_items:
-        - /var/lib/etcd
-        - /usr/local/bin/helm
-        - /usr/bin/helm
-
-   - name: Remove installed packages for Ubuntu 
+   - name: Remove Docker and Kubernetes packages for Ubuntu 
      when: " ansible_distribution == 'Ubuntu' "
      ignore_errors: yes
      apt:
@@ -31,3 +25,18 @@
        name: ['kubectl', 'kubeadm','kubelet', 'docker*']
        state: absent
        force: yes
+
+   - name: Cleanup Directories
+     ignore_errors: yes
+     file:
+       path: "{{ item }}"
+       state: absent
+     with_items:
+        - /var/lib/etcd
+        - /etc/kubernetes
+        - /usr/bin/helm
+        - /usr/local/cuda*
+        - /var/lib/docker
+        - /var/cuda*
+        - /etc/docker
+

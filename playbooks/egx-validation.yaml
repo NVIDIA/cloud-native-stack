@@ -1,5 +1,7 @@
 - hosts: localhost
   gather_facts: yes
+  vars_files:
+    - egx_version.yaml
   tasks:
     - name: Validate kubernetes cluster is up
       shell:  kubectl cluster-info | grep master
@@ -13,6 +15,7 @@
       ignore_errors: yes
 
     - name: Check Docker Version
+      become: true
       shell: docker version | grep -i -A2 'Server' | grep Version  | awk '{print $2}'
       register: dockerversion
       ignore_errors: yes
@@ -27,7 +30,8 @@
       register: helmversion
       ignore_errors: yes
 
-    - name: Check Nvidia GPU Toolkit versions
+    - name: Check Nvidia GPU Operator Toolkit versions
+      when: "gpu_operator != false"
       shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep toolkit | awk -F':' '{print $2}'
       register: nvtoolkit
       ignore_errors: yes
@@ -37,12 +41,14 @@
       register: k8sdevice
       ignore_errors: yes
 
-    - name: Check Nvidia Container Driver versions
+    - name: Check GPU Operator Nvidia Container Driver versions
+      when: "gpu_operator != false"
       shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'nvidia/driver'  | awk -F':' '{print $2}'
       register: nvcdriver
       ignore_errors: yes
 
     - name: Check Nvidia GPU Operator versions
+      when: "gpu_operator != false"
       shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'nvidia/gpu-operator'  | awk -F':' '{print $2}'
       register: gpuoperator
       ignore_errors: yes
@@ -65,8 +71,8 @@
       failed_when: helmls.rc == 1
       ignore_errors: yes
 
-
     - name: Validate the GPU Operator pods State
+      when: "gpu_operator != false"
       shell: kubectl get pods --all-namespaces | egrep -v 'kube-system|NAME'
       register: pods
       failed_when: pods.rc == 1
@@ -77,13 +83,13 @@
       register: gpus
       ignore_errors: yes
 
-    - name: Validating the GPU Operator installation
-      shell: "timeout 45 kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
+    - name: Validating the nvidia-smi on Kubernetes
+      shell: "timeout 60 kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
       register: smi
       ignore_errors: yes
 
     - name: Validating the CUDA with GPU
-      shell: timeout 45 kubectl run cuda-vector-add --rm -t -i --restart=Never --image=k8s.gcr.io/cuda-vector-add:v0.1
+      shell: timeout 60 kubectl run cuda-vector-add --rm -t -i --restart=Never --image=k8s.gcr.io/cuda-vector-add:v0.1
       register: cuda
       ignore_errors: yes
 
@@ -114,27 +120,31 @@
       debug:
         msg: "Helm Version {{ helmversion.stdout }}"
 
-    - name: Report NV Toolkit Driver
-      ignore_errors: yes
-      debug:
-        msg: "NV Container Toolkit Version {{ nvtoolkit.stdout }}"
-
     - name: Report K8sDevice Plugin Version
       ignore_errors: yes
       debug:
         msg: "Nvidia K8s Device Plugin Version {{ k8sdevice.stdout }}"
 
+    - name: Report GPU Operator NV Toolkit Driver
+      when: "gpu_operator != false"
+      ignore_errors: yes
+      debug:
+        msg: "NV Container Toolkit Version {{ nvtoolkit.stdout }}"
+
     - name: Report Nvidia Container Driver Version
+      when: "gpu_operator != false"
       ignore_errors: yes
       debug:
         msg: "Nvidia Container Driver Version {{ nvcdriver.stdout }}"
 
     - name: Report Nvidia GPU Operator version 
+      when: "gpu_operator != false"
       ignore_errors: yes
       debug:
         msg: "Nvidia GPU Operator versions {{ gpuoperator.stdout }}"
 
     - name: Report GPU Operator Pods
+      when: "gpu_operator != false"
       debug:
         msg: "{{ pods.stdout_lines }}"
 

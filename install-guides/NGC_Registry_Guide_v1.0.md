@@ -8,11 +8,11 @@ This document describes how to deploy an application from NGC Registry, how to s
 - [Deploy an Application From NGC](#Deploy-an-Application-From-NGC-Catalog)
   - [Add Helm Chart to NGC](#Add-a-Helm-Chart-to-NGC-Private-Registry)
 - [Setup NGC Account](#Setup-NGC-Account)
-- [NGC Private Registry](#NGC-Private-Registry)
+- [NGC Private Registry](#Create-NGC-Private-Registry)
 
 ## Deploy an Application from NGC Catalog
 
-The Below instructions are based on the assumption that you have a NGC-Ready for Edge Server with the EGX Stack installed. If not, please refer to [EGX DIY Stack](https://github.com/NVIDIA/egx-platform)
+The Below instructions are based on the assumption that you have a NGC-Ready for Edge Server with the EGX Stack installed. If not, please refer to the [EGX Stack](https://github.com/NVIDIA/egx-platform)
 
 First, Go to https://ngc.nvidia.com. 
 

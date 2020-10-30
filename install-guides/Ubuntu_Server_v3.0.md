@@ -273,7 +273,7 @@ Refer to https://github.com/helm/helm/releases and https://helm.sh/docs/using_he
 Add the nvidia repo 
 
 ```
-$ helm repo add nvidia https://nvidia.github.io/gpu-operator
+$ helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
 ```
 
 Update the helm repo:
@@ -311,7 +311,7 @@ gpu-operator-resources   nvidia-driver-validation                               
 
 ```
 
-Please refer to https://github.com/NVIDIA/gpu-operator for more information.
+Please refer to https://ngc.nvidia.com/catalog/helm-charts/nvidia:gpu-operator for more information.
 
 ### Validating the Installation
 The GPU Operator validates the stack through the nvidia-device-plugin-validation pod and the nvidia-driver-validation pod. If both completed successfully (see output from kubectl get pods --all-namespaces | grep -v kube-system), the EGX Stack works as expected. To manually validate the stack, this section provides two examples of how to validate that the GPU is usable from within a pod.

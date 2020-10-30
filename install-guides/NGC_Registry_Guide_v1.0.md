@@ -8,11 +8,11 @@ This document describes how to deploy an application from NGC Registry, how to s
 - [Deploy an Application From NGC](#Deploy-an-Application-From-NGC-Catalog)
   - [Add Helm Chart to NGC](#Add-a-Helm-Chart-to-NGC-Private-Registry)
 - [Setup NGC Account](#Setup-NGC-Account)
-- [NGC Private Registry](#Create-NGC-Private-Registry)
+- [NGC Private Registry](#NGC-Private-Registry)
 
 ## Deploy an Application from NGC Catalog
 
-The Below instructions are based on the assumption that you have a NGC-Ready for Edge Server with the EGX Stack installed. If not, please refer to [EGX DIY Stack](https://github.com/NVIDIA/egx-platform)
+The Below instructions are based on the assumption that you have a NGC-Ready for Edge Server with the EGX Stack installed. If not, please refer to the [EGX Stack](https://github.com/NVIDIA/egx-platform)
 
 First, Go to https://ngc.nvidia.com. 
 
@@ -42,7 +42,7 @@ $ helm install ChartName-Version.tgz
 
 ### Add a Helm Chart to NGC Private Registry
 
-The Below instructions are based on the assumption that you've a NGC Private Registry if not please refer to [NGC Private Registry](#Create-NGC-Private-Registry). The instructions assume that you have Helm installed on your machine. 
+The Below instructions are based on the assumption that you've a NGC Private Registry if not please refer to [NGC Private Registry](#NGC-Private-Registry). The instructions assume that you have Helm installed on your machine. 
 
 - Obtain a NGC API Key from [NGC](https://ngc.nvidia.com/setup/api-key)
 - Run the below command to export the API Key for future use. Replace <your-api-key> with your personal API key

@@ -1,4 +1,4 @@
-<h1> EGX DIY Node Stack Ubuntu Server (x86-64) v1.2 </h1>
+<h1> EGX Stack Ubuntu Server (x86-64) v1.2 </h1>
 
 This page describes the steps required to use Ansible to install the EGX Stack.
 

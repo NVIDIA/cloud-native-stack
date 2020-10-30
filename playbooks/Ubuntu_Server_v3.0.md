@@ -1,8 +1,8 @@
-<h1> EGX DIY Node Stack Ubuntu Server (x86-64) v3.0 </h1>
+<h1> EGX Stack Ubuntu Server (x86-64) v3.0 </h1>
 
-This page describes the steps required to use Ansible to install the EGX DIY Node Stack.
+This page describes the steps required to use Ansible to install the EGX Stack.
 
-The final EGX DIY Node Stack will include:
+The final EGX Stack will include:
 
 - Ubuntu 20.04.1 LTS
 - Docker CE 19.03.12
@@ -21,11 +21,11 @@ The final EGX DIY Node Stack will include:
 
 ### The following Ansible Playbooks are available
 
-- [Install EGX DIY Node Stack](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/egx-installation.yaml)
+- [Install EGX Stack](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/egx-installation.yaml)
 
-- [Validate EGX DIY Node Stack ](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/egx-validation.yaml)
+- [Validate EGX Stack ](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/egx-validation.yaml)
 
-- [Uninstall EGX DIY Node Stack](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/egx-uninstall.yaml)
+- [Uninstall EGX Stack](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/egx-uninstall.yaml)
 
 ## Prerequisites
 
@@ -72,16 +72,16 @@ This section describes how to use the ansible playbooks.
 
 ### Clone the git repository
 
-Run the below commands to add the EGX DIY ansible playbooks.
+Run the below commands to clone the EGX ansible playbooks.
 
 ```
 $ git clone https://github.com/NVIDIA/egx-platform.git
 $ cd egx-platform/playbooks
 ```
 
-## Update EGX DIY Stack Version
+## Available EGX Stack Versions
 
-Update EGX DIY Stack Version as per below, currently supported versions are
+Update EGX Stack Version as per below, currently supported versions are
 
 - [1.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.2.md)
 - [2.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v2.0.md)
@@ -104,9 +104,9 @@ $ bash setup.sh install
 
 ### Validation
 
-Run the below command to check if the installed versions are match with predefined versions of the EGX DIY Node Stack. Here' "Ignored" tasks refer to failed and "Changed/Ok" tasks refer to success.
+Run the below command to check if the installed versions are match with predefined versions of the EGX Stack. Here' "Ignored" tasks refer to failed and "Changed/Ok" tasks refer to success.
 
-Run the validation playbook after 5 minutes once completing the EGX DIY Node Stack Installation. Depends on your internet speed, you need to wait more time.
+Run the validation playbook after 5 minutes once completing the EGX Stack Installation. Depends on your internet speed, you need to wait more time.
 
 ```
 $ bash setup.sh validate

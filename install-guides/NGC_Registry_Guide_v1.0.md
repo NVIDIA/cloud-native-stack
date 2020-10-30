@@ -8,7 +8,7 @@ This document describes how to deploy an application from NGC Registry, how to s
 - [Deploy an Application From NGC](#Deploy-an-Application-From-NGC-Catalog)
   - [Add Helm Chart to NGC](#Add-a-Helm-Chart-to-NGC-Private-Registry)
 - [Setup NGC Account](#Setup-NGC-Account)
-- [NGC Private Registry](#Create-NGC-Private-Registry)
+- [NGC Private Registry](#NGC-Private-Registry)
 
 ## Deploy an Application from NGC Catalog
 

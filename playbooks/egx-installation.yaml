@@ -252,6 +252,8 @@
    - name: Taint the Kubernetes Control Plane node
      when: "'running' not in k8sup.stdout"
      command: kubectl taint nodes --all node-role.kubernetes.io/master-
+     
+   - name: Check If Helm is Installed  
      shell: command -v helm >/dev/null 2>&1
      register: helm_exists
      ignore_errors: yes

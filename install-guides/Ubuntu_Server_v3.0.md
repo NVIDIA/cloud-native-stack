@@ -318,7 +318,7 @@ The GPU Operator validates the stack through the nvidia-device-plugin-validation
 
 #### Example 1: nvidia-smi
 
-Execute the follwoing:
+Execute the following:
 
 ```
 $ kubectl run nvidia-smi --rm -t -i --restart=Never --image=nvidia/cuda --limits=nvidia.com/gpu=1 -- nvidia-smi

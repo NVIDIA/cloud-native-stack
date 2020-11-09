@@ -14,6 +14,7 @@ The final EGX Stack will include:
   - NV K8S device plug-in: 0.7.0
   - Data Center GPU Manager (DCGM): 2.1.0
   - Node Feature Discovery: 0.6.0
+  - GPU Feature Discvoery: 0.2.1
 
 ### Release Notes
 

@@ -12,7 +12,7 @@ The final EGX Stack will include:
   - NV containerized driver: 450.80.02
   - NV container toolkit: 1.3.0
   - NV K8S device plug-in: 0.7.0
-  - Data Center GPU Manager (DCGM): 2.1.0-rc.2
+  - Data Center GPU Manager (DCGM): 2.1.0
   - Node Feature Discovery: 0.6.0
 
 ### Release Notes

@@ -14,7 +14,6 @@ The final EGX Stack will include:
   - NV K8S device plug-in: 0.7.0
   - Data Center GPU Manager (DCGM): 2.1.0
   - Node Feature Discovery: 0.6.0
-  - GPU Feature Discvoery: 0.2.1
 
 ### Release Notes
 
@@ -85,8 +84,8 @@ $ cd egx-platform/playbooks
 Update EGX Stack Version as per below, currently supported versions are
 
 - [1.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.2.md)
-- [2.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v2.0.md)
 - [1.3](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.3.md)
+- [2.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v2.0.md)
 - [3.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v3.0.md)
 
 ```

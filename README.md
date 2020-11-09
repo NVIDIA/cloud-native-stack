@@ -12,4 +12,4 @@ Please open an [issue](https://github.com/NVIDIA/egx-platform/issues) on the Git
 - [EGX Landing Page](https://www.nvidia.com/en-us/data-center/products/egx-edge-computing/)
 - [NGC-Ready Systems](https://docs.nvidia.com/ngc/ngc-ready-systems/index.html)
 - [NGC - NVIDIA GPU Cloud](https://ngc.nvidia.com/catalog/all)
-- [GPU Operator](https://github.com/NVIDIA/gpu-operator)
+- [GPU Operator](https://ngc.nvidia.com/catalog/helm-charts/nvidia:gpu-operator)

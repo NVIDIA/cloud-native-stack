@@ -276,7 +276,7 @@
      args:
        warn: false
      with_items:
-        - helm repo add nvidia https://nvidia.github.io/gpu-operator --force-update
+        - helm repo add nvidia https://nvidia.github.io/gpu-operator
         - helm repo update
         - helm install --version 1.1.7 --devel nvidia/gpu-operator --wait --generate-name
    

@@ -130,7 +130,7 @@ $ sudo apt-get update
 Install Docker Engine 19.03.12:
 
 ```
-$ sudo apt-get install -y docker-ce=5:19.03.12~3-0~ubuntu-bionic docker-ce-cli=5:19.03.12~3-0~ubuntu-bionic containerd.io
+$ sudo apt-get install -y docker-ce=5:19.03.12~3-0~ubuntu-focal docker-ce-cli=5:19.03.12~3-0~ubuntu-focal containerd.io
 ```
 
 Verify that Docker Engine - Community is installed correctly by running the hello-world image:

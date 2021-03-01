@@ -8,13 +8,13 @@ The final EGX Stack will include:
 - Docker CE 19.03.13
 - Kubernetes version 1.18.14
 - Helm 3.3.3
-- NVIDIA GPU Operator 1.5.2
-  - NV containerized driver: 450.80.02
-  - NV container toolkit: 1.4.4
-  - NV K8S device plug-in: 0.8.1
-  - Data Center GPU Manager (DCGM): 2.1.2
+- NVIDIA GPU Operator 1.6.0
+  - NV containerized driver: 460.32.03
+  - NV container toolkit: 1.4.5
+  - NV K8S device plug-in: 0.8.2
+  - Data Center GPU Manager (DCGM): 2.2.0
   - Node Feature Discovery: 0.6.0
-  - GPU Feature Discovery 0.4.0
+  - GPU Feature Discovery: 0.4.1
 
 ### Release Notes
 

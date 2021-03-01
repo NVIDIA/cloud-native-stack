@@ -1,4 +1,4 @@
-- hosts: localhost
+- hosts: master
   gather_facts: yes
   vars_files:
     - egx_version.yaml
@@ -31,22 +31,37 @@
       ignore_errors: yes
 
     - name: Check Nvidia GPU Operator Toolkit versions
-      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep toolkit | awk -F':' '{print $2}'
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep toolkit | awk -F':' '{print $2}' | awk -F'-' '{print $1}' | head -n1
       register: nvtoolkit
       ignore_errors: yes
 
     - name: Check Nvidia K8s Device versions
-      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'k8s-device' | awk -F':' '{print $2}'
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'k8s-device' | awk -F':' '{print $2}' | head -n1
       register: k8sdevice
       ignore_errors: yes
 
     - name: Check GPU Operator Nvidia Container Driver versions
-      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'nvidia/driver'  | awk -F':' '{print $2}'
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'nvidia/driver'  | awk -F':' '{print $2}' | awk -F'-' '{print $1}' | head -n1
       register: nvcdriver
       ignore_errors: yes
 
+    - name: Check GPU Operator Nvidia DGCM Exporter Versions
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'k8s/dcgm-exporter'  | awk -F':' '{print $2}' | awk -F'-' '{print $2}' | head -n1 
+      register: dgcm
+      ignore_errors: yes
+
+    - name: Check GPU Operator Node Feature Discovery Versions
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'node-feature-discovery' | head -n1 |  awk -F':' '{print $2}'
+      register: nodediscover
+      ignore_errors: yes
+
+    - name: Check GPU Operator GPU Feature Discovery Versions
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'nvidia/gpu-feature-discovery'  | awk -F':' '{print $2}' | head -n1
+      register: gpudiscover
+      ignore_errors: yes
+
     - name: Check Nvidia GPU Operator versions
-      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'nvidia/gpu-operator'  | awk -F':' '{print $2}'
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'nvidia/gpu-operator'  | awk -F':' '{print $2}' | head -n1
       register: gpuoperator
       ignore_errors: yes
 
@@ -80,7 +95,7 @@
       ignore_errors: yes
 
     - name: Validating the nvidia-smi on Kubernetes
-      shell: "timeout 60 kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
+      shell: "timeout 60 kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.2.1-base --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
       register: smi
       ignore_errors: yes
 
@@ -116,25 +131,40 @@
       debug:
         msg: "Helm Version {{ helmversion.stdout }}"
 
-    - name: Report K8sDevice Plugin Version
+    - name: Report Nvidia GPU Operator version 
       ignore_errors: yes
       debug:
-        msg: "Nvidia K8s Device Plugin Version {{ k8sdevice.stdout }}"
-
-    - name: Report GPU Operator NV Toolkit Driver
-      ignore_errors: yes
-      debug:
-        msg: "NV Container Toolkit Version {{ nvtoolkit.stdout }}"
+        msg: "Nvidia GPU Operator versions {{ gpuoperator.stdout }}"
 
     - name: Report Nvidia Container Driver Version
       ignore_errors: yes
       debug:
         msg: "Nvidia Container Driver Version {{ nvcdriver.stdout }}"
 
-    - name: Report Nvidia GPU Operator version 
+    - name: Report GPU Operator NV Toolkit Driver
       ignore_errors: yes
       debug:
-        msg: "Nvidia GPU Operator versions {{ gpuoperator.stdout }}"
+        msg: "NV Container Toolkit Version {{ nvtoolkit.stdout }}"
+
+    - name: Report K8sDevice Plugin Version
+      ignore_errors: yes
+      debug:
+        msg: "Nvidia K8s Device Plugin Version {{ k8sdevice.stdout }}"
+
+    - name: Report Data Center GPU Manager (DCGM) Version
+      ignore_errors: yes
+      debug:
+        msg: "Data Center GPU Manager (DCGM) Version {{ dgcm.stdout }}"
+  
+    - name: Report Node Feature Discovery Version
+      ignore_errors: yes
+      debug:
+        msg: "Node Feature Discovery Version {{ nodediscover.stdout }}"
+
+    - name: Report GPU Feature Discovery Version
+      ignore_errors: yes
+      debug:
+        msg: "GPU Feature Discovery Version {{ gpudiscover.stdout }}"
 
     - name: Report GPU Operator Pods
       debug:

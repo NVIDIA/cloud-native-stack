@@ -79,6 +79,17 @@ $ git clone https://github.com/NVIDIA/egx-platform.git
 $ cd egx-platform/playbooks
 ```
 
+Update the hosts file in playbooks directory with master and worker nodes(if you have) IP's with username and password like below
+
+```
+$ sudo nano hosts
+
+[master]
+10.110.16.178 ansible_ssh_user=nvidia ansible_ssh_pass=nvidipass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+[node]
+10.110.16.179 ansible_ssh_user=nvidia ansible_ssh_pass=nvidiapass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+```
+
 ## Available EGX Stack Versions
 
 Update EGX Stack Version as per below, currently supported versions are

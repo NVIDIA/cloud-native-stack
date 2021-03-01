@@ -1,211 +1,19 @@
-- hosts: localhost
-  gather_facts: yes
+- hosts: master
   vars_files:
     - egx_version.yaml
   tasks:
-
-   - name: Add an Kubernetes apt signing key for Ubuntu
-     become: true
-     when: "ansible_distribution == 'Ubuntu'"
-     apt_key:
-       url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-       state: present
-
-   - name: Adding Kubernetes apt repository for Ubuntu
-     become: true
-     when: "ansible_distribution == 'Ubuntu'"
-     apt_repository:
-      repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
-      state: present
-      filename: kubernetes
-
-   - name: Install kubernetes components for Ubuntu on EGX Stack 1.2 or 1.3
-     become: true
-     when: "egx_version == 1.2 or egx_version == 1.3 and ansible_distribution == 'Ubuntu'"
-     apt:
-       name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.15.3-00', 'kubeadm=1.15.3-00', 'kubectl=1.15.3-00']
-       state: present
-
-   - name: Install kubernetes components for Ubuntu on EGX Stack 2.0
-     become: true
-     when: "ansible_distribution == 'Ubuntu' and egx_version == 2.0"
-     apt:
-       name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.17.5-00', 'kubeadm=1.17.5-00', 'kubectl=1.17.5-00']
-       state: present
-
-   - name: Install kubernetes components for Ubuntu on EGX Stack 3.0
-     become: true
-     when: "ansible_distribution == 'Ubuntu' and egx_version == 3.0"
-     apt:
-       name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.18.8-00', 'kubeadm=1.18.8-00', 'kubectl=1.18.8-00']
-       state: present
-
-   - name: Hold the installed Packages
-     become: true
-     when: "ansible_distribution == 'Ubuntu'"
-     dpkg_selections:
-       name: "{{ item }}"
-       selection: hold
-     with_items:
-      - kubelet
-      - kubectl
-      - kubeadm
-
-   - name: Creating a Kubernetes repository file for RHEL/CentOS
-     become: true
-     when: "ansible_distribution in ['RedHat', 'CentOS']"
-     file:
-      path: /etc/yum.repos.d/kubernetes.repo
-      state: touch
-
-   - name: Adding repository details in Kubernetes repo file for RHEL/CentOS
-     become: true
-     when: "ansible_distribution in ['RedHat', 'CentOS']"
-     blockinfile:
-      path: /etc/yum.repos.d/kubernetes.repo
-      block: |
-       [kubernetes]
-       name=Kubernetes
-       baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-       enabled=1
-       gpgcheck=0
-       repo_gpgcheck=0
-       gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-         https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-
-   - name: Installing required packages for RHEL/CentOS
-     become: true
-     when: "ansible_distribution in ['RedHat', 'CentOS'] and egx_version == 2.0"
-     yum:
-      name: ['bind-utils', 'yum-utils', 'device-mapper-persistent-data', 'lvm2', 'telnet', 'kubelet-1.17.5', 'kubeadm-1.17.5', 'kubectl-1.17.5', 'firewalld', 'curl']
-      state: present
-
    - name: Validate whether Kubernetes cluster installed
      shell: kubectl cluster-info
      register: k8sup
      ignore_errors: yes
 
-   - name: Add Docker GPG key for Ubuntu
-     become: true
-     when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
-     apt_key: url=https://download.docker.com/linux/ubuntu/gpg
-
-   - name: Add Docker APT repository for Ubuntu
-     become: true
-     when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
-     apt_repository:
-       repo: deb [arch=amd64] https://download.docker.com/linux/{{ansible_distribution|lower}} {{ansible_distribution_release}} stable
-
-   - name: Install Docker-CE Engine for Ubuntu on EGX Stack 3.0 or 1.3
-     become: true
-     when: "egx_version == 3.0 or egx_version == 1.3 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout and ansible_distribution_version == '20.04'"
-     apt:
-       name: [ 'docker-ce=5:19.03.12~3-0~ubuntu-focal' ]
-       update_cache: yes
-
-   - name: Install Docker-CE Engine for Ubuntu on EGX Stack 2.0
-     become: true
-     when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout and egx_version == 2.0"
-     apt:
-       name: [ 'docker-ce=5:19.03.5~3-0~ubuntu-bionic' ]
-       update_cache: yes
-
-   - name: Install Docker-CE Engine for Ubuntu on EGX Stack 1.2
-     become: true
-     when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout and egx_version == 1.2"
-     apt:
-       name: [ 'docker-ce=5:19.03.1~3-0~ubuntu-bionic' ]
-       update_cache: yes
-
-   - name: "Configuring Docker-CE repo for RHEL/CentOS"
-     become: true
-     when: "ansible_distribution in ['RedHat', 'CentOS'] and 'running' not in k8sup.stdout"
-     get_url:
-       url: https://download.docker.com/linux/centos/docker-ce.repo
-       dest: /etc/yum.repos.d/docker-ce.repo
-       mode: 0644
-
-   - name: Install Docker-CE Engine on RHEL/CentOS
-     become: true
-     when: "ansible_distribution in ['RedHat', 'CentOS'] and 'running' not in k8sup.stdout"
-     args:
-       warn: false
-     shell: yum install docker -y
-
-   - name: Adding Docker to Current User
-     become: true
-     shell: |
-       sudo groupadd docker
-       sudo usermod -aG docker $USER
-
-   - name: SetEnforce for RHEL/CentOS
-     become: true
-     when: "ansible_distribution in ['RedHat', 'CentOS'] and 'running' not in k8sup.stdout"
-     ignore_errors: yes
-     command: "setenforce 0"
-
-   - name: SELinux for RHEL/CentOS
-     become: true
-     when: "ansible_distribution in ['RedHat', 'CentOS'] and 'running' not in k8sup.stdout"
-     args:
-       warn: false
-     command: sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
-
-   - name: Enable Firewall Service for RHEL/CentOS
-     become: true
-     when: "ansible_distribution in ['RedHat', 'CentOS'] and 'running' not in k8sup.stdout"
-     service:
-       name: firewalld
-       state: started
-       enabled: yes
-     ignore_errors: yes
-
-   - name: Allow Network Ports in Firewalld for RHEL/CentOS
-     become: true
-     when: "ansible_distribution in ['RedHat', 'CentOS'] and 'running' not in k8sup.stdout"
-     firewalld:
-      port: "{{ item }}"
-      state: enabled
-      permanent: yes
-      immediate: yes
-     with_items:
-       - "6443/tcp"
-       - "10250/tcp"
-
-   - name: Remove swapfile from /etc/fstab
-     become: true
-     when: "'running' not in k8sup.stdout"
-     mount:
-       name: "{{ item }}"
-       fstype: swap
-       state: absent
-     with_items:
-      - swap
-      - none
-
-   - name: Disable swap
-     become: true
-     when: "'running' not in k8sup.stdout"
-     command: swapoff -a
-
-   - name: Starting and enabling the required services
-     become: true
-     when: "'running' not in k8sup.stdout"
-     service:
-      name: "{{ item }}"
-      state: started
-      enabled: yes
-     ignore_errors: yes
-     with_items:
-      - docker
-      - kubelet
-
    - name: Reset Kubernetes component
      become: true
      when: "'running' not in k8sup.stdout"
      shell: "kubeadm reset --force"
+     register: reset_cluster
 
-   - name: Remove etcd directory
+   - name: remove etcd directory
      become: true
      when: "'running' not in k8sup.stdout"
      file:
@@ -213,21 +21,22 @@
        state: absent
 
    - name: Initialize the Kubernetes cluster using kubeadm
-     become: true
      when: "'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=192.168.0.0/16
-
-   - name: admin permissions
      become: true
-     file:
-       path: /etc/kubernetes/admin.conf
-       mode: '0644'
+     register: kubeadm
 
    - name: Create kube directory
      when: "'running' not in k8sup.stdout"
      file:
       path: $HOME/.kube
       state: directory
+
+   - name: admin permissions
+     become: true
+     file:
+       path: /etc/kubernetes/admin.conf
+       mode: '0644'
 
    - name: Copy kubeconfig to home
      when: "'running' not in k8sup.stdout"
@@ -237,15 +46,15 @@
        dest:  $HOME/.kube/config
        mode: '0600'
 
-   - name: Install networking plugin to kubernetes cluster on EGX DIY Stack 3.0
-     when: "'running' not in k8sup.stdout and egx_version == 3.0"
+   - name: Install networking plugin to kubernetes cluster on EGX DIY Stack 3.1
+     when: "'running' not in k8sup.stdout and egx_version == 3.1"
      command: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 
    - name: Install networking plugin to kubernetes cluster on EGX DIY Stack 2.0
      when: "'running' not in k8sup.stdout and egx_version == 2.0"
      command: kubectl apply -f https://docs.projectcalico.org/v3.11/manifests/calico.yaml
 
-   - name: Install networking plugin to kubernetes cluster on EGX DIY Stack 1.2
+   - name: Install networking plugin to kubernetes cluster on EGX DIY Stack 1.2 or 1.3
      when: "egx_version == 1.2 or egx_version == 1.3 and 'running' not in k8sup.stdout"
      command: kubectl apply -f https://docs.projectcalico.org/v3.9/manifests/calico.yaml
 
@@ -256,8 +65,72 @@
    - name: Taint the Kubernetes Control Plane node
      when: "'running' not in k8sup.stdout"
      command: kubectl taint nodes --all node-role.kubernetes.io/master-
-     
-   - name: Check If Helm is Installed  
+
+   - name: Generate join token
+     become: true
+     when: "'running' not in k8sup.stdout"
+     shell: kubeadm token create --print-join-command
+     register: kubeadm_join_cmd
+
+   - set_fact:
+       kubeadm_join: "{{ kubeadm_join_cmd.stdout }}"
+
+   - name: Store join command
+     become: true
+     copy: 
+       content: "{{ kubeadm_join }}" 
+       dest: "/tmp/kubeadm-join.command"
+
+- hosts: node
+  tasks:
+   - name: Reset Kubernetes component
+     become: true
+     shell: "kubeadm reset --force"
+     register: reset_cluster
+
+   - name: Create kube directory
+     become: true
+     file:
+       path: /etc/kubernetes
+       state: directory
+
+   - name: Copy kubeadm-join command to node
+     become: true
+     copy:
+       src: "/tmp/kubeadm-join.command"
+       dest: "/tmp/kubeadm-join.command"
+
+- hosts: node
+  vars:
+     kubeadm_join: "{{ lookup('file', '/tmp/kubeadm-join.command') }}"
+  tasks:
+
+   - name: Run kubeadm join
+     become: true
+     shell: "{{ kubeadm_join }}"
+
+- hosts: master
+  vars_files:
+    - egx_version.yaml
+  tasks:
+   - name: Validate whether Kubernetes cluster installed
+     shell: kubectl cluster-info
+     register: k8sup
+     ignore_errors: yes
+
+   - name: Get Node name
+     shell: "kubectl get nodes  | grep -v master | awk '{print $1}' | grep -v NAME"
+     register: node_name
+     ignore_errors: yes
+     when: "'running' in k8sup.stdout"
+
+   - name: Lable the node
+     shell: "kubectl label node {{ item }} node-role.kubernetes.io/node="
+     with_items: "{{ node_name.stdout_lines }}"
+     when: "'running' in k8sup.stdout"
+     ignore_errors: true
+
+   - name: Check If Helm is Installed
      shell: command -v helm >/dev/null 2>&1
      register: helm_exists
      ignore_errors: yes
@@ -275,16 +148,17 @@
      when: "egx_version == 1.2 or egx_version == 2.0 and helm_exists.rc > 0"
 
    - name: Installing the GPU Operator on EGX DIY 1.2 or 2.0
-     when: "egx_version == 1.2 or egx_version == 2.0 and 'running' not in k8sup.stdout"
+     become: true
+     when: "egx_version == 1.2 or egx_version == 2.0 and 'running' in k8sup.stdout"
      command: "{{ item }}"
      args:
        warn: false
      with_items:
-        - helm repo add nvidia https://nvidia.github.io/gpu-operator
+        - helm repo add nvidia https://nvidia.github.io/gpu-operator 
         - helm repo update
         - helm install --version 1.1.7 --devel nvidia/gpu-operator --wait --generate-name
-   
-   - name: "Install Helm on EGX DIY Stack 3.0 or 1.3"
+
+   - name: "Install Helm on EGX DIY Stack 3.1 or 1.3"
      become: true
      command: "{{ item }}"
      args:
@@ -292,16 +166,16 @@
      with_items:
        - curl -O https://get.helm.sh/helm-v3.3.3-linux-amd64.tar.gz
        - tar -xvzf helm-v3.3.3-linux-amd64.tar.gz
-       - cp linux-amd64/helm /usr/bin/
+       - cp linux-amd64/helm /usr/local/bin/
        - rm -rf helm-v3.3.3-linux-amd64.tar.gz linux-amd64
-     when: "egx_version == 1.3 or egx_version == 3.0 and helm_exists.rc > 0"
+     when: "egx_version == 1.3 or egx_version == 3.1 and helm_exists.rc > 0"
 
    - name: Installing the GPU Operator on EGX DIY Stack 3.0
-     when: "egx_version == 1.3 or egx_version == 3.0 and 'running' not in k8sup.stdout"
+     when: "egx_version == 1.3 or egx_version == 3.1 and 'running' in k8sup.stdout"
      command: "{{ item }}"
      args:
        warn: false
      with_items:
         - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
         - helm repo update
-        - helm install --version 1.3.0 --devel nvidia/gpu-operator --wait --generate-name
+        - helm install --version 1.6.0 --devel nvidia/gpu-operator --wait --generate-name

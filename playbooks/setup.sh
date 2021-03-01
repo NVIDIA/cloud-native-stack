@@ -16,11 +16,11 @@ ansible_install() {
 		echo "Installing Ansible"
         	sudo apt-add-repository ppa:ansible/ansible -y
         	sudo apt update
-        	sudo apt install ansible -y
+        	sudo apt install ansible sshpass -y
 	elif [[ $os == "ubuntu" && $version == "focal" ]]; then
 		echo "Installing Ansible"
 		sudo apt update
-        	sudo apt install ansible -y
+        	sudo apt install ansible sshpass -y
 	elif [ $os == "rhel*" ]; then
 		version=$(cat /etc/os-release | grep VERSION_ID | awk -F'=' '{print $2}')
 		if [ $version == "*7.*" ]; then
@@ -44,15 +44,16 @@ if [ $1 == "install" ]; then
 	echo EGX DIY Stack Version $(cat egx_version.yaml | awk -F':' '{print $2}')
 	echo
 	echo "Installing EGX Stack"
-	ansible-playbook egx-installation.yaml
+	ansible-playbook -i hosts prerequisites.yaml	
+	ansible-playbook -i hosts egx-installation.yaml
 elif [ $1 == "uninstall" ]; then
 	echo
 	echo "Unstalling EGX Stack"
-        ansible-playbook egx-uninstall.yaml
+        ansible-playbook -i hosts egx-uninstall.yaml
 elif [ $1 == "validate" ]; then
 	echo
 	echo "Validating EGX Stack"
-        ansible-playbook egx-validation.yaml
+        ansible-playbook -i hosts egx-validation.yaml
 else
 	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      install     Install EGX DIY Stack\n      validate    Validate EGX DIY Stack\n      uninstall   Uninstall EGX DIY Stack"
         echo

@@ -1,4 +1,4 @@
-- hosts: localhost
+- hosts: all
   gather_facts: yes
   become: true
   vars_files:
@@ -39,4 +39,5 @@
         - /var/lib/docker
         - /var/cuda*
         - /etc/docker
+        - /var/log/containers
 

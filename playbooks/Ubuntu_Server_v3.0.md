@@ -12,8 +12,9 @@ The final EGX Stack will include:
   - NV containerized driver: 450.80.02
   - NV container toolkit: 1.3.0
   - NV K8S device plug-in: 0.7.0
-  - Data Center GPU Manager (DCGM): 2.1.0-rc.2
+  - Data Center GPU Manager (DCGM): 2.1.0
   - Node Feature Discovery: 0.6.0
+  - GPU Feature Discovery 0.4.0
 
 ### Release Notes
 
@@ -79,6 +80,18 @@ $ git clone https://github.com/NVIDIA/egx-platform.git
 $ cd egx-platform/playbooks
 ```
 
+Update the hosts file in playbooks directory with master and worker nodes(if you have) IP's with username and password like below
+
+```
+$ sudo nano hosts
+
+[master]
+10.110.16.178 ansible_ssh_user=nvidia ansible_ssh_pass=nvidipass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+[node]
+10.110.16.179 ansible_ssh_user=nvidia ansible_ssh_pass=nvidiapass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+```
+
+
 ## Available EGX Stack Versions
 
 Update EGX Stack Version as per below, currently supported versions are
@@ -86,6 +99,7 @@ Update EGX Stack Version as per below, currently supported versions are
 - [1.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.2.md)
 - [2.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v2.0.md)
 - [3.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v3.0.md)
+- [3.1](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v3.1.md)
 
 ```
 sudo nano egx_version.yaml

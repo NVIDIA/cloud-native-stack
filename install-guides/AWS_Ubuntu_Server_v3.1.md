@@ -1,15 +1,15 @@
 <h1>EGX Stack v3.1 for AWS - Install Guide for Ubuntu Server x86-64</h1>
 <h2>Introduction</h2>
+This document describes how to set up the EGX Stack on one or multiple GPU accelerated AWS instances to deploy AI applications via Helm charts from NGC.
 
-This document describes how to set up the EGX Stack on AWS as a single or multi node Kubernetes Cluster to deploy AI applications via Helm charts from NGC.
 
 - Ubuntu 20.04.2 LTS
 - Docker CE 19.03.13 
 - Kubernetes version 1.18.14
 - Helm 3.3.3
-- NVIDIA GPU Operator 1.6.0
+- NVIDIA GPU Operator 1.6.2
   - NV containerized driver: 460.32.03
-  - NV container toolkit: 1.4.5
+  - NV container toolkit: 1.4.7
   - NV K8S device plug-in: 0.8.2
   - Data Center GPU Manager (DCGM): 2.2.0
   - Node Feature Discovery: 0.6.0
@@ -34,8 +34,8 @@ This document describes how to set up the EGX Stack on AWS as a single or multi 
 - Upgraded to Docker-CE 19.03.13
 - Upgraded to Kubernetes 1.18.14
 - Upgraded to Helm 3.3.3
-- Upgraded to GPU Operator 1.6.0
-- Added support for Multi Node Kubernetes Cluster
+- Upgraded to GPU Operator 1.6.2
+- Added support for Multi-Node Kubernetes Cluster
 
 ## Prerequisites
  
@@ -45,47 +45,47 @@ Please note that the EGX Stack is only validated on AWS G4 systems with the defa
 
 
 ## AWS G4 Instance Setup
-AWS G4 EC2 instances provide the latest generation NVIDIA T4 GPUs. To setup an EGX G4 instance via the AWS console web UI, please follow the below steps. 
-First login to the AWS console and go to the EC2 management page and launch a new instance by clicking the launch instance button.
+AWS G4 EC2 instances provide the latest generation NVIDIA T4 GPUs. To set up an EGX G4 instance via the AWS console web UI, please follow the below steps. 
+First, log in to the AWS console, go to the EC2 management page, and launch a new instance by clicking the launch instance button.
 
 ![AWS_Launch_Instance](screenshots/AWS_Launch_instance.png)
 
-Step 1: Select the Ubuntu Server 20.04 LTS image with 64-bit (x86) which is available on Quick Start area.
+Step 1: Select the Ubuntu Server 20.04 LTS image with 64-bit (x86), available in the Quick Start area.
 
 ![AWS_Choose_AMI](screenshots/AWS_Choose_AMI.png)
 
-Step 2: Choose a G4 instance and select any G4 instance type. (eg: g4dn.xlarge, g4dn.2xlarge etc.). For additional information please refer [AWS G4 Instances](https://aws.amazon.com/blogs/aws/now-available-ec2-instances-g4-with-nvidia-t4-tensor-core-gpus/)
+Step 2: Choose a G4 instance and select any G4 instance type. (e.g., g4dn.xlarge, g4dn.2xlarge etc.). For additional information, please refer to [AWS G4 Instances](https://aws.amazon.com/blogs/aws/now-available-ec2-instances-g4-with-nvidia-t4-tensor-core-gpus/)
 
 ![AWS_Choose_Instance_Type](screenshots/AWS_Choose_Instance_type1.png)
 
-Step 3: In this step you will provide additional instance configuration details as shown below.
+Step 3: In this step, you will provide additional instance configuration details, as shown below.
 
 ![AWS_Configure_Instance_details](screenshots/AWS_Configure_Instance_details.png)
 
-`NOTE:` This guide uses a default network configuration to showcase a working setup. Your setup may require a different configuration. Make sure to configure the network to align with your requirements so that the EGX DIY Stack can connect to your sensor (RTSP camera). 
+`NOTE:` This guide uses a default network configuration to showcase a working setup. Your setup may require a different configuration. Ensure to configure the network to align with your requirements so that the EGX Stack can connect to your sensor (RTSP camera). 
 - Network: Use your default network or custom network configuration.
 - Subnet: Use the default subnet or custom subnet.
 
-Step 4: Modify the storage to at least 25GB for the EGX DIY Stack to work with the sample Intelligent Video Analytics Demo Application. Increase the storage to accommodate your requirements if you are using a different application.
+Step 4: Modify the storage to at least 25GB for the EGX Stack to work with the sample Intelligent Video Analytics Demo application. Increase the storage to accommodate your requirements if you are using a different application.
 
 ![AWS_Add_Storage](screenshots/AWS_Add_Storage.png)
 
 Step 5: A good practice is to add tags to your instance so that you can quickly identify the purpose and details of each instance.
 
-- For example, key as Name and it's value as EGX_Location_N.
+- For example, key as Name and its value as EGX_Location_N.
 
 ![AWS_Add_Tags](screenshots/AWS_Add_Tags.png)
 
 Step 6: For the security group settings, it is recommended that you create a security group with the rules below.
 
 - Type: SSH
-- For testing with the DeepStream - Intelligent Video Analytics Demo application create a custom TCP rule that opens ports 30000-32767.
+- For testing with the DeepStream - Intelligent Video Analytics Demo application, create a custom TCP rule that opens ports 30000-32767.
 
 `NOTE:` Make sure to add all the ports that your custom application uses.
 
 ![AWS_Configure_Security_Group](screenshots/AWS_Configure_Security_Group.png)
 
-Step 7: Review the instance configuration and click "Launch Instances", the key pair will pop up. Select the option “Choose an Existing Key Pair” if you already have a key pair. If not, select the option as “Create a New Key Pair”.
+Step 7: Review the instance configuration and click "Launch Instances," the key pair will pop up. Select the option “Choose an Existing Key Pair” if you already have a key pair. If not, select the option “Create a New Key Pair.”
 
 ![AWS_Review_Instance_Config](screenshots/AWS_Review_Instance_Config.png)
 
@@ -93,7 +93,7 @@ Please wait at least 5 minutes to see the G4 node status checks pass.
 
 ### AWS G4 Instance Access
 
-Run the below command to SSH into your AWS Instance. Replace `yourkeypair.pem` and `<public-ip>` with you AWS Key Pair and your EC2 Public IP.
+Execute the below command to SSH into your AWS Instance. Replace `yourkeypair.pem` and `<public-ip>` with your AWS Key Pair and your EC2 Public IP.
 
 ```
 ssh -i yourkeypair.pem ubuntu@ec2-<public-ip>.us-west-1.compute.amazonaws.com
@@ -126,7 +126,7 @@ Add Docker’s official GPG key:
 $ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 ```
 
-Verify that you have the key with the fingerprint 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88, by searching for the last 8 characters of the fingerprint:
+Verify that you have the key with the fingerprint 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88 by searching for the last 8 characters of the fingerprint:
 ```
 $ sudo apt-key fingerprint 0EBFCD88
     
@@ -164,11 +164,11 @@ Verify that Docker Engine - Community is installed correctly by running the hell
 $ sudo docker run hello-world
 ```
 
-Additional information on how to install Docker can be found at https://docs.docker.com/install/linux/docker-ce/ubuntu/. 
+Information on how to install Docker can be found at https://docs.docker.com/install/linux/docker-ce/ubuntu/. 
 
 ## Installing Kubernetes 
 
-Make sure docker is started and enabled before starting installation:
+Make sure docker is started and enabled before beginning installation:
 
 ```
 $ sudo systemctl start docker && sudo systemctl enable docker
@@ -182,13 +182,13 @@ $ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key a
 $ sudo mkdir -p  /etc/apt/sources.list.d/
 ```
 
-Create kubernetes.list:
+Create Kubernetes.list:
 
 ```
 $ sudo nano /etc/apt/sources.list.d/kubernetes.list
 ```
 
-Add the following lines in kubernetes. List and save the file:
+Add the following lines in Kubernetes. List and save the file:
 
 ```
 deb https://apt.kubernetes.io/ kubernetes-xenial main
@@ -209,7 +209,7 @@ $ sudo swapoff -a
 $ sudo nano /etc/fstab
 ```
 
-Add a # before all the lines that start with /swap. # is a comment and the result should look similar to this:
+Add a # before all the lines that start with /swap. # is a comment, and the result should look similar to this:
 
 ```
 UUID=e879fda9-4306-4b5b-8512-bba726093f1d / ext4 defaults 0 0
@@ -223,7 +223,7 @@ Execute the following command:
 $ sudo kubeadm init --pod-network-cidr=192.168.0.0/16
 ```
 
-The output will show you the commands that when executed deploy a pod network to the cluster as well as commands to join the cluster.
+The output will show you the commands that, when executed, deploy a pod network to the cluster and commands to join the cluster.
 
 Following the instructions in the output, execute the commands as shown below:
 
@@ -233,13 +233,13 @@ $ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 $ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-With the following command you install a pod-network add-on to the control plane node. Calico is used as the pod-network add-on here:
+With the following command, you install a pod-network add-on to the control plane node. Calico is used as the pod-network add-on here:
 
 ```
 $ kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 ```
 
-You can run below commands to ensure all pods are up and running:
+You can execute the below commands to ensure that all pods are up and running:
 
 ```
 $ kubectl get pods --all-namespaces
@@ -273,7 +273,7 @@ NAME       STATUS    ROLES    AGE   VERSION
 #hostname   Ready    master   10m   v1.18.14
 ```
 
-Since we are using a single node kubernetes cluster, the cluster will not be able to schedule pods on the control plane node by default. In order to schedule pods on the control plane node we have to remove the taint by executing the following command:
+Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
 
 ```
 $ kubectl taint nodes --all node-role.kubernetes.io/master-
@@ -293,16 +293,16 @@ $ sudo mv linux-amd64/helm /usr/local/bin/helm
 
 For additional information about Helm, refer to https://github.com/helm/helm/releases and https://helm.sh/docs/using_helm/#installing-helm. 
 
-### Adding an additional node to the EGX Stack
+### Adding additional node to EGX Stack
 
-Please Launch the new AWS G4 instance and make sure to install the docker and Kubernetes packages on additional node.
+Please Launch the new AWS G4 instance and install the docker and Kubernetes packages on an additional node.
 
 Prerequisites: 
 - [AWS G4 Instance Setup](#AWS-G4-Instance-Setup)
 - [Installing Docker-CE](#Installing-Docker-CE)
 - [Installing Kubernetes](#Installing-Kubernetes)
 
-Run the below command on the master node, and then execute the join commmand output on additional node to add the additional node to the EGX Stack. 
+Now execute the below command on the master node, and then execute the join command output on an additional node to add the additional node to EGX Stack. 
 
 ```
 $ kubeadm token create --print-join-command
@@ -341,15 +341,15 @@ Update the helm repo:
 $ helm repo update
 ```
 
-To install the GPU Operator on an AWS G4 instance with Tesla T4:
+To install the GPU Operator for AWS G4 instance with Tesla T4:
 
 ```
-$ helm install --version 1.6.0 --devel nvidia/gpu-operator --wait --generate-name
+$ helm install --version 1.6.2 --devel nvidia/gpu-operator --wait --generate-name
 ```
 
 ### Validate the state of the GPU Operator:
 
-Please note that the installation of the GPU Operator can take a couple minutes. 
+Please note that the installation of the GPU Operator can take a couple of minutes. 
 
 ```
 kubectl get pods --all-namespaces | grep -v kube-system
@@ -373,13 +373,13 @@ Please refer to https://ngc.nvidia.com/catalog/helm-charts/nvidia:gpu-operator f
 
 ## Validating the Installation
 
-The GPU Operator validates the stack through the nvidia-device-plugin-validation pod and the nvidia-driver-validation pod. If both completed successfully (see output from kubectl get pods --all-namespaces | grep -v kube-system), the EGX Stack works as expected. 
-There are two ways to validate the EGX Stack manually: 
-1. Validate the EGX Stack with nvidia-smi and cuda sample
-2. Validate the EGX Stack with an Application
+The GPU Operator validates the stack through the nvidia-device-plugin-validation pod and the nvidia-driver-validation pod. If both are completed successfully (see output from kubectl get pods --all-namespaces | grep -v kube-system), EGX Stack is working as expected. 
+There are two ways to validate EGX Stack manually: 
+1. Validate EGX Stack with nvidia-smi and cuda sample
+2. Validate EGX Stack with an Application
 
 
-### Validate the EGX Stack with nvidia-smi and cuda sample
+### Validate EGX Stack with nvidia-smi and cuda sample
 This section provides two examples of how to validate that the GPU is usable from within a pod.
 
 #### Example 1: nvidia-smi
@@ -387,15 +387,15 @@ This section provides two examples of how to validate that the GPU is usable fro
 Execute the following:
 
 ```
-$ kubectl run nvidia-smi --rm -t -i --restart=Never --image=nvidia/cuda:11.2.1-base --limits=nvidia.com/gpu=1 -- nvidia-smi
+$ kubectl run nvidia-smi --rm -t -i --restart=Never --image=nvidia/cuda:11.1.1-base --limits=nvidia.com/gpu=1 -- nvidia-smi
 ```
 
 Output:
 
 ``` 
-Wed Feb 24 17:51:27 2021
+Wed Apr 10 17:51:27 2021
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 460.32.03    Driver Version: 460.32.03    CUDA Version: 11.2     |
+| NVIDIA-SMI 450.80.02    Driver Version: 450.80.02    CUDA Version: 11.1     |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
@@ -415,7 +415,7 @@ pod "nvidia-smi" deleted
 
 #### Example 2: CUDA-Vector-Add
 
-Create a pod yaml file:
+Create a pod YAML file:
 
 ```
 $ sudo nano cuda-samples.yaml
@@ -435,7 +435,7 @@ spec:
       image: "k8s.gcr.io/cuda-vector-add:v0.1"
 ```
 
-Run the below command to create a sample GPU pod:
+Execute the below command to create a sample GPU pod:
 
 ```
 $ sudo kubectl apply -f cuda-samples.yaml
@@ -447,11 +447,18 @@ Check if the cuda-samples pod was created:
 $ kubectl get pods
 ``` 
 
-The EGX stack works as expected if the get pods command shows the pod status as completed.
+EGX stack works as expected if the get pods command shows the pod status as completed.
 
-Another option to validate the EGX Stack is by running a demo application that is hosted on NGC. NGC is NVIDIA's hub for GPU-optimized software. The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm Chart. The Application can be used to validate the full EGX Stack and test the connectivity of the EGX Stack to remote sensors. DeepStream delivers real-time AI based video and image understanding, as well as multi-sensor processing on GPUs. For additional information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo)
+### Validate the EGX Stack with an application from NGC
+Another option to validate EGX Stack is by running a demo application hosted on NGC.
 
-There are two ways to configure the DeepStream - Intelligent Video Analytics Demo Application on your EGX DIY Stack
+NGC is NVIDIA's GPU Optimized Software Hub. NGC provides a curated set of GPU-optimized software for AI, HPC, and Visualization. The content provided by NVIDIA and third-party ISVs simplify building, customizing, and integrating GPU-optimized software into workflows, accelerating the time to solutions for users.
+
+Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkit with software development kits (SDKs) hosted on NGC. For more information about how to deploy an application that hosted on NGC, the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information
+
+The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm chart. The application can validate the full EGX Stack and test the connectivity of EGX Stack to remote sensors. DeepStream delivers real-time AI-based video and image understanding, as well as multi-sensor processing on GPUs. For additional information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo)
+
+There are two ways to configure the DeepStream - Intelligent Video Analytics Demo Application on your EGX Stack
 
 - Using a camera
 - Using the integrated video file (no camera required)
@@ -463,7 +470,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 Go through the below steps to install the demo application. 
 ```
-1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.5.tgz --untar
+1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.6.tgz --untar
 
 2. cd into the folder video-analytics-demo and update the file values.yaml
 
@@ -473,7 +480,7 @@ cameras:
  camera1: rtsp://XXXX
 ```
 
-Run the following command to deploy the demo application:
+Execute the following command to deploy the demo application:
 ```
 helm install video-analytics-demo --name-template iva
 ```
@@ -482,27 +489,27 @@ Once the helm chart is deployed, access the application with the VLC player. See
 
 #### Using the integrated video file (no camera)
 
-If you do not have a camera input, please run the below commands to use the default video which is integrated in the application. 
+If you do not have a camera input, please execute the below commands to use the default video integrated with the application. 
 
 ```
-$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.5.tgz
+$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.6.tgz
 
-$ helm install video-analytics-demo-0.1.5 --name-template iva
+$ helm install video-analytics-demo-0.1.6,tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the Application with VLC player with the instructions below. 
-For additional information about Demo application, please refer to https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo
+For additional information about the Demo application, please refer to https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo
 
 #### Access from WebUI
 
-Use the below WebUI URL to access video analytics demo application from browser.
+Use the below WebUI URL to access the video analytics demo application from the browser.
 ```
 http://IPAddress of Node:31115/WebRTCApp/play.html?name=videoanalytics
 ```
 
 #### Access from VLC
 
-Download VLC Player from: https://www.videolan.org/vlc/ on the machine where you intend to view the video stream.
+Download VLC Player from https://www.videolan.org/vlc/ on the machine where you intend to view the video stream.
 
 View the video stream in VLC by navigating to Media > Open Network Stream > Entering the following URL.
 
@@ -518,8 +525,9 @@ You will now see the video output like below with the AI model detecting objects
 
 ## Saving your instance
 
-You can save your current state of your EC2 instance as an Amazon AMI. Follow the steps to [Create an AMI](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/tkv-create-ami-from-instance.html) 
+You can save the current state of your EC2 instance as an Amazon AMI. Follow the steps to [Create an AMI](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/tkv-create-ami-from-instance.html) 
 
 ## Cleanup
 
-To remove your AWS instance, login to the AWS console and go to the EC2 management page and select your EC2 instance and select Instance State >> then click  Terminate.
+To remove your AWS instance, log in to the AWS console, go to the EC2 management page, select your EC2 instance, and select Instance State >> then click  Terminate.
+

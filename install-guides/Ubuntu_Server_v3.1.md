@@ -1,20 +1,20 @@
 <h1>EGX Stack v3.1 - Install Guide for Ubuntu Server x86-64</h1>
 <h2>Introduction</h2>
 
-This document describes how to set up the EGX Stack v3.1 on a single or multi node Kubernetes Cluster to deploy AI applications via Helm charts from NGC. EGX Stack 3.1 also it includes instructions on how to setup the NVIDIA Networking Stack within the EGX stack. The final environment will include:
+This document describes how to set up EGX Stack v3.1 on a single or multi-node Kubernetes Cluster to deploy AI applications via Helm charts from NGC. EGX Stack 3.1 also includes instructions on how to set up the NVIDIA Networking Stack within EGX Stack. The final environment will include:
 
 - Ubuntu 20.04.2 LTS
 - Docker CE 19.03.13 
 - Kubernetes version 1.18.14
 - Helm 3.3.3
-- NVIDIA GPU Operator 1.6.0
+- NVIDIA GPU Operator 1.6.2
   - NV containerized driver: 460.32.03
-  - NV container toolkit: 1.4.5
+  - NV container toolkit: 1.4.7
   - NV K8S device plug-in: 0.8.2
   - Data Center GPU Manager (DCGM): 2.2.0
   - Node Feature Discovery: 0.6.0
-  - GPU Feature Discvoery: 0.4.1
-- Mellanox MOFED Driver 5.1-2.5.8.0
+  - GPU Feature Discovery: 0.4.1
+- Mellanox MOFED Driver 5.3-1.0.0.1
 - Mellanox NV_Peer_Memory 1.1 
 
 <h2>Table of Contents</h2>
@@ -25,11 +25,11 @@ This document describes how to set up the EGX Stack v3.1 on a single or multi no
 - [Installing Docker-CE](#Installing-Docker-CE)
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Installing Helm](#Installing-Helm)
-- [Adding additional node to the EGX Stack](#Adding-additional-node-to-the-EGX-Stack)
+- [Adding additional node to EGX Stack](#Adding-additional-node-to-EGX-Stack)
 - [Installing the GPU Operator](#Installing-the-GPU-Operator)
 - [Installing Mellanox MOFED on EGX Stack](#Installing-Mellanox-MOFED-on-EGX-Stack)
 - [Installing nv_peer_mem on EGX Stack](#Installing-nv_peer_mem-on-EGX-Stack)
-- [Validatiing the Mellanox on EGX Stack](#Validatiing-the-Mellanox-on-EGX-Stack)
+- [Validating the Mellanox on EGX Stack](#Validating-the-Mellanox-on-EGX-Stack)
 - [Validating the Installation](#Validating-the-Installation)
 - [NGC - NVIDIA's GPU-Optimized Software Hub](#NVIDIAs-GPU-Optimized-Software-Hub)
 - [Uninstalling the GPU Operator](#Uninstalling-the-GPU-Operator)
@@ -38,28 +38,32 @@ This document describes how to set up the EGX Stack v3.1 on a single or multi no
 
 - Upgraded to Ubuntu Server 20.04.2 LTS
 - Upgraded to Docker-CE 19.03.13
-- Upgradet to Kubernetes 1.18.14
+- Upgraded to Kubernetes 1.18.14
 - Upgraded to Helm 3.3.3
-- Upgraded to GPU Operator 1.6.0
-- Added Support for A100
-- Added support for Multi Node Kubernetes Cluster
+- Upgraded to GPU Operator 1.6.2
+- Added support for A100
+- Added support for Multi-Node Kubernetes Cluster
 - Added support for Mellanox MOFED, nv_peer_mem with GPU Operator
 
 ### Prerequisites
  
 The following instructions assume the following:
 
-- You have a NGC-Ready for Edge Server with Mellanox CX Switches. 
+- You have NVIDIA-Certified Systems or NGC-Ready Servers with Mellanox CX NICs. 
 - You will perform a clean install.
 
-To determine if your system qualifies as a NGC-Ready or NVIDIA Certified Server, review the list of NGC-Ready for Edge Systems at https://docs.nvidia.com/ngc/ngc-ready-systems/index.html.
+To determine if your system qualifies as an NVIDIA Certified System or an NGC-Ready Server, review the list of NVIDIA Certified Systems at https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html and NGC-Ready for Edge Systems at https://docs.nvidia.com/ngc/ngc-ready-systems/index.html. 
 
-Please note that the EGX Stack is only validated on Intel based NGC-Ready systems with the default kernel (not HWE). Using an AMD EPYC 2nd generation (ROME) NGC-Ready server is not validated yet and will require the HWE kernel and manually disabling nouveau.
+Please note that EGX Stack is only validated on Intel-based systems with the default kernel (not HWE). Using an AMD EPYC 2nd generation (ROME) server is not validated yet and will require the HWE kernel and manually disabling nouveau.
 
 ### Installing the Ubuntu Operating System
-These instructions require installing Ubuntu Server LTS 20.04.2 on your NGC-Ready for Edge system. Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/20.04.1/release/.
+These instructions require installing Ubuntu Server LTS 20.04.2. Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/20.04.1/release/.
 
-Disabling nouveau (not validated and only required with Ubuntu 20.04.2 LTS HWE Kernel): 
+Please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
+
+#### Disabling nouveau 
+
+`NOTE:` It's only required with Ubuntu 20.04.2 LTS HWE Kernel 
 
 ```
 $ sudo nano /etc/modprobe.d/blacklist-nouveau.conf
@@ -83,8 +87,6 @@ And reboot your system:
 ```
 $ sudo reboot
 ```
-
-For more information on installing Ubuntu server please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
 
 ### Installing Docker-CE
 
@@ -111,7 +113,7 @@ Add Docker’s official GPG key:
 $ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 ```
 
-Verify that you now have the key with the fingerprint 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88, by searching for the last 8 characters of the fingerprint:
+Verify that you now have the key with the fingerprint 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88 by searching for the last 8 characters of the fingerprint:
 ```
 $ sudo apt-key fingerprint 0EBFCD88
     
@@ -153,7 +155,7 @@ More information on how to install Docker can be found at https://docs.docker.co
 
 ### Installing Kubernetes 
 
-Make sure docker has been started and enabled before starting installation:
+Make sure docker has been started and enabled before beginning installation:
 
 ```
 $ sudo systemctl start docker && sudo systemctl enable docker
@@ -173,7 +175,7 @@ Create kubernetes.list
 $ sudo nano /etc/apt/sources.list.d/kubernetes.list
 ```
 
-Add the following lines in kubernetes.list and save the file:
+Add the following lines in the kubernetes.list and save the file:
 
 ```
 deb https://apt.kubernetes.io/ kubernetes-xenial main
@@ -194,7 +196,7 @@ $ sudo swapoff -a
 $ sudo nano /etc/fstab
 ```
 
-Add a # before all the lines that start with /swap. # is a comment and the result should look something like this:
+Add a # before all the lines that start with /swap. # is a comment, and the result should look something like this:
 
 ```
 UUID=e879fda9-4306-4b5b-8512-bba726093f1d / ext4 defaults 0 0
@@ -208,7 +210,7 @@ Execute the following command:
 $ sudo kubeadm init --pod-network-cidr=192.168.0.0/16
 ```
 
-The output will show you the commands that you can execute to deploy a pod network to the cluster as well as commands to join the cluster.
+The output will show you the commands that you can execute to deploy a pod network to the cluster and commands to join the cluster.
 
 Following the instructions in the output, execute the commands as shown below:
 
@@ -218,13 +220,13 @@ $ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 $ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-With the following command you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
+With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
 $ kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 ```
 
-You can run below commands to ensure all pods are up and running:
+You can execute the below commands to ensure that all pods are up and running
 
 ```
 $ kubectl get pods --all-namespaces
@@ -258,7 +260,7 @@ NAME             STATUS   ROLES    AGE   VERSION
 #yourhost        Ready    master   10m   v1.18.14
 ```
 
-Since we are using a single node kubernetes cluster, the cluster will not be able to schedule pods on the control plane node by default. In order to schedule pods on the control plane node we have to remove the taint by executing the following command:
+Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
 
 ```
 $ kubectl taint nodes --all node-role.kubernetes.io/master-
@@ -277,18 +279,18 @@ $ sudo tar -zxvf helm-v3.3.3-linux-amd64.tar.gz
 $ sudo mv linux-amd64/helm /usr/local/bin/helm
 ```
 
-Refer to https://github.com/helm/helm/releases and https://helm.sh/docs/using_helm/#installing-helm  for more information.
+Refer to https://github.com/helm/helm/releases and https://helm.sh/docs/using_helm/#installing-helm for more information.
 
 
-### Adding additional node to the EGX Stack
+### Adding additional node to EGX Stack
 
-Please make sure to install the docker and Kubernetes packages on additional node.
+Please make sure to install the docker and Kubernetes packages on an additional node.
 
 Prerequisites: 
 - [Installing Docker-CE](#Installing-Docker-CE)
 - [Installing Kubernetes](#Installing-Kubernetes)
 
-Now run the below command on master node, and then run the join commmand output on additional node to add the additional node to the EGX Stack. 
+Now execute the below command on the master node and then execute the join command output on an additional node to add the additional node to EGX Stack. 
 
 ```
 $ kubeadm token create --print-join-command
@@ -300,7 +302,7 @@ example:
 kubeadm join 10.110.0.34:6443 --token kg2h7r.e45g9uyrbm1c0w3k     --discovery-token-ca-cert-hash sha256:77fd6571644373ea69074dd4af7b077bbf5bd15a3ed720daee98f4b04a8f524e
 ```
 
-The get nodes command shows that the master and worker nodes is up and ready:
+The get nodes command shows that the master and worker nodes are up and ready:
 
 ```
 $ kubectl get nodes
@@ -314,29 +316,29 @@ NAME             STATUS   ROLES    AGE   VERSION
 #yourhost-worker Ready             10m   v1.18.14
 ```
 
-### Installing the GPU Operator
+### Installing GPU Operator
 
-Add the nvidia repo 
+Add the NVIDIA repo:
 
 ```
 $ helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
 ```
 
-Update the helm repo:
+Update the Helm repo:
 
 ```
 $ helm repo update
 ```
 
-To install the GPU Operator for Tesla T4, RTX 6000/8000 or A100:
+Install the GPU Operator:
 
 ```
-$ helm install --version 1.6.0 --devel nvidia/gpu-operator --wait --generate-name
+$ helm install --version 1.6.2 --devel nvidia/gpu-operator --wait --generate-name
 ```
 
 #### Validate the state of the GPU Operator:
 
-Please note that the installation of the GPU Operator can take a couple minutes. How long you will have to wait will depend on your internet speed.
+Please note that the installation of the GPU Operator can take a couple of minutes. How long you will have to wait will depend on your internet speed.
 
 ```
 kubectl get pods --all-namespaces | grep -v kube-system
@@ -360,9 +362,9 @@ Please refer to https://ngc.nvidia.com/catalog/helm-charts/nvidia:gpu-operator f
 
 ### Installing Mellanox MOFED on EGX Stack
 
-Below instructions assume that mellanox NICs are connected to your machines.
+Below instructions that assume that Mellanox NICs are connected to your machines.
 
-Run the below command to verify mellanox NIC's are enabled on your machines
+Execute the below command to verify Mellanox NIC's are enabled on your machines
 
 ```
 $ lspci | grep -i "Mellanox"
@@ -374,31 +376,31 @@ Output:
 0c:00.1 Ethernet controller: Mellanox Technologies MT2892 Family [ConnectX-6 Dx]
 ```
 
-Run the below commands to install MOFED Drivers on every EGX node
+Execute the below commands to install MOFED Drivers on every EGX node
 
 ```
 $ wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | sudo apt-key add -
-$ wget https://linux.mellanox.com/public/repo/mlnx_ofed/5.1-2.5.8.0/ubuntu20.04/mellanox_mlnx_ofed.list
+$ wget https://linux.mellanox.com/public/repo/mlnx_ofed/5.3-1.0.0.1/ubuntu20.04/mellanox_mlnx_ofed.list
 $ sudo mv mellanox_mlnx_ofed.list /etc/apt/sources.list.d/
 $ sudo apt update && sudo apt-get install mlnx-ofed-all -y
 ```
 
-Once MOFED drivers installed successfully, please reboot the systems. 
+Once MOFED drivers are installed successfully, please reboot the systems.
 
 ```	
 $ sudo reboot
 ```
 
-Now run the below command to install MULTUS CNI Plugin on EGX Stack from master node
+Now execute the below command to install MULTUS CNI Plugin on EGX Stack from the master node
 
 ```
 $ kubectl apply -f https://raw.githubusercontent.com/intel/multus-cni/master/images/multus-daemonset.yml
 ```
-Multus CNI enables attaching multiple network interfaces to pods in Kubernetes. for more information about multus, please refer https://github.com/intel/multus-cni
+Multus CNI enables attaching multiple network interfaces to pods in Kubernetes. for more information about Multus, please refer to https://github.com/intel/multus-cni
 
-Follow the below steps to install kubernetes rdma shared plugin to enable Mellanox NIC's on EGX Stack. 
+Follow the below steps to install Kubernetes RDMA shared plug-in to enable Mellanox NIC's on EGX Stack. 
 
-1. Run the below command on EGX nodes to list the Mellanox NIC's with the status
+1. Execute the below command on EGX nodes to list the Mellanox NIC's with the status
 ```
 $ sudo ibdev2netdev
 ```
@@ -407,12 +409,12 @@ Output:
 mlx5_0 port 1 ==> ens192f0 (Up)
 mlx5_1 port 1 ==> ens192f1 (Down)
 ```
-2. Now get the RDMA shared plugin configmap with below command on master node
+2. Now, create the RDMA shared plug-in configmap with the below command on the master node
 ```
-wget -qo - https://raw.githubusercontent.com/Mellanox/k8s-rdma-shared-dev-plugin/master/images/k8s-rdma-shared-dev-plugin-config-map.yaml
+sudo nano k8s-rdma-shared-dev-plugin-config-map.yaml
 ```
 
-Update Mellanox devices which you previously listed with `ibdev2netdev` and also modify `rdmaHcaMax` value to `100` in configmap as per below 
+Update Mellanox devices which you previously listed with `ibdev2netdev` in configmap as per below 
 
 ```	
 apiVersion: v1
@@ -432,14 +434,14 @@ data:
     }
 
 ```
-3. Install the Kubernetes RDMA shared device plugin on EGX Stack from master node
+3. Install the Kubernetes RDMA shared device plug-in on EGX Stack from the master node
 ```
 $ kubectl apply -f k8s-rdma-shared-dev-plugin-config-map.yaml
 $ kubectl apply -f https://raw.githubusercontent.com/Mellanox/k8s-rdma-shared-dev-plugin/master/images/k8s-rdma-shared-dev-plugin-ds.yaml
 ```
-for more information about RDMA shared plugin, please refer https://github.com/Mellanox/k8s-rdma-shared-dev-plugin
+for more information about RDMA shared plug-in, please refer to https://github.com/Mellanox/k8s-rdma-shared-dev-plugin
 
-Now run the below commands to copy the container network plugins on every EGX node.
+Now execute the below commands to copy the container network plug-ins on every EGX node.
 
 ```
 $ wget https://github.com/containernetworking/plugins/releases/download/v0.8.7/cni-plugins-linux-amd64-v0.8.7.tgz
@@ -447,35 +449,39 @@ $ tar xvfz cni-plugins-linux-amd64-v0.8.7.tgz
 $ sudo cp macvlan tuning /opt/cni/bin/
 ```
 
-Now install the whereabouts CNI on EGX Stack with the below steps from master node
+Now install the whereabouts CNI on EGX Stack with the below steps from the master node
 
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/openshift/whereabouts-cni/master/doc/daemonset-install.yaml
+$ wget https://raw.githubusercontent.com/openshift/whereabouts-cni/master/doc/daemonset-install.yaml
+$ sed -ie 's/latest/v0.3/g' daemonset-install.yaml
+$ kubectl apply -f daemonset-install.yaml
 $ kubectl apply -f https://raw.githubusercontent.com/openshift/whereabouts-cni/master/doc/whereabouts.cni.cncf.io_ippools.yaml
 $ kubectl apply -f https://raw.githubusercontent.com/openshift/whereabouts-cni/master/doc/whereabouts.cni.cncf.io_overlappingrangeipreservations.yaml
 ```
-Whereabout is An IP Address Management (IPAM) CNI plugin that assigns IP addresses cluster-wide. for more information, please refer https://github.com/openshift/whereabouts-cni
+Whereabout is An IP Address Management (IPAM) CNI plug-in that assigns IP addresses cluster-wide. for more information, please refer to https://github.com/openshift/whereabouts-cni
 
 ### Installing nv_peer_mem on EGX Stack 
 
-`NOTE:` Install the [GPU Operator](#Installing-the-GPU-Operator) before installing nv_peer_memory on every node, as nv_peer_memory need NVIDIA Drivers. 
+`NOTE:` Install the [GPU Operator](#Installing-the-GPU-Operator) before installing nv_peer_memory on every node, as nv_peer_memory needs NVIDIA Drivers. 
 
-Run below steps on every EGX node.
+Execute the below steps on every EGX node.
 
-First clone the nv_peer_mem source from github and build nv_peer_mem module with below steps.
+First, clone the nv_peer_mem source from GitHub and build the nv_peer_mem module with the below steps.
 
 ```
 $ git clone https://github.com/Mellanox/nv_peer_memory.git
 
 $ cd nv_peer_memory 
+
+$ sudo nano create_nv.symvers.sh
 ```
 
 replace the line `nvidia_mod=$(/sbin/modinfo -F filename -k "$KVER" $mod 2>/dev/null)"` with 
 
-`nvidia_mod="/run/nvidia/driver/usr/src/nvidia-450.80.02/kernel/nvidia.ko"` in the file `create_nv.symvers.sh`
+`nvidia_mod="/run/nvidia/driver/usr/src/nvidia-460.32.03/kernel/nvidia.ko"` in the file `create_nv.symvers.sh`
 
 
-Now build the nv_peer_mem module with below commands
+Now build the nv_peer_mem module with the below commands
 
 ```
 ./build_module.sh
@@ -483,22 +489,23 @@ Now build the nv_peer_mem module with below commands
 $ cd /tmp
 $ tar xzf /tmp/nvidia-peer-memory_1.1.orig.tar.gz
 $ cd nvidia-peer-memory-1.1
-$ dpkg-buildpackage -us -uc
-$ dpkg -i <path to generated deb files>
+$ sudo apt install autotools-dev debhelper -y
+$ sudo dpkg-buildpackage -us -uc
+$ sudo dpkg -i <path to generated deb files>
 
-(e.g. dpkg -i ../nvidia-peer-memory_1.1-0_all.deb
-      dpkg -i ../nvidia-peer-memory-dkms_1.1-0_all.deb)
+(e.g. sudo dpkg -i ../nvidia-peer-memory_1.1-0_all.deb
+      sudo dpkg -i ../nvidia-peer-memory-dkms_1.1-0_all.deb)
 ```
 
 
-### Validatiing the Mellanox on EGX Stack 
+### Validating the Mellanox on EGX Stack 
 
-Create Network defination for IPAM on EGX Stack
+Create Network definition for IPAM on EGX Stack
 ```
 sudo nano networkdefination.yaml 
 ```
 
-Add the below content to the network defination yaml and apply to EGX Stack on master node
+Add the below content to the network definition YAML and apply it to EGX Stack on the master node
 ```
 apiVersion: k8s.cni.cncf.io/v1
 kind: NetworkAttachmentDefinition
@@ -535,15 +542,15 @@ spec:
     }
 ``` 
 
-`NOTE:` If you does not have VLAN based networking in high-performance side please set "vlan": 0
+`NOTE:` If you do not have VLAN based networking on the high-performance side, please set "vlan": 0
  
- Run the below command to install network defination on EGX Stack from master node
+ Execute the below command to install network definition on EGX Stack from the master node
  
  ```
  $ kubectl apply -f networkdefination.yaml 
  ```
  
-Now create the pod yaml with below content.
+Now create the pod YAML with the below content.
 
 ``` 
 $ sudo nano mellanox-test.yaml
@@ -615,7 +622,7 @@ spec:
       sleep infinity
  ```
 
-Apply the mellanox test pod to EGX stack for the validation
+Apply the Mellanox test pod to the EGX stack for the validation
 ```
 $ kubectl apply -f mellanox-test.yaml
 ```
@@ -643,7 +650,7 @@ lrwxrwxrwx 1 root root 0 Nov 19 02:26 tunl0 -> ../../devices/virtual/net/tunl0
 
 #### Validate nv_peer_mem on EGX Stack 
 
-First verify that nv_peer_mem modules are loaded on every EGX node with below command 
+First, verify that nv_peer_mem modules are loaded on every EGX node with the below command: 
 
 ```
 $ lsmod | grep nv_peer_mem
@@ -656,7 +663,7 @@ ib_core               323584  11 rdma_cm,ib_ipoib,mlx4_ib,nv_peer_mem,iw_cm,ib_u
 nvidia              20385792  117 nvidia_uvm,nv_peer_mem,nvidia_modeset
 ```
 
-Run the below command to list the Mellanox NIC's with the status
+Execute the below command to list the Mellanox NIC's with the status
 ```
 $ sudo ibdev2netdev
 ```
@@ -666,7 +673,7 @@ mlx5_0 port 1 ==> ens192f0 (Up)
 mlx5_1 port 1 ==> ens192f1 (Down)
 ```
 
-Update the above Mellanox NIC, which status is `Up` in below command 
+Update the above Mellanox NIC, which status is `Up` in the below command 
 
 ```
 $ kubectl exec -it rdma-test-pod-1 -- bash
@@ -677,7 +684,7 @@ $ kubectl exec -it rdma-test-pod-1 -- bash
 ************************************
 ```
 
-In a separate terminal, print the network address of the secondary interface on `rdma-test-pod-1` Pod.
+In a separate terminal, print the network address of the secondary interface on the `rdma-test-pod-1` pod.
 
 ```
 $ kubectl exec rdma-test-pod-1 -- ip addr show dev net1
@@ -687,7 +694,7 @@ $ kubectl exec rdma-test-pod-1 -- ip addr show dev net1
        valid_lft forever preferred_lft forever
 ```
 
-Run the below command with above inet address to verify the nv_peer_memory performance on EGX Stack. 
+Execute the below command with the above inet address to verify the nv_peer_memory performance on EGX Stack. 
 ```
 $ kubectl exec -it rdma-test-pod-2 -- bash
 [root@rdma-test-pod-1 /]# ib_write_bw -d mlx5_0 -a -F --report_gbits -q 1 192.168.111.1
@@ -737,7 +744,7 @@ $ kubectl exec -it rdma-test-pod-2 -- bash
 ```
 The benchmark achieved approximately 83 Gbps throughput.
 
-Delete the rdma test Pods.
+Exit from RDMA test pods and then Delete the RDMA test pods with the below command.
 
 ```
 $ kubectl delete pod rdma-test-pod-1 rdma-test-pod-2
@@ -745,7 +752,7 @@ $ kubectl delete pod rdma-test-pod-1 rdma-test-pod-2
 
 ### Validating the Installation
 
-The GPU Operator validates the stack through the nvidia-device-plugin-validation pod and the nvidia-driver-validation pod. If both completed successfully (see output from kubectl get pods --all-namespaces | grep -v kube-system), the EGX Stack works as expected. To manually validate the stack, this section provides two examples of how to validate that the GPU is usable from within a pod.
+GPU Operator validates the stack through the nvidia-device-plugin-validation pod and the nvidia-driver-validation pod. If both are completed successfully (see output from kubectl get pods --all-namespaces | grep -v kube-system), the EGX Stack works as expected. This section provides two examples of validating that the GPU is usable from within a pod to validate the stack manually.
 
 #### Example 1: nvidia-smi
 
@@ -758,7 +765,7 @@ $ kubectl run nvidia-smi --rm -t -i --restart=Never --image=nvidia/cuda:11.2.1-b
 Output:
 
 ``` 
-Tue Feb 23 22:35:02 2021
+Tue Apr 9 22:35:02 2021
 +-----------------------------------------------------------------------------+
 | NVIDIA-SMI 460.32.03    Driver Version: 460.32.03    CUDA Version: 11.2     |
 |-------------------------------+----------------------+----------------------+
@@ -782,7 +789,7 @@ pod "nvidia-smi" deleted
 
 #### Example 2: CUDA-Vector-Add
 
-Create a pod yaml file:
+Create a pod YAML file:
 
 ```
 $ sudo nano cuda-samples.yaml
@@ -802,10 +809,10 @@ spec:
       image: "k8s.gcr.io/cuda-vector-add:v0.1"
 ```
 
-Run the below command to create a sample gpu pod:
+Execute the below command to create a sample GPU pod:
 
 ```
-$ sudo kubectl apply -f cuda-samples.yaml
+$ kubectl apply -f cuda-samples.yaml
 ```
 
 Check if the cuda-samples pod was created:
@@ -814,11 +821,16 @@ Check if the cuda-samples pod was created:
 $ kubectl get pods
 ``` 
 
-The EGX stack works as expected if the get pods command shows the pod status as completed.
+EGX Stack works as expected if the get pods command shows the pod status as completed.
 
 ### Validate the EGX Stack with an application from NGC
+Another option to validate EGX Stack is by running a demo application hosted on NGC.
 
-Another option to validate the EGX Stack is by running a demo application that is hosted on NGC. NGC is NVIDIA's hub for GPU-optimized software. The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm Chart. The Application can be used to validate the full EGX Stack and test the connectivity of the EGX Stack to remote sensors. DeepStream delivers real-time AI based video and image understanding and multi-sensor processing on GPUs. For more information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo)
+NGC is NVIDIA's GPU Optimized Software Hub. NGC provides a curated set of GPU-optimized software for AI, HPC, and Visualization. The content provided by NVIDIA and third-party ISVs simplify building, customizing, and integrating GPU-optimized software into workflows, accelerating the time to solutions for users.
+
+Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkit with software development kits (SDKs) hosted on NGC. For more information about how to deploy an application that hosted on NGC, the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information
+
+The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm Chart. The application can validate the full EGX Stack and test the connectivity of the EGX Stack to remote sensors. DeepStream delivers real-time AI-based video and image understanding and multi-sensor processing on GPUs. For more information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo)
 
 There are two ways to configure the DeepStream - Intelligent Video Analytics Demo Application on your EGX DIY Stack
 
@@ -832,7 +844,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 Go through the below steps to install the demo application. 
 ```
-1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.5.tgz --untar
+1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.6.tgz --untar
 
 2. cd into the folder video-analytics-demo and update the file values.yaml
 
@@ -842,7 +854,7 @@ cameras:
  camera1: rtsp://XXXX
 ```
 
-Run the following command to deploy the demo application:
+Execute the following command to deploy the demo application:
 ```
 helm install video-analytics-demo --name-template iva
 ```
@@ -851,29 +863,29 @@ Once the helm chart is deployed, access the application with the VLC player. See
 
 #### Using the integrated video file (no camera)
 
-If you don’t have a camera input, please run the below commands to use the default video which is already integrated in the application. 
+If you don’t have a camera input, please execute the below commands to use the default video already integrated into the application. 
 
 ```
-$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.5.tgz
+$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.6.tgz
 
-$ helm install video-analytics-demo-0.1.5 --name-template iva
+$ helm install video-analytics-demo-0.1.6.tgz --name-template iva
 ```
 
 `NOTE:` if you're deploying on A100 GPU, please pass image tag as `--set image.tag=5.0-20.08-devel-a100` to the above command 
 
-Once the helm chart is deployed, Access the Application with VLC player as per below instructions. 
-For more information about Demo application, please refer https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo
+Once the helm chart is deployed, Access the Application with the VLC player as per the below instructions. 
+For more information about the demo application, please refer to https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo
 
 #### Access from WebUI
 
-Use the below WebUI URL to access video analytics demo application from browser
+Use the below WebUI URL to access the video analytic demo application from the browser:
 ```
 http://IPAddress of Node:31115/WebRTCApp/play.html?name=videoanalytics
 ```
 
 #### Access from VLC
 
-Download VLC Player from: https://www.videolan.org/vlc/ on the machine where you intend to view the video stream.
+Download VLC Player from https://www.videolan.org/vlc/ on the machine where you intend to view the video stream.
 
 View the video stream in VLC by navigating to Media > Open Network Stream > Entering the following URL
 
@@ -888,22 +900,14 @@ You will now see the video output like below with the AI model detecting objects
 `NOTE:` Video stream in VLC will change if you provide an input RTSP camera.
 
 
-### NVIDIA's GPU Optimized Software Hub
-
-NGC is NVIDIA's GPU Optimized Software Hub. NGC provides a curated set of GPU-optimized software for AI, HPC and Visualization.
-
-The content provided by NVIDIA and third party ISVs simplify building, customizing and the integration of GPU-optimized software into workflows, accelerating the time to solutions for users.
-
-Containers, pre-trained models, Helm charts for Kubernetes deployments and industry specific AI toolkits with software development kits (SDKs) are hosted on NGC. For more information about how to deploy an application that is hosted on NGC, the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information
-
 #### Uninstalling the GPU Operator 
 
-Run the below commands to uninstall the GPU Operator 
+Execute the below commands to uninstall the GPU Operator 
 
 ```
 $ helm ls
 NAME                    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 default         1               2021-02-09 20:23:28.063421701 +0000 UTC deployed        gpu-operator-1.5.2      1.5.2 
+gpu-operator-1606173805 default         1               2021-04-09 20:23:28.063421701 +0000 UTC deployed        gpu-operator-1.6.2      1.6.2 
 
 $ helm del gpu-operator-1606173805
 ```

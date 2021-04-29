@@ -2,14 +2,12 @@
 
 <h2>Introduction</h2>
 
-This document describes how to set up the EGX Stack Version 3.1 on a Jetson Xavier NX DevKit to deploy AI applications via Helm charts from NGC. 
-
-
+This document describes how to set up EGX Stack Version 3.1 on a Jetson Xavier NX DevKit to deploy AI applications via Helm charts from NGC. 
 
 The final environment will include:
 
 - JetPack 4.5
-- Kubernetes version 1.18.8
+- Kubernetes version 1.18.14
 - Helm 3.3.3
 - NVIDIA Container Runtime 1.0.1-dev
 
@@ -22,15 +20,14 @@ The final environment will include:
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Installing Helm](#Installing-Helm)
 - [Validating the Installation](#Validating-the-Installation)
-  - [Validate the EGX Stack with an application from NGC](#Validate-the-EGX-Stack-with-an-application-from-NGC)
+- [Validate EGX Stack with an application from NGC](#Validate-the-EGX-Stack-with-an-application-from-NGC)
 
 ### Release Notes
 
 - Upgraded to JetPack 4.5
 - Upgraded to Kubernetes 1.18.14
 - Upgraded to Helm 3.3.3
-- Validate the EGX Stack with an application from NGC
-- Added support for multi node deployments
+- Validate EGX Stack with an application from NGC
 
 ### Prerequisites
  
@@ -41,7 +38,7 @@ These instructions assume you have a Jetson Xavier or Xavier NX Developer Kit.
 
 ### Installing JetPack 4.5
 
-JetPack (the Jetson SDK) is an on-demand all-in-one package that bundles developer software for the NVIDIA® Jetson platform. Use the SDK Manager installer to flash your Jetson Developer Kit with the latest OS image, to install developer tools for both host PC and Developer Kit, and to install the libraries and APIs, samples, and documentation needed to jumpstart your development environment.
+JetPack (the Jetson SDK) is an on-demand all-in-one package that bundles developer software for the NVIDIA® Jetson platform. Use the SDK Manager installer to flash your Jetson Developer Kit with the latest OS image, install developer tools for both host PC and Developer Kit, and install the libraries and APIs, samples, and documentation needed to jump-start your development environment.
 
 Follow the link for instructions on how to install JetPack 4.5
 https://docs.nvidia.com/sdk-manager/install-with-sdkm-jetson/index.html
@@ -50,7 +47,7 @@ Download the SDK Manager here:
 https://developer.nvidia.com/nvidia-sdk-manager
 
 ### Jetson Xavier NX Storage
-Running EGX on Xavier NX production modules (16GB) might not provide sufficient storage capacity with fully loaded JetPack 4.5 to host your specific container images. If you require additional storage, use the Jetson Xavier NX Development Kit during the development phase as you can insert greater than 16GB via microSD cards and/or remove unused JetPack 4.5 packages. For production deployments, remove packages that are not required from fully loaded JetPack 4.5 and/or extend the storage capacity via NVMe or SSD.
+Running EGX on Xavier NX production modules (16GB) might not provide sufficient storage capacity with fully loaded JetPack 4.5 to host your specific container images. If you require additional storage, use the Jetson Xavier NX Development Kit during the development phase, as you can insert greater than 16GB via microSD cards and/or remove unused JetPack 4.5 packages. For production deployments, remove packages that are not required from fully loaded JetPack 4.5 and/or extend the storage capacity via NVMe or SSD.
 
 
 ### Update Docker Config
@@ -97,7 +94,7 @@ Default Runtime: nvidia
 
 ### Installing Kubernetes 
 
-Make sure docker is started and enabled before starting installation:
+Make sure docker is started and enabled before beginning installation:
 
 ```
 $ sudo systemctl start docker && sudo systemctl enable docker
@@ -143,7 +140,7 @@ Execute the following command:
 $ sudo kubeadm init --pod-network-cidr=10.244.0.0/16
 ```
 
-The output will show you the commands that you can execute to deploy a pod network to the cluster as well as commands to join the cluster.
+The output will show you the commands that you can execute to deploy a pod network to the cluster and commands to join the cluster.
 
 Following the instructions in the output, execute the commands as shown below:
 
@@ -153,13 +150,13 @@ $ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 $ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-With the following command you can install a pod-network add-on to the control plane node. Calico is the pod-network add-on here:
+With the following command, you can install a pod-network add-on to the control plane node. Calico is the pod-network add-on here:
 
 ```
 $ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 ```
 
-You can run below commands to ensure all pods are up and running:
+You can execute the below commands to ensure all pods are up and running:
 
 ```
 $ kubectl get pods --all-namespaces
@@ -192,7 +189,7 @@ NAME         STATUS   ROLES    AGE   VERSION
 #yournodes   Ready    master   10m   v1.18.8
 ```
 
-Since we are using a single node kubernetes cluster, the cluster will not be able to schedule pods on the control plane node by default. In order to schedule pods on the control plane node we have to remove the taint by executing the following command:
+Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
 
 ```
 $ kubectl taint nodes --all node-role.kubernetes.io/master-
@@ -213,14 +210,14 @@ $ sudo mv linux-arm64/helm /usr/local/bin/helm
 
 Refer to https://github.com/helm/helm/releases and https://helm.sh/docs/using_helm/#installing-helm  for more information.
 
-### Adding additional node to the EGX Stack
+### Adding an additional node to the EGX Stack
 
-Please make sure to install the Kubernetes packages on additional node.
+Please make sure to install the Kubernetes packages on an additional node.
 
 Prerequisites: 
 - [Installing Kubernetes](#Installing-Kubernetes)
 
-Now run the below command on master node, and then run the join commmand output on additional node to add the additional node to the EGX Stack. 
+Now execute the below command on the master node, and then execute the join command output on an additional node to add the additional node to the EGX Stack. 
 
 ```
 $ kubeadm token create --print-join-command
@@ -249,7 +246,7 @@ NAME             STATUS   ROLES    AGE   VERSION
 ### Validating the Installation
 
 
-Create a pod yaml file, add the following contents to it and save it as samples.yaml:
+Create a pod YAML file, add the following contents to it, and save it as samples.yaml:
 
 ```
 $ sudo nano cuda-samples.yaml
@@ -270,18 +267,18 @@ spec:
     args:
        - /usr/local/cuda/samples/1_Utilities/deviceQuery/deviceQuery
 ```
-Now compile the cuda examples to validate from pod: 
+Now compile the CUDA examples to validate from the pod: 
 
 ```
 $ cd /usr/local/cuda/samples/1_Utilities/deviceQuery
 $ sudo make
 $ cd ~
 ```
-Run the below command to create a sample gpu pod:
+Execute the below command to create a sample GPU pod:
 ```
 $ sudo kubectl apply -f cuda-samples.yaml
 ```
-Check if the samples pod was created:
+Check if the samples pod were created:
 ```
 $ kubectl get pods
 ```
@@ -290,12 +287,12 @@ Output:
 nvidia-l4t-base  0/1 Completed 2m
 ```
 
-Validate the sample pod logs to support cuda libraries:
+Validate the sample pod logs to support CUDA libraries:
 
 ```
 kubectl logs nvidia-l4t-base
 ```
-The EGX Stack works as expected if the get pods command shows the pod status as completed. You can also verify the successful run of the cuda-samples.yaml by verifying that the output shows Result=PASS
+EGX Stack works as expected if the get pods command shows the pod status as completed. You can also verify the successful run of the cuda-samples.yaml by confirming that the output shows Result=PASS
 
 Output:
 
@@ -343,7 +340,13 @@ Result = PASS
 ```
 ### Validate the EGX Stack with an application from NGC
 
-Another option to validate the EGX Stack is by running a demo application that is hosted on NGC. NGC is NVIDIA's hub for GPU-optimized software. The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm Chart. The Application can be used to validate the full EGX Stack and test the connectivity of the EGX Stack to remote sensors. DeepStream delivers real-time AI based video and image understanding, as well as multi-sensor processing on GPUs. For more information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo-l4t)
+Another option to validate the EGX Stack is by running a demo application hosted on NGC. 
+
+NGC is NVIDIA's GPU Optimized Software Hub. NGC provides a curated set of GPU-optimized software for AI, HPC, and Visualization. The content provided by NVIDIA and third-party ISVs simplifies building, customizing, and integrating GPU-optimized software into workflows, accelerating the time to solutions for users.
+
+Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkits with software development kits (SDKs) are hosted on NGC. For more information about how to deploy an application hosted on NGC, please visit the NGC Private Registry. Refer to this document: [NGC Registry Guide](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information.
+
+The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm Chart. The application can validate the full EGX Stack and test the connectivity of the EGX Stack to remote sensors. DeepStream delivers real-time AI-based video and image understanding, as well as multi-sensor processing on GPUs. For more information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo-l4t)
 
 There are two ways to configure the DeepStream - Intelligent Video Analytics Demo Application on your EGX DIY Stack
 
@@ -361,13 +364,13 @@ Go through the below steps to install the demo application.
 
 2. cd into the folder video-analytics-demo-l4t and update the file values.yaml
 
-3. Go to the section Cameras in the values.yaml file and add the address of your IP camera. Read the comments section on how it can be added. Single or multiple cameras can be added as shown below
+3. Go to the section Cameras in the values.yaml file and add the address of your IP camera. Please read the comments section on how it could be added. Single or multiple cameras could be added as shown below
 
 cameras:
  camera1: rtsp://XXXX
 ```
 
-Run the following command to deploy the demo application:
+Execute the following command to deploy the demo application:
 ```
 helm install video-analytics-demo-l4t --name-template iva
 ```
@@ -376,7 +379,7 @@ Once the helm chart is deployed, access the application with the VLC player. See
 
 #### Using the integrated video file (no camera)
 
-If you don’t have a camera input, please run the below commands to use the default video which is already integrated in the application. 
+If you don’t have a camera input, please execute the below commands to use the default video already integrated into the application. 
 
 ```
 $ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-l4t-0.1.0.tgz
@@ -384,12 +387,12 @@ $ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-l4t-
 $ helm install video-analytics-demo-l4t-0.1.0 --name-template iva
 ```
 
-Once the helm chart is deployed, Access the Application with VLC player as per below instructions. 
-For more information about Demo application, please refer to https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo
+Once the Helm chart is deployed, Access the Application with the VLC player as per the below instructions. 
+For more information about the demo application, please refer to https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo
 
 #### Access from VLC
 
-Download VLC Player from: https://www.videolan.org/vlc/ on the machine where you intend to view the video stream.
+Download VLC Player from https://www.videolan.org/vlc/ on the machine where you intend to view the video stream.
 
 View the video stream in VLC by navigating to Media > Open Network Stream > Entering the following URL
 
@@ -402,12 +405,3 @@ You will now see the video output like below with the AI model detecting objects
 ![Deepstream_Video](screenshots/Deepstream.png)
 
 `NOTE:` Video stream in VLC will change if you provide an input RTSP camera.
-
-
-### NVIDIA's GPU Optimized Software Hub
-
-NGC is NVIDIA's GPU Optimized Software Hub. NGC provides a curated set of GPU-optimized software for AI, HPC and Visualization.
-
-The content provided by NVIDIA and third party ISVs simplifies building, customizing, and the integration of GPU-optimized software into workflows, accelerating the time to solutions for users.
-
-Containers, pre-trained models, Helm charts for Kubernetes deployments and industry specific AI toolkits with software development kits (SDKs) are hosted on NGC. For more information about how to deploy an application that is hosted on NGC, please visit the NGC Private Registry. Refer to this document: [NGC Registry Guide](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information.

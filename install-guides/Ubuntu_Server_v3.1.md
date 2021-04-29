@@ -26,7 +26,7 @@ This document describes how to set up EGX Stack v3.1 on a single or multi-node K
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Installing Helm](#Installing-Helm)
 - [Adding additional node to EGX Stack](#Adding-additional-node-to-EGX-Stack)
-- [Installing the GPU Operator](#Installing-the-GPU-Operator)
+- [Installing GPU Operator](#Installing-GPU-Operator)
 - [Installing Mellanox MOFED on EGX Stack](#Installing-Mellanox-MOFED-on-EGX-Stack)
 - [Installing nv_peer_mem on EGX Stack](#Installing-nv_peer_mem-on-EGX-Stack)
 - [Validating the Mellanox on EGX Stack](#Validating-the-Mellanox-on-EGX-Stack)
@@ -828,7 +828,7 @@ Another option to validate EGX Stack is by running a demo application hosted on 
 
 NGC is NVIDIA's GPU Optimized Software Hub. NGC provides a curated set of GPU-optimized software for AI, HPC, and Visualization. The content provided by NVIDIA and third-party ISVs simplify building, customizing, and integrating GPU-optimized software into workflows, accelerating the time to solutions for users.
 
-Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkit with software development kits (SDKs) hosted on NGC. For more information about how to deploy an application that hosted on NGC, the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/erikbohnhorst/EGX-DIY-Node-Stack/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information
+Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkit with software development kits (SDKs) hosted on NGC. For more information about how to deploy an application that hosted on NGC, the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information
 
 The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm Chart. The application can validate the full EGX Stack and test the connectivity of the EGX Stack to remote sensors. DeepStream delivers real-time AI-based video and image understanding and multi-sensor processing on GPUs. For more information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo)
 

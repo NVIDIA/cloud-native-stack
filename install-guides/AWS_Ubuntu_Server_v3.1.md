@@ -56,7 +56,7 @@ Step 1: Select the Ubuntu Server 20.04 LTS image with 64-bit (x86), available in
 
 Step 2: Choose a G4 instance and select any G4 instance type. (e.g., g4dn.xlarge, g4dn.2xlarge etc.). For additional information, please refer to [AWS G4 Instances](https://aws.amazon.com/blogs/aws/now-available-ec2-instances-g4-with-nvidia-t4-tensor-core-gpus/)
 
-![AWS_Choose_Instance_Type](screenshots/AWS_Choose_Instance_type1.png)
+![AWS_Choose_Instance_Type](screenshots/AWS_Choose_Instance_type.png)
 
 Step 3: In this step, you will provide additional instance configuration details, as shown below.
 

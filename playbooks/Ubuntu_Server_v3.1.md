@@ -1,4 +1,4 @@
-<h1> EGX Stack Ubuntu Server (x86-64) v3.1 </h1>
+<h1> EGX Stack Ubuntu Server (x86-64) v3.0 </h1>
 
 This page describes the steps required to use Ansible to install the EGX Stack.
 
@@ -8,9 +8,9 @@ The final EGX Stack will include:
 - Docker CE 19.03.13
 - Kubernetes version 1.18.14
 - Helm 3.3.3
-- NVIDIA GPU Operator 1.6.0
+- NVIDIA GPU Operator 1.6.2
   - NV containerized driver: 460.32.03
-  - NV container toolkit: 1.4.5
+  - NV container toolkit: 1.4.7
   - NV K8S device plug-in: 0.8.2
   - Data Center GPU Manager (DCGM): 2.2.0
   - Node Feature Discovery: 0.6.0
@@ -97,7 +97,6 @@ $ sudo nano hosts
 Update EGX Stack Version as per below, currently supported versions are
 
 - [1.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.2.md)
-- [1.3](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.3.md)
 - [2.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v2.0.md)
 - [3.1](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v3.1.md)
 

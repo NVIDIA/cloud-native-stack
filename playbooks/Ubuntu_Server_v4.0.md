@@ -1,23 +1,24 @@
-<h1> EGX Stack Ubuntu Server (x86-64) v1.3 </h1>
+<h1> EGX Stack Ubuntu Server (x86-64) v3.0 </h1>
 
 This page describes the steps required to use Ansible to install the EGX Stack.
 
 The final EGX Stack will include:
 
-- Ubuntu 20.04.1 LTS
-- Docker CE 19.03.12
-- Kubernetes version 1.15.3
-- Helm 3.3.3
-- NVIDIA GPU Operator 1.3.0
-  - NV containerized driver: 450.80.02
-  - NV container toolkit: 1.3.0
-  - NV K8S device plug-in: 0.7.0
-  - Data Center GPU Manager (DCGM): 2.1.0
+- Ubuntu 20.04.2 LTS
+- Containerd 1.4.6
+- Kubernetes version 1.21.1
+- Helm 3.5.4
+- NVIDIA GPU Operator 1.7.0
+  - NV containerized driver: 460.73.01
+  - NV container toolkit: 1.5.0
+  - NV K8S device plug-in: 0.9.0
+  - Data Center GPU Manager (DCGM): 2.1.8-2.4.0-rc.2
   - Node Feature Discovery: 0.6.0
+  - GPU Feature Discovery: 0.4.1
 
 ### Release Notes
 
-- Added section: "Installing the Ubuntu Operating System"
+- Added support for Multi Node Kubernetes Cluster
 
 ### The following Ansible Playbooks are available
 
@@ -38,9 +39,9 @@ To determine if your system is NGC-Ready for Edge Servers, please review the lis
 Please note that the EGX Stack is only validated on Intel based NGC-Ready systems with the default kernel (not HWE). Using an AMD EPYC 2nd generation (ROME) NGC-Ready server is not validated yet and will require the HWE kernel and manually disabling nouveau.
 
 ### Installing the Ubuntu Operating System
-These instructions require having Ubuntu Server LTS 20.04.1 on your NGC-Ready system. The Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/20.04.1/release/.
+These instructions require having Ubuntu Server LTS 20.04.2 on your NGC-Ready system. The Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/20.04.2/release/.
 
-Disabling nouveau (not validated and only required with Ubuntu 20.04.1 LTS HWE Kernel): 
+Disabling nouveau (not validated and only required with Ubuntu 20.04.2 LTS HWE Kernel): 
 
 ```
 $ sudo nano /etc/modprobe.d/blacklist-nouveau.conf
@@ -90,19 +91,20 @@ $ sudo nano hosts
 10.110.16.179 ansible_ssh_user=nvidia ansible_ssh_pass=nvidiapass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
+
 ## Available EGX Stack Versions
 
 Update EGX Stack Version as per below, currently supported versions are
 
 - [1.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.2.md)
-- [1.3](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.3.md)
 - [2.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v2.0.md)
-- [3.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v3.0.md)
+- [3.1](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v3.1.md)
+- [4.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v4.0.md)
 
 ```
 sudo nano egx_version.yaml
 
-egx_version: 1.3
+egx_version: 4.0
 
 ```
 

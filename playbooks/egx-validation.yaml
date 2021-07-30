@@ -46,7 +46,7 @@
       ignore_errors: yes
 
     - name: Check GPU Operator Nvidia DGCM Exporter Versions
-      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'k8s/dcgm-exporter'  | awk -F':' '{print $2}' | awk -F'-' '{print $2}' | head -n1 
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'k8s/dcgm-exporter'  |  awk -F':' '{print $2}'  | sed 's/-ubuntu.*//g' 
       register: dgcm
       ignore_errors: yes
 
@@ -95,7 +95,7 @@
       ignore_errors: yes
 
     - name: Validating the nvidia-smi on Kubernetes
-      shell: "timeout 60 kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.2.1-base --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
+      shell: "timeout 60 kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.2.2-base --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
       register: smi
       ignore_errors: yes
 

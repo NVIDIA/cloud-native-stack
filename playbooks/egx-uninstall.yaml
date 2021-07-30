@@ -1,8 +1,6 @@
 - hosts: all
   gather_facts: yes
   become: true
-  vars_files:
-    - egx_version.yaml
   tasks:
 
    - name: Reset Kubernetes component
@@ -13,7 +11,7 @@
      when: " ansible_distribution == 'Ubuntu' "
      ignore_errors: yes
      apt:
-       name: ['kubectl', 'kubeadm','kubelet', 'docker-ce*']
+       name: ['kubectl', 'kubeadm','kubelet', 'docker-ce*', "containerd"]
        state: absent
        purge: yes
        force: yes
@@ -34,10 +32,15 @@
      with_items:
         - /var/lib/etcd
         - /etc/kubernetes
-        - /usr/bin/helm
+        - /usr/local/bin/helm
         - /usr/local/cuda*
         - /var/lib/docker
         - /var/cuda*
         - /etc/docker
         - /var/log/containers
+        - /etc/apt/sources.list.d/devel*
+        - /etc/sysctl.d/99-kubernetes-cri.conf 
+        - /etc/modules-load.d/containerd.conf
+        - /etc/apt/trusted.gpg.d/libcontainers* 
+        - /etc/default/kubelet
 

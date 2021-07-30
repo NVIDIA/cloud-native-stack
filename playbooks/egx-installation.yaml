@@ -19,9 +19,14 @@
      file:
        path: "/var/lib/etcd"
        state: absent
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd
+     when: "'running' not in k8sup.stdout and egx_version == 4.0"
+     command: kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock
+     become: true
+     register: kubeadm
 
    - name: Initialize the Kubernetes cluster using kubeadm
-     when: "'running' not in k8sup.stdout"
+     when: "'running' not in k8sup.stdout and egx_version == 3.1"
      command: kubeadm init --pod-network-cidr=192.168.0.0/16
      become: true
      register: kubeadm
@@ -46,8 +51,8 @@
        dest:  $HOME/.kube/config
        mode: '0600'
 
-   - name: Install networking plugin to kubernetes cluster on EGX DIY Stack 3.1
-     when: "'running' not in k8sup.stdout and egx_version == 3.1"
+   - name: Install networking plugin to kubernetes cluster on EGX DIY Stack 3.1 or 4.0
+     when: "egx_version == 3.1 or  egx_version == 4.0 and 'running' not in k8sup.stdout"
      command: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 
    - name: Install networking plugin to kubernetes cluster on EGX DIY Stack 2.0
@@ -170,18 +175,20 @@
        - rm -rf helm-v3.3.3-linux-amd64.tar.gz linux-amd64
      when: "egx_version == 1.3 or egx_version == 3.1 and helm_exists.rc > 0"
 
-   - name: Installing the GPU Operator on EGX DIY Stack 1.3
-     when: "egx_version == 1.3 and 'running' in k8sup.stdout"
+   - name: "Install Helm on EGX DIY Stack 4.0"
+     become: true
      command: "{{ item }}"
      args:
        warn: false
      with_items:
-        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
-        - helm repo update
-        - helm install --version 1.3.0 --devel nvidia/gpu-operator --wait --generate-name
+       - curl -O https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz
+       - tar -xvzf helm-v3.5.4-linux-amd64.tar.gz
+       - cp linux-amd64/helm /usr/local/bin/
+       - rm -rf helm-v3.5.4-linux-amd64.tar.gz linux-amd64
+     when: "egx_version == 4.0 and helm_exists.rc > 0"
 
-   - name: Installing the GPU Operator on EGX DIY Stack 3.1
-     when: "egx_version == 3.1 and 'running' in k8sup.stdout"
+   - name: Installing the GPU Operator on EGX DIY Stack 3.0
+     when: "egx_version == 1.3 or egx_version == 3.1 and 'running' in k8sup.stdout"
      command: "{{ item }}"
      args:
        warn: false
@@ -189,3 +196,13 @@
         - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
         - helm repo update
         - helm install --version 1.6.2 --devel nvidia/gpu-operator --wait --generate-name
+
+   - name: Installing the GPU Operator on EGX DIY Stack 4.0
+     when: "egx_version == 4.0 and 'running' in k8sup.stdout"
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.7.0 --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd --wait --generate-name 

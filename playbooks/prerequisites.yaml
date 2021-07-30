@@ -40,6 +40,13 @@
        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.18.14-00', 'kubeadm=1.18.14-00', 'kubectl=1.18.14-00']
        state: present
 
+   - name: Install kubernetes components for Ubuntu on EGX Stack 4.0
+     become: true
+     when: "ansible_distribution == 'Ubuntu' and egx_version == 4.0"
+     apt:
+       name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.21.1-00', 'kubeadm=1.21.1-00', 'kubectl=1.21.1-00']
+       state: present
+
    - name: Hold the installed Packages
      become: true
      when: "ansible_distribution == 'Ubuntu'"
@@ -198,6 +205,44 @@
      when: "'running' not in k8sup.stdout"
      command: swapoff -a
 
+   - name: Setup Containerd for Ubuntu 20.04
+     when: "ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout and egx_version == 4.0"
+     become: true
+     ignore_errors: true
+     args:
+       warn: false
+     shell: " {{ item }}"
+     with_items:
+       - touch /etc/modules-load.d/containerd.conf
+       - chmod 666 /etc/modules-load.d/containerd.conf
+       - echo -e "overlay" >> /etc/modules-load.d/containerd.conf
+       - echo -e "br_netfilter" >> /etc/modules-load.d/containerd.conf
+       - modprobe overlay
+       - modprobe br_netfilter
+       - sysctl -w net.bridge.bridge-nf-call-ip6tables=1
+       - sysctl -w net.bridge.bridge-nf-call-iptables=1
+       - sysctl -w net.ipv4.ip_forward=1
+       - sysctl --system
+
+   - name: Install Containerd for Ubuntu 20.04
+     become: true
+     ignore_errors: true
+     args:
+       warn: false
+     when: "ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout and egx_version == 4.0"
+     shell: " {{ item }}"
+     with_items:
+       - apt-get update && sudo apt-get install -y libseccomp2
+       - wget https://github.com/containerd/containerd/releases/download/v1.4.6/cri-containerd-cni-1.4.6-linux-amd64.tar.gz
+       - sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.4.6-linux-amd64.tar.gz
+       - rm -rf cri-containerd-cni-1.4.6-linux-amd64.tar.gz
+       - mkdir -p /etc/containerd
+       - containerd config default | sudo tee /etc/containerd/config.toml
+       - touch /etc/default/kubelet
+       - echo 'KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"' | sudo tee /etc/default/kubelet
+       - systemctl daemon-reload
+       - systemctl restart containerd
+      
    - name: Starting and enabling the required services
      become: true
      when: "'running' not in k8sup.stdout"
@@ -209,3 +254,6 @@
      with_items:
       - docker
       - kubelet
+      - containerd
+
+   

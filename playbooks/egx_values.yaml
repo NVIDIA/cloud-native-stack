@@ -1,5 +1,5 @@
 egx_version: 4.1
-enable_network_operator: yes
+enable_network_operator: no
 ## This is most likely to enable MIG with GPU Operator 
 enable_mig: no
 ## This is most likely to MIG Profile for GPU Operator 

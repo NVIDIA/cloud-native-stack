@@ -114,8 +114,28 @@ Update EGX Stack Version as per below, currently supported versions are
 
 ```
 sudo nano egx_values.yaml
-
+```
+```
 egx_version: 4.1
+enable_network_operator: yes
+## This is most likely to enable MIG with GPU Operator 
+enable_mig: no
+## This is most likely to MIG Profile for GPU Operator 
+mig_profile: all-1g.5gb
+## This is most likely to enable vGPU for GPU Operator 
+enable_vgpu: no
+## This is most likely vGPU License Server
+vgpu_license_server: ""
+## This is most likely GPU Operator Driver Registry
+gpu_operator_driver_registry: "nvcr.io/nvstaging/cnt-ea"
+## This is most likely GPU Operator Driver version
+gpu_operator_driver_version: ""
+## This should remain as $oauthtoken if using an NGC API key
+gpu_operator_registry_username: "$oauthtoken"
+## This is most likely an NGC API key
+gpu_operator_registry_password: ""
+## This is most likely an NGC email
+gpu_operator_registry_email: ""
 
 ```
 

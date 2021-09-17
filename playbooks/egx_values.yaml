@@ -9,7 +9,7 @@ enable_vgpu: no
 ## This is most likely vGPU License Server
 vgpu_license_server: ""
 ## This is most likely GPU Operator Driver Registry
-gpu_operator_driver_registry: "nvcr.io/nvstaging/cnt-ea"
+gpu_operator_driver_registry: "nvcr.io/nvidia"
 ## This is most likely GPU Operator Driver version
 gpu_operator_driver_version: ""
 ## This should remain as $oauthtoken if using an NGC API key

@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -a
 if [ -z $1 ]; then
 	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      install     Install EGX DIY Stack\n      validate    Validate EGX DIY Stack\n      uninstall   Uninstall EGX DIY Stack"
 	echo
@@ -41,7 +41,7 @@ else
 fi
 if [ $1 == "install" ]; then
 	echo
-	echo EGX DIY Stack Version $(cat egx_version.yaml | awk -F':' '{print $2}')
+	echo EGX DIY Stack Version $(cat egx_values.yaml | awk -F':' '{print $2}' | head -n2)
 	echo
 	echo "Installing EGX Stack"
 	ansible-playbook -i hosts prerequisites.yaml	

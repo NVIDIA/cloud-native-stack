@@ -9,7 +9,8 @@
 - [Ubuntu(x86-64) v3.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v3.0.md)
 - [Ubuntu(x86-64) v3.1](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v3.1.md)
 - [Ubuntu(x86-64) v4.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v4.0.md)
-- 
+- [Ubuntu(x86-64) v4.1](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v4.1.md)
+
 <h2> Ansible Playbook Descriptions </h2>
 
 - [Install EGX Platform](#Install-EGX-Platform)

@@ -1,12 +1,12 @@
 - hosts: master
   gather_facts: yes
   vars_files:
-    - egx_version.yaml
+    - egx_values.yaml
   tasks:
     - name: Validate kubernetes cluster is up
       shell:  kubectl cluster-info | grep master
       register: cluster
-      failed_when: cluster.rc == 1
+      failed_when: false
       ignore_errors: yes
 
     - name: Check Operating System Version
@@ -16,8 +16,16 @@
 
     - name: Check Docker Version
       become: true
+      when: egx_version == 3.1
       shell: docker version | grep -i -A2 'Server' | grep Version  | awk '{print $2}'
       register: dockerversion
+      ignore_errors: yes
+
+    - name: Check Containerd Version
+      become: true
+      when: egx_version == 4.0 or egx_version == 4.1
+      shell: containerd -v | awk '{print $3}'
+      register: containerd_version
       ignore_errors: yes
 
     - name: Check Kubernetes Version
@@ -65,6 +73,48 @@
       register: gpuoperator
       ignore_errors: yes
 
+    - name: Check Mellanox Network Operator version
+      when: "enable_network_operator == true"
+      shell: kubectl get pods -n network-operator -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'network-operator'  | awk -F':' '{print $2}' | head -n1
+      register: networkoperator
+      ignore_errors: yes
+
+    - name: Check Mellanox MOFED Driver Version
+      when: "enable_network_operator == true"
+      shell: kubectl get pods -n nvidia-network-operator-resources -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep mellanox/mofed | awk -F'mofed-' '{print $3}' | awk -F":" '{print $1}'
+      register: mofed_version
+      ignore_errors: yes
+
+    - name: Check RDMA Shared Device Plugin Version
+      when: "enable_network_operator == true"
+      shell: kubectl get pods -n nvidia-network-operator-resources -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep rdma-shared | awk -F':' '{print $2}'
+      register: rdma_version
+      ignore_errors: yes
+
+    - name: Check SRIOV Device Plugin Version
+      when: "enable_network_operator == true"
+      shell: kubectl get pods -n nvidia-network-operator-resources -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep sriov-device | awk -F':' '{print $2}'
+      register: sriov_version
+      ignore_errors: yes
+
+    - name: Check Container Networking Plugins Version
+      when: "enable_network_operator == true"
+      shell: kubectl get pods -n nvidia-network-operator-resources -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep containernetworking-plugins | awk -F':' '{print $2}'
+      register: cni_version
+      ignore_errors: yes
+
+    - name: Check Multus Version
+      when: "enable_network_operator == true"
+      shell: kubectl get pods -n nvidia-network-operator-resources -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep multus | awk -F':' '{print $2}'
+      register: multus_version
+      ignore_errors: yes
+
+    - name: Check Whereabouts Version
+      when: "enable_network_operator == true"
+      shell: kubectl get pods -n nvidia-network-operator-resources -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep whereabouts | awk -F':' '{print $2}'
+      register: whereabouts_version
+      ignore_errors: yes
+
     - name: check master node is up and running
       shell: kubectl get nodes | grep -i ready
       register: nodeready
@@ -95,7 +145,7 @@
       ignore_errors: yes
 
     - name: Validating the nvidia-smi on Kubernetes
-      shell: "timeout 60 kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.2.2-base --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
+      shell: "timeout 60 kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.4.0-base --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
       register: smi
       ignore_errors: yes
 
@@ -117,9 +167,16 @@
         msg: "Ubuntu Operating System version {{ osversion.stdout }}"
 
     - name: Report Docker Version
+      when: egx_version == 3.1
       ignore_errors: yes
       debug:
         msg: "Docker Version {{ dockerversion.stdout }}"
+
+    - name: Report Containerd Version
+      when: egx_version == 4.0 or egx_version == 4.1
+      ignore_errors: yes
+      debug:
+        msg: " Containerd Version {{ containerd_version.stdout }}"
 
     - name: Report Kubernetes Version
       ignore_errors: yes
@@ -179,6 +236,49 @@
       ignore_errors: yes
       debug:
         msg: "{{ cuda.stdout_lines }}"
+
+    - name: Report Network Operator version
+      when: "enable_network_operator == true"
+      ignore_errors: yes
+      debug:
+        msg: "Network Operator version {{ networkoperator.stdout }}"
+
+    - name: Report Mellanox MOFED Driver Version
+      when: "enable_network_operator == true"
+      ignore_errors: yes
+      debug:
+        msg: "Mellanox MOFED Driver version {{ mofed_version.stdout }}"
+
+    - name: Report RDMA Shared Device Plugin Version
+      when: "enable_network_operator == true"
+      ignore_errors: yes
+      debug:
+        msg: "RDMA Shared Device Plugin version {{ rdma_version.stdout }}"
+
+    - name: Report SRIOV Device Plugin Version
+      when: "enable_network_operator == true"
+      ignore_errors: yes
+      debug:
+        msg: "SRIOV Device Plugin version {{ sriov_version.stdout }}"
+
+    - name: Report Container Networking Plugin Version
+      when: "enable_network_operator == true"
+      ignore_errors: yes
+      debug:
+        msg: "Container Networking Plugin version {{ cni_version.stdout }}"
+
+
+    - name: Report Multus Version
+      when: "enable_network_operator == true"
+      ignore_errors: yes
+      debug:
+        msg: "Multus version {{ multus_version.stdout }}"
+
+    - name: Report Whereabouts Version
+      when: "enable_network_operator == true"
+      ignore_errors: yes
+      debug:
+        msg: "Container Whereabouts version {{ whereabouts_version.stdout }}"
 
     - name: Status Check
       shell: echo "All tasks should be changed or ok, if it's failed or ignoring means that validation task failed."

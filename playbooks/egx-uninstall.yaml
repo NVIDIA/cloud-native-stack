@@ -1,17 +1,34 @@
 - hosts: all
   gather_facts: yes
   become: true
+  vars_files:
+    - egx_values.yaml
   tasks:
 
-   - name: Reset Kubernetes component
-     shell: "kubeadm reset --force"
-     ignore_errors: yes
+   - name: Uninstall the GPU Operator with MIG
+     shell: kubectl label nodes --all nvidia.com/mig.config=all-disabled --overwrite; sleep 60
+     when: "egx_version == 4.1 and enable_mig == true"
+     failed_when: false
 
-   - name: Remove Docker and Kubernetes packages for Ubuntu 
-     when: " ansible_distribution == 'Ubuntu' "
+   - name: Reset Kubernetes component
+     shell: "timeout 45 kubeadm reset --force"
+     failed_when: false
+     no_log: True
+
+   - name: Remove Conatinerd and Kubernetes packages for Ubuntu 
+     when: " egx_version == 4.1 or egx_version == 4.0 and ansible_distribution == 'Ubuntu'"
      ignore_errors: yes
      apt:
-       name: ['kubectl', 'kubeadm','kubelet', 'docker-ce*', "containerd"]
+       name: ['kubectl', 'kubeadm','kubelet', 'containerd']
+       state: absent
+       purge: yes
+       force: yes
+
+   - name: Remove Docker and Kubernetes packages for Ubuntu
+     when: " egx_version != 4.1 and ansible_distribution == 'Ubuntu'"
+     ignore_errors: yes
+     apt:
+       name: ['kubectl', 'kubeadm','kubelet', 'docker-ce*']
        state: absent
        purge: yes
        force: yes
@@ -35,12 +52,20 @@
         - /usr/local/bin/helm
         - /usr/local/cuda*
         - /var/lib/docker
+        - /var/lib/containerd
+        - /var/lib/crio
+        - /run/containerd
+        - /etc/containerd
+        - /etc/crio
+        - /usr/local/bin/crio
         - /var/cuda*
         - /etc/docker
         - /var/log/containers
         - /etc/apt/sources.list.d/devel*
         - /etc/sysctl.d/99-kubernetes-cri.conf 
         - /etc/modules-load.d/containerd.conf
+        - /etc/modules-load.d/crio.conf
         - /etc/apt/trusted.gpg.d/libcontainers* 
         - /etc/default/kubelet
+        - /etc/cni/net.d
 

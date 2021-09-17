@@ -1,20 +1,30 @@
-<h1> EGX Stack Ubuntu Server (x86-64) v4.0 </h1>
+<h1> EGX Stack Ubuntu Server (x86-64) v4.1 </h1>
 
 This page describes the steps required to use Ansible to install the EGX Stack.
 
 The final EGX Stack will include:
 
 - Ubuntu 20.04.2 LTS
-- Containerd 1.4.6
+- Containerd 1.5.0
 - Kubernetes version 1.21.1
-- Helm 3.5.4
-- NVIDIA GPU Operator 1.7.0
-  - NV containerized driver: 460.73.01
-  - NV container toolkit: 1.5.0
+- Helm 3.6.2
+- NVIDIA GPU Operator 1.8.0
+  - NV containerized driver: 470.57.02
+  - NV container toolkit: 1.6.0
   - NV K8S device plug-in: 0.9.0
-  - Data Center GPU Manager (DCGM): 2.1.8-2.4.0-rc.2
-  - Node Feature Discovery: 0.6.0
+  - Data Center GPU Manager (DCGM): 2.2.9-2.4.0
+  - Node Feature Discovery: 0.8.2
   - GPU Feature Discovery: 0.4.1
+  - K8s MIG Manager: 0.1.2
+  - NVIDIA DGCM: 2.2.3
+- NVIDIA Network Operator 1.0.0
+  - Mellanox MOFED Driver 5.4-1.0.3.0
+  - Mellanox NV Peer Memory Driver 1.1-0
+  - RDMA Shared Device Plugin 1.1.0
+  - SRIOV Device Plugin 3.3
+  - Container Networking Plugins 0.8.7
+  - Multus 3.6
+  - Whereabouts 0.3
 
 ### Release Notes
 
@@ -100,11 +110,12 @@ Update EGX Stack Version as per below, currently supported versions are
 - [2.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v2.0.md)
 - [3.1](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v3.1.md)
 - [4.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v4.0.md)
+- [4.1](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v4.0.md)
 
 ```
-sudo nano egx_version.yaml
+sudo nano egx_values.yaml
 
-egx_version: 4.0
+egx_version: 4.1
 
 ```
 

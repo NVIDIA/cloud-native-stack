@@ -1,0 +1,11 @@
+deployCR: true
+ofedDriver:
+  deploy: true
+nvPeerDriver:
+  deploy: true
+rdmaSharedDevicePlugin:
+  deploy: true
+  resources:
+    - name: rdma_shared_device_a
+      vendors: [15b3]
+      devices: [ ens160f0,ens192]

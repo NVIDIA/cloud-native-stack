@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rdma-test-pod-1
+  #namespace: nvidia-network-operator-resources
+  annotations:
+    k8s.v1.cni.cncf.io/networks: rdma-net-ipam
+    # If a network with static IPAM is used replace network annotation with the below.
+    #k8s.v1.cni.cncf.io/networks: '[
+    #  { "name": "rmda-net",
+    #    "ips": ["192.168.111.101/24"],
+    #    "gateway": ["192.168.111.1"]
+    #  }
+    #]'
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - image: mellanox/rping-test
+    name: rdma-test-ctr
+    securityContext:
+      capabilities:
+        add: [ "IPC_LOCK" ]
+    resources:
+      limits:
+        rdma/rdma_shared_device_a: 1
+      requests:
+        rdma/rdma_shared_device_a: 1
+    command:
+    - sh
+    - -c
+    - |
+      ls -l /dev/infiniband /sys/class/net
+      sleep infinity
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rdma-test-pod-2
+  #namespace: nvidia-network-operator-resources
+  annotations:
+    k8s.v1.cni.cncf.io/networks: rdma-net-ipam
+    # If a network with static IPAM is used replace network annotation with the below.
+    #k8s.v1.cni.cncf.io/networks: '[
+    #  { "name": "rmda-net",
+    #    "ips": ["192.168.111.101/24"],
+    #    "gateway": ["192.168.111.1"]
+    #  }
+    #]'
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - image: mellanox/rping-test
+    name: rdma-test-ctr
+    securityContext:
+      capabilities:
+        add: [ "IPC_LOCK" ]
+    resources:
+      limits:
+        rdma/rdma_shared_device_a: 1
+      requests:
+        rdma/rdma_shared_device_a: 1
+    command:
+    - sh
+    - -c
+    - |
+      ls -l /dev/infiniband /sys/class/net
+      sleep infinity

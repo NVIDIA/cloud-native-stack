@@ -234,57 +234,123 @@
      command: swapoff -a
 
    - name: Setup Containerd for Ubuntu 20.04
-     when: "egx_version == 4.0 or egx_version == 4.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
-     become: true
-     ignore_errors: true
-     args:
-       warn: false
-     shell: " {{ item }}"
-     with_items:
-       - touch /etc/modules-load.d/containerd.conf
-       - chmod 666 /etc/modules-load.d/containerd.conf
-       - echo -e "overlay" >> /etc/modules-load.d/containerd.conf
-       - echo -e "br_netfilter" >> /etc/modules-load.d/containerd.conf
-       - modprobe overlay
-       - modprobe br_netfilter
-       - sysctl -w net.bridge.bridge-nf-call-ip6tables=1
-       - sysctl -w net.bridge.bridge-nf-call-iptables=1
-       - sysctl -w net.ipv4.ip_forward=1
-       - sysctl --system
-       - apt-get update && sudo apt-get install -y libseccomp2
-       - mkdir -p /etc/containerd
-       - touch /etc/default/kubelet
-       - echo 'KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"' | sudo tee /etc/default/kubelet
+      become: true
+      block:
+        - name: Create containerd.conf
+          lineinfile:
+            create: yes
+            mode: 666
+            path: /etc/modules-load.d/containerd.conf
+            line: "{{ item }}"
+          loop:
+            - "overlay"
+            - "br_netfilter"
 
-   - name: Install Containerd for EGX DIY Stack 4.0
-     become: true
-     ignore_errors: true
-     args:
-       warn: false
-     when: "egx_version == 4.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
-     shell: " {{ item }}"
-     with_items:
-       - wget https://github.com/containerd/containerd/releases/download/v1.4.6/cri-containerd-cni-1.4.6-linux-amd64.tar.gz
-       - sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.4.6-linux-amd64.tar.gz
-       - rm -rf cri-containerd-cni-1.4.6-linux-amd64.tar.gz
-       - containerd config default | sudo tee /etc/containerd/config.toml
-       - systemctl daemon-reload
-       - systemctl restart containerd
-   
-   - name: Install Containerd for EGX DIY Stack 4.1
-     become: true
-     ignore_errors: true
-     args:
-       warn: false
-     when: "egx_version == 4.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
-     shell: " {{ item }}"
-     with_items:
-       - wget https://github.com/containerd/containerd/releases/download/v1.5.0/cri-containerd-cni-1.5.0-linux-amd64.tar.gz
-       - sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.5.0-linux-amd64.tar.gz
-       - rm -rf cri-containerd-cni-1.5.0-linux-amd64.tar.gz
-       - containerd config default | sudo tee /etc/containerd/config.toml
-       - systemctl daemon-reload
-       - systemctl restart containerd
+        - name: Modprobe for overlay and br_netfilter
+          modprobe:
+            name: "{{ item }}"
+            state: present
+          ignore_errors: true
+          loop:
+          - "overlay"
+          - "br_netfilter"
+
+        - name: Add sysctl parameters to /etc/sysctl.conf
+          sysctl:
+            name: "{{ item.name }}"
+            value: "{{ item.value }}"
+            state: present
+            reload: "{{ item.reload }}"
+          loop:
+            - {name: "net.bridge.bridge-nf-call-ip6tables", value: "1", reload: no}
+            - {name: "net.bridge.bridge-nf-call-iptables", value: "1", reload: no}
+            - {name: "net.ipv4.ip_forward", value: "1", reload: yes}
+        
+        - name: Install libseccomp2
+          apt:
+            name: libseccomp2
+            state: present
+            update_cache: yes
+        
+        - name: Create /etc/containerd
+          file:
+            path: /etc/containerd
+            state: directory
+
+        - name: Create /etc/default/kubelet
+          file:
+            content: 'KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"'
+            dest: /etc/default/kubelet
+            state: touch
+      when: "egx_version == 4.0 or egx_version == 4.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+
+    - name: Install Containerd for EGX DIY Stack 4.0
+      become: true
+      block:
+        - name: Download cri-containerd-cni
+          get_url:
+            url: https://github.com/containerd/containerd/releases/download/v1.4.6/cri-containerd-cni-1.4.6-linux-amd64.tar.gz
+            dest: /tmp/cri-containerd-cni-1.4.6-linux-amd64.tar.gz
+            mode: 0664
+
+        - name: Untar cri-containerd-cni
+          unarchive:
+            src: /tmp/cri-containerd-cni-1.4.6-linux-amd64.tar.gz
+            dest: /
+            remote_src: yes
+            extra_opts:
+              - --no-overwrite-dir
+        
+        - name: Get defaults from containerd
+          command: containerd config default
+          changed_when: false
+          register: containerd_config_default
+
+        - name: Write defaults to config.toml
+          copy:
+            dest: /etc/containerd/config.toml
+            content: "{{ containerd_config_default.stdout }}"
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "egx_version == 4.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+    
+    - name: Install Containerd for EGX DIY Stack 4.1
+      become: true
+      block:
+        - name: Download cri-containerd-cni
+          get_url:
+            url: https://github.com/containerd/containerd/releases/download/v1.5.0/cri-containerd-cni-1.5.0-linux-amd64.tar.gz
+            dest: /tmp/cri-containerd-cni-1.5.0-linux-amd64.tar.gz
+            mode: 0664
+
+        - name: Untar cri-containerd-cni
+          unarchive:
+            src: /tmp/cri-containerd-cni-1.5.0-linux-amd64.tar.gz
+            dest: /
+            remote_src: yes
+            extra_opts:
+              - --no-overwrite-dir
+        
+        - name: Get defaults from containerd
+          command: containerd config default
+          changed_when: false
+          register: containerd_config_default
+
+        - name: Write defaults to config.toml
+          copy:
+            dest: /etc/containerd/config.toml
+            content: "{{ containerd_config_default.stdout }}"
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "egx_version == 4.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
 
    - name: Starting and enabling the required services
      become: true

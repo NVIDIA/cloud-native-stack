@@ -144,7 +144,7 @@ $ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 $ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-With the following command, you can install a pod-network add-on to the control plane node. Calico is the pod-network add-on here:
+With the following command, you can install a pod-network add-on to the control plane node. Flannel is the pod-network add-on here:
 
 ```
 $ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml

@@ -182,13 +182,13 @@ $ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key a
 $ sudo mkdir -p  /etc/apt/sources.list.d/
 ```
 
-Create Kubernetes.list:
+Create `kubernetes.list`:
 
 ```
 $ sudo nano /etc/apt/sources.list.d/kubernetes.list
 ```
 
-Add the following lines in Kubernetes. List and save the file:
+Add the following lines in `kubernetes.list` and save the file:
 
 ```
 deb https://apt.kubernetes.io/ kubernetes-xenial main

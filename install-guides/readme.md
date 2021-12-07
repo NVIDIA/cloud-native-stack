@@ -10,6 +10,8 @@ The following EGX Platform Install Guides are available.
 - [Ubuntu Server v3.1](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v3.1.md)
 - [Ubuntu Server v4.0](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v4.0.md)
 - [Ubuntu Server v4.1](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v4.1.md)
+- [Ubuntu Server v4.2](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v4.2.md)
+
 
 ### Jetson Systems
 - [Jetson Xavier NX v2.0](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Jetson_Xavier_NX_v2.0.md)
@@ -21,3 +23,4 @@ The following EGX Platform Install Guides are available.
 - [AWS - Ubuntu Server v3.1](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/AWS_Ubuntu_Server_v3.1.md)
 - [AWS - Ubuntu Server v4.0](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/AWS_Ubuntu_Server_v4.0.md)
 - [AWS - Ubuntu Server v4.1](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/AWS_Ubuntu_Server_v4.1.md)
+- [AWS - Ubuntu Server v4.2](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/AWS_Ubuntu_Server_v4.2.md)

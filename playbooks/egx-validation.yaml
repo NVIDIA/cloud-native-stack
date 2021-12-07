@@ -23,7 +23,7 @@
 
     - name: Check Containerd Version
       become: true
-      when: egx_version == 4.0 or egx_version == 4.1
+      when: egx_version == 4.0 or egx_version == 4.1 or egx_version == 4.2
       shell: containerd -v | awk '{print $3}'
       register: containerd_version
       ignore_errors: yes
@@ -150,7 +150,7 @@
       ignore_errors: yes
 
     - name: Validating the CUDA with GPU
-      shell: kubectl delete pod cuda-vector-add; timeout 60 kubectl run cuda-vector-add --rm -t -i --restart=Never --image=k8s.gcr.io/cuda-vector-add:v0.1
+      shell: timeout 60 kubectl run cuda-vector-add --rm -t -i --restart=Never --image=k8s.gcr.io/cuda-vector-add:v0.1
       register: cuda
       ignore_errors: yes
 
@@ -173,7 +173,7 @@
         msg: "Docker Version {{ dockerversion.stdout }}"
 
     - name: Report Containerd Version
-      when: egx_version == 4.0 or egx_version == 4.1
+      when: egx_version == 4.0 or egx_version == 4.1 or egx_version == 4.2
       ignore_errors: yes
       debug:
         msg: " Containerd Version {{ containerd_version.stdout }}"

@@ -7,7 +7,7 @@
 
    - name: Uninstall the GPU Operator with MIG
      shell: kubectl label nodes --all nvidia.com/mig.config=all-disabled --overwrite; sleep 60
-     when: "egx_version == 4.1 and enable_mig == true"
+     when: "egx_version == 4.2 or egx_version == 4.1 and enable_mig == true"
      failed_when: false
 
    - name: Reset Kubernetes component
@@ -16,7 +16,7 @@
      no_log: True
 
    - name: Remove Conatinerd and Kubernetes packages for Ubuntu 
-     when: " egx_version == 4.1 or egx_version == 4.0 and ansible_distribution == 'Ubuntu'"
+     when: "egx_version == 4.2 or egx_version == 4.1 or egx_version == 4.0 and ansible_distribution == 'Ubuntu'"
      ignore_errors: yes
      apt:
        name: ['kubectl', 'kubeadm','kubelet', 'containerd']
@@ -25,7 +25,7 @@
        force: yes
 
    - name: Remove Docker and Kubernetes packages for Ubuntu
-     when: " egx_version != 4.1 and ansible_distribution == 'Ubuntu'"
+     when: "egx_version != 4.2 or egx_version != 4.1 and ansible_distribution == 'Ubuntu'"
      ignore_errors: yes
      apt:
        name: ['kubectl', 'kubeadm','kubelet', 'docker-ce*']
@@ -40,6 +40,11 @@
        name: ['kubectl', 'kubeadm','kubelet', 'docker*']
        state: absent
        force: yes
+
+   - name: IPTables Cleanup
+     ignore_errors: yes
+     become: true
+     shell: "iptables -F"
 
    - name: Cleanup Directories
      ignore_errors: yes

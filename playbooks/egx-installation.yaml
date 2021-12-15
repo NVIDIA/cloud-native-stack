@@ -25,7 +25,7 @@
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd
      when: "egx_version == 4.0 or egx_version == 4.1 or egx_version == 4.2 and 'running' not in k8sup.stdout"
-     command: kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock
      become: true
      register: kubeadm
 

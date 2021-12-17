@@ -73,6 +73,13 @@
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.21.1-00', 'kubeadm=1.21.1-00', 'kubectl=1.21.1-00']
         state: present
+        
+    - name: Install kubernetes components for Ubuntu on EGX Stack 4.2
+      become: true
+      when: "egx_version == 4.2 and ansible_distribution == 'Ubuntu'"
+      apt:
+        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.21.7-00', 'kubeadm=1.21.7-00', 'kubectl=1.21.7-00']
+        state: present
 
     - name: Hold the installed Packages
       become: true

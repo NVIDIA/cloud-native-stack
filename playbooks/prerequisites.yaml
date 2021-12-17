@@ -287,13 +287,10 @@
             state: directory
 
         - name: Create /etc/default/kubelet
-          file:
-            content: 'KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"'
-            dest: /etc/default/kubelet
-            state: touch
-            
-        - name: Update /etc/default/kubelet
-          shell: echo 'KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"' | sudo tee /etc/default/kubelet            
+          lineinfile:
+            line: KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
+            path: /etc/default/kubelet
+            create: yes
       when: "egx_version == 4.2 or egx_version == 4.1 or egx_version == 4.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
 
     - name: Install Containerd for EGX DIY Stack 4.0

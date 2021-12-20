@@ -144,7 +144,7 @@ sudo sysctl --system
 Download the Containerd tarball
 
 ```
-$ wget https://github.com/containerd/containerd/releases/download/v1.5.0/cri-containerd-cni-1.5.8-linux-amd64.tar.gz
+$ wget https://github.com/containerd/containerd/releases/download/v1.5.8/cri-containerd-cni-1.5.8-linux-amd64.tar.gz
 $ sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.5.8-linux-amd64.tar.gz
 $ rm -rf cri-containerd-cni-1.5.8-linux-amd64.tar.gz
 ```

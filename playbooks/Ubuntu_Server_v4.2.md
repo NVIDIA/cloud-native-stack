@@ -55,7 +55,7 @@ These instructions require having Ubuntu Server LTS 20.04.2 on your NGC-Ready sy
 Disabling nouveau (not validated and only required with Ubuntu 20.04.2 LTS HWE Kernel): 
 
 ```
-$ sudo nano /etc/modprobe.d/blacklist-nouveau.conf
+sudo nano /etc/modprobe.d/blacklist-nouveau.conf
 ```
 
 Insert the following:
@@ -68,13 +68,13 @@ options nouveau modeset=0
 Regenerate the kernel initramfs:
 
 ```
-$ sudo update-initramfs -u
+sudo update-initramfs -u
 ```
 
 And reboot your system:
 
 ```
-$ sudo reboot
+sudo reboot
 ```
 
 For more information on installing Ubuntu server please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
@@ -87,8 +87,8 @@ This section describes how to use the ansible playbooks.
 Run the below commands to clone the EGX ansible playbooks.
 
 ```
-$ git clone https://github.com/NVIDIA/egx-platform.git
-$ cd egx-platform/playbooks
+git clone https://github.com/NVIDIA/egx-platform.git
+cd egx-platform/playbooks
 ```
 
 Update the hosts file in playbooks directory with master and worker nodes(if you have) IP's with username and password like below
@@ -115,7 +115,7 @@ Update EGX Stack Version as per below, currently supported versions are
 - [4.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v4.2.md)
 
 ```
-sudo nano egx_values.yaml
+$ sudo nano egx_values.yaml
 
 egx_version: 4.2
 
@@ -126,7 +126,7 @@ egx_version: 4.2
 Install the EGX stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
 
 ```
-$ bash setup.sh install
+bash setup.sh install
 ```
 
 ### Validation
@@ -136,7 +136,7 @@ Run the below command to check if the installed versions are match with predefin
 Run the validation playbook after 5 minutes once completing the EGX Stack Installation. Depends on your internet speed, you need to wait more time.
 
 ```
-$ bash setup.sh validate
+bash setup.sh validate
 ```
 
 ### Uninstall
@@ -144,6 +144,6 @@ $ bash setup.sh validate
 Run the below command to uninstall the EGX Stack. Taks being "ignored" refers to no kubernetes cluster being available.
 
 ```
-$ bash setup.sh uninstall
+bash setup.sh uninstall
 ```
 

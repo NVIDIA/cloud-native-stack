@@ -55,15 +55,11 @@ These instructions require having Ubuntu Server LTS 20.04.2 on your NGC-Ready sy
 Disabling nouveau (not validated and only required with Ubuntu 20.04.2 LTS HWE Kernel): 
 
 ```
-sudo nano /etc/modprobe.d/blacklist-nouveau.conf
-```
-
-Insert the following:
-
-```
+sudo tee /etc/modprobe.d/blacklist-nouveau.conf <<EOF
 blacklist nouveau
 options nouveau modeset=0
-```
+EOF
+``
 
 Regenerate the kernel initramfs:
 

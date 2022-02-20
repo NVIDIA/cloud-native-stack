@@ -433,7 +433,7 @@ EOF
 Execute the below command to create a sample GPU pod:
 
 ```
-sudo kubectl apply -f cuda-samples.yaml
+kubectl apply -f cuda-samples.yaml
 ```
 
 Execute the below command to confirm the cuda-samples pod was created:

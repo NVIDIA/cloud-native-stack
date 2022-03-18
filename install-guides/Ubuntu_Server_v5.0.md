@@ -33,12 +33,12 @@ NVIDIA Cloud Native Core v5.0 includes:
 - [Installing Containerd](#Installing-Containerd)
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Installing Helm](#Installing-Helm)
-- [Adding an Additional Node to NVIDIA Cloud Native Core](#Adding-additional-node-to-NVIDIA Cloud Native Core-Stack)
+- [Adding an Additional Node to NVIDIA Cloud Native Core](#Adding-additional-node-to-NVIDIA-Cloud-Native-Core-Stack)
 - [Installing NVIDIA Network Operator](#Installing-NVIDIA-Network-Operator)
 - [Installing the GPU Operator](#Installing-the-GPU-Operator)
 - [Validating the Network Operator with GPUDirect RDMA](#Validating-the-Network-Operator-with-GPUDirect-RDMA)
 - [Validating the GPU Operator](#Validating-the-GPU-Operator)
-- [Validate NVIDIA Cloud Native Core with an Application from NGC](#Validate-NVIDIA Cloud Native Core-Stack-with-an-application-from-NGC)
+- [Validate NVIDIA Cloud Native Core with an Application from NGC](#Validate-NVIDIA-Cloud-Native-Core-with-an-application-from-NGC)
 - [Uninstalling the GPU Operator](#Uninstalling-the-GPU-Operator)
 - [Uninstalling the Network Operator](#Uninstalling-the-Network-Operator)
 
@@ -623,7 +623,7 @@ spec:
 EOF
  ```
 
-Apply the Mellanox test pod to the NVIDIA Cloud Native Core stack for the validation:
+Apply the Mellanox test pod to the NVIDIA Cloud Native Core  for the validation:
 ```
 $ kubectl apply -f mellanox-test.yaml
 ```
@@ -769,7 +769,7 @@ $ kubectl delete pod rdma-test-pod-1 rdma-test-pod-2
 
 ### Validating the GPU Operator
 
-GPU Operator validates the stack through the nvidia-device-plugin-validation pod and the nvidia-driver-validation pod. If both are completed successfully (see output from kubectl get pods --all-namespaces | grep -v kube-system), NVIDIA Cloud Native Core is working as expected. This section provides two examples of validating that the GPU is usable from within a pod to validate the stack manually.
+GPU Operator validates the  through the nvidia-device-plugin-validation pod and the nvidia-driver-validation pod. If both are completed successfully (see output from kubectl get pods --all-namespaces | grep -v kube-system), NVIDIA Cloud Native Core is working as expected. This section provides two examples of validating that the GPU is usable from within a pod to validate the  manually.
 
 #### Example 1: nvidia-smi
 
@@ -842,7 +842,7 @@ Another option to validate NVIDIA Cloud Native Core is by running a demo applica
 
 NGC is NVIDIA's GPU-optimized software hub. NGC provides a curated set of GPU-optimized software for AI, HPC, and visualization. The content provided by NVIDIA and third-party ISVs simplify building, customizing, and integrating GPU-optimized software into workflows, accelerating the time to solutions for users.
 
-Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkits with software development kits (SDKs) are hosted on NGC. For more information about how to deploy an application that is hosted on NGC or the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/erikbohnhorst/NVIDIA Cloud Native Core-DIY-Node-Stack/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information.
+Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkits with software development kits (SDKs) are hosted on NGC. For more information about how to deploy an application that is hosted on NGC or the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/NVIDIA/cloud-native-core/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information.
 
 The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm Chart. The application can validate the full NVIDIA Cloud Native Core and test the connectivity of NVIDIA Cloud Native Core to remote sensors. DeepStream delivers real-time AI-based video and image understanding and multi-sensor processing on GPUs. For more information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo).
 

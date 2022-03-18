@@ -4,7 +4,7 @@ NVIDIA Cloud Native Core (formerly known as EGX Stack) is a collection of softwa
 
 Interested in deploying NVIDIA Cloud Native Core? This repository has [install guides](https://github.com/NVIDIA/cloud-native-core/tree/master/install-guides) for manual installations and [ansible playbooks](https://github.com/NVIDIA/cloud-native-core/tree/master/playbooks) for automated installations.
 
-Interested in a pre-provisioned NVIDIA Cloud Native Core environment? [NVIDIA Launchpad](https://docs.nvidia.com/LaunchPad/developer-labs/overview.html) provides pre-provisioned environments so that you can quickly get started.
+Interested in a pre-provisioned NVIDIA Cloud Native Core environment? [NVIDIA Launchpad](https://www.nvidia.com/en-us/data-center/launchpad/) provides pre-provisioned environments so that you can quickly get started.
 
 #### Getting help or Providing feedback
 

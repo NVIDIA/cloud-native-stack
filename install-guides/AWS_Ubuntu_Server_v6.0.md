@@ -26,7 +26,7 @@ NVIDIA Cloud Native Core v6.0 includes:
 - [Installing Containerd](#Installing-Containerd)
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Installing Helm](#Installing-Helm)
-- [Adding an additional node to the NVIDIA Cloud Native Core](#Adding-additional-node-to-the-NVIDIA Cloud Native Core-Stack)
+- [Adding an additional node to the NVIDIA Cloud Native Core](#Adding-additional-node-to-the-NVIDIA-Cloud-Native-Core-Stack)
 - [Installing GPU Operator](#Installing-the-GPU-Operator)
 - [Installing NVIDIA Network Operator](#Installing-NVIDIA-Network-Operator)
 - [Validating the Installation](#Validating-the-Installation)
@@ -367,7 +367,7 @@ Please refer to [GPU Operator page](https://ngc.nvidia.com/catalog/helm-charts/n
 
 ## Validating the Installation
 
-GPU Operator validates the stack through the nvidia-device-plugin-validation pod and the nvidia-driver-validation pod. If both complete successfully (see output from kubectl get pods --all-namespaces | grep -v kube-system), the NVIDIA Cloud Native Core is working as expected. 
+GPU Operator validates the  through the nvidia-device-plugin-validation pod and the nvidia-driver-validation pod. If both complete successfully (see output from kubectl get pods --all-namespaces | grep -v kube-system), the NVIDIA Cloud Native Core is working as expected. 
 There are two ways to validate NVIDIA Cloud Native Core manually: 
 1. Validate NVIDIA Cloud Native Core with nvidia-smi and cuda sample
 2. Validate NVIDIA Cloud Native Core with an Application
@@ -439,7 +439,7 @@ Execute the below command to confirm the cuda-samples pod was created:
 kubectl get pods
 ``` 
 
-NVIDIA Cloud Native Core stack works as expected if the get pods command shows the pod status as completed.
+NVIDIA Cloud Native Core  works as expected if the get pods command shows the pod status as completed.
 
 ### Validate NVIDIA Cloud Native Core with an application from NGC
 Another option to validate NVIDIA Cloud Native Core is by running a demo application hosted on NGC.

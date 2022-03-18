@@ -66,7 +66,7 @@ Please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutor
 
 Run the below command to verify if `nouveau` is loaded.
 ```
-$ lsmod | grep nouveau
+ lsmod | grep nouveau
 ```
 Output: 
 ```
@@ -82,7 +82,7 @@ wmi                    32768  5 wmi_bmof,dell_smbios,dell_wmi_descriptor,mxm_wmi
 If you see the above output, follow the below steps to disable nouveau
 
 ```
-$ cat <<EOF | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
+ cat <<EOF | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
 blacklist nouveau
 options nouveau modeset=0
 EOF
@@ -91,13 +91,13 @@ EOF
 Regenerate the kernel initramfs:
 
 ```
-$ sudo update-initramfs -u
+ sudo update-initramfs -u
 ```
 
 And reboot your system:
 
 ```
-$ sudo reboot
+ sudo reboot
 ```
 
 ### Installing Containerd
@@ -105,32 +105,32 @@ $ sudo reboot
 Set up the repository and update the apt package index:
 
 ```
-$ sudo apt-get update
+ sudo apt-get update
 ```
 
 Install packages to allow apt to use a repository over HTTPS:
 
 ```
-$ sudo apt-get install -y apt-transport-https gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
+ sudo apt-get install -y apt-transport-https gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
 ```
 
 Configure the prerequisites for Containerd
 
 ```
-$ cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+ cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
 overlay
 br_netfilter
 EOF
 ```
 
 ```
-$ sudo modprobe overlay
-$ sudo modprobe br_netfilter
+ sudo modprobe overlay
+ sudo modprobe br_netfilter
 ```
 
 Setup required sysctl params; these persist across reboots.
 ```
-$ cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+ cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.ipv4.ip_forward                 = 1
 net.bridge.bridge-nf-call-ip6tables = 1
@@ -139,24 +139,22 @@ EOF
 
 Apply sysctl params without reboot
 ```
-$ sudo sysctl --system
+ sudo sysctl --system
 ```
 
 Download the containerd tarball
 
 ```
-$ wget https://github.com/containerd/containerd/releases/download/v1.4.6/cri-containerd-cni-1.4.6-linux-amd64.tar.gz
-$ sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.4.6-linux-amd64.tar.gz
-$ rm -rf cri-containerd-cni-1.4.6-linux-amd64.tar.gz
+ wget https://github.com/containerd/containerd/releases/download/v1.4.6/cri-containerd-cni-1.4.6-linux-amd64.tar.gz
+ sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.4.6-linux-amd64.tar.gz
+ rm -rf cri-containerd-cni-1.4.6-linux-amd64.tar.gz
 ```
 
 Install containerd
 ```
-$ sudo mkdir -p /etc/containerd
-
-$ containerd config default | sudo tee /etc/containerd/config.toml
-
-$ sudo systemctl restart containerd
+ sudo mkdir -p /etc/containerd
+ containerd config default | sudo tee /etc/containerd/config.toml
+ sudo systemctl restart containerd
 ```
 
 For additional information on how to install containerd, please reference [Install Containerd with Release Tarball](https://github.com/containerd/containerd/blob/master/docs/cri/installation.md). 
@@ -166,21 +164,21 @@ For additional information on how to install containerd, please reference [Insta
 Make sure containerd has been started and enabled before beginning installation:
 
 ```
-$ sudo systemctl start containerd && sudo systemctl enable containerd
+ sudo systemctl start containerd && sudo systemctl enable containerd
 ```
 
 Execute the following to add apt keys:
 
 ```
-$ sudo apt-get update && sudo apt-get install -y apt-transport-https curl
-$ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-$ sudo mkdir -p  /etc/apt/sources.list.d/
+ sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+ sudo mkdir -p  /etc/apt/sources.list.d/
 ```
 
 Create kubernetes.list
 
 ```
-$ cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+ cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
 deb https://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 ```
@@ -188,27 +186,29 @@ EOF
 Now execute the below to install kubelet, kubeadm and kubectl:
 
 ```
-$ sudo apt-get update
-$ sudo apt-get install -y -q kubelet=1.21.1-00 kubectl=1.21.1-00 kubeadm=1.21.1-00
-$ sudo apt-mark hold kubelet kubeadm kubectl
+ sudo apt-get update
+ sudo apt-get install -y -q kubelet=1.21.1-00 kubectl=1.21.1-00 kubeadm=1.21.1-00
+ sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
 Create a kubelet default with containerd
 ```
-$ cat <<EOF | sudo tee /etc/default/kubelet
+ cat <<EOF | sudo tee /etc/default/kubelet
 KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
 EOF
 ```
 
 Reload the system daemon
 ```
-$ sudo systemctl daemon-reload
+ sudo systemctl daemon-reload
 ```
 
 ##### Disable swap
 ```
-$ sudo swapoff -a
-$ sudo nano /etc/fstab
+sudo swapoff -a
+```
+```
+sudo nano /etc/fstab
 ```
 
 `NOTE:` Add a # before all the lines that start with /swap. # is a comment, and the result should look something like this:
@@ -224,7 +224,7 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command:
 
 ```
-$ sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock
+ sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock
 ```
 
 Output:
@@ -255,21 +255,21 @@ kubeadm join <your-host-IP>:6443 --token 489oi5.sm34l9uh7dk4z6cm \
 Following the instructions in the output, execute the commands as shown below:
 
 ```
-$ mkdir -p $HOME/.kube
-$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+ mkdir -p $HOME/.kube
+ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
 With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
-$ kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+ kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 ```
 
 You can execute the below commands to ensure that all pods are up and running
 
 ```
-$ kubectl get pods --all-namespaces
+ kubectl get pods --all-namespaces
 ```
 
 Output:
@@ -290,7 +290,7 @@ kube-system   kube-scheduler-#yourhost                   1/1     Running   0    
 The get nodes command shows that the control-plane node is up and ready:
 
 ```
-$ kubectl get nodes
+ kubectl get nodes
 ```
 
 Output:
@@ -303,7 +303,7 @@ NAME             STATUS   ROLES                  AGE   VERSION
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
 
 ```
-$ kubectl taint nodes --all node-role.kubernetes.io/master-
+ kubectl taint nodes --all node-role.kubernetes.io/master-
 ```
 
 Refer to [Installing Kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
@@ -314,10 +314,10 @@ for more information.
 Execute the following command to download and install Helm 3.5.4: 
 
 ```
-$ wget https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz
-$ tar -zxvf helm-v3.5.4-linux-amd64.tar.gz
-$ sudo mv linux-amd64/helm /usr/local/bin/helm
-$ rm -rf helm-v3.5.4-linux-amd64.tar.gz linux-amd64/
+ wget https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz
+ tar -zxvf helm-v3.5.4-linux-amd64.tar.gz
+ sudo mv linux-amd64/helm /usr/local/bin/helm
+ rm -rf helm-v3.5.4-linux-amd64.tar.gz linux-amd64/
 ```
 
 Refer to the Helm 3.5.4 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
@@ -335,7 +335,7 @@ Prerequisites:
 Once the prerequisites are completed on the additional nodes, execute the below command on the control-plane node and then execute the join command output on an additional node to add the additional node to NVIDIA Cloud Native Core. 
 
 ```
-$ sudo kubeadm token create --print-join-command
+ sudo kubeadm token create --print-join-command
 ```
 
 Output:
@@ -348,7 +348,7 @@ sudo kubeadm join 10.110.0.34:6443 --token kg2h7r.e45g9uyrbm1c0w3k     --discove
 The get nodes command shows that the master and worker nodes are up and ready:
 
 ```
-$ kubectl get nodes
+ kubectl get nodes
 ```
 
 Output:
@@ -364,19 +364,19 @@ NAME             STATUS   ROLES                  AGE   VERSION
 Add the NVIDIA repo:
 
 ```
-$ helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+ helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
 ```
 
 Update the Helm repo:
 
 ```
-$ helm repo update
+ helm repo update
 ```
 
 Install GPU Operator:
 
 ```
-$ helm install --version 1.7.0 --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd --wait --generate-name
+ helm install --version 1.7.0 --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd --wait --generate-name
 ```
 
 #### Validate the state of the GPU Operator:
@@ -419,7 +419,7 @@ The below instructions assume that Mellanox NICs are connected to your machines.
 Execute the below command to verify Mellanox NICs are enabled on your machines
 
 ```
-$ lspci | grep -i "Mellanox"
+ lspci | grep -i "Mellanox"
 ```
 
 Output:
@@ -431,22 +431,22 @@ Output:
 Execute the below commands to install MOFED drivers on every NVIDIA Cloud Native Core node
 
 ```
-$ wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | sudo apt-key add -
-$ wget https://linux.mellanox.com/public/repo/mlnx_ofed/latest/ubuntu20.04/mellanox_mlnx_ofed.list
-$ sudo mv mellanox_mlnx_ofed.list /etc/apt/sources.list.d/
-$ sudo apt update && sudo apt-get install mlnx-ofed-all -y
+ wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | sudo apt-key add -
+ wget https://linux.mellanox.com/public/repo/mlnx_ofed/latest/ubuntu20.04/mellanox_mlnx_ofed.list
+ sudo mv mellanox_mlnx_ofed.list /etc/apt/sources.list.d/
+ sudo apt update && sudo apt-get install mlnx-ofed-all -y
 ```
 
 Once MOFED drivers are installed successfully, please reboot the systems.
 
 ```	
-$ sudo reboot
+ sudo reboot
 ```
 
 Now execute the below command to install MULTUS CNI plugin on NVIDIA Cloud Native Core from the control-plane node
 
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/intel/multus-cni/master/images/multus-daemonset.yml
+ kubectl apply -f https://raw.githubusercontent.com/intel/multus-cni/master/images/multus-daemonset.yml
 ```
 Multus CNI enables attaching multiple network interfaces to pods in Kubernetes. Learn more about [Multus](https://github.com/intel/multus-cni)
 
@@ -454,7 +454,7 @@ Next, follow the below steps to install Kubernetes RDMA shared plug-in to enable
 
 1. Execute the below command on NVIDIA Cloud Native Core nodes to list the Mellanox NIC's with the status
 ```
-$ sudo ibdev2netdev
+ sudo ibdev2netdev
 ```
 Output:
 ```
@@ -491,27 +491,27 @@ sed -ie "s/ens192f0/$(sudo ibdev2netdev | grep -i up | awk -F">" '{print $2}' | 
 ```
 3. Install the Kubernetes RDMA shared device plug-in on NVIDIA Cloud Native Core from the control-plane node
 ```
-$ kubectl apply -f k8s-rdma-shared-dev-plugin-config-map.yaml
-$ kubectl apply -f https://raw.githubusercontent.com/Mellanox/k8s-rdma-shared-dev-plugin/master/images/k8s-rdma-shared-dev-plugin-ds.yaml
+ kubectl apply -f k8s-rdma-shared-dev-plugin-config-map.yaml
+ kubectl apply -f https://raw.githubusercontent.com/Mellanox/k8s-rdma-shared-dev-plugin/master/images/k8s-rdma-shared-dev-plugin-ds.yaml
 ```
 Learn more about [RDMA shared plug-in](https://github.com/Mellanox/k8s-rdma-shared-dev-plugin).
 
 Now execute the below commands to copy the container network plug-ins on every NVIDIA Cloud Native Core node.
 
 ```
-$ wget -q https://github.com/containernetworking/plugins/releases/download/v0.8.7/cni-plugins-linux-amd64-v0.8.7.tgz
-$ mkdir cni-plugins && tar -C ./cni-plugins -xzvf cni-plugins-linux-amd64-v0.8.7.tgz
-$ sudo cp cni-plugins/macvlan cni-plugins/tuning /opt/cni/bin/
+ wget -q https://github.com/containernetworking/plugins/releases/download/v0.8.7/cni-plugins-linux-amd64-v0.8.7.tgz
+ mkdir cni-plugins && tar -C ./cni-plugins -xzvf cni-plugins-linux-amd64-v0.8.7.tgz
+ sudo cp cni-plugins/macvlan cni-plugins/tuning /opt/cni/bin/
 ```
 
 Now install the Whereabouts CNI on NVIDIA Cloud Native Core with the below steps from the control-plane node
 
 ```
-$ wget -q https://raw.githubusercontent.com/openshift/whereabouts-cni/master/doc/daemonset-install.yaml
-$ sed -ie 's/latest/v0.3/g' daemonset-install.yaml
-$ kubectl apply -f daemonset-install.yaml
-$ kubectl apply -f https://raw.githubusercontent.com/openshift/whereabouts-cni/master/doc/whereabouts.cni.cncf.io_ippools.yaml
-$ kubectl apply -f https://raw.githubusercontent.com/openshift/whereabouts-cni/master/doc/whereabouts.cni.cncf.io_overlappingrangeipreservations.yaml
+ wget -q https://raw.githubusercontent.com/openshift/whereabouts-cni/master/doc/daemonset-install.yaml
+ sed -ie 's/latest/v0.3/g' daemonset-install.yaml
+ kubectl apply -f daemonset-install.yaml
+ kubectl apply -f https://raw.githubusercontent.com/openshift/whereabouts-cni/master/doc/whereabouts.cni.cncf.io_ippools.yaml
+ kubectl apply -f https://raw.githubusercontent.com/openshift/whereabouts-cni/master/doc/whereabouts.cni.cncf.io_overlappingrangeipreservations.yaml
 ```
 Whereabouts is an IP Address Management (IPAM) CNI plug-in that assigns IP addresses cluster-wide. Learn more about [Whereabouts CNI](https://github.com/openshift/whereabouts-cni).
 
@@ -523,7 +523,7 @@ Execute the below steps on every NVIDIA Cloud Native Core node.
 
 Run the below command to check that the GPU Operator is running on your node(s). 
 ```
-$ sudo chroot /run/nvidia/driver nvidia-smi
+ sudo chroot /run/nvidia/driver nvidia-smi
 ```
 
 Output: 
@@ -553,11 +553,11 @@ Thu Jun 17 22:41:28 2021
 Now clone the nv_peer_mem source from GitHub and build the nv_peer_mem module with the below steps.
 
 ```
-$ git clone https://github.com/Mellanox/nv_peer_memory.git
+ git clone https://github.com/Mellanox/nv_peer_memory.git
 
-$ cd nv_peer_memory 
+ cd nv_peer_memory 
 
-$ sed -ie "s/nvidia_mod=\$.*/nvidia_mod=\"\/run\/nvidia\/driver\/usr\/src\/nvidia-460\.73\.01\/kernel\/nvidia.ko\"/g" create_nv.symvers.sh
+ sed -ie "s/nvidia_mod=\$.*/nvidia_mod=\"\/run\/nvidia\/driver\/usr\/src\/nvidia-460\.73\.01\/kernel\/nvidia.ko\"/g" create_nv.symvers.sh
 ```
 
 Now build the nv_peer_mem module with the below commands
@@ -627,13 +627,13 @@ sed -ie "s/ens192f0/$(sudo ibdev2netdev | grep -i up | awk -F">" '{print $2}' | 
  Execute the below command to install network definition on NVIDIA Cloud Native Core from the control-plane node
  
  ```
- $ kubectl apply -f networkdefinition.yaml 
+  kubectl apply -f networkdefinition.yaml 
  ```
  
 Now create the pod YAML with the below content.
 
 ``` 
-$ cat <<EOF | tee mellanox-test.yaml
+cat <<EOF | tee mellanox-test.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -704,7 +704,7 @@ EOF
 
 Apply the Mellanox test pod to NVIDIA Cloud Native Core stack for the validation
 ```
-$ kubectl apply -f mellanox-test.yaml
+ kubectl apply -f mellanox-test.yaml
 ```
 
 Once you apply, verify the `rdma-test-pod-1` pod logs. You should see the expected output as shown below.
@@ -733,7 +733,7 @@ lrwxrwxrwx 1 root root 0 Jun 1 02:26 tunl0 -> ../../devices/virtual/net/tunl0
 First, verify that nv_peer_mem modules are loaded on every NVIDIA Cloud Native Core node with the below command: 
 
 ```
-$ lsmod | grep nv_peer_mem
+ lsmod | grep nv_peer_mem
 ```
 
 Output:
@@ -745,7 +745,7 @@ nvidia              20385792  117 nvidia_uvm,nv_peer_mem,nvidia_modeset
 
 Execute the below command to list the Mellanox NIC's with the status
 ```
-$ sudo ibdev2netdev
+ sudo ibdev2netdev
 ```
 Output:
 ```
@@ -828,7 +828,7 @@ The benchmark achieved approximately 93 Gbps throughput.
 Exit from RDMA test pods and then delete the RDMA test pods with the below command.
 
 ```
-$ kubectl delete pod rdma-test-pod-1 rdma-test-pod-2
+ kubectl delete pod rdma-test-pod-1 rdma-test-pod-2
 ```
 
 ### Validating the Installation
@@ -840,7 +840,7 @@ GPU Operator validates the stack through the nvidia-device-plugin-validation pod
 Execute the following:
 
 ```
-$ kubectl run nvidia-smi --rm -t -i --restart=Never --image=nvidia/cuda:11.2.2-base --limits=nvidia.com/gpu=1 -- nvidia-smi
+ kubectl run nvidia-smi --rm -t -i --restart=Never --image=nvidia/cuda:11.2.2-base --limits=nvidia.com/gpu=1 -- nvidia-smi
 ```
 
 Output:
@@ -873,7 +873,7 @@ pod "nvidia-smi" deleted
 Create a pod YAML file:
 
 ```
-$ cat <<EOF | tee cuda-samples.yaml
+ cat <<EOF | tee cuda-samples.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -889,13 +889,13 @@ EOF
 Execute the below command to create a sample GPU pod:
 
 ```
-$ kubectl apply -f cuda-samples.yaml
+ kubectl apply -f cuda-samples.yaml
 ```
 
 Confirm the cuda-samples pod was created:
 
 ```
-$ kubectl get pods
+ kubectl get pods
 ``` 
 
 NVIDIA Cloud Native Core works as expected if the get pods command shows the pod status as completed.
@@ -943,9 +943,9 @@ Once the Helm chart is deployed, access the application with the VLC player. See
 If you don't have a camera input, please execute the below commands to use the default video already integrated into the application. 
 
 ```
-$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.6.tgz
+helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.6.tgz
 
-$ helm install video-analytics-demo-0.1.6.tgz --name-template iva
+helm install video-analytics-demo-0.1.6.tgz --name-template iva
 ```
 
 `NOTE:` If you're deploying on an A100 GPU, please pass image tag as `--set image.tag=5.0-20.08-devel-a100` to the above command 
@@ -994,8 +994,8 @@ $ helm del gpu-operator-1606173805
 Execute the below commands to uninstall the nv_peer_mem
 
 ```
-$ sudo dpkg -r --force-all nvidia-peer-memory-dkms
-$ sudo dpkg -r --force-all nvidia-peer-memory
+sudo dpkg -r --force-all nvidia-peer-memory-dkms
+sudo dpkg -r --force-all nvidia-peer-memory
 ```
 
 #### Uninstalling the Mellanox MOFED
@@ -1003,6 +1003,6 @@ $ sudo dpkg -r --force-all nvidia-peer-memory
 Execute the below commands to uninstall the Mellanox MOFED
 
 ```
-$ sudo apt purge mlnx-ofed-all -y
+sudo apt purge mlnx-ofed-all -y
 ```
 

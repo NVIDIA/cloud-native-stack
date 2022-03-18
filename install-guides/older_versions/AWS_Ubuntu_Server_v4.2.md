@@ -105,13 +105,13 @@ ssh -i yourkeypair.pem ubuntu@ec2-<public-ip>.us-west-1.compute.amazonaws.com
 Set up the repository and update the apt package index:
 
 ```
-$ sudo apt-get update
+sudo apt-get update
 ```
 
 Install packages to allow apt to use a repository over HTTPS:
 
 ```
-$ sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
+ sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
 ```
 
 Configure the Prerequisites for Containerd
@@ -151,11 +151,11 @@ $ rm -rf cri-containerd-cni-1.5.8-linux-amd64.tar.gz
 
 Install the Containerd
 ```
-$ sudo mkdir -p /etc/containerd
+ sudo mkdir -p /etc/containerd
 
-$ containerd config default | sudo tee /etc/containerd/config.toml
+ containerd config default | sudo tee /etc/containerd/config.toml
 
-$ sudo systemctl restart containerd
+ sudo systemctl restart containerd
 ```
 
 For additional information on installing Containerd, please reference [Install Containerd with Release Tarball](https://github.com/containerd/containerd/blob/master/docs/cri/installation.md).
@@ -165,20 +165,20 @@ For additional information on installing Containerd, please reference [Install C
 Make sure Containerd has been started and enabled before beginning installation:
 
 ```
-$ sudo systemctl start containerd && sudo systemctl enable containerd
+ sudo systemctl start containerd && sudo systemctl enable containerd
 ```
 
 Execute the following to install kubelet kubeadm and kubectl:
 
 ```
-$ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-$ sudo mkdir -p  /etc/apt/sources.list.d/
+ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+ sudo mkdir -p  /etc/apt/sources.list.d/
 ```
 
 Create Kubernetes.list:
 
 ```
-$ cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+ cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
 deb https://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 ```
@@ -186,17 +186,19 @@ EOF
 Now execute the commands below:
 
 ```
-$ sudo apt-get update
-$ sudo apt-get install -y -q kubelet=1.21.7-00 kubectl=1.21.7-00 kubeadm=1.21.7-00
-$ sudo apt-mark hold kubelet kubeadm kubectl
+ sudo apt-get update
+ sudo apt-get install -y -q kubelet=1.21.7-00 kubectl=1.21.7-00 kubeadm=1.21.7-00
+ sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
 ### Initializing the Kubernetes cluster to run as master
 
 #### Disable swap
 ```
-$ sudo swapoff -a
-$ sudo nano /etc/fstab
+ sudo swapoff -a
+```
+``
+sudo nano /etc/fstab
 ```
 
 Add a # before all the lines that start with /swap. # is a comment, and the result should look similar to this:
@@ -210,7 +212,7 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command:
 
 ```
-$ sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock
+ sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock
 ```
 
 The output will show you the commands that, when executed, deploy a pod network to the cluster and commands to join the cluster.
@@ -218,21 +220,21 @@ The output will show you the commands that, when executed, deploy a pod network 
 Following the instructions in the output, execute the commands as shown below:
 
 ```
-$ mkdir -p $HOME/.kube
-$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+ mkdir -p $HOME/.kube
+ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
 With the following command, you install a pod-network add-on to the control plane node. Calico is used as the pod-network add-on here:
 
 ```
-$ kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+ kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 ```
 
 You can execute the below commands to ensure that all pods are up and running:
 
 ```
-$ kubectl get pods --all-namespaces
+ kubectl get pods --all-namespaces
 ```
 
 Output:
@@ -253,7 +255,7 @@ kube-system   kube-scheduler-#hostname                   1/1     Running   0    
 The get nodes command shows that the control-plane node is up and ready:
 
 ```
-$ kubectl get nodes
+ kubectl get nodes
 ```
 
 Output:
@@ -266,7 +268,7 @@ NAME             STATUS   ROLES                  AGE   VERSION
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
 
 ```
-$ kubectl taint nodes --all node-role.kubernetes.io/master-
+ kubectl taint nodes --all node-role.kubernetes.io/master-
 ```
 
 For additional information, refer to [kubeadm installation guide](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
@@ -276,9 +278,9 @@ For additional information, refer to [kubeadm installation guide](https://kubern
 Execute the following command to download Helm 3.7.0: 
 
 ```
-$ sudo wget https://get.helm.sh/helm-v3.7.0-linux-amd64.tar.gz
-$ sudo tar -zxvf helm-v3.7.0-linux-amd64.tar.gz
-$ sudo mv linux-amd64/helm /usr/local/bin/helm
+ sudo wget https://get.helm.sh/helm-v3.7.0-linux-amd64.tar.gz
+ sudo tar -zxvf helm-v3.7.0-linux-amd64.tar.gz
+ sudo mv linux-amd64/helm /usr/local/bin/helm
 ```
 
 For additional information about Helm, refer to the Helm 3.7.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information. 
@@ -296,7 +298,7 @@ Prerequisites:
 Once the prerequisites are completed on the additional nodes, execute the below command on the control-plane node and then execute the join command output on an additional node to add the additional node to NVIDIA Cloud Native Core 
 
 ```
-$ kubeadm token create --print-join-command
+ kubeadm token create --print-join-command
 ```
 
 Output:
@@ -309,7 +311,7 @@ sudo kubeadm join 10.110.0.34:6443 --token kg2h7r.e45g9uyrbm1c0w3k     --discove
 The get nodes command shows that the master and worker nodes are up and ready:
 
 ```
-$ kubectl get nodes
+ kubectl get nodes
 ```
 
 Output:
@@ -324,19 +326,19 @@ NAME             STATUS   ROLES                  AGE   VERSION
 Add the NVIDIA helm repo 
 
 ```
-$ helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+ helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
 ```
 
 Update the helm repo:
 
 ```
-$ helm repo update
+ helm repo update
 ```
 
 To install GPU Operator for AWS G4 instance with Tesla T4:
 
 ```
-$ helm install --version 1.9.0 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator  --set operator.defaultRuntime=containerd --wait --generate-name
+ helm install --version 1.9.0 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator  --set operator.defaultRuntime=containerd --wait --generate-name
 ```
 
 ### Validate the state of GPU Operator:
@@ -383,7 +385,7 @@ This section provides two examples of how to validate that the GPU is usable fro
 Execute the following:
 
 ```
-$ kubectl run nvidia-smi --rm -t -i --restart=Never --image=nvidia/cuda:11.4.0-base --limits=nvidia.com/gpu=1 -- nvidia-smi
+ kubectl run nvidia-smi --rm -t -i --restart=Never --image=nvidia/cuda:11.4.0-base --limits=nvidia.com/gpu=1 -- nvidia-smi
 ```
 
 Output:
@@ -417,7 +419,7 @@ pod "nvidia-smi" deleted
 Create a pod YAML file:
 
 ```
-$ cat <<EOF | tee cuda-samples.yaml
+ cat <<EOF | tee cuda-samples.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -433,13 +435,13 @@ EOF
 Execute the below command to create a sample GPU pod:
 
 ```
-$ sudo kubectl apply -f cuda-samples.yaml
+ kubectl apply -f cuda-samples.yaml
 ```
 
 Execute the below command to confirm the cuda-samples pod was created:
 
 ```
-$ kubectl get pods
+ kubectl get pods
 ``` 
 
 NVIDIA Cloud Native Core stack works as expected if the get pods command shows the pod status as completed.
@@ -487,9 +489,9 @@ Once the helm chart is deployed, access the application with the VLC player. See
 If you do not have a camera input, please execute the below commands to use the default video integrated with the application. 
 
 ```
-$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.6.tgz
+ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.6.tgz
 
-$ helm install video-analytics-demo-0.1.6,tgz --name-template iva
+ helm install video-analytics-demo-0.1.6.tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the Application with VLC player with the instructions below. 

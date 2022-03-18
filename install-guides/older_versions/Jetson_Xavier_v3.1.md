@@ -20,7 +20,7 @@ The final environment will include:
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Installing Helm](#Installing-Helm)
 - [Validating the Installation](#Validating-the-Installation)
-- [Validate NVIDIA Cloud Native Core with an application from NGC](#Validate-the-NVIDIA Cloud Native Core-Stack-with-an-application-from-NGC)
+- [Validate NVIDIA Cloud Native Core with an application from NGC](#Validate-the-NVIDIA-Cloud-Native-Core-with-an-application-from-NGC)
 
 ### Release Notes
 

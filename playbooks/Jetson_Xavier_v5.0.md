@@ -1,4 +1,4 @@
-<h1> NVIDIA Cloud Native Core Jetson Xavier v6.0 </h1>
+<h1> NVIDIA Cloud Native Core Jetson Xavier v5.0 </h1>
 
 This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Core.
 

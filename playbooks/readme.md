@@ -19,7 +19,7 @@ A list of older NVIDIA Cloud Native Core versions (formerly known as EGX Stack) 
 
 - [Install NVIDIA Cloud Native Core](#Install-NVIDIA-Cloud-Native-Core)
 - [Validate NVIDIA Cloud Native Core](#Validate-NVIDIA-Cloud-Native-Core)
-- [Uninstall NVIDIA Cloud Native Core](#Uninstall-NVIDI-Cloud-Native-Core)
+- [Uninstall NVIDIA Cloud Native Core](#Uninstall-NVIDIA-Cloud-Native-Core)
 
 ### Install NVIDIA Cloud Native Core 
 

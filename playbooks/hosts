@@ -1,4 +1,4 @@
 [master]
-192.168.0.21 ansible_ssh_user=nvidia ansible_ssh_pass=nvidia ansible_sudo_pass=nvidia ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+192.168.0.20 ansible_ssh_user=nvidia ansible_ssh_pass=nvidia3D! ansible_sudo_pass=nvidia3D! ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 [nodes]
-192.168.0.22 ansible_ssh_user=nvidia ansible_ssh_pass=nvidia ansible_sudo_pass=nvidia ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+192.168.0.12 ansible_ssh_user=nvidia ansible_ssh_pass=nvidia3D! ansible_sudo_pass=nvidia3D! ansible_ssh_common_args='-o StrictHostKeyChecking=no'

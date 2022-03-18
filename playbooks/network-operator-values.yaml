@@ -8,4 +8,4 @@ rdmaSharedDevicePlugin:
   resources:
     - name: rdma_shared_device_a
       vendors: [15b3]
-      devices: [ ens160f0,ens192]
+      devices: [ ens192f0,ens160f0,ens160f1]

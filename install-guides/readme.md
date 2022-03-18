@@ -1,26 +1,19 @@
-## EGX Install Guides
+## NVIDIA Cloud Native Core Install Guides
 
-The following EGX Platform Install Guides are available.
+The following NVIDIA Cloud Native Core Install Guides are available.
 ### Ubuntu Systems
-- [Ubuntu Server v1.1](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v1.1.md)
-- [Ubuntu Server v1.2](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v1.2.md)
-- [Ubuntu Server v1.3](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v1.3.md)
-- [Ubuntu Server v2.0](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v2.0.md)
-- [Ubuntu Server v3.0](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v3.0.md)
-- [Ubuntu Server v3.1](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v3.1.md)
-- [Ubuntu Server v4.0](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v4.0.md)
-- [Ubuntu Server v4.1](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v4.1.md)
-- [Ubuntu Server v4.2](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v4.2.md)
+- [Ubuntu Server v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/install-guides/Ubuntu_Server_v5.0.md)
+- [Ubuntu Server v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/install-guides/Ubuntu_Server_v6.0.md)
 
 
 ### Jetson Systems
-- [Jetson Xavier NX v2.0](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Jetson_Xavier_NX_v2.0.md)
-- [Jetson Xavier NX v3.1](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Jetson_Xavier_NX_v3.1.md)
-- [Jetson Xavier NX v4.0](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Jetson_Xavier_NX_v4.0.md)
+- [Jetson Xavier v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/install-guides/Jetson_Xavier_v5.0.md)
+- [Jetson Xavier v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/install-guides/Jetson_Xavier_v6.0.md)
+
 
 ### AWS Systems
-- [AWS - Ubuntu Server v2.0](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/AWS_Ubuntu_Server_v2.0.md)
-- [AWS - Ubuntu Server v3.1](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/AWS_Ubuntu_Server_v3.1.md)
-- [AWS - Ubuntu Server v4.0](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/AWS_Ubuntu_Server_v4.0.md)
-- [AWS - Ubuntu Server v4.1](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/AWS_Ubuntu_Server_v4.1.md)
-- [AWS - Ubuntu Server v4.2](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/AWS_Ubuntu_Server_v4.2.md)
+- [AWS - Ubuntu Server v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/install-guides/AWS_Ubuntu_Server_v5.0.md)
+- [AWS - Ubuntu Server v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/install-guides/AWS_Ubuntu_Server_v6.0.md)
+
+`NOTE`
+A list of older NVIDIA Cloud Native Core versions (formerly known as EGX Stack) can be found [here](https://github.com/NVIDIA/cloud-native-core/blob/master/install-guides/older_versions/readme.md)

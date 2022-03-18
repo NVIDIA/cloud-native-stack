@@ -1,0 +1,100 @@
+- hosts: all
+  gather_facts: yes
+  become: true
+  vars_files:
+    - cnc_values.yaml
+  tasks:
+
+   - name: Uninstall the GPU Operator with MIG
+     shell: kubectl label nodes --all nvidia.com/mig.config=all-disabled --overwrite; sleep 60
+     when: "enable_mig == true and cnc_version >= 4.1 and ansible_architecture == 'x86_64'"
+     failed_when: false
+
+   - name: Reset Kubernetes component
+     shell: "timeout 45 kubeadm reset --force"
+     failed_when: false
+     no_log: True
+
+   - name: Remove Conatinerd and Kubernetes packages for Ubuntu
+     when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0"
+     ignore_errors: yes
+     apt:
+       name: ['kubectl', 'kubeadm','kubelet', 'containerd']
+       state: absent
+       purge: yes
+       force: yes
+
+   - name: Remove Docker and Kubernetes packages for Ubuntu
+     when: "ansible_distribution == 'Ubuntu' and cnc_version <= 3.1"
+     ignore_errors: yes
+     apt:
+       name: ['kubectl', 'kubeadm','kubelet', 'docker-ce*']
+       state: absent
+       purge: yes
+       force: yes
+
+   - name: Remove installed packages for RHEL/CentOS
+     when:  "ansible_distribution in ['RedHat', 'CentOS']"
+     ignore_errors: yes
+     yum:
+       name: ['kubectl', 'kubeadm','kubelet', 'docker*']
+       state: absent
+       force: yes
+
+   - name: IPTables Cleanup
+     ignore_errors: yes
+     become: true
+     shell: "iptables -F"
+
+   - name: Cleanup Directories
+     ignore_errors: yes
+     when: ansible_architecture == 'aarch64'
+     file:
+       path: "{{ item }}"
+       state: absent
+     with_items:
+        - /var/lib/etcd
+        - /etc/kubernetes
+        - /usr/local/bin/helm
+        - /usr/local/cuda*
+        - /var/lib/crio
+        - /etc/crio
+        - /usr/local/bin/crio
+        - /var/cuda*
+        - /var/log/containers
+        - /etc/apt/sources.list.d/devel*
+        - /etc/sysctl.d/99-kubernetes-cri.conf
+        - /etc/modules-load.d/containerd.conf
+        - /etc/modules-load.d/crio.conf
+        - /etc/apt/trusted.gpg.d/libcontainers*
+        - /etc/default/kubelet
+        - /etc/cni/net.d
+
+   - name: Cleanup Directories
+     ignore_errors: yes
+     when: ansible_architecture != 'aarch64'
+     file:
+       path: "{{ item }}"
+       state: absent
+     with_items:
+        - /var/lib/etcd
+        - /etc/kubernetes
+        - /usr/local/bin/helm
+        - /usr/local/cuda*
+        - /var/lib/docker
+        - /var/lib/containerd
+        - /var/lib/crio
+        - /run/containerd
+        - /etc/containerd
+        - /etc/crio
+        - /usr/local/bin/crio
+        - /var/cuda*
+        - /etc/docker
+        - /var/log/containers
+        - /etc/apt/sources.list.d/devel*
+        - /etc/sysctl.d/99-kubernetes-cri.conf
+        - /etc/modules-load.d/containerd.conf
+        - /etc/modules-load.d/crio.conf
+        - /etc/apt/trusted.gpg.d/libcontainers*
+        - /etc/default/kubelet
+        - /etc/cni/net.d

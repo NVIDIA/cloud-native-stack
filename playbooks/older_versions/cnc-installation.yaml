@@ -1,0 +1,464 @@
+- hosts: master
+  vars_files:
+    - ../cnc_values.yaml
+  tasks:
+   - name: Validate whether Kubernetes cluster installed
+     shell: kubectl cluster-info
+     register: k8sup
+     no_log: True
+     failed_when: false
+
+   - name: Reset Kubernetes component
+     become: true
+     when: "'running' not in k8sup.stdout"
+     shell: "kubeadm reset --force"
+     register: reset_cluster
+     no_log: True
+     failed_when: false
+
+   - name: remove etcd directory
+     become: true
+     when: "'running' not in k8sup.stdout"
+     file:
+       path: "/var/lib/etcd"
+       state: absent
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd
+     when: "'running' not in k8sup.stdout and cnc_version >= 4.0"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock
+     become: true
+     register: kubeadm
+
+   - name: Initialize the Kubernetes cluster using kubeadm
+     when: "cnc_version <= 3.1 and 'running' not in k8sup.stdout"
+     command: kubeadm init --pod-network-cidr=192.168.0.0/16
+     become: true
+     register: kubeadm
+
+   - name: Create kube directory
+     when: "'running' not in k8sup.stdout"
+     file:
+      path: $HOME/.kube
+      state: directory
+
+   - name: admin permissions
+     become: true
+     file:
+       path: /etc/kubernetes/admin.conf
+       mode: '0644'
+
+   - name: Copy kubeconfig to home
+     when: "'running' not in k8sup.stdout"
+     copy:
+       remote_src: yes
+       src:  /etc/kubernetes/admin.conf
+       dest:  $HOME/.kube/config
+       mode: '0600'
+
+
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core > 3.1
+     #when: "'running' not in k8sup.stdout and cnc_version == 5.0"
+     when: "'running' not in k8sup.stdout and cnc_version >= 3.1"
+     command: kubectl apply -f https://docs.projectcalico.org/v3.21/manifests/calico.yaml
+
+   - name: Update Network plugin for Calico on NVIDIA Cloud Native Core > 3.1
+     when: "'running' not in k8sup.stdout and cnc_version >= 3.1 "
+     shell: "sleep 5; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*" 
+
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core 2.0
+     when: "'running' not in k8sup.stdout and cnc_version == 2.0"
+     command: kubectl apply -f https://docs.projectcalico.org/v3.11/manifests/calico.yaml
+
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core 1.2 or 1.3
+     when: "cnc_version == 1.2 or cnc_version == 1.3 and 'running' not in k8sup.stdout"
+     command: kubectl apply -f https://docs.projectcalico.org/v3.9/manifests/calico.yaml
+
+   - name: Update Networking Plugin for  on NVIDIA Cloud Native Core 1.2 or 1.3
+     when: "cnc_version == 1.2 or cnc_version == 1.3 and 'running' not in k8sup.stdout"
+     command: kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
+
+
+   - name: Taint the Kubernetes Control Plane node
+     when: "'running' not in k8sup.stdout"
+     command: kubectl taint nodes --all node-role.kubernetes.io/master-
+
+   - name: Generate join token
+     become: true
+     when: "'running' not in k8sup.stdout"
+     shell: kubeadm token create --print-join-command
+     register: kubeadm_join_cmd
+
+   - set_fact:
+       kubeadm_join: "{{ kubeadm_join_cmd.stdout }}"
+     when: "'running' not in k8sup.stdout"
+
+   - name: Store join command
+     when: "'running' not in k8sup.stdout"
+     become: true
+     copy: 
+       content: "{{ kubeadm_join }}" 
+       dest: "/tmp/kubeadm-join.command"
+
+   - name: Store Kubernetes cluster status
+     become: true
+     copy:
+       content: "{{ k8sup.stdout }}"
+       dest: "/tmp/k8sup.status"
+
+- hosts: nodes
+  vars_files:
+    - ../cnc_values.yaml
+  tasks:
+   - name: Copy kubernetes cluster status
+     become: true
+     copy:
+       src: "/tmp/k8sup.status"
+       dest: "/tmp/k8sup.status"
+
+   - name: Search for Kubernetes status
+     become: true
+     register: k8sup
+     shell: "cat /tmp/k8sup.status"
+
+   - name: Reset Kubernetes component
+     become: true
+     shell: "kubeadm reset --force"
+     register: reset_cluster
+     failed_when: false
+     when: "'running' not in k8sup.stdout"
+
+   - name: Create kube directory
+     become: true
+     file:
+       path: /etc/kubernetes
+       state: directory
+
+   - name: Copy kubeadm-join command to node
+     become: true
+     copy:
+       src: "/tmp/kubeadm-join.command"
+       dest: "/tmp/kubeadm-join.command"
+
+   - name: Get the Active Mellanox NIC on nodes
+     when: "enable_network_operator == true and cnc_version >= 4.1"
+     become: true
+     shell: "for device in `sudo lshw -class network -short | grep -i ConnectX | awk '{print $2}' | egrep -v 'Device|path' | sed '/^$/d'`;do echo -n $device; sudo ethtool $device | grep -i 'Link detected'; done | grep yes | awk '{print $1}' > /tmp/$(hostname)-nic"
+     register: node_nic
+
+   - name: Copy Mellanox NIC Active File to master
+     when: "enable_network_operator == true and cnc_version >= 4.1"
+     become: true
+     fetch:
+       src: "/tmp/{{ ansible_nodename }}-nic"
+       dest: "/tmp/"
+       flat: yes
+
+
+- hosts: nodes
+  vars:
+     kubeadm_join: "{{ lookup('file', '/tmp/kubeadm-join.command') }}"
+  tasks:
+
+   - name: Search for Kubernetes status
+     become: true
+     register: k8sup
+     shell: "cat /tmp/k8sup.status"
+
+   - name: Run kubeadm join
+     become: true
+     shell: "{{ kubeadm_join }}"
+     when: "'running' not in k8sup.stdout"
+
+- hosts: master
+  vars_files:
+    - ../cnc_values.yaml
+  tasks:
+   - name: Validate whether Kubernetes cluster installed
+     shell: kubectl cluster-info
+     register: k8sup
+     no_log: True
+     failed_when: false
+
+   - name: Get Node name
+     shell: "kubectl get nodes  | grep -v master | awk '{print $1}' | grep -v NAME"
+     register: node_name
+     no_log: True
+     failed_when: false
+     when: "'running' in k8sup.stdout"
+
+   - name: Lable the node
+     shell: "kubectl label node {{ item }} node-role.kubernetes.io/node="
+     with_items: "{{ node_name.stdout_lines }}"
+     when: "'running' in k8sup.stdout"
+     no_log: True
+     failed_when: false
+
+   - name: Check If Helm is Installed
+     shell: command -v helm >/dev/null 2>&1
+     register: helm_exists
+     no_log: True
+     failed_when: false
+
+   - name: "Install Helm on NVIDIA Cloud Native Core 1.2 or 2.0"
+     become: true
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+       - curl -O https://get.helm.sh/helm-v3.1.0-linux-amd64.tar.gz
+       - tar -xvzf helm-v3.1.0-linux-amd64.tar.gz
+       - cp linux-amd64/helm /usr/bin/
+       - rm -rf helm-v3.1.0-linux-amd64.tar.gz linux-amd64
+     when: "cnc_version == 1.2 or cnc_version == 2.0 and helm_exists.rc > 0"
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 1.2 or 2.0
+     become: true
+     when: "cnc_version == 1.2 or cnc_version == 2.0 and 'running' in k8sup.stdout"
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://nvidia.github.io/gpu-operator 
+        - helm repo update
+        - helm install --version 1.1.7 --devel nvidia/gpu-operator --wait --generate-name
+
+   - name: "Install Helm on NVIDIA Cloud Native Core 3.1 or 1.3"
+     become: true
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+       - curl -O https://get.helm.sh/helm-v3.3.3-linux-amd64.tar.gz
+       - tar -xvzf helm-v3.3.3-linux-amd64.tar.gz
+       - cp linux-amd64/helm /usr/local/bin/
+       - rm -rf helm-v3.3.3-linux-amd64.tar.gz linux-amd64
+     when: "cnc_version == 1.3 or cnc_version == 3.1 and helm_exists.rc > 0"
+
+   - name: "Install Helm on NVIDIA Cloud Native Core 4.0"
+     become: true
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+       - curl -O https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz
+       - tar -xvzf helm-v3.5.4-linux-amd64.tar.gz
+       - cp linux-amd64/helm /usr/local/bin/
+       - rm -rf helm-v3.5.4-linux-amd64.tar.gz linux-amd64
+     when: "cnc_version == 4.0 and helm_exists.rc > 0"
+
+   - name: "Install Helm on NVIDIA Cloud Native Core 4.1"
+     become: true
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+       - curl -O https://get.helm.sh/helm-v3.6.2-linux-amd64.tar.gz
+       - tar -xvzf helm-v3.6.2-linux-amd64.tar.gz
+       - cp linux-amd64/helm /usr/local/bin/
+       - rm -rf helm-v3.6.2-linux-amd64.tar.gz linux-amd64
+     when: "helm_exists.rc > 0 and cnc_version == 4.1"
+
+   - name: "Install Helm on NVIDIA Cloud Native Core 4.2"
+     become: true
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+       - curl -O https://get.helm.sh/helm-v3.7.0-linux-amd64.tar.gz
+       - tar -xvzf helm-v3.7.0-linux-amd64.tar.gz
+       - cp linux-amd64/helm /usr/local/bin/
+       - rm -rf helm-v3.7.0-linux-amd64.tar.gz linux-amd64
+     when: "cnc_version == 4.2 and helm_exists.rc > 0"
+
+   - name: Checking Nouveau is disabled
+     become: true
+     command: lsmod | grep nouveau
+     register: nouveau_result
+     failed_when: false
+
+   - name: Alert
+     when: nouveau_result.rc != 1
+     failed_when: false
+     debug:
+       msg: "Please reboot the host and run the same command again"
+
+   - name: Checking if Network Operator is installed
+     shell: helm ls -A | grep network-operator
+     register: network_operator
+     failed_when: false
+     no_log: True
+
+   - name: Get the Active Mellanox NIC on master
+     when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version >= 4.1"
+     become: true
+     failed_when: false
+     shell: "for device in `sudo lshw -class network -short | grep -i ConnectX | awk '{print $2}' | egrep -v 'Device|path' | sed '/^$/d'`;do echo -n $device; sudo ethtool $device | grep -i 'Link detected'; done | awk '{print $1}' > /tmp/$(hostname)-nic"
+
+   - name: List Mellanox Active NICs
+     when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version >= 4.1"
+     failed_when: false
+     shell: "for list in `ls -lrt /tmp/*nic | awk '{print $NF}'`; do cat $list | tr '\n' ','; done | sed 's/.$//'"
+     register: active_nic
+
+   - name: Update Active mellanox NIC in network-operator-values.yaml
+     when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version >= 4.1"
+     failed_when: false
+     shell: 'sed -ie "s/devices: \[.*\]/devices: \\[ {{ active_nic.stdout }}\]/g" $PWD/cloud-native-core/playbooks/network-operator-values.yaml'
+     args:
+       warn: false
+
+   - name: Installing the Network Operator on NVIDIA Cloud Native Core 
+     when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version >= 4.1"
+     shell: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add mellanox https://mellanox.github.io/network-operator --force-update
+        - helm repo update
+        - kubectl label nodes --all node-role.kubernetes.io/master- --overwrite
+        - helm install -f $PWD/cloud-native-core/playbooks/network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
+        - kubectl apply -f $PWD/cloud-native-core/playbooks/networkdefinition.yaml
+
+   - name: Checking if GPU Operator is installed
+     shell: helm ls -A | grep gpu-operator
+     register: gpu_operator
+     failed_when: false
+     no_log: True
+
+   - name: Checking if Network Operator is installed
+     shell: helm ls -A | grep network-operator
+     register: network_operator_valid
+     failed_when: false
+     no_log: True
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 3.1
+     when: "cnc_version == 1.3 or cnc_version == 3.1 and gpu_operator.rc == 1 and 'running' in k8sup.stdout"
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.6.2 --devel nvidia/gpu-operator --wait --generate-name
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 4.0
+     when: "cnc_version == 4.0 and gpu_operator.rc == 1 and 'running' in k8sup.stdout"
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.7.0 --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd --wait --generate-name
+
+
+   - name: Install GPU Operator with vGPU on NVIDIA Cloud Native Core stack 4.1
+     when: "enable_vgpu == true and cnc_version == 4.1 and gpu_operator.rc == 1 and 'running' in k8sup.stdout"
+     args:
+       warn: false
+     shell: "{{ item }}"
+     with_items:
+        - kubectl create namespace gpu-operator-resources
+        - kubectl create configmap licensing-config -n gpu-operator-resources --from-file=$PWD/cloud-native-core/playbooks/gridd.conf
+        - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password={{ gpu_operator_registry_password }} --docker-email={{ gpu_operator_registry_email }} -n gpu-operator-resources
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.8.0 --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd --set driver.repository='{{ gpu_operator_driver_registry }}' --set driver.imagePullSecrets[0]=registry-secret --set driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 4.1
+     when: "enable_vgpu == false and cnc_version == 4.1 and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and enable_mig == false and 'running' in k8sup.stdout"
+     shell: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.8.0 --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd --wait --generate-name
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 4.1
+     when: "enable_vgpu == false and cnc_version == 4.1 and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and enable_mig == true and 'running' in k8sup.stdout"
+     shell: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.8.0 --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd --wait --set mig.strategy=single --generate-name
+        - kubectl label nodes --all nvidia.com/mig.config={{ mig_profile }} --overwrite
+
+   - name: Installing the GPU Operator with MIG and RDMA on NVIDIA Cloud Native Core 4.1
+     when: "enable_vgpu == false and cnc_version == 4.1 and gpu_operator.rc == 1 and enable_rdma == true and enable_mig == true and 'running' in k8sup.stdout"
+     shell: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.8.0 --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd --set driver.rdma.enabled=true --set mig.strategy=single --wait --generate-name
+
+   - name: Install GPU Operator with vGPU on NVIDIA Cloud Native Core stack 4.2
+     when: "enable_vgpu == true and cnc_version == 4.2 and gpu_operator.rc == 1 and 'running' in k8sup.stdout"
+     args:
+       warn: false
+     shell: "{{ item }}"
+     with_items:
+        - kubectl create namespace gpu-operator-resources
+        - kubectl create configmap licensing-config -n gpu-operator-resources --from-file=$PWD/cloud-native-core/playbooks/gridd.conf
+        - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password={{ gpu_operator_registry_password }} --docker-email={{ gpu_operator_registry_email }} -n gpu-operator-resources
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.9.0 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd --set driver.repository='{{ gpu_operator_driver_registry }}' --set driver.imagePullSecrets[0]=registry-secret --set driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 4.2
+     when: "enable_mig == false and enable_vgpu == false and enable_rdma == false and cnc_version == 4.2 and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout"
+     shell: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.9.0 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd --wait --generate-name
+
+   - name: Installing the GPU Operator with RDMA on NVIDIA Cloud Native Core 4.2
+     when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and cnc_version == 4.2 and gpu_operator.rc == 1 and 'running' in k8sup.stdout"
+     shell: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.9.0 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd,driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy=single --wait --generate-name 
+
+
+   - name: Installing the GPU Operator with RDMA on NVIDIA Cloud Native Core 4.2
+     when: "enable_mig == false and  enable_rdma == true and enable_vgpu == false and cnc_version == 4.2 and gpu_operator.rc == 1 and 'running' in k8sup.stdout"
+     shell: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.9.0 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd,driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait --generate-name 
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 4.2
+     when: "enable_mig == true and  enable_rdma == false  and enable_vgpu == false and cnc_version == 4.2 and gpu_operator.rc == 1 and 'running' in k8sup.stdout"
+     shell: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.9.0 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set operator.defaultRuntime=containerd --set mig.strategy=single --wait --generate-name
+
+   - name: Enable MIG profile with GPU Operator on NVIDIA Cloud Native Core
+     when: "enable_mig == true and enable_vgpu == false and gpu_operator.rc == 1 and cnc_version >= 4.1"
+     shell: "kubectl label nodes --all nvidia.com/mig.config={{ mig_profile }} --overwrite"
+     args:
+       warn: false
+
+   - name: Container Netwroking Plugin changes 
+     when: "'running' in k8sup.stdout" 
+     shell: "sleep 20; timeout 15 kubectl delete pods $(kubectl get pods -n kube-system | grep core | awk '{print $1}') -n kube-system; for ns in `kubectl get pods -A  | grep node-feature | grep -v master | awk '{print $1}'`; do kubectl get pods -n $ns  | grep node-feature | grep -v master | awk '{print $1}' | xargs kubectl delete pod -n $ns; done"
+#       - kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=$(cat /tmp/*ipv4nic | sed 's/^ *//g' | sed 's/\(.\{3\}\).*/\1/' | sed 's/$/*/' | sed  'N;s/\n/,/g')
+     args:
+       warn: false

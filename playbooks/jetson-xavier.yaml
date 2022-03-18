@@ -1,0 +1,381 @@
+- hosts: all
+  gather_facts: yes
+  vars_files:
+    - cnc_values.yaml
+  tasks:
+    - name: Add an Kubernetes apt signing key for Ubuntu
+      become: true
+      when: "ansible_distribution == 'Ubuntu'"
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    - name: Adding Kubernetes apt repository for Ubuntu
+      become: true
+      when: "ansible_distribution == 'Ubuntu'"
+      apt_repository:
+        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+        filename: kubernetes
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core
+      become: true
+      when: "cnc_version == 5.0 and ansible_distribution == 'Ubuntu'"
+      apt:
+        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.22.5-00', 'kubeadm=1.22.5-00', 'kubectl=1.22.5-00']
+        state: present
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core
+      become: true
+      when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu'"
+      apt:
+        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.2-00', 'kubeadm=1.23.2-00', 'kubectl=1.23.2-00']
+        state: present
+
+    - name: Hold the installed Packages
+      become: true
+      when: "ansible_distribution == 'Ubuntu'"
+      dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      with_items:
+        - kubelet
+        - kubectl
+        - kubeadm
+
+    - name: Validate whether Kubernetes cluster installed
+      shell: kubectl cluster-info
+      register: k8sup
+      no_log: True
+      failed_when: false
+
+    - name: Remove swapfile from /etc/fstab
+      become: true
+      when: "'running' not in k8sup.stdout"
+      mount:
+        name: "{{ item }}"
+        fstype: swap
+        state: absent
+      with_items:
+        - swap
+        - none
+
+    - name: Disable swap
+      become: true
+      when: "'running' not in k8sup.stdout"
+      command: swapoff -a
+
+    - name: Setup Containerd for Ubuntu
+      become: true
+      block:
+        - name: Create containerd.conf
+          lineinfile:
+            create: yes
+            mode: 666
+            path: /etc/modules-load.d/containerd.conf
+            line: "{{ item }}"
+          loop:
+            - "overlay"
+            - "br_netfilter"
+
+        - name: Modprobe for overlay and br_netfilter
+          modprobe:
+            name: "{{ item }}"
+            state: present
+          ignore_errors: true
+          loop:
+          - "overlay"
+          - "br_netfilter"
+
+        - name: Add sysctl parameters to /etc/sysctl.conf
+          sysctl:
+            name: "{{ item.name }}"
+            value: "{{ item.value }}"
+            state: present
+            reload: "{{ item.reload }}"
+          loop:
+            - {name: "net.bridge.bridge-nf-call-ip6tables", value: "1", reload: no}
+            - {name: "net.bridge.bridge-nf-call-iptables", value: "1", reload: no}
+            - {name: "net.ipv4.ip_forward", value: "1", reload: yes}
+        
+        - name: Install libseccomp2
+          apt:
+            name: libseccomp2
+            state: present
+            update_cache: yes
+        
+        - name: Create /etc/containerd
+          file:
+            path: /etc/containerd
+            state: directory
+
+        - name: Create /etc/default/kubelet
+          lineinfile:
+            line: KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
+            path: /etc/default/kubelet
+            create: yes
+      when: "cnc_version == 5.0 or cnc_version == 6.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
+
+    - name: Install Containerd for NVIDIA Cloud Native Core 5.0
+      become: true
+      block:
+  #      - name: Download cri-containerd-cni
+  #        get_url:
+  #          url: https://github.com/containerd/containerd/releases/download/v1.4.9/cri-containerd-cni-1.4.9-linux-arm64.tar.gz
+  #          dest: /tmp/cri-containerd-cni-1.4.9-linux-arm64.tar.gz
+  #          mode: 0664
+
+  #      - name: Untar cri-containerd-cni
+  #        unarchive:
+  #          src: /tmp/cri-containerd-cni-1.4.9-linux-arm64.tar.gz
+  #          dest: /
+  #          remote_src: yes
+  #          extra_opts:
+  #            - --no-overwrite-dir
+
+
+        - name: Write defaults to config.toml
+          get_url:
+            dest: /etc/containerd/config.toml
+            url: https://raw.githubusercontent.com/NVIDIA/cloud-native-core/master/playbooks/config.toml
+            mode: 0664
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "cnc_version == 5.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
+
+    - name: Install Containerd for NVIDIA Cloud Native Core 6.0
+      become: true
+      block:
+        - name: Download cri-containerd-cni
+          get_url:
+            url: https://github.com/containerd/containerd/releases/download/v1.6.0/cri-containerd-cni-1.6.0-linux-arm64.tar.gz
+            dest: /tmp/cri-containerd-cni-1.6.0-linux-arm64.tar.gz
+            mode: 0664
+
+        - name: Untar cri-containerd-cni
+          unarchive:
+            src: /tmp/cri-containerd-cni-1.6.0-linux-arm64.tar.gz
+            dest: /
+            remote_src: yes
+            extra_opts:
+              - --no-overwrite-dir
+        
+
+        - name: Write defaults to config.toml
+          get_url:
+            dest: /etc/containerd/config.toml
+            url: https://raw.githubusercontent.com/NVIDIA/cloud-native-core/master/playbooks/config.toml
+            mode: 0664
+            
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
+    
+#    - name: Installing Latest Nvidia Container Runtime
+#      become: true
+#      block:
+#        - name: Add NVIDIA Docker apt signing key for Ubuntu
+#          apt_key:
+#            url: https://nvidia.github.io/nvidia-docker/gpgkey
+#            state: present
+#        - name: Get NVIDIA Docker Apt list
+#          get_url:
+#            url: https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list
+#            dest: /etc/apt/sources.list.d/nvidia-docker.list
+#            mode: 0644
+#        - name: Install NVIDIA Container Runtime
+#          apt:
+#            name: ['nvidia-container-runtime=3.1.0-1']
+#            state: present
+#            update_cache: yes
+#      when: "cnc_version == 5.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
+
+    - name: Installing Latest Nvidia Container Runtime
+      become: true
+      block:
+        - name: Add NVIDIA Docker apt signing key for Ubuntu 
+          apt_key:
+            url: https://nvidia.github.io/nvidia-docker/gpgkey
+            state: present
+
+        - name: Get NVIDIA Docker Apt list
+          get_url:
+            url: https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list 
+            dest: /etc/apt/sources.list.d/nvidia-docker.list
+            mode: 0644
+
+        - name: Install NVIDIA Container Runtime
+          apt:
+            name: ['nvidia-container-runtime=3.8.0-1']
+            state: present
+            update_cache: yes
+      when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
+
+- hosts: master
+  vars_files:
+    - cnc_values.yaml
+  tasks:
+   - name: Validate whether Kubernetes cluster installed
+     shell: kubectl cluster-info
+     register: k8sup
+     no_log: True
+     failed_when: false
+
+   - name: Reset Kubernetes component
+     become: true
+     when: "'running' not in k8sup.stdout"
+     shell: "kubeadm reset --force"
+     register: reset_cluster
+     no_log: True
+     failed_when: false
+
+   - name: remove etcd directory
+     become: true
+     when: "'running' not in k8sup.stdout"
+     file:
+       path: "/var/lib/etcd"
+       state: absent
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd
+     when: "cnc_version == 6.0 or cnc_version == 5.0 and 'running' not in k8sup.stdout"
+     command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock
+     become: true
+     register: kubeadm
+
+   - name: Create kube directory
+     when: "'running' not in k8sup.stdout"
+     file:
+      path: $HOME/.kube
+      state: directory
+
+   - name: admin permissions
+     become: true
+     file:
+       path: /etc/kubernetes/admin.conf
+       mode: '0644'
+
+   - name: Copy kubeconfig to home
+     when: "'running' not in k8sup.stdout"
+     copy:
+       remote_src: yes
+       src:  /etc/kubernetes/admin.conf
+       dest:  $HOME/.kube/config
+       mode: '0600'
+
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core
+     when: "cnc_version == 6.0 or cnc_version == 5.0 and 'running' not in k8sup.stdout"
+     command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+   - name: Taint the Kubernetes Control Plane node
+     when: "'running' not in k8sup.stdout"
+     command: kubectl taint nodes --all node-role.kubernetes.io/master-
+
+   - name: Generate join token
+     become: true
+     when: "'running' not in k8sup.stdout"
+     shell: kubeadm token create --print-join-command
+     register: kubeadm_join_cmd
+
+   - set_fact:
+       kubeadm_join: "{{ kubeadm_join_cmd.stdout }}"
+     when: "'running' not in k8sup.stdout"
+
+   - name: Store join command
+     when: "'running' not in k8sup.stdout"
+     become: true
+     copy: 
+       content: "{{ kubeadm_join }}" 
+       dest: "/tmp/kubeadm-join.command"
+
+- hosts: nodes
+  vars_files:
+    - cnc_values.yaml
+  tasks:
+   - name: Reset Kubernetes component
+     become: true
+     shell: "kubeadm reset --force"
+     register: reset_cluster
+     no_log: True
+     failed_when: false
+
+   - name: Create kube directory
+     become: true
+     file:
+       path: /etc/kubernetes
+       state: directory
+
+   - name: Copy kubeadm-join command to node
+     become: true
+     copy:
+       src: "/tmp/kubeadm-join.command"
+       dest: "/tmp/kubeadm-join.command"
+
+- hosts: nodes
+  vars:
+     kubeadm_join: "{{ lookup('file', '/tmp/kubeadm-join.command') }}"
+  tasks:
+
+   - name: Run kubeadm join
+     become: true
+     shell: "{{ kubeadm_join }}"
+
+- hosts: master
+  vars_files:
+    - cnc_values.yaml
+  tasks:
+   - name: Validate whether Kubernetes cluster installed
+     shell: kubectl cluster-info
+     register: k8sup
+     no_log: True
+     failed_when: false
+
+   - name: Get Node name
+     shell: "kubectl get nodes  | grep -v master | awk '{print $1}' | grep -v NAME"
+     register: node_name
+     no_log: True
+     failed_when: false
+     when: "'running' in k8sup.stdout"
+
+   - name: Lable the node
+     shell: "kubectl label node {{ item }} node-role.kubernetes.io/node="
+     with_items: "{{ node_name.stdout_lines }}"
+     when: "'running' in k8sup.stdout"
+     no_log: True
+     failed_when: false
+
+   - name: Check If Helm is Installed
+     shell: command -v helm >/dev/null 2>&1
+     register: helm_exists
+     no_log: True
+     failed_when: false
+
+   - name: "Install Helm on NVIDIA Cloud Native Core"
+     become: true
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+       - curl -O https://get.helm.sh/helm-v3.6.3-linux-arm64.tar.gz
+       - tar -xvzf helm-v3.6.3-linux-arm64.tar.gz
+       - cp linux-arm64/helm /usr/local/bin/
+       - rm -rf helm-v3.6.3-linux-arm64.tar.gz linux-arm64
+     when: "cnc_version == 5.0 and helm_exists.rc > 0"
+
+   - name: "Install Helm on NVIDIA Cloud Native Core"
+     become: true
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+       - curl -O https://get.helm.sh/helm-v3.8.0-linux-arm64.tar.gz
+       - tar -xvzf helm-v3.8.0-linux-arm64.tar.gz
+       - cp linux-arm64/helm /usr/local/bin/
+       - rm -rf helm-v3.8.0-linux-arm64.tar.gz linux-arm64
+     when: "cnc_version == 6.0 and helm_exists.rc > 0"

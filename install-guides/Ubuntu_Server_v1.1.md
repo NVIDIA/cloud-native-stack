@@ -1,4 +1,4 @@
-### Deprecated, please refer to [Ubuntu Server 1.2](https://github.com/NVIDIA/egx-platform/blob/master/install-guides/Ubuntu_Server_v1.2.md)
+### Deprecated, please refer to [Ubuntu Server 1.2](https://github.com/NVIDIA/cloud-native-core/blob/master/install-guides/Ubuntu_Server_v1.2.md)
 
 <h1>EGX Stack v1.1 - Install Guide for Ubuntu Server x86-64</h1>
 <h2>Introduction</h2>

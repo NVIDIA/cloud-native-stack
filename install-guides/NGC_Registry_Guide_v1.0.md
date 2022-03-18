@@ -12,7 +12,7 @@ This document describes how to deploy an application from NGC Registry, how to s
 
 ## Deploy an Application from NGC Catalog
 
-The Below instructions are based on the assumption that you have a NGC-Ready for Edge Server with the EGX Stack installed. If not, please refer to the [EGX Stack](https://github.com/NVIDIA/egx-platform)
+The Below instructions are based on the assumption that you have a NVIDIA Certified System for Edge Server with the NVIDIA Cloud Native Core installed. If not, please refer to the [NVIDIA Cloud Native Core](https://github.com/NVIDIA/cloud-native-core)
 
 First, Go to https://ngc.nvidia.com. 
 
@@ -26,13 +26,13 @@ You can find multiple Helm Charts under the Helm Chart Tab.  If you already know
 
 ![ngc_app_catalog](screenshots/ngc_app_catalog.png)
 
-Once you find the right Helm Chart on NGC, click on the Helm chart to access the Helm Chart detail view and  get instructions on how to deploy the Helm Chart on EGX Stack.
+Once you find the right Helm Chart on NGC, click on the Helm chart to access the Helm Chart detail view and  get instructions on how to deploy the Helm Chart on NVIDIA Cloud Native Core.
 
 In this Helm Chart, you can see proper instructions on the DeepStream Helm Chart overview section such as how can you deploy a Helm Chart and how can you view the application as per below. 
 
 ![ngc_deepstream_app](screenshots/ngc_deepstream_app.png)
 
-If you don't see any instructions in the overview section, run the below commands with Helm Chart Name and Helm Chart Version to install the Chart on EGX Stack. 
+If you don't see any instructions in the overview section, run the below commands with Helm Chart Name and Helm Chart Version to install the Chart on NVIDIA Cloud Native Core. 
 
 ```
 $ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/ChartName-Version.tgz
@@ -143,7 +143,7 @@ As data scientists build custom content, storing, sharing, and versioning of thi
 
 ### NGC Support Services
 
-NGC Support Services provides enterprise-grade support to ensure optimal performance and maximized system utility for NGC-Ready systems. The support service is purchased through NVIDIA's OEM partners. The service gives enterprise customers direct phone access to NVIDIA's subject matter experts to quickly address L1 through L3 software issues during local business hours or via web and email. This support for open source AI software combined with the OEM's hardware support gives enterprises to build optimized AI solutions at scale, minimize system downtime and accelerate their time to solution. 
+NGC Support Services provides enterprise-grade support to ensure optimal performance and maximized system utility for NVIDIA Certified System. The support service is purchased through NVIDIA's OEM partners. The service gives enterprise customers direct phone access to NVIDIA's subject matter experts to quickly address L1 through L3 software issues during local business hours or via web and email. This support for open source AI software combined with the OEM's hardware support gives enterprises to build optimized AI solutions at scale, minimize system downtime and accelerate their time to solution. 
 
 NGC support services cover machine learning, deep learning and inference containers available from NGC, running on both bare metal or virtual machines. Support is also provided for CUDA and associated drivers. Below is the breakdown of the various softwares that are covered under the contract. The OEM partner is typically responsible for providing support at the hardware and OS level with additional support for container orchestration tools. 
 

@@ -1,24 +1,29 @@
-<h1>Ansible playbooks for EGX Platform</h1>
+<h1>Ansible Playbooks for NVIDIA Cloud Native Core </h1>
 
 <h2> Available Ansible Playbooks </h2>
 
-- [Ubuntu(x86-64)_v1.1](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.1.md)(DEPRECATED)
-- [Ubuntu(x86-64)_v1.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.2.md)
-- [Ubuntu(x86-64) v1.3](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.3.md)
-- [Ubuntu(x86-64) v2.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v2.0.md)
-- [Ubuntu(x86-64) v3.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v3.0.md)
-- [Ubuntu(x86-64) v3.1](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v3.1.md)
-- [Ubuntu(x86-64) v4.0](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v4.0.md)
-- [Ubuntu(x86-64) v4.1](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v4.1.md)
-- [Ubuntu(x86-64) v4.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v4.2.md)
+<h3> Ubuntu Systems </h3>
+
+- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/egx-/blob/master/playbooks/Ubuntu_Server_v5.0.md)
+- [Ubuntu(x86-64) v6.0](https://github.com/NVIDIA/egx-/blob/master/playbooks/Ubuntu_Server_v6.0.md)
+
+<h3> Jetson Systems </h3>
+
+- [Jetson Xavier v5.0](https://github.com/NVIDIA/egx-/blob/master/playbooks/Jetson_Xavier_v5.0.md)
+- [Jetson Xavier v6.0](https://github.com/NVIDIA/egx-/blob/master/playbooks/Jetson_Xavier_v6.0.md)
+
+`NOTE`
+A list of older NVIDIA Cloud Native Core versions (formerly known as EGX Stack) can be found [here](https://github.com/NVIDIA/egx-/blob/master/playbooks/older_versions/readme.md)
 
 <h2> Ansible Playbook Descriptions </h2>
 
-- [Install EGX Platform](#Install-EGX-Platform)
-- [Validate EGX Platform](#Validate-EGX-Platform)
-- [Uninstall EGX Platform](#Uninstall-EGX-Platform)
+- [Install NVIDIA Cloud Native Core ](#Install-NVIDIA Cloud Native Core)
+- [Validate NVIDIA Cloud Native Core ](#Validate-NVIDIA Cloud Native Core)
+- [Uninstall NVIDIA Cloud Native Core ](#Uninstall-NVIDIA Cloud Native Core)
 
-The Ansible EGX Platform installation playbook will do the following:
+### Install NVIDIA Cloud Native Core 
+
+The Ansible NVIDIA Cloud Native Core installation playbook will do the following:
 
 - Validate if Kubernetes is already installed
 - Setup the Kubernetes repository
@@ -38,10 +43,11 @@ The Ansible EGX Platform installation playbook will do the following:
 - Check if Helm installed
 - Install Helm, if not already installed
 - Install the NVIDIA GPU Operator
+- Install the NVIDIA Network Operator 
 
-### Validate EGX Platform
+### Validate NVIDIA Cloud Native Core 
 
-The Ansible EGX Platform validation playbook will do the following:
+The Ansible NVIDIA Cloud Native Core validation playbook will do the following:
 
 - Validate if Kubernetes cluster is up
 - Check if node is up and running
@@ -51,9 +57,9 @@ The Ansible EGX Platform validation playbook will do the following:
 - Report Operating System, Docker, Kubernetes, Helm, GPU Operator versions
 - Validate nvidia-smi and cuda liberaries on kubernetes
 
-### Uninstall EGX Platform
+### Uninstall NVIDIA Cloud Native Core 
 
-The Ansible EGX Platform uninstall playbook will do the following:
+The Ansible NVIDIA Cloud Native Core uninstall playbook will do the following:
 
 - Reset the Kubernetes cluster
 - Remove the Helm package
@@ -61,4 +67,6 @@ The Ansible EGX Platform uninstall playbook will do the following:
 
 ### Getting Help
 
-Please [open an issue on the GitHub project](https://github.com/NVIDIA/egx-platform/issues) for any questions. Your feedback is appreciated.
+Please [open an issue on the GitHub project](https://github.com/NVIDIA/cloud-native-core/issues) for any questions. Your feedback is appreciated.
+
+

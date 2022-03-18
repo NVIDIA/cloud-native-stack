@@ -1,0 +1,25 @@
+cnc_version: 6.0
+## This is most likely NVIDIA Driver Version (https://www.nvidia.com/Download/index.aspx?lang=en-us)
+## enable 51.0.47.03 for cnc_version: 6.0
+gpu_driver_version: "510.47.03"
+## If the Network Operator is yes then make sure enable_rdma as well yes
+enable_network_operator: no
+## Enable RDMA yes for NVIDIA Certification
+enable_rdma: no
+## This is most likely to enable MIG with GPU Operator 
+enable_mig: yes
+## This is most likely to MIG Profile for GPU Operator 
+mig_profile: all-disabled
+## This is most likely to enable vGPU for GPU Operator 
+enable_vgpu: no
+## This is most likely vGPU License Server
+vgpu_license_server: ""
+## This is most likely GPU Operator Driver Registry
+gpu_operator_driver_registry: "nvcr.io/ea-cnt/nv_only"
+## This should remain as $oauthtoken if using an NGC API key
+gpu_operator_registry_username: "$oauthtoken"
+## This is most likely an NGC API key
+gpu_operator_registry_password: ""
+## This is most likely an NGC email
+gpu_operator_registry_email: ""
+

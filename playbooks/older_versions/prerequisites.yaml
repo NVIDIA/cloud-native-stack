@@ -1,0 +1,420 @@
+- hosts: all
+  gather_facts: yes
+  vars_files:
+    - ../cnc_values.yaml
+  tasks:
+    - name: Checking Nouveau is disabled
+      become: true
+      command: lsmod | grep nouveau
+      register: nouveau_result
+      failed_when: false
+
+    - name: unload nouveau
+      when: nouveau_result.rc != 0
+      become: true
+      modprobe:
+        name: nouveau
+        state: absent
+      ignore_errors: true
+
+    - name: blacklist nouveau
+      when: nouveau_result.rc != 0
+      become: true
+      copy:
+        dest: "/etc/modprobe.d/blacklist-nouveau.conf"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+        content: |
+          blacklist nouveau
+          options nouveau modeset=0
+      notify:
+      - update-initramfs
+
+    - name: Validate whether Kubernetes cluster installed
+      shell: kubectl cluster-info
+      register: k8sup
+      no_log: True
+      failed_when: false 
+
+    - name: Add an Kubernetes apt signing key for Ubuntu
+      become: true
+      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    - name: Adding Kubernetes apt repository for Ubuntu
+      become: true
+      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      apt_repository:
+        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+        filename: kubernetes
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 1.2 or 1.3
+      become: true
+      when: "cnc_version == 1.2 or cnc_version == 1.3 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      apt:
+        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.15.3-00', 'kubeadm=1.15.3-00', 'kubectl=1.15.3-00']
+        state: present
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 2.0
+      become: true
+      when: "ansible_distribution == 'Ubuntu' and cnc_version == 2.0 and 'running' not in k8sup.stdout"
+      apt:
+        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.17.5-00', 'kubeadm=1.17.5-00', 'kubectl=1.17.5-00']
+        state: present
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 3.1
+      become: true
+      when: "ansible_distribution == 'Ubuntu' and cnc_version == 3.1 and 'running' not in k8sup.stdout"
+      apt:
+        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.18.14-00', 'kubeadm=1.18.14-00', 'kubectl=1.18.14-00']
+        state: present
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 4.1
+      become: true
+      when: "cnc_version == 4.0 or cnc_version == 4.1 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      apt:
+        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.21.1-00', 'kubeadm=1.21.1-00', 'kubectl=1.21.1-00']
+        state: present
+        
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 4.2
+      become: true
+      when: "cnc_version == 4.2 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      apt:
+        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.21.7-00', 'kubeadm=1.21.7-00', 'kubectl=1.21.7-00']
+        state: present
+
+    - name: Hold the installed Packages
+      become: true
+      when: "ansible_distribution == 'Ubuntu'"
+      dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      with_items:
+        - kubelet
+        - kubectl
+        - kubeadm
+
+    - name: Creating a Kubernetes repository file for RHEL/CentOS
+      become: true
+      when: "ansible_distribution in ['RedHat', 'CentOS']"
+      file:
+        path: /etc/yum.repos.d/kubernetes.repo
+        state: touch
+
+    - name: Adding repository details in Kubernetes repo file for RHEL/CentOS
+      become: true
+      when: "ansible_distribution in ['RedHat', 'CentOS']"
+      blockinfile:
+        path: /etc/yum.repos.d/kubernetes.repo
+        block: |
+          [kubernetes]
+          name=Kubernetes
+          baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+          enabled=1
+          gpgcheck=0
+          repo_gpgcheck=0
+          gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+            https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
+    - name: Installing required packages for RHEL/CentOS
+      become: true
+      when: "ansible_distribution in ['RedHat', 'CentOS'] and cnc_version == 2.0"
+      yum:
+        name: ['bind-utils', 'yum-utils', 'device-mapper-persistent-data', 'lvm2', 'telnet', 'kubelet-1.17.5', 'kubeadm-1.17.5', 'kubectl-1.17.5', 'firewalld', 'curl']
+        state: present
+
+    - name: Validate whether Kubernetes cluster installed
+      shell: kubectl cluster-info
+      register: k8sup
+      no_log: True
+      failed_when: false
+
+    - name: Add Docker GPG key for Ubuntu
+      become: true
+      when: "cnc_version == 3.1 or cnc_version == 1.3 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      apt_key: url=https://download.docker.com/linux/ubuntu/gpg
+
+    - name: Add Docker APT repository for Ubuntu
+      become: true
+      when: "cnc_version == 3.1 or cnc_version == 1.3 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/{{ansible_distribution|lower}} {{ansible_distribution_release}} stable
+
+    - name: Install Docker-CE Engine for Ubuntu 20.04 on NVIDIA Cloud Native Core 3.1 or 1.3
+      become: true
+      ignore_errors: true
+      when: "cnc_version == 3.1 or cnc_version == 1.3 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+      apt:
+        name: [ 'docker-ce=5:19.03.13~3-0~ubuntu-focal' ]
+        update_cache: yes
+
+    - name: Install Docker-CE Engine for Ubuntu 18.04 on NVIDIA Cloud Native Core 3.1 or 1.3
+      ignore_errors: true
+      become: true
+      when: "cnc_version == 3.1 or cnc_version == 1.3 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
+      apt:
+        name: [ 'docker-ce=5:19.03.13~3-0~ubuntu-bionic' ]
+        update_cache: yes
+
+    - name: Install Docker-CE Engine for Ubuntu on NVIDIA Cloud Native Core 2.0
+      become: true
+      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout and cnc_version == 2.0"
+      apt:
+        name: [ 'docker-ce=5:19.03.5~3-0~ubuntu-bionic' ]
+        update_cache: yes
+
+    - name: Install Docker-CE Engine for Ubuntu on NVIDIA Cloud Native Core 1.2
+      become: true
+      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout and cnc_version == 1.2"
+      apt:
+        name: [ 'docker-ce=5:19.03.1~3-0~ubuntu-bionic' ]
+        update_cache: yes
+
+    - name: "Configuring Docker-CE repo for RHEL/CentOS"
+      become: true
+      when: "ansible_distribution in ['RedHat', 'CentOS'] and 'running' not in k8sup.stdout"
+      get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+        mode: 0644
+
+    - name: Install Docker-CE Engine on RHEL/CentOS
+      become: true
+      when: "ansible_distribution in ['RedHat', 'CentOS'] and 'running' not in k8sup.stdout"
+      args:
+        warn: false
+      shell: yum install docker -y
+
+    - name: Adding Docker to Current User
+      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      become: true
+      shell: |
+        groupadd docker
+        usermod -aG docker $USER
+
+    - name: SetEnforce for RHEL/CentOS
+      become: true
+      when: "ansible_distribution in ['RedHat', 'CentOS'] and 'running' not in k8sup.stdout"
+      ignore_errors: yes
+      command: "setenforce 0"
+
+    - name: SELinux for RHEL/CentOS
+      become: true
+      when: "ansible_distribution in ['RedHat', 'CentOS'] and 'running' not in k8sup.stdout"
+      args:
+        warn: false
+      command: sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+
+    - name: Enable Firewall Service for RHEL/CentOS
+      become: true
+      when: "ansible_distribution in ['RedHat', 'CentOS'] and 'running' not in k8sup.stdout"
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+      ignore_errors: yes
+
+    - name: Allow Network Ports in Firewalld for RHEL/CentOS
+      become: true
+      when: "ansible_distribution in ['RedHat', 'CentOS'] and 'running' not in k8sup.stdout"
+      firewalld:
+        port: "{{ item }}"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "6443/tcp"
+        - "10250/tcp"
+
+    - name: Remove swapfile from /etc/fstab
+      become: true
+      when: "'running' not in k8sup.stdout"
+      mount:
+        name: "{{ item }}"
+        fstype: swap
+        state: absent
+      with_items:
+        - swap
+        - none
+
+    - name: Disable swap
+      become: true
+      when: "'running' not in k8sup.stdout"
+      command: swapoff -a
+
+    - name: Setup Containerd for Ubuntu 20.04
+      become: true
+      block:
+        - name: Create containerd.conf
+          lineinfile:
+            create: yes
+            mode: 666
+            path: /etc/modules-load.d/containerd.conf
+            line: "{{ item }}"
+          loop:
+            - "overlay"
+            - "br_netfilter"
+
+        - name: Modprobe for overlay and br_netfilter
+          modprobe:
+            name: "{{ item }}"
+            state: present
+          ignore_errors: true
+          loop:
+          - "overlay"
+          - "br_netfilter"
+
+        - name: Add sysctl parameters to /etc/sysctl.conf
+          sysctl:
+            name: "{{ item.name }}"
+            value: "{{ item.value }}"
+            state: present
+            reload: "{{ item.reload }}"
+          loop:
+            - {name: "net.bridge.bridge-nf-call-ip6tables", value: "1", reload: no}
+            - {name: "net.bridge.bridge-nf-call-iptables", value: "1", reload: no}
+            - {name: "net.ipv4.ip_forward", value: "1", reload: yes}
+        
+        - name: Install libseccomp2
+          apt:
+            name: libseccomp2
+            state: present
+            update_cache: yes
+        
+        - name: Create /etc/containerd
+          file:
+            path: /etc/containerd
+            state: directory
+
+        - name: Create /etc/default/kubelet
+          lineinfile:
+            line: KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
+            path: /etc/default/kubelet
+            create: yes
+      when: "cnc_version == 6.0 or cnc_version == 5.0 or cnc_version == 4.2 or cnc_version == 4.1 or cnc_version == 4.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+
+    - name: Install Containerd for NVIDIA Cloud Native Core 4.0
+      become: true
+      block:
+        - name: Download cri-containerd-cni
+          get_url:
+            url: https://github.com/containerd/containerd/releases/download/v1.4.6/cri-containerd-cni-1.4.6-linux-amd64.tar.gz
+            dest: /tmp/cri-containerd-cni-1.4.6-linux-amd64.tar.gz
+            mode: 0664
+
+        - name: Untar cri-containerd-cni
+          unarchive:
+            src: /tmp/cri-containerd-cni-1.4.6-linux-amd64.tar.gz
+            dest: /
+            remote_src: yes
+            extra_opts:
+              - --no-overwrite-dir
+        
+        - name: Get defaults from containerd
+          command: containerd config default
+          changed_when: false
+          register: containerd_config_default
+
+        - name: Write defaults to config.toml
+          copy:
+            dest: /etc/containerd/config.toml
+            content: "{{ containerd_config_default.stdout }}"
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "cnc_version == 4.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+    
+    - name: Install Containerd for NVIDIA Cloud Native Core 4.1
+      become: true
+      block:
+        - name: Download cri-containerd-cni
+          get_url:
+            url: https://github.com/containerd/containerd/releases/download/v1.5.0/cri-containerd-cni-1.5.0-linux-amd64.tar.gz
+            dest: /tmp/cri-containerd-cni-1.5.0-linux-amd64.tar.gz
+            mode: 0664
+
+        - name: Untar cri-containerd-cni
+          unarchive:
+            src: /tmp/cri-containerd-cni-1.5.0-linux-amd64.tar.gz
+            dest: /
+            remote_src: yes
+            extra_opts:
+              - --no-overwrite-dir
+        
+        - name: Get defaults from containerd
+          command: containerd config default
+          changed_when: false
+          register: containerd_config_default
+
+        - name: Write defaults to config.toml
+          copy:
+            dest: /etc/containerd/config.toml
+            content: "{{ containerd_config_default.stdout }}"
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "cnc_version == 4.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+
+    - name: Install Containerd for NVIDIA Cloud Native Core 4.2
+      become: true
+      block:
+        - name: Download cri-containerd-cni
+          get_url:
+            url: https://github.com/containerd/containerd/releases/download/v1.5.8/cri-containerd-cni-1.5.8-linux-amd64.tar.gz
+            dest: /tmp/cri-containerd-cni-1.5.8-linux-amd64.tar.gz
+            mode: 0664
+
+        - name: Untar cri-containerd-cni
+          unarchive:
+            src: /tmp/cri-containerd-cni-1.5.8-linux-amd64.tar.gz
+            dest: /
+            remote_src: yes
+            extra_opts:
+              - --no-overwrite-dir
+        
+        - name: Get defaults from containerd
+          command: containerd config default
+          changed_when: false
+          register: containerd_config_default
+
+        - name: Write defaults to config.toml
+          copy:
+            dest: /etc/containerd/config.toml
+            content: "{{ containerd_config_default.stdout }}"
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "cnc_version == 4.2 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+
+
+    - name: Starting and enabling the required services
+      become: true
+      when: "'running' not in k8sup.stdout"
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      failed_when: false
+      with_items:
+        - docker
+        - kubelet
+        - containerd
+
+  handlers:
+    - name: update-initramfs
+      become: true
+      command: update-initramfs -u
+      when: ansible_os_family == "Debian" and nouveau_result.rc != 0

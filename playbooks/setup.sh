@@ -1,7 +1,7 @@
 #!/bin/bash
 set -a
 if [ -z $1 ]; then
-	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      install     Install EGX DIY Stack\n      validate    Validate EGX DIY Stack\n      uninstall   Uninstall EGX DIY Stack"
+	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      install           Install NVIDIA Cloud Native Core x86\n      install jetson    Install NVIDIA Cloud Native Core for Jetson\n      validate          Validate NVIDIA Cloud Native Core x86 only\n      uninstall         Uninstall NVIDIA Cloud Native Core"
 	echo
 	exit 1
 fi
@@ -39,24 +39,35 @@ else
 	echo "Ansible Already Installed"
 	echo
 fi
-if [ $1 == "install" ]; then
+
+if [[ $2 == "jetson" ]]; then
+	echo "Installing NVIDIA Cloud Native Core on Jetson"
+        ansible-playbook -i hosts jetson-xavier.yaml
 	echo
-	echo EGX DIY Stack Version $(cat egx_values.yaml | awk -F':' '{print $2}' | head -n2)
-	echo
-	echo "Installing EGX Stack"
-	ansible-playbook -i hosts prerequisites.yaml	
-	ansible-playbook -i hosts egx-installation.yaml
-elif [ $1 == "uninstall" ]; then
-	echo
-	echo "Unstalling EGX Stack"
-        ansible-playbook -i hosts egx-uninstall.yaml
-elif [ $1 == "validate" ]; then
-	echo
-	echo "Validating EGX Stack"
-        ansible-playbook -i hosts egx-validation.yaml
 else
-	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      install     Install EGX DIY Stack\n      validate    Validate EGX DIY Stack\n      uninstall   Uninstall EGX DIY Stack"
+	if [ $1 == "install" ]; then
+	echo
+	version=$(cat cnc_values.yaml | awk -F':' '{print $2}' | head -n1)
+        	if [[ $version == " 5.0" || $version == " 6.0" ]]; then
+			echo "Installing NVIDIA Cloud Native Core Version $version"
+			ansible-playbook -i hosts prerequisites.yaml	
+			ansible-playbook -i hosts cnc-installation.yaml
+        	else
+			echo "Installing NVIDIA Cloud Native Core Version $version"
+			ansible-playbook -i hosts older_versions/prerequisites.yaml
+	        	ansible-playbook -i hosts older_versions/cnc-installation.yaml	
+		fi
+	elif [ $1 == "uninstall" ]; then
+	echo
+	echo "Unstalling NVIDIA Cloud Native Core"
+        ansible-playbook -i hosts cnc-uninstall.yaml
+	elif [ $1 == "validate" ]; then
+	echo
+	echo "Validating NVIDIA Cloud Native Core"
+        ansible-playbook -i hosts cnc-validation.yaml
+	else
+	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      install     Install NVIDIA Cloud Native Core\n      validate    Validate NVIDIA Cloud Native Core\n      uninstall   Uninstall NVIDIA Cloud Native Core"
         echo
         exit 1
+	fi
 fi
-

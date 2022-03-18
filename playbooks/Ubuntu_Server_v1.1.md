@@ -1,4 +1,4 @@
-# This version is Deprecated, Please refer [Ubuntu Server 1.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.2.md)
+# This version is Deprecated, Please refer [Ubuntu Server 1.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/Ubuntu_Server_v1.2.md)
 
 <h1> EGX DIY Node Stack Ubuntu Server (x86-64) v1.1 </h1>
 
@@ -23,11 +23,11 @@ The final EGX DIY Node Stack will include:
 
 ### The following Ansible Playbooks are available
 
-- [Install EGX DIY Node Stack](https://github.com/NVIDIA/egx-platform/blob/master/Playbooks/egx-installation.yaml)
+- [Install EGX DIY Node Stack](https://github.com/NVIDIA/cloud-native-core/blob/master/Playbooks/egx-installation.yaml)
 
-- [Validate EGX DIY Node Stack ](https://github.com/NVIDIA/egx-platform/blob/master/Playbooks/egx-validation.yaml)
+- [Validate EGX DIY Node Stack ](https://github.com/NVIDIA/cloud-native-core/blob/master/Playbooks/egx-validation.yaml)
 
-- [Uninstall EGX DIY Node Stack](https://github.com/NVIDIA/egx-platform/blob/master/Playbooks/egx-uninstall.yaml)
+- [Uninstall EGX DIY Node Stack](https://github.com/NVIDIA/cloud-native-core/blob/master/Playbooks/egx-uninstall.yaml)
 
 ## Prerequisites
 
@@ -115,8 +115,8 @@ This section describes how to use the ansible playbooks.
 Run the below commands to add the EGX DIY ansible playbooks.
 
 ```
-$ git clone https://github.com/NVIDIA/egx-platform.git
-$ cd egx-platform/Playbooks
+$ git clone https://github.com/NVIDIA/cloud-native-core.git
+$ cd cloud-native-core/Playbooks
 ```
 
 ### Installation

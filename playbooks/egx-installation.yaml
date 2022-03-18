@@ -274,7 +274,7 @@
    - name: Update Active mellanox NIC in network-operator-values.yaml
      when: "enable_network_operator == true and egx_version == 4.1 and network_operator.rc == 1 and 'running' in k8sup.stdout"
      failed_when: false
-     shell: 'sed -ie "s/devices: \[.*\]/devices: \\[ {{ active_nic.stdout }}\]/g" $PWD/egx-platform/playbooks/network-operator-values.yaml'
+     shell: 'sed -ie "s/devices: \[.*\]/devices: \\[ {{ active_nic.stdout }}\]/g" $PWD/cloud-native-core/playbooks/network-operator-values.yaml'
      args:
        warn: false
 
@@ -287,7 +287,7 @@
         - helm repo add mellanox https://mellanox.github.io/network-operator --force-update
         - helm repo update
         - kubectl label nodes --all node-role.kubernetes.io/master- --overwrite
-        - helm install -f $PWD/egx-platform/playbooks/network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
+        - helm install -f $PWD/cloud-native-core/playbooks/network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
 
    - name: Checking if GPU Operator is installed
      shell: helm ls -A | grep gpu-operator
@@ -329,7 +329,7 @@
      shell: "{{ item }}"
      with_items:
         - kubectl create namespace gpu-operator-resources
-        - kubectl create configmap licensing-config -n gpu-operator-resources --from-file=$PWD/egx-platform/playbooks/gridd.conf
+        - kubectl create configmap licensing-config -n gpu-operator-resources --from-file=$PWD/cloud-native-core/playbooks/gridd.conf
         - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password={{ gpu_operator_registry_password }} --docker-email={{ gpu_operator_registry_email }} -n gpu-operator-resources
         - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
         - helm repo update
@@ -373,7 +373,7 @@
      shell: "{{ item }}"
      with_items:
         - kubectl create namespace gpu-operator-resources
-        - kubectl create configmap licensing-config -n gpu-operator-resources --from-file=$PWD/egx-platform/playbooks/gridd.conf
+        - kubectl create configmap licensing-config -n gpu-operator-resources --from-file=$PWD/cloud-native-core/playbooks/gridd.conf
         - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password={{ gpu_operator_registry_password }} --docker-email={{ gpu_operator_registry_email }} -n gpu-operator-resources
         - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
         - helm repo update

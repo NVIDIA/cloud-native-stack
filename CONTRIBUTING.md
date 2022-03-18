@@ -1,6 +1,6 @@
 # Contribute to the NVIDIA EGX Platform
 
-Want to hack on the NVIDIA EGX PlatformProject? Awesome!
+Want to hack on the NVIDIA EGX Platform Project? Awesome!
 We only require you to sign your work, the below section describes this!
 
 ## Sign your work

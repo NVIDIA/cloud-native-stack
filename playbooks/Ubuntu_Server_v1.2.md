@@ -21,11 +21,11 @@ The final EGX Stack will include:
 
 ### The following Ansible Playbooks are available
 
-- [Install EGX Stack](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/egx-installation.yaml)
+- [Install EGX Stack](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/egx-installation.yaml)
 
-- [Validate EGX Stack ](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/egx-validation.yaml)
+- [Validate EGX Stack ](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/egx-validation.yaml)
 
-- [Uninstall EGX Stack](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/egx-uninstall.yaml)
+- [Uninstall EGX Stack](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/egx-uninstall.yaml)
 
 
 ## Prerequisites
@@ -77,8 +77,8 @@ This section describes how to use the ansible playbooks.
 Run the below commands to add the EGX Stack ansible playbooks.
 
 ```
-$ git clone https://github.com/NVIDIA/egx-platform.git
-$ cd egx-platform/playbooks
+$ git clone https://github.com/NVIDIA/cloud-native-core.git
+$ cd cloud-native-core/playbooks
 ```
 Update the hosts file in playbooks directory with master and worker nodes(if you have) IP's with username and password like below
 
@@ -95,7 +95,7 @@ $ sudo nano hosts
 
 Update the EGX Stack version as per below, currently supported versions are
 
-- [1.2](https://github.com/NVIDIA/egx-platform/blob/master/playbooks/Ubuntu_Server_v1.2.md)
+- [1.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/Ubuntu_Server_v1.2.md)
 
 ```
 sudo nano egx_version.yaml

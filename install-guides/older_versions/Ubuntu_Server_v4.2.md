@@ -1,7 +1,7 @@
 <h1>NVIDIA Cloud Native Core v4.2 (formely EGX Stack 4.2) - Install Guide for Ubuntu Server x86-64</h1>
 <h2>Introduction</h2>
 
-This document describes how to set up NVIDIA NVIDIA Cloud Native Core v4.2 on single or multiple servers to deploy AI applications via Helm charts from NVIDIA NGC. NVIDIA Cloud Native Core v4.2 will include:
+This document describes how to set up NVIDIA Cloud Native Core v4.2 on single or multiple servers to deploy AI applications via Helm charts from NVIDIA NGC. NVIDIA Cloud Native Core v4.2 will include:
 
 - Ubuntu 20.04.2 LTS
 - Containerd 1.5.8
@@ -34,12 +34,12 @@ This document describes how to set up NVIDIA NVIDIA Cloud Native Core v4.2 on si
 - [Installing Containerd](#Installing-Containerd)
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Installing Helm](#Installing-Helm)
-- [Adding an Additional Node to NVIDIA Cloud Native Core](#Adding-additional-node-to-NVIDIA Cloud Native Core-Stack)
+- [Adding an Additional Node to NVIDIA Cloud Native Core](#Adding-additional-node-to-NVIDIA-Cloud-Native-Core)
 - [Installing NVIDIA Network Operator](#Installing-NVIDIA-Network-Operator)
 - [Installing the GPU Operator](#Installing-the-GPU-Operator)
 - [Validating the Network Operator with GPUDirect RDMA](#Validating-the-Network-Operator-with-GPUDirect-RDMA)
 - [Validating the GPU Operator](#Validating-the-GPU-Operator)
-- [Validate NVIDIA Cloud Native Core with an Application from NGC](#Validate-NVIDIA Cloud Native Core-Stack-with-an-application-from-NGC)
+- [Validate NVIDIA Cloud Native Core with an Application from NGC](#Validate-NVIDIA-Cloud-Native-Core-with-an-application-from-NGC)
 - [Uninstalling the GPU Operator](#Uninstalling-the-GPU-Operator)
 - [Uninstalling the Network Operator](#Uninstalling-the-Network-Operator)
 

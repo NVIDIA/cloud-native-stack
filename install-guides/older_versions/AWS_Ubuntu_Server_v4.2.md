@@ -25,7 +25,7 @@ This document describes setting up NVIDIA NVIDIA Cloud Native Core v4.12 on one 
 - [Installing Containerd](#Installing-Containerd)
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Installing Helm](#Installing-Helm)
-- [Adding an additional node to the NVIDIA Cloud Native Core](#Adding-additional-node-to-the-NVIDIA Cloud Native Core-Stack)
+- [Adding an additional node to the NVIDIA Cloud Native Core](#Adding-additional-node-to-the-NVIDIA-Cloud-Native-Core)
 - [Installing GPU Operator](#Installing-the-GPU-Operator)
 - [Installing NVIDIA Network Operator](#Installing-NVIDIA-Network-Operator)
 - [Validating the Installation](#Validating-the-Installation)

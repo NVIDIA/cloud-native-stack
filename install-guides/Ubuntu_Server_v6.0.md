@@ -920,10 +920,11 @@ Execute the below commands to uninstall the GPU Operator:
 
 ```
 $ helm ls
-NAME                    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 default         1               2022-03-03 20:23:28.063421701 +0000 UTC deployed        gpu-operator-1.9.1      1.9.1 
+NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+gpu-operator-1606173805 gpu-operator-resources         1               2022-03-03 20:23:28.063421701 +0000 UTC deployed        gpu-operator-1.9.1      1.9.1 
 
-$ helm del gpu-operator-1606173805
+$ helm del gpu-operator-1606173805 -n gpu-operator-resources
+
 ```
 
 ### Uninstalling the Network Operator

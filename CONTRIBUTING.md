@@ -1,6 +1,6 @@
-# Contribute to the NVIDIA EGX Platform
+# Contribute to the NVIDIA Cloud Native Core
 
-Want to hack on the NVIDIA EGX Platform Project? Awesome!
+Want to hack on the NVIDIA Cloud Native Core Project? Awesome!
 We only require you to sign your work, the below section describes this!
 
 ## Sign your work

@@ -17,9 +17,9 @@ A list of older NVIDIA Cloud Native Core versions (formerly known as EGX Stack) 
 
 <h2> Ansible Playbook Descriptions </h2>
 
-- [Install NVIDIA Cloud Native Core](#Install-NVIDIA Cloud Native Core)
-- [Validate NVIDIA Cloud Native Core](#Validate-NVIDIA Cloud Native Core)
-- [Uninstall NVIDIA Cloud Native Core](#Uninstall-NVIDIA Cloud Native Core)
+- [Install NVIDIA Cloud Native Core](#Install-NVIDIA-Cloud-Native-Core)
+- [Validate NVIDIA Cloud Native Core](#Validate-NVIDIA-Cloud-Native-Core)
+- [Uninstall NVIDIA Cloud Native Core](#Uninstall-NVIDI-Cloud-Native-Core)
 
 ### Install NVIDIA Cloud Native Core 
 

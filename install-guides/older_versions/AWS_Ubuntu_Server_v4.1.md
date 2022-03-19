@@ -1,6 +1,6 @@
 <h1>NVIDIA Cloud Native Core v4.1(formely EGX Stack 4.1) for AWS - Install Guide for Ubuntu Server x86-64</h1>
 <h2>Introduction</h2>
-This document describes setting up NVIDIA NVIDIA Cloud Native Core v4.1 on one or multiple GPU accelerated AWS instances to deploy AI applications via Helm charts from NVIDIA NGC. NVIDIA Cloud Native Core v4.1 will include:
+This document describes setting up NVIDIA Cloud Native Core v4.1 on one or multiple GPU accelerated AWS instances to deploy AI applications via Helm charts from NVIDIA NGC. NVIDIA Cloud Native Core v4.1 will include:
 
 - Ubuntu 20.04.2 LTS
 - Containerd 1.5.0

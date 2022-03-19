@@ -3,7 +3,7 @@
 
 This document describes how to setup the NVIDIA Cloud Native Core collection on a single or multiple AWS instances. NVIDIA Cloud Native Core can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster. 
 
-NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core v5.0 includes:
+NVIDIA Cloud Native Core v5.0 includes:
 
 - Ubuntu 20.04.3 LTS
 - Containerd 1.4.9
@@ -56,17 +56,17 @@ Step 3: In this step, you will provide additional instance configuration details
 
 ![AWS_Configure_Instance_details](screenshots/AWS_Configure_Instance_details.png)
 
-`NOTE:` This guide uses a default network configuration to showcase a working setup. Your setup may require a different configuration. Ensure that you configure the network to align with your requirements so that NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core can connect to your sensor (RTSP camera). 
+`NOTE:` This guide uses a default network configuration to showcase a working setup. Your setup may require a different configuration. Ensure that you configure the network to align with your requirements so that NVIDIA Cloud Native Core can connect to your sensor (RTSP camera). 
 - Network: Use your default network or custom network configuration.
 - Subnet: Use the default subnet or custom subnet.
 
-Step 4: Modify the storage to at least 25GB for NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core to work with the sample Intelligent Video Analytics Demo application. Increase the storage to accommodate your requirements if you are using a different application.
+Step 4: Modify the storage to at least 25GB for NVIDIA Cloud Native Core to work with the sample Intelligent Video Analytics Demo application. Increase the storage to accommodate your requirements if you are using a different application.
 
 ![AWS_Add_Storage](screenshots/AWS_Add_Storage.png)
 
 Step 5: A good practice is to add tags to your instance so that you can quickly identify the purpose and details of each instance.
 
-- For example, key as Name and its value as NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core_Location_N.
+- For example, key as Name and its value as NVIDIA Cloud Native Core_Location_N.
 
 ![AWS_Add_Tags](screenshots/AWS_Add_Tags.png)
 
@@ -278,7 +278,7 @@ sudo mv linux-amd64/helm /usr/local/bin/helm
 
 For additional information about Helm, refer to the Helm 3.6.2 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information. 
 
-### Adding additional node to NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core
+### Adding additional node to NVIDIA Cloud Native Core
 
 Please Launch the new AWS G4 instance and install the Containerd and Kubernetes packages on an additional node.
 
@@ -288,7 +288,7 @@ Prerequisites:
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Disable Swap](#Disable-swap)
 
-Once the prerequisites are completed on the additional nodes, execute the below command on the control-plane node and then execute the join command output on an additional node to add the additional node to NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core 
+Once the prerequisites are completed on the additional nodes, execute the below command on the control-plane node and then execute the join command output on an additional node to add the additional node to NVIDIA Cloud Native Core 
 
 ```
 kubeadm token create --print-join-command
@@ -365,12 +365,12 @@ Please refer to [GPU Operator page](https://ngc.nvidia.com/catalog/helm-charts/n
 
 ## Validating the Installation
 
-GPU Operator validates the  through the nvidia-device-plugin-validation pod and the nvidia-driver-validation pod. If both complete successfully (see output from kubectl get pods --all-namespaces | grep -v kube-system), the NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core is working as expected. 
-There are two ways to validate NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core manually: 
-1. Validate NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core with nvidia-smi and cuda sample
-2. Validate NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core with an Application
+GPU Operator validates the  through the nvidia-device-plugin-validation pod and the nvidia-driver-validation pod. If both complete successfully (see output from kubectl get pods --all-namespaces | grep -v kube-system), the NVIDIA Cloud Native Core is working as expected. 
+There are two ways to validate NVIDIA Cloud Native Core manually: 
+1. Validate NVIDIA Cloud Native Core with nvidia-smi and cuda sample
+2. Validate NVIDIA Cloud Native Core with an Application
 
-### Validate NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core with nvidia-smi and cuda sample
+### Validate NVIDIA Cloud Native Core with nvidia-smi and cuda sample
 This section provides two examples of how to validate that the GPU is usable from within a pod.
 
 #### Example 1: nvidia-smi
@@ -437,18 +437,18 @@ Execute the below command to confirm the cuda-samples pod was created:
 kubectl get pods
 ``` 
 
-NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core  works as expected if the get pods command shows the pod status as completed.
+NVIDIA Cloud Native Core  works as expected if the get pods command shows the pod status as completed.
 
-### Validate NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core with an application from NGC
-Another option to validate NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core is by running a demo application hosted on NGC.
+### Validate NVIDIA Cloud Native Core with an application from NGC
+Another option to validate NVIDIA Cloud Native Core is by running a demo application hosted on NGC.
 
 NGC is NVIDIA's GPU Optimized Software Hub. NGC provides a curated set of GPU-optimized software for AI, HPC, and Visualization. The content provided by NVIDIA and third-party ISVs simplify building, customizing, and integrating GPU-optimized software into workflows, accelerating the time to solutions for users.
 
 Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkit with software development kits (SDKs) hosted on NGC. For more information about how to deploy an application that hosted on NGC, the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/NVIDIA/cloud-native-core/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information
 
-The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm chart. The application can validate the full NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core and test the connectivity of NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core to remote sensors. DeepStream delivers real-time AI-based video and image understanding, as well as multi-sensor processing on GPUs. For additional information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo)
+The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm chart. The application can validate the full NVIDIA Cloud Native Core and test the connectivity of NVIDIA Cloud Native Core to remote sensors. DeepStream delivers real-time AI-based video and image understanding, as well as multi-sensor processing on GPUs. For additional information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo)
 
-There are two ways to configure the DeepStream - Intelligent Video Analytics Demo Application on your NVIDIA NVIDIA NVIDIA NVIDIA Cloud Native Core
+There are two ways to configure the DeepStream - Intelligent Video Analytics Demo Application on your NVIDIA Cloud Native Core
 
 - Using a camera
 - Using the integrated video file (no camera required)

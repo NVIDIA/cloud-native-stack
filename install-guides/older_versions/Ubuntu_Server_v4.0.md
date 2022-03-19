@@ -1,7 +1,7 @@
 <h1>NVIDIA Cloud Native Core v4.0 (formely EGX Stack 4.0) - Install Guide for Ubuntu Server x86-64</h1>
 <h2>Introduction</h2>
 
-This document describes how to set up NVIDIA NVIDIA Cloud Native Core v4.0 on a single or multi-node Kubernetes Cluster to deploy AI applications via Helm charts from NVIDIA NGC. This document also includes instructions on how to set up the NVIDIA Networking Stack within NVIDIA Cloud Native Core. The final environment for NVIDIA Cloud Native Core v4.0 will include:
+This document describes how to set up NVIDIA Cloud Native Core v4.0 on a single or multi-node Kubernetes Cluster to deploy AI applications via Helm charts from NVIDIA NGC. This document also includes instructions on how to set up the NVIDIA Networking Stack within NVIDIA Cloud Native Core. The final environment for NVIDIA Cloud Native Core v4.0 will include:
 
 - Ubuntu 20.04.2 LTS
 - Containerd 1.4.6

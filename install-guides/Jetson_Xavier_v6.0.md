@@ -2,7 +2,7 @@
 
 <h2>Introduction</h2>
 
-This document describes how to setup the NVIDIA NVIDIA Cloud Native Core collection on a single or multiple Jetson AGX Xavier or Jetson Xavier NX DevKits. NVIDIA Cloud Native Core can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
+This document describes how to setup the NVIDIA Cloud Native Core collection on a single or multiple Jetson AGX Xavier or Jetson Xavier NX DevKits. NVIDIA Cloud Native Core can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
 The final environment will include:
 

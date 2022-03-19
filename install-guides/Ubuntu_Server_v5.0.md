@@ -33,7 +33,7 @@ NVIDIA Cloud Native Core v5.0 includes:
 - [Installing Containerd](#Installing-Containerd)
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Installing Helm](#Installing-Helm)
-- [Adding an Additional Node to NVIDIA Cloud Native Core](#Adding-additional-node-to-NVIDIA-Cloud-Native-Core-Stack)
+- [Adding an Additional Node to NVIDIA Cloud Native Core](#Adding-additional-node-to-NVIDIA-Cloud-Native-Core)
 - [Installing NVIDIA Network Operator](#Installing-NVIDIA-Network-Operator)
 - [Installing the GPU Operator](#Installing-the-GPU-Operator)
 - [Validating the Network Operator with GPUDirect RDMA](#Validating-the-Network-Operator-with-GPUDirect-RDMA)

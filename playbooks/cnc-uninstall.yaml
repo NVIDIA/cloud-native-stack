@@ -1,14 +1,31 @@
+- hosts: master
+  gather_facts: yes
+  vars_files:
+    - cnc_values.yaml
+  tasks:
+
+   - name: Uninstall the GPU Operator with MIG
+     shell: |
+       kubectl label nodes --all nvidia.com/mig.config=all-disabled --overwrite
+       sleep 5
+       config_state=$(kubectl describe nodes  |grep mig.config.state |head -n1 | awk -F'=' '{print $2}')
+       while [ $config_state != "success" ]
+       do
+         sleep 5
+         config_state=$(kubectl describe nodes  |grep mig.config.state | head -n1 |awk -F'=' '{print $2}')
+       done
+     when: "enable_mig == true and cnc_version >= 4.1 and ansible_architecture == 'x86_64'"
+     #failed_when: false
+     async: 120
+     args:
+       executable: /bin/bash
+       
 - hosts: all
   gather_facts: yes
   become: true
   vars_files:
     - cnc_values.yaml
   tasks:
-
-   - name: Uninstall the GPU Operator with MIG
-     shell: kubectl label nodes --all nvidia.com/mig.config=all-disabled --overwrite; sleep 60
-     when: "enable_mig == true and cnc_version >= 4.1 and ansible_architecture == 'x86_64'"
-     failed_when: false
 
    - name: Reset Kubernetes component
      shell: "timeout 45 kubeadm reset --force"

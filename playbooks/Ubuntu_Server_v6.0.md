@@ -114,8 +114,9 @@ k8s_apt_repository: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
 bash setup.sh install
 ```
 #### Custom Configuration
-By default Cloud Native Core uses Google kubernetes apt repository, if you want to use any other kubernetes apt reposiotry please configure as per below
+By default Cloud Native Core uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` parameters from the `cnc_values.yaml` file
 
+Example:
 ```
 cnc_version: 6.0
 ## This is most likely NVIDIA Driver Version (https://www.nvidia.com/Download/index.aspx?lang=en-us)

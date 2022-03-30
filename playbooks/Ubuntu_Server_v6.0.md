@@ -2,7 +2,7 @@
 
 This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Core.
 
-NVIDIA Cloud Native Core v5.0 includes:
+NVIDIA Cloud Native Core v6.0 includes:
 - Ubuntu 20.04.3 LTS
 - Containerd 1.6.0
 - Kubernetes version 1.23.2

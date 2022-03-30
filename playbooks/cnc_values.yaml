@@ -22,4 +22,6 @@ gpu_operator_registry_username: "$oauthtoken"
 gpu_operator_registry_password: ""
 ## This is most likely an NGC email
 gpu_operator_registry_email: ""
-
+## This is most likely kubernetes apt resources
+k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+k8s_apt_repository: "deb https://apt.kubernetes.io/ kubernetes-xenial main"

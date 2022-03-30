@@ -7,7 +7,7 @@ enable_network_operator: no
 ## Enable RDMA yes for NVIDIA Certification
 enable_rdma: no
 ## This is most likely to enable MIG with GPU Operator 
-enable_mig: yes
+enable_mig: no
 ## This is most likely to MIG Profile for GPU Operator 
 mig_profile: all-disabled
 ## This is most likely to enable vGPU for GPU Operator 

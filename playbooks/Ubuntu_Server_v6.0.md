@@ -81,28 +81,28 @@ Install the NVIDIA Cloud Native Core stack by running the below command. "Skippi
 $ nano cnc_values.yaml
 
 cnc_version: 6.0
-## This is most likely NVIDIA Driver Version (https://www.nvidia.com/Download/index.aspx?lang=en-us)
+## NVIDIA Driver Version (https://www.nvidia.com/Download/index.aspx?lang=en-us)
 ## enable 51.0.47.03 for cnc_version: 6.0
 gpu_driver_version: "510.47.03"
 ## If the Network Operator is yes then make sure enable_rdma as well yes
 enable_network_operator: no
 ## Enable RDMA yes for NVIDIA Certification
 enable_rdma: no
-## This is most likely to enable MIG with GPU Operator 
+## enable MIG with GPU Operator 
 enable_mig: no
-## This is most likely to MIG Profile for GPU Operator 
+## MIG Profile for GPU Operator 
 mig_profile: all-disabled
-## This is most likely to enable vGPU for GPU Operator 
+## Enable vGPU for GPU Operator 
 enable_vgpu: no
-## This is most likely vGPU License Server
+## vGPU License Server
 vgpu_license_server: ""
-## This is most likely GPU Operator Driver Registry
+## GPU Operator Driver Registry
 gpu_operator_driver_registry: "nvcr.io/nvidia"
 ## This should remain as $oauthtoken if using an NGC API key
 gpu_operator_registry_username: "$oauthtoken"
-## This is most likely an NGC API key
+## NGC API key
 gpu_operator_registry_password: ""
-## This is most likely an NGC email
+## NGC email
 gpu_operator_registry_email: ""
 ## Kubernetes apt resources
 k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
@@ -119,28 +119,28 @@ By default Cloud Native Core uses Google kubernetes apt repository, if you want 
 Example:
 ```
 cnc_version: 6.0
-## This is most likely NVIDIA Driver Version (https://www.nvidia.com/Download/index.aspx?lang=en-us)
+## NVIDIA Driver Version (https://www.nvidia.com/Download/index.aspx?lang=en-us)
 ## enable 51.0.47.03 for cnc_version: 6.0
 gpu_driver_version: "510.47.03"
 ## If the Network Operator is yes then make sure enable_rdma as well yes
 enable_network_operator: no
 ## Enable RDMA yes for NVIDIA Certification
 enable_rdma: no
-## This is most likely to enable MIG with GPU Operator 
+## Enable MIG with GPU Operator 
 enable_mig: no
-## This is most likely to MIG Profile for GPU Operator 
+## MIG Profile for GPU Operator 
 mig_profile: all-disabled
-## This is most likely to enable vGPU for GPU Operator 
+## Enable vGPU for GPU Operator 
 enable_vgpu: no
-## This is most likely vGPU License Server
+## vGPU License Server
 vgpu_license_server: ""
-## This is most likely GPU Operator Driver Registry
+## GPU Operator Driver Registry
 gpu_operator_driver_registry: "nvcr.io/nvidia"
 ## This should remain as $oauthtoken if using an NGC API key
 gpu_operator_registry_username: "$oauthtoken"
-## This is most likely an NGC API key
+##  NGC API key
 gpu_operator_registry_password: ""
-## This is most likely an NGC email
+## NGC email
 gpu_operator_registry_email: ""
 ## Kubernetes apt resources
 k8s_apt_key: "https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg"

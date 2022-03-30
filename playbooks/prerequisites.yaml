@@ -41,16 +41,17 @@
       become: true
       when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
       apt_key:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        url: "{{ k8s_apt_key }}"
         state: present
 
     - name: Adding Kubernetes apt repository for Ubuntu
       become: true
       when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
       apt_repository:
-        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+        repo: "{{ k8s_apt_repository }}"
         state: present
         filename: kubernetes
+
 
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 5.0
       become: true

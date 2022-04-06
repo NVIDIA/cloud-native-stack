@@ -25,7 +25,7 @@
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd
      when: "'running' not in k8sup.stdout and cnc_version >= 4.0"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.2"
      become: true
      register: kubeadm
 

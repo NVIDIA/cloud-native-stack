@@ -22,9 +22,14 @@
      file:
        path: "/var/lib/etcd"
        state: absent
-
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd
-     when: "'running' not in k8sup.stdout and cnc_version >= 4.0"
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 5.0
+     when: "'running' not in k8sup.stdout and cnc_version == 5.0"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.22.5"
+     become: true
+     register: kubeadm
+     
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.0
+     when: "'running' not in k8sup.stdout and cnc_version == 6.0"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.2"
      become: true
      register: kubeadm

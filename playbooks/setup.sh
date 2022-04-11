@@ -14,13 +14,17 @@ ansible_install() {
 	version=$(cat /etc/os-release | grep -i VERSION_CODENAME | awk -F'=' '{print $2}')
 	if [[ $os == "ubuntu" && $version != "focal" ]]; then 
 		echo "Installing Ansible"
+		{
         	sudo apt-add-repository ppa:ansible/ansible -y
         	sudo apt update
-        	sudo apt install ansible sshpass -y
+        	sudo apt install ansible sshpass -y 
+		} > /dev/null 
 	elif [[ $os == "ubuntu" && $version == "focal" ]]; then
 		echo "Installing Ansible"
+		{ 
 		sudo apt update
         	sudo apt install ansible sshpass -y
+		} > /dev/null
 	elif [ $os == "rhel*" ]; then
 		version=$(cat /etc/os-release | grep VERSION_ID | awk -F'=' '{print $2}')
 		if [ $version == "*7.*" ]; then
@@ -48,15 +52,8 @@ else
 	if [ $1 == "install" ]; then
 	echo
 	version=$(cat cnc_values.yaml | awk -F':' '{print $2}' | head -n1)
-        	if [[ $version == " 5.0" || $version == " 6.0" ]]; then
-			echo "Installing NVIDIA Cloud Native Core Version $version"
-			ansible-playbook -i hosts prerequisites.yaml	
-			ansible-playbook -i hosts cnc-installation.yaml
-        	else
-			echo "Installing NVIDIA Cloud Native Core Version $version"
-			ansible-playbook -i hosts older_versions/prerequisites.yaml
-	        	ansible-playbook -i hosts older_versions/cnc-installation.yaml	
-		fi
+	echo "Installing NVIDIA Cloud Native Core Version $version"
+	ansible-playbook -i hosts cnc-docker.yaml
 	elif [ $1 == "uninstall" ]; then
 	echo
 	echo "Unstalling NVIDIA Cloud Native Core"

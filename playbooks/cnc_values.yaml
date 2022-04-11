@@ -1,4 +1,4 @@
-cnc_version: 6.0
+cnc_version: 6.1
 ## This is most likely NVIDIA Driver Version (https://www.nvidia.com/Download/index.aspx?lang=en-us)
 ## enable 51.0.47.03 for cnc_version: 6.0
 gpu_driver_version: "510.47.03"

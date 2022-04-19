@@ -7,15 +7,16 @@ NVIDIA Cloud Native Core v6.1 includes:
 - Containerd 1.6.2
 - Kubernetes version 1.23.5
 - Helm 3.8.1
-- NVIDIA GPU Operator 1.10.0
-  - NVIDIA GPU Driver: 510.47.03
-  - NVIDIA Container Toolkit: 1.7.2
-  - NVIDIA K8S Device Plugin: 0.10.0
-  - NVIDIA DCGM-Exporter: 2.3.1-2.6.1
-  - NVIDIA GPU Feature Discovery: 0.4.1
-  - NVIDIA K8s MIG Manager: 0.2.0
-  - NVIDIA Driver Manager: 0.2.0
-  - Node Feature Discovery: 0.8.2
+- NVIDIA GPU Operator 1.10.1
+  - NVIDIA GPU Driver: 470.103.01
+  - NVIDIA Container Toolkit: 1.9.0
+  - NVIDIA K8S Device Plugin: 0.11.0
+  - NVIDIA DCGM-Exporter: 2.3.4-2.6.4
+  - NVIDIA DCGM: 2.3.4.1
+  - NVIDIA GPU Feature Discovery: 0.5.0
+  - NVIDIA K8s MIG Manager: 0.3.0
+  - NVIDIA Driver Manager: 0.3.0
+  - Node Feature Discovery: 0.10.1
 - NVIDIA Network Operator 1.2.0
   - Mellanox MOFED Driver 5.5-1.0.3.2
   - Mellanox NV Peer Memory Driver 1.1-0

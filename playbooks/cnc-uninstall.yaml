@@ -65,7 +65,6 @@
 
    - name: Cleanup Directories
      ignore_errors: yes
-     when: ansible_architecture == 'aarch64'
      file:
        path: "{{ item }}"
        state: absent
@@ -73,40 +72,12 @@
         - /var/lib/etcd
         - /etc/kubernetes
         - /usr/local/bin/helm
-        - /usr/local/cuda*
-        - /var/lib/crio
-        - /etc/crio
-        - /usr/local/bin/crio
-        - /var/cuda*
-        - /var/log/containers
-        - /etc/apt/sources.list.d/devel*
-        - /etc/sysctl.d/99-kubernetes-cri.conf
-        - /etc/modules-load.d/containerd.conf
-        - /etc/modules-load.d/crio.conf
-        - /etc/apt/trusted.gpg.d/libcontainers*
-        - /etc/default/kubelet
-        - /etc/cni/net.d
-
-   - name: Cleanup Directories
-     ignore_errors: yes
-     when: ansible_architecture != 'aarch64'
-     file:
-       path: "{{ item }}"
-       state: absent
-     with_items:
-        - /var/lib/etcd
-        - /etc/kubernetes
-        - /usr/local/bin/helm
-        - /usr/local/cuda*
-        - /var/lib/docker
         - /var/lib/containerd
         - /var/lib/crio
         - /run/containerd
         - /etc/containerd
         - /etc/crio
         - /usr/local/bin/crio
-        - /var/cuda*
-        - /etc/docker
         - /var/log/containers
         - /etc/apt/sources.list.d/devel*
         - /etc/sysctl.d/99-kubernetes-cri.conf

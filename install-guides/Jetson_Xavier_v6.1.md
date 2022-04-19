@@ -1,4 +1,4 @@
-<h1>NVIDIA Cloud Native Core - v5.0 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit</h1>
+<h1> NVIDIA Cloud Native Core - v6.0 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit</h1>
 
 <h2>Introduction</h2>
 
@@ -7,9 +7,9 @@ This document describes how to setup the NVIDIA Cloud Native Core collection on 
 The final environment will include:
 
 - JetPack 4.6.1
-- Kubernetes version 1.22.5
-- Helm 3.6.3
-- Containerd 1.4.4
+- Kubernetes version 1.23.5
+- Helm 3.8.1
+- Containerd 1.6.2
 
 
 <h2>Table of Contents</h2>
@@ -17,12 +17,14 @@ The final environment will include:
 - [Prerequisites](#Prerequisites)
 - [Installing JetPack 4.6.1](#Installing-JetPack-4.6.1)
 - [Jetson Xavier NX Storage](#Jetson-Xavier-NX-Storage)
+- [Upgrading Nvidia Container Runtime](#Upgrading-Nvidia-Container-Runtime)
 - [Installing Containerd](#Installing-Containerd)
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Installing Helm](#Installing-Helm)
 - [Adding an Additional Node to NVIDIA Cloud Native Core](#Adding-additional-node-to-NVIDIA-Cloud-Native-Core)
 - [Validating the Installation](#Validating-the-Installation)
 - [Validate NVIDIA Cloud Native Core with an Application from NGC](#Validate-NVIDIA-Cloud-Native-Core-with-an-application-from-NGC)
+
 
 ### Prerequisites
  
@@ -45,6 +47,36 @@ Download the SDK Manager from [here](https://developer.nvidia.com/nvidia-sdk-man
 
 ### Jetson Xavier NX Storage
 Running NVIDIA Cloud Native Core on Xavier NX production modules (16GB) might not provide sufficient storage capacity with fully loaded JetPack 4.5 to host your specific container images. If you require additional storage, use the Jetson Xavier NX Development Kit during the development phase, as you can insert greater than 16GB via microSD cards and/or remove unused JetPack 4.6 packages. For production deployments, remove packages that are not required from fully loaded JetPack 4.6 and/or extend the storage capacity via NVMe or SSD.
+
+### Upgrading Nvidia Container Runtime
+
+
+Execute the following commands to upgrade nvidia container runtime
+
+Install packages to allow apt to use a repository over HTTPS:
+
+```
+ sudo apt-get install -y curl apt-transport-https gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
+```
+
+Execute the following to add apt keys:
+
+```
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -   
+```
+
+Create nvidia-docker.list:
+
+```
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID) &&  curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+```
+
+Now execute the commands below:
+
+```
+sudo apt-get update && sudo apt install nvidia-container-runtime=3.8.0-1
+```
+
 
 ### Installing Containerd
 
@@ -80,6 +112,14 @@ EOF
 Apply sysctl params without reboot:
 ```
  sudo sysctl --system
+```
+
+Download the Containerd tarball:
+
+```
+ wget https://github.com/containerd/containerd/releases/download/v1.6.2/cri-containerd-cni-1.6.2-linux-arm64.tar.gz
+ sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.2-linux-arm64.tar.gz
+ rm -rf cri-containerd-cni-1.6.2-linux-arm64.tar.gz
 ```
 
 Install Containerd:
@@ -121,7 +161,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 
 ```
  sudo apt-get update
- sudo apt-get install -y -q kubelet=1.22.5-00 kubectl=1.22.5-00 kubeadm=1.22.5-00
+ sudo apt-get install -y -q kubelet=1.23.5-00 kubectl=1.23.5-00 kubeadm=1.23.5-00
  sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
@@ -156,7 +196,7 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command:
 
 ```
- sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock
+ sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.5"
 ```
 
 Output:
@@ -228,7 +268,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.22.5
+#yourhost        Ready    control-plane,master   10m   v1.23.5
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -242,16 +282,16 @@ for more information.
 
 ### Installing Helm 
 
-Execute the following command to download and install Helm 3.6.3: 
+Execute the following command to download and install Helm 3.8.1: 
 
 ```
- wget https://get.helm.sh/helm-v3.6.3-linux-arm64.tar.gz
- tar -zxvf helm-v3.6.3-linux-arm64.tar.gz
+ wget https://get.helm.sh/helm-v3.8.1-linux-arm64.tar.gz
+ tar -zxvf helm-v3.8.1-linux-arm64.tar.gz
  sudo mv linux-arm64/helm /usr/local/bin/helm
- rm -rf helm-v3.6.3-linux-arm64.tar.gz linux-arm64/
+ rm -rf helm-v3.8.1-linux-arm64.tar.gz linux-arm64/
 ```
 
-Refer to the Helm 3.6.3 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
+Refer to the Helm 3.8.1 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
 
 
 ### Adding an Additional Node to NVIDIA Cloud Native Core
@@ -287,8 +327,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.22.5
-#yourhost-worker Ready                           10m   v1.22.5
+#yourhost        Ready    control-plane,master   10m   v1.23.5
+#yourhost-worker Ready                           10m   v1.23.5
 ```
 
 ### Validating the Installation

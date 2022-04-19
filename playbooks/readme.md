@@ -4,13 +4,21 @@
 
 <h3> Ubuntu Systems </h3>
 
-- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/Ubuntu_Server_v5.0.md)
-- [Ubuntu(x86-64) v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/Ubuntu_Server_v6.0.md)
+- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v5.0.md)
+- [Ubuntu(x86-64) v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.0.md)
+- [Ubuntu(x86-64) v5.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v5.1.md)
+- [Ubuntu(x86-64) v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.1.md)
 
 <h3> Jetson Systems </h3>
 
-- [Jetson Xavier v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/Jetson_Xavier_v5.0.md)
-- [Jetson Xavier v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/Jetson_Xavier_v6.0.md)
+- [Jetson Xavier v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v5.0.md)
+- [Jetson Xavier v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.0.md)
+- [Jetson Xavier v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.1.md)
+
+<h3> DGX Systems </h3>
+
+- [DGX Server v5.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/DGX_Server_v5.1.md)
+- [DGX Server v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/DGX_Server_v6.1.md)
 
 `NOTE`
 A list of older NVIDIA Cloud Native Core versions (formerly known as EGX Stack) can be found [here](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/older_versions/readme.md)

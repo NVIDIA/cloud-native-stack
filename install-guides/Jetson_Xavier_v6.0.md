@@ -296,7 +296,6 @@ Refer to the Helm 3.8.0 [release notes](https://github.com/helm/helm/releases) a
 
 ### Adding an Additional Node to NVIDIA Cloud Native Core
 
-`NOTE:` If you're not adding additional nodes, please skip this step and proceed to the next step [Installing NVIDIA Network Operator](#Installing-NVIDIA-Network-Operator)
 
 Make sure to install the Containerd and Kubernetes packages on additional nodes.
 

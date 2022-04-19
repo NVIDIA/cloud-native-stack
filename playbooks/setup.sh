@@ -1,7 +1,7 @@
 #!/bin/bash
 set -a
 if [ -z $1 ]; then
-	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      install           Install NVIDIA Cloud Native Core x86\n      install jetson    Install NVIDIA Cloud Native Core for Jetson\n      validate          Validate NVIDIA Cloud Native Core x86 only\n      uninstall         Uninstall NVIDIA Cloud Native Core"
+	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      install           Install NVIDIA Cloud Native Core x86\n      install jetson    Install NVIDIA Cloud Native Core for Jetson\n      install dgx       Install NVIDIA Cloud Native Core for DGX System\n      validate          Validate NVIDIA Cloud Native Core x86 only\n      uninstall         Uninstall NVIDIA Cloud Native Core"
 	echo
 	exit 1
 fi
@@ -14,17 +14,13 @@ ansible_install() {
 	version=$(cat /etc/os-release | grep -i VERSION_CODENAME | awk -F'=' '{print $2}')
 	if [[ $os == "ubuntu" && $version != "focal" ]]; then 
 		echo "Installing Ansible"
-		{
-        	sudo apt-add-repository ppa:ansible/ansible -y
-        	sudo apt update
-        	sudo apt install ansible sshpass -y 
-		} > /dev/null 
+        	sudo apt-add-repository ppa:ansible/ansible -y 
+        	sudo apt update >/dev/null
+        	sudo apt install ansible sshpass -y >/dev/null
 	elif [[ $os == "ubuntu" && $version == "focal" ]]; then
 		echo "Installing Ansible"
-		{ 
 		sudo apt update
         	sudo apt install ansible sshpass -y
-		} > /dev/null
 	elif [ $os == "rhel*" ]; then
 		version=$(cat /etc/os-release | grep VERSION_ID | awk -F'=' '{print $2}')
 		if [ $version == "*7.*" ]; then
@@ -38,7 +34,7 @@ ansible_install() {
 }
 if ! hash sudo ansible 2>/dev/null
 then 
-	ansible_install
+	ansible_install 
 else
 	echo "Ansible Already Installed"
 	echo
@@ -48,12 +44,28 @@ if [[ $2 == "jetson" ]]; then
 	echo "Installing NVIDIA Cloud Native Core on Jetson"
         ansible-playbook -i hosts jetson-xavier.yaml
 	echo
+elif [[ $2 == "cnc-docker" ]]; then
+      echo "Installing NVIDIA Cloud Native Core with Docker"
+        ansible-playbook -i hosts cnc-docker.yaml
+        echo
+elif [[ $2 == "dgx" ]]; then
+	echo "Installing NVIDIA Cloud Native Core on DGX System"
+        ansible-playbook -i hosts dgx.yaml
+        echo
 else
 	if [ $1 == "install" ]; then
 	echo
 	version=$(cat cnc_values.yaml | awk -F':' '{print $2}' | head -n1)
-	echo "Installing NVIDIA Cloud Native Core Version $version"
-	ansible-playbook -i hosts cnc-docker.yaml
+        	if [[ $version > " 4.1" ]]; then
+        	#if [[ $version == " 5.0" || $version == " 6.0" ]]; then
+			echo "Installing NVIDIA Cloud Native Core Version $version"
+			ansible-playbook -i hosts prerequisites.yaml	
+			ansible-playbook -i hosts cnc-installation.yaml
+        	else
+			echo "Installing NVIDIA Cloud Native Core Version $version"
+			ansible-playbook -i hosts older_versions/prerequisites.yaml
+	        	ansible-playbook -i hosts older_versions/cnc-installation.yaml	
+		fi
 	elif [ $1 == "uninstall" ]; then
 	echo
 	echo "Unstalling NVIDIA Cloud Native Core"

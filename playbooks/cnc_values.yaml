@@ -10,6 +10,10 @@ enable_rdma: no
 enable_mig: no
 ## This is most likely to MIG Profile for GPU Operator 
 mig_profile: all-disabled
+## Enable GDS feature on GPU Operator
+enable_gds: no
+## Enable secure boot if the system is loaded secure boot for GPU Operator
+enable_secure_boot: no
 ## This is most likely to enable vGPU for GPU Operator 
 enable_vgpu: no
 ## This is most likely vGPU License Server

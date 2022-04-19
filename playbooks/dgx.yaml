@@ -1,6 +1,7 @@
 - hosts: all
-  become: true
-  become_method: sudo
+  gather_facts: yes
+  vars_files:
+    - cnc_values.yaml
   vars:
     daemon_json:
       default-runtime: nvidia
@@ -9,67 +10,9 @@
           path: /usr/bin/nvidia-container-runtime
           runtimeArgs: []
   tasks:
-    - name: Install Docker Dependencies 
-      ansible.builtin.apt:
-        name:
-          - apt-transport-https
-          - ca-certificates
-          - lsb-release
-          - gnupg
-        state: latest
-        update_cache: true
 
-    - name: Add Docker APT signing key
-      ansible.builtin.apt_key:
-        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
-        state: present
-
-    - name: Add Docker repository into sources list
-      ansible.builtin.apt_repository:
-        repo: "deb https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
-        state: present
-        filename: docker
-
-    - name: Install Docker
-      ansible.builtin.apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-        state: latest
-        update_cache: true
-
-    - name: remove nvidia-docker v1
-      apt:
-        name: nvidia-docker
-        state: absent
-        purge: yes
-
-    - name: Add NVIDIA Docker APT signing key
-      apt_key:
-        url: https://nvidia.github.io/nvidia-docker/gpgkey
-        state: present
-
-    - name: Add NVIDIA Docker repository into sources list
-      apt_repository:
-        repo: "{{ item }}"
-        state: present
-        filename: 'nvidia-docker'
-        update_cache: yes
-      with_items:
-        - "deb https://nvidia.github.io/libnvidia-container/ubuntu18.04/amd64 /"
-        - "deb https://nvidia.github.io/nvidia-container-runtime/ubuntu18.04/amd64 /"
-        - "deb https://nvidia.github.io/nvidia-docker/ubuntu18.04/amd64 /"
-
-    - name: Install NVIDIA Docker2
-      apt:
-        name: "{{ item }}"
-        state: present
-      with_items:
-        - "nvidia-docker2"
-        - "nvidia-container-runtime"
-
-    - name: Update docker default runtime
+    - name: set docker default runtime
+      become: true
       copy:
         content: "{{ daemon_json | to_nice_json }}"
         dest: /etc/docker/daemon.json
@@ -77,59 +20,10 @@
         group: root
         mode: 0644
 
-    - name: Restart Docker Service
+    - name: Restart Docker service
+      become: true
       service: name=docker state=restarted enabled=yes
 
-    - name: Check NVIDIA Driver Modules are loaded
-      shell: "lsmod | grep -i nvidia"
-      register: nvidia_mod
-      no_log: True
-      failed_when: false
-
-    - name: Install NVIDIA TRD Driver
-      become: true
-      when:  nvidia_mod.rc == 1
-      block:
-        - name: Download NVIDIA TRD Driver
-          get_url:
-            url: https://us.download.nvidia.com/tesla/510.47.03/nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb
-            dest: /tmp/nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb
-            mode: 0664
-
-        - name: Install TRD Driver Local
-          apt:
-            deb: https://us.download.nvidia.com/tesla/510.47.03/nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb
-            state: present
-            update_cache: yes
-
-        - name: Add NVIDIA Driver APT key
-          apt_key:
-            data: "{{ lookup('file', '/var/nvidia-driver-local-repo-ubuntu2004-510.47.03/7fa2af80.pub') }}"
-            state: present
-
-        - name: Install TRD Driver
-          apt:
-            deb: https://us.download.nvidia.com/tesla/510.47.03/nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb
-            state: present
-            update_cache: yes
-
-        - name: Install NVIDIA CUDA Drivers
-          apt:
-            name: cuda-drivers
-            update_cache: yes
-            state: latest
-
-    - name: Reboot the system
-      when:  nvidia_mod.rc == 1
-      reboot:
-        reboot_timeout: 900
-
-- hosts: all
-  become: true
-  become_method: sudo
-  vars_files:
-    - cnc_values.yaml
-  tasks:
     - name: Add an Kubernetes apt signing key for Ubuntu
       become: true
       when: "ansible_distribution == 'Ubuntu'"
@@ -147,7 +41,7 @@
 
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core
       become: true
-      when: "cnc_version == 5.1 and ansible_distribution == 'Ubuntu'"
+      when: "cnc_version == 5.0 and ansible_distribution == 'Ubuntu'"
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.22.5-00', 'kubeadm=1.22.5-00', 'kubectl=1.22.5-00']
         state: present
@@ -461,7 +355,7 @@
      with_items:
         - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
         - helm repo update
-        - helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+        - helm install --version 1.10.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 
    - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core
      when: "enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version >= 5.0"
@@ -471,7 +365,7 @@
      with_items:
         - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
         - helm repo update
-        - helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
+        - helm install --version 1.10.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
 
    - name: Enable MIG profile with GPU Operator on NVIDIA Cloud Native Core
      when: "enable_mig == true and enable_vgpu == false and gpu_operator.rc == 1 and cnc_version >= 4.1"

@@ -8,7 +8,7 @@ NVIDIA Cloud Native Core v6.1 includes:
 - Kubernetes version 1.23.5
 - Helm 3.8.1
 - NVIDIA GPU Operator 1.10.1
-  - NVIDIA GPU Driver: 470.103.01
+  - NVIDIA GPU Driver: 510.47.03
   - NVIDIA Container Toolkit: 1.9.0
   - NVIDIA K8S Device Plugin: 0.11.0
   - NVIDIA DCGM-Exporter: 2.3.4-2.6.4

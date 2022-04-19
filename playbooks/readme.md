@@ -15,10 +15,6 @@
 - [Jetson Xavier v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.0.md)
 - [Jetson Xavier v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.1.md)
 
-<h3> DGX Systems </h3>
-
-- [DGX Server v5.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/DGX_Server_v5.1.md)
-- [DGX Server v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/DGX_Server_v6.1.md)
 
 `NOTE`
 A list of older NVIDIA Cloud Native Core versions (formerly known as EGX Stack) can be found [here](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/older_versions/readme.md)

@@ -61,15 +61,12 @@
         - "deb https://nvidia.github.io/nvidia-container-runtime/ubuntu18.04/amd64 /"
         - "deb https://nvidia.github.io/nvidia-docker/ubuntu18.04/amd64 /"
 
-    - name: Install NVIDIA Docker2
+    - name: Install NVIDIA Docker and NVIDIA Container Runtime
       apt:
-        name: "{{ item }}"
+        name: [ "nvidia-docker2", "nvidia-container-runtime" ]
         state: present
-      with_items:
-        - "nvidia-docker2"
-        - "nvidia-container-runtime"
 
-    - name: Update docker default runtime
+- name: Update docker default runtime
       copy:
         content: "{{ daemon_json | to_nice_json }}"
         dest: /etc/docker/daemon.json
@@ -90,29 +87,21 @@
       become: true
       when:  nvidia_mod.rc == 1
       block:
-        - name: Download NVIDIA TRD Driver
+        - name: Get Apt Key
           get_url:
-            url: https://us.download.nvidia.com/tesla/510.47.03/nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb
-            dest: /tmp/nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb
+            url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
+            dest: /tmp/7fa2af80.pub
             mode: 0664
 
-        - name: Install TRD Driver Local
-          apt:
-            deb: https://us.download.nvidia.com/tesla/510.47.03/nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb
-            state: present
-            update_cache: yes
-
         - name: Add NVIDIA Driver APT key
-          apt_key:
-            data: "{{ lookup('file', '/var/nvidia-driver-local-repo-ubuntu2004-510.47.03/7fa2af80.pub') }}"
-            state: present
+          shell: cat /tmp/7fa2af80.pub | apt-key add
 
         - name: Install TRD Driver
           apt:
             deb: https://us.download.nvidia.com/tesla/510.47.03/nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb
             state: present
             update_cache: yes
-
+            
         - name: Install NVIDIA CUDA Drivers
           apt:
             name: cuda-drivers

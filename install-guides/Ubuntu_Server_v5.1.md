@@ -450,8 +450,25 @@ If the host is already installed MOFED driver without network operator, execute 
 
 ```
  helm install --version 1.10.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --set driver.version=470.103.01 --wait --generate-name 
+```
+
+### GPU Operator with GPU Direct Storage(GDS) 
+
+Execute the below command to enable the GPU Direct Storage Driver on GPU Operator 
 
 ```
+helm install --version 1.10.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --set gds.enabled=true
+
+### GPU Operator with Signed Driver
+
+`NOTE:` Please make sure you configure the UEFI Secure Boot on your system configuration.
+
+Execute the below command to enable the signed dirver for Secure Boot on GPU Operator 
+```
+helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.version=470-signed --wait --generate-name
+```
+For more information please refer [GPU Operator with Signed Driver](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/install-precompiled-signed-drivers.html?highlight=signed)
+
 
 #### Validating the State of the GPU Operator:
 

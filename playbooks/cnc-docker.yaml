@@ -16,6 +16,7 @@
           - ca-certificates
           - lsb-release
           - gnupg
+          - apt-utils
         state: latest
         update_cache: true
 

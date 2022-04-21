@@ -66,7 +66,7 @@
         name: [ "nvidia-docker2", "nvidia-container-runtime" ]
         state: present
 
-- name: Update docker default runtime
+    - name: Update docker default runtime
       copy:
         content: "{{ daemon_json | to_nice_json }}"
         dest: /etc/docker/daemon.json

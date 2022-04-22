@@ -104,6 +104,7 @@
             update_cache: yes
             
         - name: Install NVIDIA CUDA Drivers
+          ignore_errors: true
           apt:
             name: cuda-drivers
             update_cache: yes

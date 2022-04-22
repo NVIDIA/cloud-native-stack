@@ -101,10 +101,10 @@ k8s_apt_repository: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
 
 ```
 
+`NOTE:` The host may reboot through the install. if it does, wait for the host to finish the reboot and run the installer again. 
 ```
 bash setup.sh install cnc-docker
 ```
-`NOTE:` The host may reboot through the install. if it does, wait for the host to finish the reboot and run the installer again. 
 
 #### Custom Configuration
 By default Cloud Native Core uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` parameters from the `cnc_values.yaml` file

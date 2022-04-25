@@ -104,13 +104,13 @@
             deb: https://us.download.nvidia.com/tesla/510.47.03/nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb
             state: present
             update_cache: yes
+            cache_valid_time: 900
             
         - name: Install NVIDIA CUDA Drivers
           ignore_errors: true
           apt:
             name: cuda-drivers
             update_cache: yes
-            cache_valid_time: 900
             state: latest
 
     - name: Reboot the system

@@ -9,6 +9,14 @@
           path: /usr/bin/nvidia-container-runtime
           runtimeArgs: []
   tasks:
+    - name: Update and Remove Dependencies 
+      apt:
+        autoremove: yes
+        upgrade: dist
+        autoclean: yes
+        update_cache: yes
+        force: yes
+  
     - name: Install Docker Dependencies 
       ansible.builtin.apt:
         name:

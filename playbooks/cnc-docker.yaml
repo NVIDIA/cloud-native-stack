@@ -9,13 +9,6 @@
           path: /usr/bin/nvidia-container-runtime
           runtimeArgs: []
   tasks:
-    - name: Update and Remove Dependencies 
-      apt:
-        autoremove: yes
-        upgrade: dist
-        autoclean: yes
-        update_cache: yes
-        force: yes
   
     - name: Install Docker Dependencies 
       ansible.builtin.apt:
@@ -25,6 +18,7 @@
           - lsb-release
           - gnupg
           - apt-utils
+          - aptitude
         state: latest
         update_cache: true
 
@@ -116,6 +110,7 @@
           apt:
             name: cuda-drivers
             update_cache: yes
+            cache_valid_time: 900
             state: latest
 
     - name: Reboot the system

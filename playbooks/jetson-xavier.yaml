@@ -341,7 +341,7 @@
        mode: '0600'
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core
-     when: "cnc_version == 6.0 or cnc_version == 5.0 and 'running' not in k8sup.stdout"
+     when: "cnc_version == 6.1 or cnc_version == 6.0 or cnc_version == 5.0 and 'running' not in k8sup.stdout"
      command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 
    - name: Taint the Kubernetes Control Plane node

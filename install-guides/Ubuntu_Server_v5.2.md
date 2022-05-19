@@ -18,7 +18,7 @@ NVIDIA Cloud Native Core v5.2 includes:
   - NVIDIA K8s MIG Manager: 0.3.0
   - NVIDIA Driver Manager: 0.3.0
   - Node Feature Discovery: 0.10.1
-- NVIDIA Network Operator 1.2.0
+- NVIDIA Network Operator 1.1.0
   - Mellanox MOFED Driver 5.5-1.0.3.2
   - Mellanox NV Peer Memory Driver 1.1-0
   - RDMA Shared Device Plugin 1.2.1

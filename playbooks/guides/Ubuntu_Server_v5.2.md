@@ -133,7 +133,7 @@ bash setup.sh validate
 
 ### Uninstall
 
-Run the below command to uninstall the NVIDIA Cloud Native Core. Taks being "ignored" refers to no kubernetes cluster being available.
+Run the below command to uninstall the NVIDIA Cloud Native Core. Tasks being "ignored" refers to no kubernetes cluster being available.
 
 ```
 bash setup.sh uninstall

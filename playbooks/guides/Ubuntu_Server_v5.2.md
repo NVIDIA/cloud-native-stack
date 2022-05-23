@@ -7,9 +7,9 @@ NVIDIA Cloud Native Core v5.1 includes:
 - Ubuntu 20.04.4 LTS
 - Containerd 1.4.9
 - Kubernetes version 1.22.5
-- Helm 3.6.2
+- Helm 3.8.2
 - NVIDIA GPU Operator 1.10.1
-  - NVIDIA GPU Driver: 470.103.01
+  - NVIDIA GPU Driver: 510.47.03
   - NVIDIA Container Toolkit: 1.9.0
   - NVIDIA K8S Device Plugin: 0.11.0
   - NVIDIA DCGM-Exporter: 2.3.4-2.6.4
@@ -67,7 +67,8 @@ Install the NVIDIA Cloud Native Core stack by running the below command. "Skippi
 ```
 $ nano cnc_values.yaml
 
-cnc_version: 5.1
+
+cnc_version: 5.2
 
 # GPU Operator Values
 gpu_driver_version: "510.47.03"
@@ -105,7 +106,6 @@ cnc_nvidia_driver: no
 ## Kubernetes apt resources
 k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 k8s_apt_repository: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
-
 ```
 
 ```
@@ -116,7 +116,6 @@ By default Cloud Native Core uses Google kubernetes apt repository, if you want 
 
 Example:
 ```
-
 ## Kubernetes apt resources
 k8s_apt_key: "https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg"
 k8s_apt_repository: "deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main"

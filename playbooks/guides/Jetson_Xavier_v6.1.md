@@ -79,7 +79,7 @@ cnc_version: 6.1
 ```
 
 ```
-$ bash setup.sh install jetson
+$ bash setup.sh install
 ```
 
 ### Uninstall

@@ -2,35 +2,10 @@
   gather_facts: yes
   vars_files:
     - cnc_values.yaml
+  environment:
+    http_proxy: "{{ http_proxy }}"
+    https_proxy: "{{ https_proxy }}"
   tasks:
-    - name: Checking Nouveau is disabled
-      become: true
-      command: lsmod | grep nouveau
-      register: nouveau_result
-      failed_when: false
-
-    - name: unload nouveau
-      when: nouveau_result.rc != 0
-      become: true
-      modprobe:
-        name: nouveau
-        state: absent
-      ignore_errors: true
-
-    - name: blacklist nouveau
-      when: nouveau_result.rc != 0
-      become: true
-      copy:
-        dest: "/etc/modprobe.d/blacklist-nouveau.conf"
-        owner: "root"
-        group: "root"
-        mode: "0644"
-        content: |
-          blacklist nouveau
-          options nouveau modeset=0
-      notify:
-      - update-initramfs
-
     - name: Validate whether Kubernetes cluster installed
       shell: kubectl cluster-info
       register: k8sup
@@ -59,7 +34,7 @@
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.22.5-00', 'kubeadm=1.22.5-00', 'kubectl=1.22.5-00']
         state: present
-        update_cache: yes
+        update_cache: true
 
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.0
       become: true
@@ -67,7 +42,7 @@
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.2-00', 'kubeadm=1.23.2-00', 'kubectl=1.23.2-00']
         state: present
-        update_cache: yes
+        update_cache: true
 
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.1
       become: true
@@ -75,7 +50,7 @@
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.5-00', 'kubeadm=1.23.5-00', 'kubectl=1.23.5-00']
         state: present
-        update_cache: yes
+        update_cache: true
 
     - name: Hold the installed Packages
       become: true
@@ -161,7 +136,7 @@
             create: yes
       when: "cnc_version >= 4.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
 
-    - name: Install Containerd for NVIDIA Cloud Native Core 5.0 or 5.1 or 5.2
+    - name: Install Containerd for NVIDIA Cloud Native Core 5.x
       become: true
       block:
         - name: Download cri-containerd-cni
@@ -193,7 +168,7 @@
             name: containerd
             state: restarted
             daemon_reload: yes
-      when: "cnc_version == 5.2 or cnc_version == 5.0 or cnc_version == 5.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+      when: "cnc_version == 5.2 or cnc_version == 5.1 or cnc_version == 5.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
 
 
     - name: Install Containerd for NVIDIA Cloud Native Core 6.0
@@ -263,6 +238,42 @@
             state: restarted
             daemon_reload: yes
       when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+
+    - name: Add Containerd Proxy configuration
+      become: true
+      block:
+        - name: Get Host IP
+          shell: interface=$(ip a | grep 'state UP' |  egrep 'enp*|ens*|eth*|enc*|bond*|wlan*' | awk '{print $2}' | sed 's/://g'); ifconfig $interface | grep -iw inet | awk '{print $2}'
+          register: network
+
+        - name: subnet
+          shell: echo {{ network.stdout }} | cut -d. -f1-3
+          register: subnet
+
+        - name: Create containerd.service.d
+          file:
+            path: /etc/systemd/system/containerd.service.d
+            state: directory
+            recurse: yes
+
+        - name: create http-proxy.conf
+          lineinfile:
+            create: yes
+            mode: 666
+            path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+            line: "{{ item }}"
+          loop:
+          - "[Service]"
+          - "Environment='NO_PROXY={{ network.stdout }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24'"
+          - "Environment='HTTPS_PROXY={{ https_proxy }}'"
+          - "Environment='HTTP_PROXY={{ http_proxy }}'"
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "proxy == true and cnc_version == 6.1 and 'running' not in k8sup.stdout"
 
     - name: Starting and enabling the required services
       become: true

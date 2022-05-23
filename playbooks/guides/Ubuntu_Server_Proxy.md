@@ -1,4 +1,4 @@
-<h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) for Developers </h1>
+<h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) with Proxy </h1>
 
 This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Core for Developers
 
@@ -69,7 +69,9 @@ nano hosts
 
 Install the NVIDIA Cloud Native Core stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
 
-`NOTE:` Change the Proxy configuartion values in `cnc_values.yaml`, and if you only have http proxy, please add the same proxy details in https_proxy also. 
+`NOTE:` 
+- If you only have http proxy, please add the same proxy details in https_proxy also. 
+- Cloud Native Core 5.2 and 6.1 versions only supports proxy configuration.
 ```
 $ nano cnc_values.yaml
 

@@ -1,7 +1,6 @@
 <h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) with Proxy </h1>
 
-This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Core for Developers
-
+This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Core with Proxy configration 
 NVIDIA Cloud Native Core for Developers includes:
 - Ubuntu 20.04.4 LTS
 - Containerd 1.6.2

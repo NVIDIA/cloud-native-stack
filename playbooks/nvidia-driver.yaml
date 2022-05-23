@@ -1,0 +1,41 @@
+- hosts: all
+  become: true
+  become_method: sudo
+  tasks:
+
+    - name: Check NVIDIA Driver Modules are loaded
+      shell: "lsmod | grep -i nvidia"
+      register: nvidia_mod
+      no_log: True
+      failed_when: false
+
+    - name: Install NVIDIA TRD Driver
+      become: true
+      when:  nvidia_mod.rc == 1
+      block:
+        - name: Get Apt Key
+          get_url:
+            url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
+            dest: /tmp/7fa2af80.pub
+            mode: 0664
+
+        - name: Add NVIDIA Driver APT key
+          shell: cat /tmp/7fa2af80.pub | apt-key add
+
+        - name: Install TRD Driver
+          apt:
+            deb: https://us.download.nvidia.com/tesla/510.47.03/nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb
+            state: present
+            update_cache: yes
+
+        - name: Install NVIDIA CUDA Drivers
+          ignore_errors: true
+          apt:
+            name: cuda-drivers
+            update_cache: yes
+            state: latest
+
+    - name: Reboot the system
+      when:  nvidia_mod.rc == 1
+      reboot:
+        reboot_timeout: 900

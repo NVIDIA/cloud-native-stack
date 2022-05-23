@@ -68,6 +68,8 @@ nano hosts
 ### Installation
 
 Install the NVIDIA Cloud Native Core stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
+
+`NOTE:` Change the Proxy configuartion values in `cnc_values.yaml`, and if you only have http proxy, please add the same proxy details in https_proxy also. 
 ```
 $ nano cnc_values.yaml
 
@@ -96,15 +98,15 @@ enable_network_operator: no
 enable_rdma: no
 
 # Prxoy Configuration
-proxy: no
-http_proxy: ""
-https_proxy: "" 
+proxy: yes
+http_proxy: "http://<proxy-ip>:proxy-port>"
+https_proxy: "http://<proxy-ip>:proxy-port>" 
 
 # Cloud Native Core for Developers Values
 ## Enable for Cloud Native Core Developers 
-cnc_docker: yes
+cnc_docker: no
 ## Enable For Cloud Native Core Developers with TRD Driver
-cnc_nvidia_driver: yes
+cnc_nvidia_driver: no
 
 ## Kubernetes apt resources
 k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"

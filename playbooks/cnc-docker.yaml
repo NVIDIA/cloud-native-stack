@@ -9,7 +9,6 @@
           path: /usr/bin/nvidia-container-runtime
           runtimeArgs: []
   tasks:
-  
     - name: Install Docker Dependencies 
       ansible.builtin.apt:
         name:
@@ -18,7 +17,7 @@
           - lsb-release
           - gnupg
           - apt-utils
-          - aptitude
+          - unzip
         state: latest
         update_cache: true
 
@@ -68,6 +67,7 @@
       apt:
         name: [ "nvidia-docker2", "nvidia-container-runtime" ]
         state: present
+        update_cache: true
 
     - name: Update docker default runtime
       copy:
@@ -80,43 +80,20 @@
     - name: Restart Docker Service
       service: name=docker state=restarted enabled=yes
 
-    - name: Check NVIDIA Driver Modules are loaded
-      shell: "lsmod | grep -i nvidia"
-      register: nvidia_mod
-      no_log: True
-      failed_when: false
-
-    - name: Install NVIDIA TRD Driver
+    - name: NGC CLI Setup
       become: true
-      when:  nvidia_mod.rc == 1
       block:
-        - name: Get Apt Key
+        - name: Download CLI
           get_url:
-            url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
-            dest: /tmp/7fa2af80.pub
+            url: https://ngc.nvidia.com/downloads/ngccli_linux.zip
+            dest: /tmp/ngccli_linux.zip
             mode: 0664
 
-        - name: Add NVIDIA Driver APT key
-          shell: cat /tmp/7fa2af80.pub | apt-key add
-
-        - name: Install TRD Driver
-          apt:
-            deb: https://us.download.nvidia.com/tesla/510.47.03/nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb
-            state: present
-            update_cache: yes
-            cache_valid_time: 900
-            
-        - name: Install NVIDIA CUDA Drivers
-          ignore_errors: true
-          apt:
-            name: cuda-drivers
-            update_cache: yes
-            state: latest
-
-    - name: Reboot the system
-      when:  nvidia_mod.rc == 1
-      reboot:
-        reboot_timeout: 900
+        - name: Install NGC CLI
+          unarchive:
+            src: /tmp/ngccli_linux.zip
+            dest: /usr/local/bin/
+            remote_src: yes
 
 - hosts: all
   become: true
@@ -126,16 +103,16 @@
   tasks:
     - name: Add an Kubernetes apt signing key for Ubuntu
       become: true
-      when: "ansible_distribution == 'Ubuntu'"
+      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
       apt_key:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        url: "{{ k8s_apt_key }}"
         state: present
 
     - name: Adding Kubernetes apt repository for Ubuntu
       become: true
-      when: "ansible_distribution == 'Ubuntu'"
+      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
       apt_repository:
-        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+        repo: "{{ k8s_apt_repository }}"
         state: present
         filename: kubernetes
 
@@ -145,6 +122,7 @@
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.22.5-00', 'kubeadm=1.22.5-00', 'kubectl=1.22.5-00']
         state: present
+        update_cache: true
 
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core
       become: true
@@ -152,6 +130,7 @@
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.5-00', 'kubeadm=1.23.5-00', 'kubectl=1.23.5-00']
         state: present
+        update_cache: true
 
     - name: Hold the installed Packages
       become: true
@@ -253,7 +232,6 @@
             remote_src: yes
             extra_opts:
               - --no-overwrite-dir
-
 
         - name: Write defaults to config.toml
           get_url:

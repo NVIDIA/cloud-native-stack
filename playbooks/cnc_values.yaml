@@ -1,31 +1,38 @@
 cnc_version: 6.1
-## This is most likely NVIDIA Driver Version (https://www.nvidia.com/Download/index.aspx?lang=en-us)
-## enable 51.0.47.03 for cnc_version: 6.0
+
+# GPU Operator Values
 gpu_driver_version: "510.47.03"
-## If the Network Operator is yes then make sure enable_rdma as well yes
-enable_network_operator: no
-## Enable RDMA yes for NVIDIA Certification
-enable_rdma: no
-## This is most likely to enable MIG with GPU Operator 
 enable_mig: no
-## This is most likely to MIG Profile for GPU Operator 
 mig_profile: all-disabled
-## Enable GDS feature on GPU Operator
 enable_gds: no
-## Enable secure boot if the system is loaded secure boot for GPU Operator
 enable_secure_boot: no
-## This is most likely to enable vGPU for GPU Operator 
 enable_vgpu: no
-## This is most likely vGPU License Server
 vgpu_license_server: ""
 ## This is most likely GPU Operator Driver Registry
 gpu_operator_driver_registry: "nvcr.io/nvidia"
-## This should remain as $oauthtoken if using an NGC API key
 gpu_operator_registry_username: "$oauthtoken"
 ## This is most likely an NGC API key
 gpu_operator_registry_password: ""
 ## This is most likely an NGC email
 gpu_operator_registry_email: ""
+
+# Network Operator Values
+## If the Network Operator is yes then make sure enable_rdma as well yes
+enable_network_operator: no
+## Enable RDMA yes for NVIDIA Certification
+enable_rdma: no
+
+# Prxoy Configuration
+proxy: no
+http_proxy: ""
+https_proxy: "" 
+
+# Cloud Native Core for Developers Values
+## Enable for Cloud Native Core Developers 
+cnc_docker: no
+## Enable For Cloud Native Core Developers with TRD Driver
+cnc_nvidia_driver: no
+
 ## Kubernetes apt resources
 k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 k8s_apt_repository: "deb https://apt.kubernetes.io/ kubernetes-xenial main"

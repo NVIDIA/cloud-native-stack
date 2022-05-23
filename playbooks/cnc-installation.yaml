@@ -9,7 +9,6 @@
     - set_fact: 
         cnc_docker: "{{ cnc_docker }}"
         cnc_nvidia_driver: "{{ cnc_nvidia_driver }}"
-        cnc_nvidia_vgpu: "{{ cnc_nvidia_vgpu }}"
         cnc_version: "{{ cnc_version }}"
 
     - name: Checking Nouveau is disabled

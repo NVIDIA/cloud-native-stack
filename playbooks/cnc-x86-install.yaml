@@ -73,7 +73,7 @@
 
    - name: add default gateway
      shell: route add -net 0.0.0.0/0 gw {{ network.stdout }}
-     when: gateway.rc == 1 and proxy == true
+     when: proxy == true
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 5.0
      when: "cnc_version == 5.2 or cnc_version == 5.1 or cnc_version == 5.0 and 'running' not in k8sup.stdout"

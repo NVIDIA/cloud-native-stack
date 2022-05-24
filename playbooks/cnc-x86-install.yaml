@@ -327,14 +327,18 @@
      shell: "for list in `ls -lrt /tmp/*nic | awk '{print $NF}'`; do cat $list | tr '\n' ','; done | sed 's/.$//'"
      register: active_nic
 
-   - name: Get pwd directory
-     shell: "echo {{lookup('pipe', 'pwd')}}"
-     register: pwd
+   - name: Copy files to master
+     when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version >= 4.1"
+     copy:
+       src: "{{ item }}"
+       dest: /tmp/
+     with_fileglob:
+       - "{{lookup('pipe', 'pwd')}}/*.yaml"
 
    - name: Update Active mellanox NIC in network-operator-values.yaml
      when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version >= 4.1"
      failed_when: false
-     shell: 'sed -ie "s/devices: \[.*\]/devices: \\[ {{ active_nic.stdout }}\]/g" "{{ pwd.stdout }}"/network-operator-values.yaml'
+     shell: 'sed -ie "s/devices: \[.*\]/devices: \\[ {{ active_nic.stdout }}\]/g" /tmp/network-operator-values.yaml'
      args:
        warn: false
 
@@ -347,7 +351,7 @@
         - helm repo add mellanox https://mellanox.github.io/network-operator --force-update
         - helm repo update
         - kubectl label nodes --all node-role.kubernetes.io/master- --overwrite
-        - helm install -f {{lookup('pipe', 'pwd')}}/network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
+        - helm install -f /tmp/network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
 
    - name: Checking if GPU Operator is installed
      shell: helm ls -A | grep gpu-operator

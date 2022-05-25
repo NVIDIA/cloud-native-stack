@@ -48,6 +48,13 @@ fi
 	echo
 	version=$(cat cnc_values.yaml | awk -F':' '{print $2}' | head -n1)
         echo "Installing NVIDIA Cloud Native Core Version $version"
+		id=$(sudo dmidecode --string system-uuid | awk -F'-' '{print $1}' | cut -c -3)
+		if [ $id == 'ec2' ]; then
+			sed -ie 's/- hosts: master/- hosts: all/g' cnc-docker.yaml
+			ansible-playbook -c local -i localhost, cnc-docker.yaml
+			exit 1
+		fi
+
 	ansible-playbook -i hosts cnc-installation.yaml
 	elif [ $1 == "uninstall" ]; then
 	echo

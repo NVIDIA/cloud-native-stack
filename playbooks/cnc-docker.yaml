@@ -101,6 +101,12 @@
   vars_files:
     - cnc_values.yaml
   tasks:
+    - name: Validate whether Kubernetes cluster installed
+      shell: kubectl cluster-info
+      register: k8sup
+      no_log: True
+      failed_when: false
+
     - name: Add an Kubernetes apt signing key for Ubuntu
       become: true
       when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
@@ -404,6 +410,7 @@
        - curl -O https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz
        - tar -xvzf helm-v3.6.3-linux-amd64.tar.gz
        - cp linux-amd64/helm /usr/local/bin/
+       - chmod 755 /usr/local/bin/helm
        - rm -rf helm-v3.6.3-linux-amd64.tar.gz linux-amd64
      when: "cnc_version == 5.1 and helm_exists.rc > 0"
 
@@ -416,6 +423,7 @@
        - curl -O https://get.helm.sh/helm-v3.8.1-linux-amd64.tar.gz
        - tar -xvzf helm-v3.8.1-linux-amd64.tar.gz
        - cp linux-amd64/helm /usr/local/bin/
+       - chmod 755 /usr/local/bin/helm
        - rm -rf helm-v3.8.1-linux-amd64.tar.gz linux-amd64
      when: "cnc_version == 6.1 and helm_exists.rc > 0"
 

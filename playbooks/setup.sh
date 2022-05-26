@@ -50,8 +50,8 @@ fi
         echo "Installing NVIDIA Cloud Native Core Version $version"
 		id=$(sudo dmidecode --string system-uuid | awk -F'-' '{print $1}' | cut -c -3)
 		if [ $id == 'ec2' ]; then
-			sed -ie 's/- hosts: master/- hosts: all/g' cnc-docker.yaml
-			ansible-playbook -c local -i localhost, cnc-docker.yaml
+			sed -ie 's/- hosts: master/- hosts: all/g' *.yaml
+			ansible-playbook -c local -i localhost, cnc-installation.yaml
 			exit 1
 		fi
 

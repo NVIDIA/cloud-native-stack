@@ -32,13 +32,42 @@
         state: present
         filename: docker
 
+    - name: Create docker systemd file
+      become: true
+      copy:
+        dest: /etc/systemd/system/docker.service
+        content: |
+          [Unit]
+          Description=Docker Application Container Engine
+          Documentation=https://docs.docker.com
+          After=network-online.target docker.socket firewalld.service containerd.service
+          Wants=network-online.target
+          Requires=docker.socket containerd.service
+
+          [Service]
+          Type=notify
+          ExecStart=/usr/bin/dockerd -H unix:// --containerd=/run/containerd/containerd.sock
+          ExecReload=/bin/kill -s HUP $MAINPID
+          TimeoutSec=0
+          RestartSec=2
+          Restart=always
+          StartLimitBurst=3
+          StartLimitInterval=60s
+          LimitNOFILE=infinity
+          LimitNPROC=infinity
+          LimitCORE=infinity
+          TasksMax=infinity
+          Delegate=yes
+          KillMode=process
+          OOMScoreAdjust=-500
+          [Install]
+          WantedBy=multi-user.target
+
     - name: Install Docker
-      ansible.builtin.apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
+      apt:
+        name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
         state: latest
+        force: yes
         update_cache: true
 
     - name: remove nvidia-docker v1
@@ -105,7 +134,7 @@
       shell: kubectl cluster-info
       register: k8sup
       no_log: True
-      failed_when: false
+      failed_when: false 
 
     - name: Add an Kubernetes apt signing key for Ubuntu
       become: true
@@ -250,8 +279,6 @@
             name: containerd
             state: restarted
             daemon_reload: yes
-      when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
-
 
 - hosts: master
   vars_files:

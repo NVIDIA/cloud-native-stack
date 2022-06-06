@@ -15,12 +15,12 @@
       block:
         - name: Get Apt Key
           get_url:
-            url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
-            dest: /tmp/7fa2af80.pub
+            url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
+            dest: /tmp/3bf863cc.pub
             mode: 0664
 
         - name: Add NVIDIA Driver APT key
-          shell: cat /tmp/7fa2af80.pub | apt-key add
+          shell: cat /tmp/3bf863cc.pub | apt-key add
 
         - name: Install TRD Driver
           apt:

@@ -370,7 +370,10 @@
      with_items:
         - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
         - helm repo update
-        - helm show values nvidia/gpu-operator > /tmp/values.yaml     
+
+   - name: Get the GPU Operator 1.10.1 Values.yaml
+     shell: helm show --version=v1.10.1 values nvidia/gpu-operator > /tmp/values.yaml
+     when: "cnc_version == 6.1 or cnc_version == 6.0 or cnc_version == 5.1 or cnc_version == 5.2"
 
    - name: create GPU Custom Values for proxy
      when: proxy == true

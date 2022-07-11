@@ -4,6 +4,19 @@
     - cnc_values.yaml
     - gpu_operator.yaml
   tasks:
+    - name: Waiting for the Cluster to become available 
+      args:
+        executable: /bin/bash
+      shell: |
+        state=$(kubectl get pods -n nvidia-gpu-operator | egrep -v 'Running|Completed|NAME' | wc -l)
+        while [ $state != 0 ]
+          do
+            sleep 10
+            state=$(kubectl get pods -n nvidia-gpu-operator | egrep -v 'Running|Completed|NAME' | wc -l)
+          done
+      register: status
+      when: "cnc_version > 4.1 and ansible_architecture == 'x86_64'"
+
     - name: Validate kubernetes cluster is up
       shell:  kubectl cluster-info | grep master
       register: cluster
@@ -240,7 +253,7 @@
         msg: "Nvidia Container Driver Version {{ nvidia_driver.stdout }}"
 
     - name: Report GPU Operator NV Toolkit Driver
-      when: cnc_docker == true or
+      when: cnc_docker == true
       ignore_errors: yes
       debug:
         msg: "NV Container Toolkit Version {{ nvidia_ct.stdout }}"

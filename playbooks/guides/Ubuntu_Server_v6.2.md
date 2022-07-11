@@ -1,8 +1,8 @@
-<h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) v6.1 </h1>
+<h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) v6.2 </h1>
 
 This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Core.
 
-NVIDIA Cloud Native Core v6.1 includes:
+NVIDIA Cloud Native Core v6.2 includes:
 - Ubuntu 20.04.4 LTS
 - Containerd 1.6.5
 - Kubernetes version 1.23.8

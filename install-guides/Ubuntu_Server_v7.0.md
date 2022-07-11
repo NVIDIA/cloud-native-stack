@@ -57,7 +57,7 @@ Please note that NVIDIA Cloud Native Core is validated only on systems with the 
 
 
 ### Installing the Ubuntu Operating System
-These instructions require installing Ubuntu Server LTS 22.04.4. Ubuntu Server can be downloaded [here](http://cdimage.ubuntu.com/releases/20.04.4/release/).
+These instructions require installing Ubuntu Server LTS 22.04. Ubuntu Server can be downloaded [here](http://cdimage.ubuntu.com/releases/22.04/release/).
 
 Please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
 
@@ -510,8 +510,6 @@ Execute the below command to enable the GPU Direct Storage Driver on GPU Operato
 ```
 helm install --version 1.11.0 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --set gds.enabled=true
 ```
-### TODO
-For more information GPUD Direct Storage, please refer
 
 #### Validating the State of the GPU Operator:
 

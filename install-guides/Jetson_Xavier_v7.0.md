@@ -1,4 +1,4 @@
-<h1> NVIDIA Cloud Native Core - v6.0 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit</h1>
+<h1> NVIDIA Cloud Native Core - v7.0 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit</h1>
 
 <h2>Introduction</h2>
 
@@ -15,7 +15,7 @@ The final environment will include:
 <h2>Table of Contents</h2>
 
 - [Prerequisites](#Prerequisites)
-- [Installing JetPack 4.6.1](#Installing-JetPack-5.0)
+- [Installing JetPack 5.0](#Installing-JetPack-5.0)
 - [Jetson Xavier NX Storage](#Jetson-Xavier-NX-Storage)
 - [Upgrading Nvidia Container Runtime](#Upgrading-Nvidia-Container-Runtime)
 - [Installing Containerd](#Installing-Containerd)

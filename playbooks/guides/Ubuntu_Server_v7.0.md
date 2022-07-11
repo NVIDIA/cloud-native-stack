@@ -1,8 +1,8 @@
-<h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) v6.1 </h1>
+<h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) v7.0 </h1>
 
 This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Core.
 
-NVIDIA Cloud Native Core v6.1 includes:
+NVIDIA Cloud Native Core v7.0 includes:
 - Ubuntu 22.04 LTS
 - Containerd 1.6.6
 - Kubernetes version 1.24.2
@@ -47,7 +47,7 @@ To determine if your system qualifies as an NVIDIA Certified System, review the 
 Please note that NVIDIA Cloud Native Core is validated only on systems with the default kernel (not HWE).
 
 ### Installing the Ubuntu Operating System
-These instructions require having Ubuntu Server LTS 20.04.4 on your system. The Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/20.04.4/release/.
+These instructions require having Ubuntu Server LTS 22.04 on your system. The Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/22.04/release/.
 
 
 For more information on installing Ubuntu server please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
@@ -79,7 +79,7 @@ nano hosts
 
 Install the NVIDIA Cloud Native Core stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
 ```
-$ nano cnc_values.yaml
+$ nano cnc_version.yaml
 
 cnc_version: 7.0
 ```

@@ -1,10 +1,10 @@
-<h1>NVIDIA Cloud Native Core v6.1 - Install Guide for Developers</h1>
+<h1>NVIDIA Cloud Native Core v6.2 - Install Guide for Developers</h1>
 <h2>Introduction</h2>
 
 This document describes how to setup the NVIDIA Cloud Native Core collection on a single or multiple systems. NVIDIA Cloud Native Core can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
-NVIDIA Cloud Native Core v6.1 includes:
-- Ubuntu 20.04.3 LTS
+NVIDIA Cloud Native Core v6.2 includes:
+- Ubuntu 20.04.4 LTS
 - Containerd 1.6.5
 - Kubernetes version 1.23.8
 - Helm 3.8.2
@@ -304,13 +304,13 @@ Apply sysctl params without reboot:
 Download the Containerd tarball:
 
 ```
- wget https://github.com/containerd/containerd/releases/download/v1.6.2/cri-containerd-cni-1.6.2-linux-amd64.tar.gz
+ wget https://github.com/containerd/containerd/releases/download/v1.6.5/cri-containerd-cni-1.6.5-linux-amd64.tar.gz
 ```
 ```
- sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.2-linux-amd64.tar.gz
+ sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.5-linux-amd64.tar.gz
 ```
 ```
- rm -rf cri-containerd-cni-1.6.2-linux-amd64.tar.gz
+ rm -rf cri-containerd-cni-1.6.5-linux-amd64.tar.gz
 ```
 
 Install Containerd:
@@ -360,7 +360,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
  sudo apt-get update
 ```
 ```
- sudo apt-get install -y -q kubelet=1.23.5-00 kubectl=1.23.5-00 kubeadm=1.23.5-00
+ sudo apt-get install -y -q kubelet=1.23.8-00 kubectl=1.23.8-00 kubeadm=1.23.8-00
 ```
 ```
  sudo apt-mark hold kubelet kubeadm kubectl
@@ -478,7 +478,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.23.5
+#yourhost        Ready    control-plane,master   10m   v1.23.8
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -492,13 +492,13 @@ for more information.
 
 ### Installing Helm 
 
-Execute the following command to download and install Helm 3.8.1: 
+Execute the following command to download and install Helm 3.8.2: 
 
 ```
- wget https://get.helm.sh/helm-v3.8.1-linux-amd64.tar.gz && \
- tar -zxvf helm-v3.8.1-linux-amd64.tar.gz && \
+ wget https://get.helm.sh/helm-v3.8.2-linux-amd64.tar.gz && \
+ tar -zxvf helm-v3.8.2-linux-amd64.tar.gz && \
  sudo mv linux-amd64/helm /usr/local/bin/helm && \ 
- rm -rf helm-v3.8.1-linux-amd64.tar.gz linux-amd64/
+ rm -rf helm-v3.8.2-linux-amd64.tar.gz linux-amd64/
 ```
 
 Refer to the Helm 3.8.1 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.

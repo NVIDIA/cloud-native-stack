@@ -1,12 +1,12 @@
-<h1>NVIDIA Cloud Native Core v6.1 - Install Guide for Developers</h1>
+<h1>NVIDIA Cloud Native Core v7.0 - Install Guide for Developers</h1>
 <h2>Introduction</h2>
 
 This document describes how to setup the NVIDIA Cloud Native Core collection on a single or multiple systems. NVIDIA Cloud Native Core can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
-NVIDIA Cloud Native Core v6.1 includes:
+NVIDIA Cloud Native Core v7.0 includes:
 - Ubuntu 22.04.3 LTS
 - Containerd 1.6.6
-- Kubernetes version 1.24.1
+- Kubernetes version 1.24.2
 - Helm 3.9.0
 - NVIDIA GPU Driver: 515.48.07
 - NVIDIA Container Toolkit: 1.10.0
@@ -48,7 +48,7 @@ To determine if your system qualifies as an NVIDIA Certified System, review the 
 Please note that NVIDIA Cloud Native Core is validated only on systems with the default kernel (not HWE).
 
 ### Installing the Ubuntu Operating System
-These instructions require having Ubuntu Server LTS 22.04.4 on your system. The Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/20.04.4/release/.
+These instructions require having Ubuntu Server LTS 22.04 on your system. The Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/20.04/release/.
 
 For more information on installing Ubuntu server please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
 
@@ -360,7 +360,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
  sudo apt-get update
 ```
 ```
- sudo apt-get install -y -q kubelet=1.24.1-00 kubectl=1.24.1-00 kubeadm=1.24.1-00
+ sudo apt-get install -y -q kubelet=1.24.2-00 kubectl=1.24.2-00 kubeadm=1.24.2-00
 ```
 ```
  sudo apt-mark hold kubelet kubeadm kubectl

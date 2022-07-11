@@ -136,9 +136,6 @@
 - when: "cnc_docker == true and ansible_architecture == 'x86_64'" 
   import_playbook: cnc-docker.yaml
 
-- when: "cnc_dgx == true and ansible_architecture == 'x86_64'" 
-  import_playbook: cnc-dgx.yaml
-
 - when: "cnc_version <= 4.1 and cnc_docker != true and ansible_architecture == 'x86_64'"
   import_playbook: older_versions/prerequisites.yaml
 

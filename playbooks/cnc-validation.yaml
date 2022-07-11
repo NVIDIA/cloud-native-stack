@@ -90,12 +90,12 @@
       ignore_errors: yes
 
     - name: Check NVIDIA Driver Version
-      when: cnc_nvidia_driver == true or cnc_dgx == true
+      when: cnc_nvidia_driver == true 
       shell: nvidia-smi --query-gpu=driver_version --format=csv,noheader --id=0
       register: nvidia_driver
 
     - name: Check NVIDIA Container ToolKit Version
-      when: cnc_dgx == true or cnc_docker == true
+      when: cnc_docker == true
       become: true
       shell: dpkg -l | grep -i nvidia-container-toolkit | awk '{ print $3}'
       register: nvidia_ct
@@ -222,25 +222,25 @@
         msg: "Nvidia GPU Operator versions {{ gpuoperator.stdout }}"
 
     - name: Report Nvidia Container Driver Version
-      when: cnc_docker == false or cnc_dgx == false
+      when: cnc_docker == false 
       ignore_errors: yes
       debug:
         msg: "Nvidia Container Driver Version {{ nvcdriver.stdout }}"
 
     - name: Report GPU Operator NV Toolkit Driver
-      when: cnc_docker == false or cnc_dgx == false
+      when: cnc_docker == false
       ignore_errors: yes
       debug:
         msg: "NV Container Toolkit Version {{ nvtoolkit.stdout }}"
 
     - name: Report Nvidia Container Driver Version
-      when: cnc_docker == true or cnc_dgx == true
+      when: cnc_docker == true
       ignore_errors: yes
       debug:
         msg: "Nvidia Container Driver Version {{ nvidia_driver.stdout }}"
 
     - name: Report GPU Operator NV Toolkit Driver
-      when: cnc_docker == true or or cnc_dgx == true
+      when: cnc_docker == true or
       ignore_errors: yes
       debug:
         msg: "NV Container Toolkit Version {{ nvidia_ct.stdout }}"
@@ -309,7 +309,7 @@
         msg: "{{ compare_61.stdout_lines }}"
 
     - name: Componenets Matrix Versions Vs Installed Versions
-      when: cnc_docker == false and cnc_dgx == false and cnc_version == 6.2 or cnc_docker == false and cnc_dgx == false and cnc_version == 7.0
+      when: cnc_docker == false and cnc_version == 6.2 or cnc_docker == false and cnc_version == 7.0
       register: compare_70
       args:
         executable: /bin/bash
@@ -332,12 +332,12 @@
         echo -e "Please validate between Matrix Version and Installed Version listed above"
 
     - name: Report Versions
-      when: cnc_docker == false and cnc_dgx == false and cnc_version == 6.2 or cnc_docker == false and cnc_dgx == false and cnc_version == 7.0
+      when: cnc_docker == false and cnc_version == 6.2 or cnc_docker == false and cnc_version == 7.0
       debug:
         msg: "{{ compare_70.stdout_lines }}"
 
     - name: Componenets Matrix Versions Vs Installed Versions
-      when: cnc_version == 7.0 and cnc_docker == true or cnc_version == 6.2 and cnc_docker == true or cnc_version == 6.2 and cnc_dgx == true
+      when: cnc_version == 7.0 and cnc_docker == true or cnc_version == 6.2 and cnc_docker == true or cnc_version == 6.2
       register: compare_70
       args:
         executable: /bin/bash
@@ -360,7 +360,7 @@
         echo -e "Please validate between Matrix Version and Installed Version listed above"
 
     - name: Report Versions
-      when: cnc_version == 7.0 and cnc_docker == true or cnc_version == 6.2 and cnc_docker == true or cnc_version == 6.2 and cnc_dgx == true
+      when: cnc_version == 7.0 and cnc_docker == true or cnc_version == 6.2 and cnc_docker == true or cnc_version == 6.2
       debug:
         msg: "{{ compare_70.stdout_lines }}"
 
@@ -386,14 +386,14 @@
 
     - name: Validating the nvidia-smi on NVIDIA Cloud Native Core
       command: "kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.4.0-base-ubuntu20.04 --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
-      when: "cnc_version <= 5.2 or cnc_dgx == true"
+      when: "cnc_version <= 5.2"
       register: smi
       ignore_errors: yes
       async: 60
 
     - name: Validating the nvidia-smi on NVIDIA Cloud Native Core
       command: "kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.6.0-base-ubuntu20.04 --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
-      when: "cnc_version == 6.2 or cnc_version == 6.0 or cnc_version == 6.1 and cnc_dgx == false"
+      when: "cnc_version == 6.2 or cnc_version == 6.0 or cnc_version == 6.1"
       register: smi
       ignore_errors: yes
       async: 60

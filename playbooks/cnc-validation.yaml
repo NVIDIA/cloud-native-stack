@@ -350,7 +350,7 @@
         msg: "{{ compare_70.stdout_lines }}"
 
     - name: Componenets Matrix Versions Vs Installed Versions
-      when: cnc_version == 7.0 and cnc_docker == true or cnc_version == 6.2 and cnc_docker == true or cnc_version == 6.2
+      when: cnc_docker == true and cnc_version == 6.2 or cnc_docker == true and cnc_version == 7.0
       register: compare_70
       args:
         executable: /bin/bash
@@ -373,7 +373,7 @@
         echo -e "Please validate between Matrix Version and Installed Version listed above"
 
     - name: Report Versions
-      when: cnc_version == 7.0 and cnc_docker == true or cnc_version == 6.2 and cnc_docker == true or cnc_version == 6.2
+      when: cnc_docker == true and cnc_version == 6.2 or cnc_docker == true and cnc_version == 7.0
       debug:
         msg: "{{ compare_70.stdout_lines }}"
 

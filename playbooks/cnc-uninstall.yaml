@@ -38,19 +38,10 @@
      shell: "iptables -F"
 
    - name: Remove Conatinerd and Kubernetes packages for Ubuntu
-     when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0 and cnc_dgx == false"
+     when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0"
      ignore_errors: yes
      apt:
        name: ['kubectl', 'kubeadm', 'kubelet', 'containerd']
-       state: absent
-       purge: yes
-       force: yes
-
-   - name: Remove Conatinerd and Kubernetes packages for Ubuntu
-     when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0 and cnc_dgx == true"
-     ignore_errors: yes
-     apt:
-       name: ['kubectl', 'kubeadm', 'kubelet']
        state: absent
        purge: yes
        force: yes

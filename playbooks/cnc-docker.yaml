@@ -151,7 +151,7 @@
         state: present
         filename: kubernetes
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 5.1
       become: true
       when: "cnc_version == 5.1 and ansible_distribution == 'Ubuntu'"
       apt:
@@ -159,11 +159,27 @@
         state: present
         update_cache: true
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.1
       become: true
       when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu'"
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.5-00', 'kubeadm=1.23.5-00', 'kubectl=1.23.5-00']
+        state: present
+        update_cache: true
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.2
+      become: true
+      when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu'"
+      apt:
+        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.8-00', 'kubeadm=1.23.8-00', 'kubectl=1.23.8-00']
+        state: present
+        update_cache: true
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 7.0
+      become: true
+      when: "cnc_version == 7.0 and ansible_distribution == 'Ubuntu'"
+      apt:
+        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.24.2-00', 'kubeadm=1.24.2-00', 'kubectl=1.24.2-00']
         state: present
         update_cache: true
 
@@ -279,6 +295,73 @@
             name: containerd
             state: restarted
             daemon_reload: yes
+      when: "cnc_version == 5.1 or cnc_version == 6.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+
+    - name: Install Containerd for NVIDIA Cloud Native Core 6.2
+      become: true
+      block:
+        - name: Download cri-containerd-cni
+          get_url:
+            url: https://github.com/containerd/containerd/releases/download/v1.6.5/cri-containerd-cni-1.6.5-linux-amd64.tar.gz
+            dest: /tmp/cri-containerd-cni-1.6.5-linux-amd64.tar.gz
+            mode: 0664
+
+        - name: Untar cri-containerd-cni
+          unarchive:
+            src: /tmp/cri-containerd-cni-1.6.5-linux-amd64.tar.gz
+            dest: /
+            remote_src: yes
+            extra_opts:
+              - --no-overwrite-dir
+
+        - name: Write defaults to config.toml
+          get_url:
+            dest: /etc/containerd/config.toml
+            url: https://raw.githubusercontent.com/NVIDIA/cloud-native-core/master/playbooks/config.toml
+            mode: 0664
+
+        - name: Enable systemd cgroups
+          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+
+    - name: Install Containerd for NVIDIA Cloud Native Core 7.0
+      become: true
+      block:
+        - name: Download cri-containerd-cni
+          get_url:
+            url: https://github.com/containerd/containerd/releases/download/v1.6.6/cri-containerd-cni-1.6.6-linux-amd64.tar.gz
+            dest: /tmp/cri-containerd-cni-1.6.6-linux-amd64.tar.gz
+            mode: 0664
+
+        - name: Untar cri-containerd-cni
+          unarchive:
+            src: /tmp/cri-containerd-cni-1.6.6-linux-amd64.tar.gz
+            dest: /
+            remote_src: yes
+            extra_opts:
+              - --no-overwrite-dir
+
+        - name: Write defaults to config.toml
+          get_url:
+            dest: /etc/containerd/config.toml
+            url: https://raw.githubusercontent.com/NVIDIA/cloud-native-core/master/playbooks/config.toml
+            mode: 0664
+
+        - name: Enable systemd cgroups
+          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "cnc_version == 6.2 or cnc_version == 7.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and 'running' not in k8sup.stdout"
 
 - hosts: master
   vars_files:
@@ -292,9 +375,7 @@
 
    - name: Reset Kubernetes component
      become: true
-     when: "'running' not in k8sup.stdout"
      shell: "kubeadm reset --force"
-     register: reset_cluster
      no_log: True
      failed_when: false
 
@@ -314,6 +395,18 @@
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.1
      when: "'running' not in k8sup.stdout and cnc_version == 6.1"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.5"
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.2
+     when: "'running' not in k8sup.stdout and cnc_version == 6.2"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.8"
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.0
+     when: "'running' not in k8sup.stdout and cnc_version == 7.0"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.2"
      become: true
      register: kubeadm
 
@@ -339,15 +432,19 @@
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core
      when: "cnc_version >= 5.0 and 'running' not in k8sup.stdout"
-     command: kubectl apply -f https://docs.projectcalico.org/v3.21/manifests/calico.yaml
+     command: kubectl apply -f https://docs.projectcalico.org/v3.23/manifests/calico.yaml
 
    - name: Update Network plugin for Calico on NVIDIA Cloud Native Core > 3.1
      when: "'running' not in k8sup.stdout and cnc_version >= 3.1 "
      shell: "sleep 5; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*"
 
    - name: Taint the Kubernetes Control Plane node
-     when: "'running' not in k8sup.stdout"
+     when: "'running' not in k8sup.stdout and cnc_version < 7.0"
      command: kubectl taint nodes --all node-role.kubernetes.io/master-
+
+   - name: Taint the Kubernetes Control Plane node
+     when: "'running' not in k8sup.stdout and cnc_version >= 7.0"
+     command: kubectl taint nodes --all node-role.kubernetes.io/master- node-role.kubernetes.io/control-plane-
 
    - name: Generate join token
      become: true
@@ -454,14 +551,40 @@
        - rm -rf helm-v3.8.1-linux-amd64.tar.gz linux-amd64
      when: "cnc_version == 6.1 and helm_exists.rc > 0"
 
+   - name: "Install Helm on NVIDIA Cloud Native Core 6.2"
+     become: true
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+       - curl -O https://get.helm.sh/helm-v3.8.2-linux-amd64.tar.gz
+       - tar -xvzf helm-v3.8.2-linux-amd64.tar.gz
+       - cp linux-amd64/helm /usr/local/bin/
+       - chmod 755 /usr/local/bin/helm
+       - rm -rf helm-v3.8.2-linux-amd64.tar.gz linux-amd64
+     when: "cnc_version == 6.2 and helm_exists.rc > 0"
+
+   - name: "Install Helm on NVIDIA Cloud Native Core 7.0"
+     become: true
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+       - curl -O https://get.helm.sh/helm-v3.9.0-linux-amd64.tar.gz
+       - tar -xvzf helm-v3.9.0-linux-amd64.tar.gz
+       - cp linux-amd64/helm /usr/local/bin/
+       - chmod 755 /usr/local/bin/helm
+       - rm -rf helm-v3.9.0-linux-amd64.tar.gz linux-amd64
+     when: "cnc_version == 7.0 and helm_exists.rc > 0"
+
    - name: Checking if GPU Operator is installed
      shell: helm ls -A | grep gpu-operator
      register: gpu_operator
      failed_when: false
      no_log: True
 
-   - name: Installing the GPU Operator on NVIDIA Cloud Native Core
-     when: "enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version >= 5.0"
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 6.1
+     when: "enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.1"
      shell: "{{ item }}"
      args:
        warn: false
@@ -470,8 +593,8 @@
         - helm repo update
         - helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 
-   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core
-     when: "enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version >= 5.0"
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 6.1
+     when: "enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.1"
      shell: "{{ item }}"
      args:
        warn: false
@@ -479,6 +602,26 @@
         - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
         - helm repo update
         - helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 7.0 or 6.2
+     when: "cnc_version >= 6.2 and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout"
+     shell: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.11.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 7.0 or 6.2
+     when: "cnc_version >= 6.2 and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout"
+     shell: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+        - helm repo add nvidia https://helm.ngc.nvidia.com/nvidia --force-update
+        - helm repo update
+        - helm install --version 1.11.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
 
    - name: Enable MIG profile with GPU Operator on NVIDIA Cloud Native Core
      when: "enable_mig == true and enable_vgpu == false and gpu_operator.rc == 1 and cnc_version >= 4.1"

@@ -1,9 +1,10 @@
-cnc_version: 6.1
+
 
 # GPU Operator Values
 gpu_driver_version: "510.47.03"
 enable_mig: no
 mig_profile: all-disabled
+mig_strategy: single
 enable_gds: no
 enable_secure_boot: no
 enable_vgpu: no
@@ -16,6 +17,8 @@ gpu_operator_registry_password: ""
 ## This is most likely an NGC email
 gpu_operator_registry_email: ""
 
+cnc_validation: no
+
 # Network Operator Values
 ## If the Network Operator is yes then make sure enable_rdma as well yes
 enable_network_operator: no
@@ -25,10 +28,10 @@ enable_rdma: no
 # Prxoy Configuration
 proxy: no
 http_proxy: ""
-https_proxy: "" 
+https_proxy: ""
 
 # Cloud Native Core for Developers Values
-## Enable for Cloud Native Core Developers 
+## Enable for Cloud Native Core Developers
 cnc_docker: no
 ## Enable For Cloud Native Core Developers with TRD Driver
 cnc_nvidia_driver: no

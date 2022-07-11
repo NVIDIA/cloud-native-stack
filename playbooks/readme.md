@@ -8,13 +8,16 @@
 - [Ubuntu(x86-64) v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.0.md)
 - [Ubuntu(x86-64) v5.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v5.1.md)
 - [Ubuntu(x86-64) v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.1.md)
-- [Ubuntu(x86-64) v5.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v5.2.md)
+- [Ubuntu(x86-64) v6.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.2.md)
+- [Ubuntu(x86-64) v7.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v7.0.md)
 
 <h3> Jetson Systems </h3>
 
 - [Jetson Xavier v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v5.0.md)
 - [Jetson Xavier v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.0.md)
 - [Jetson Xavier v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.1.md)
+- [Jetson Xavier v6.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.2.md)
+- [Jetson Xavier v7.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v7.0.md)
 
 
 `NOTE`

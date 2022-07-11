@@ -8,8 +8,10 @@
   tasks:
     - set_fact: 
         cnc_docker: "{{ cnc_docker }}"
+        cnc_dgx: "{{ cnc_dgx }}"
         cnc_nvidia_driver: "{{ cnc_nvidia_driver }}"
         cnc_version: "{{ cnc_version }}"
+        cnc_validation: "{{ cnc_validation }}"
 
     - name: Checking Nouveau is disabled
       become: true
@@ -39,11 +41,90 @@
       notify:
       - update-initramfs
 
+    - name: Test Internet Connection
+      register: connection
+      no_log: true
+      failed_when: false
+      ignore_errors: true
+      uri:
+        url: https://google.com
+        timeout: 5
+
+    - name: Report Internet Connection status
+      failed_when: "connection.status == -1"
+      debug:
+        msg: "Internet Connection status {{ connection.status }}"
+
+    - name: Install Internet Speed dependencies
+      when: connection.status != '-1'
+      become: true
+      apt:
+        name: ['speedtest-cli']
+        state: present
+        update_cache: yes
+
+    - name: Check Internet Speed
+      shell: speedtest-cli --simple
+      register: speed
+
+    - name: Report Valid Internet Speed
+      shell: echo {{ speed.stdout_lines[1] }} | awk '{print $3}'
+      register: speedtest
+      failed_when: "'Kbit/s' in speedtest.stdout"
+
+    - name: Check DNS Configuration
+      shell: dig google.com +cmd +noall +answer
+      register: dns
+      failed_when: "dns.stdout | length < 0"
+
+    - name: Check Google Repo access
+      register: google_repo
+      failed_when: "google_repo.status != 200"
+      uri:
+        url: https://packages.cloud.google.com
+        timeout: 5
+
+    - name: Install secure boot dependencies
+      become: true
+      apt:
+        name: ['mokutil']
+        state: present
+        update_cache: yes
+
+    - name: check secure boot
+      shell: mokutil --sb-state | awk '{print $2}'
+      register: secure_boot
+      failed_when: "'enabled' in secure_boot.stdout"
+
+    - name: check enough storage
+      shell: df --block-size 1g / --output=avail | tail -1 | sed "s/ //g"
+      register: size
+      failed_when: " size.stdout | int <= 40"
+
+    - name: Clean up kube config
+      become: true
+      file:
+        path: /root/.kube
+        state: absent
+
+    - name: Add DHCP Mac to netplan 
+      become: true 
+      args: 
+        warn: false 
+      shell: 'sudo sed -ie "/dhcp4: .*/a\      dhcp-identifier: mac" /etc/netplan/*' 
+ 
+ #   - name: Apply DHCP mac to NetPlan 
+ #     become: true 
+ #     shell: netplan apply 
+
   handlers:
     - name: update-initramfs
       become: true
       command: update-initramfs -u
       when: ansible_os_family == "Debian" and nouveau_result.rc != 0
+
+#- import_playbook: cnc-uninstall.yaml
+#  when: "cnc_version > 4.1"
 
 - when: ansible_architecture == "aarch64"
   import_playbook: cnc-jetson.yaml
@@ -52,8 +133,14 @@
 - import_playbook: nvidia-driver.yaml
   when: "cnc_docker == true and cnc_nvidia_driver == true and ansible_architecture == 'x86_64'"
 
+- when: "cnc_docker == true and cnc_nvidia_vgpu == true and ansible_architecture == 'x86_64'"
+  import_playbook: nvidia-vgpu-driver.yaml
+
 - when: "cnc_docker == true and ansible_architecture == 'x86_64'" 
   import_playbook: cnc-docker.yaml
+
+- when: "cnc_dgx == true and ansible_architecture == 'x86_64'" 
+  import_playbook: cnc-dgx.yaml
 
 - when: "cnc_version <= 4.1 and cnc_docker != true and ansible_architecture == 'x86_64'"
   import_playbook: older_versions/prerequisites.yaml
@@ -66,3 +153,26 @@
 
 - when: "cnc_version > 4.1 and cnc_docker != true and ansible_architecture == 'x86_64'"
   import_playbook: cnc-x86-install.yaml
+
+- hosts: all
+  gather_facts: yes
+  vars_files:
+    - cnc_values.yaml
+  tasks:
+
+    - name: Waiting for Cluster to up and running
+      args:
+        executable: /bin/bash
+      shell: |
+        sleep 240
+        state=$(kubectl get pods -n nvidia-gpu-operator | egrep -v 'Running|Completed|NAME' | wc -l)
+        while [ $state != 0 ]
+          do
+            sleep 10
+            state=$(kubectl get pods -n nvidia-gpu-operator | egrep -v 'Running|Completed|NAME' | wc -l)
+          done
+      register: status
+      when: "cnc_version > 4.1 and cnc_validation == true and ansible_architecture == 'x86_64'"
+
+- when: "cnc_version > 4.1 and cnc_validation == true and ansible_architecture == 'x86_64'"
+  import_playbook: cnc-validation.yaml

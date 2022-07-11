@@ -445,7 +445,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 Go through the below steps to install the demo application:
 ```
-1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-l4t-0.1.1.tgz --untar
+1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-l4t-0.121.tgz --untar
 
 2. cd into the folder video-analytics-demo-l4t and update the file values.yaml
 
@@ -467,9 +467,9 @@ Once the Helm chart is deployed, access the application with the VLC player. See
 If you dont have a camera input, please execute the below commands to use the default video already integrated into the application:
 
 ```
-helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-l4t-0.1.1.tgz
+helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-l4t-0.1.2.tgz
 
-helm install video-analytics-demo-l4t-0.1.1.tgz --name-template iva
+helm install video-analytics-demo-l4t-0.1.2.tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the application with the VLC player as per the below instructions. 
@@ -479,7 +479,7 @@ For more information about the demo application, please refer to the [applicatio
 
 Use the below WebUI URL to access the video analytic demo application from the browser:
 ```
-http://IPAddress of Node:31115/WebRTCApp/play.html?name=videoanalytics
+http://IPAddress of Node:31115/
 ```
 
 #### Access from VLC

@@ -1,0 +1,26 @@
+release_1_11_0:
+  gpu_operator_version: v1.11.0
+  gpu_driver_version: 515.48.07
+  driver_manager_version: 0.4.0
+  container_toolkit: v1.10.0
+  device_plugin: v0.12.2
+  dcgm_exporter_version: 2.4.5-2.6.7
+  nfd_version: v0.10.1
+  gfd_version: v0.6.1
+  mig_manager_version: 0.4.2
+  dcgm_version: 2.4.5-1
+  validator_version: v1.11.0
+  kubevit_device_plugin: 1.1.2
+  device_manager_version: 0.1.0
+release_1_10:
+  gpu_operator_version: v1.10.1
+  gpu_driver_version: 510.47.03
+  driver_manager_version: 0.3.0
+  container_toolkit: v1.9.0
+  device_plugin: v0.11.0
+  dcgm_exporter_version: 2.3.4-2.6.4
+  nfd_version: v0.10.1
+  gfd_version: v0.5.0
+  mig_manager_version: 0.3.0
+  dcgm_version: 2.3.4.1
+  validator_version: v1.10.1

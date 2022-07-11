@@ -27,7 +27,6 @@
         state: present
         filename: kubernetes
 
-
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 5.0
       become: true
       when: "cnc_version == 5.2 or cnc_version == 5.1 or cnc_version == 5.0 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
@@ -49,6 +48,22 @@
       when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.5-00', 'kubeadm=1.23.5-00', 'kubectl=1.23.5-00']
+        state: present
+        update_cache: true
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.2
+      become: true
+      when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      apt:
+        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.8-00', 'kubeadm=1.23.8-00', 'kubectl=1.23.8-00']
+        state: present
+        update_cache: true
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 7.0
+      become: true
+      when: "cnc_version == 7.0 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout and ansible_distribution_major_version == '22'"
+      apt:
+        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.24.2-00', 'kubeadm=1.24.2-00', 'kubectl=1.24.2-00']
         state: present
         update_cache: true
 
@@ -134,9 +149,9 @@
             line: KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
             path: /etc/default/kubelet
             create: yes
-      when: "cnc_version >= 4.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+      when: "cnc_version >= 4.0 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
 
-    - name: Install Containerd for NVIDIA Cloud Native Core 5.x
+    - name: Install Containerd for NVIDIA Cloud Native Core 5.0
       become: true
       block:
         - name: Download cri-containerd-cni
@@ -152,24 +167,7 @@
             remote_src: yes
             extra_opts:
               - --no-overwrite-dir
-        
-        - name: Get defaults from containerd
-          command: containerd config default
-          changed_when: false
-          register: containerd_config_default
-
-        - name: Write defaults to config.toml
-          copy:
-            dest: /etc/containerd/config.toml
-            content: "{{ containerd_config_default.stdout }}"
-
-        - name: restart containerd
-          service:
-            name: containerd
-            state: restarted
-            daemon_reload: yes
       when: "cnc_version == 5.2 or cnc_version == 5.1 or cnc_version == 5.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
-
 
     - name: Install Containerd for NVIDIA Cloud Native Core 6.0
       become: true
@@ -187,22 +185,6 @@
             remote_src: yes
             extra_opts:
               - --no-overwrite-dir
-
-        - name: Get defaults from containerd
-          command: containerd config default
-          changed_when: false
-          register: containerd_config_default
-
-        - name: Write defaults to config.toml
-          copy:
-            dest: /etc/containerd/config.toml
-            content: "{{ containerd_config_default.stdout }}"
-
-        - name: restart containerd
-          service:
-            name: containerd
-            state: restarted
-            daemon_reload: yes
       when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
 
     - name: Install Containerd for NVIDIA Cloud Native Core 6.1
@@ -221,7 +203,47 @@
             remote_src: yes
             extra_opts:
               - --no-overwrite-dir
+      when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
 
+    - name: Install Containerd for NVIDIA Cloud Native Core 6.2
+      become: true
+      block:
+        - name: Download cri-containerd-cni
+          get_url:
+            url: https://github.com/containerd/containerd/releases/download/v1.6.5/cri-containerd-cni-1.6.5-linux-amd64.tar.gz
+            dest: /tmp/cri-containerd-cni-1.6.5-linux-amd64.tar.gz
+            mode: 0664
+
+        - name: Untar cri-containerd-cni
+          unarchive:
+            src: /tmp/cri-containerd-cni-1.6.5-linux-amd64.tar.gz
+            dest: /
+            remote_src: yes
+            extra_opts:
+              - --no-overwrite-dir
+      when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and 'running' not in k8sup.stdout"
+
+    - name: Install Containerd for NVIDIA Cloud Native Core 7.0
+      become: true
+      block:
+        - name: Download cri-containerd-cni
+          get_url:
+            url: https://github.com/containerd/containerd/releases/download/v1.6.6/cri-containerd-cni-1.6.6-linux-amd64.tar.gz
+            dest: /tmp/cri-containerd-cni-1.6.6-linux-amd64.tar.gz
+            mode: 0664
+
+        - name: Untar cri-containerd-cni
+          unarchive:
+            src: /tmp/cri-containerd-cni-1.6.6-linux-amd64.tar.gz
+            dest: /
+            remote_src: yes
+            extra_opts:
+              - --no-overwrite-dir
+      when: "cnc_version == 7.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and 'running' not in k8sup.stdout"
+
+    - name: Configure Containerd for NVIDIA Cloud Native Core
+      become: true
+      block:
         - name: Get defaults from containerd
           command: containerd config default
           changed_when: false
@@ -237,7 +259,20 @@
             name: containerd
             state: restarted
             daemon_reload: yes
-      when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and 'running' not in k8sup.stdout"
+      when: "cnc_version >= 4.1 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+
+    - name: Update Containerd for NVIDIA Cloud Native Core 
+      become: true
+      block:
+        - name: Enable systemd cgroups
+          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+          
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "cnc_version >= 4.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '22' and'running' not in k8sup.stdout"
 
     - name: Add Containerd Proxy configuration
       become: true
@@ -273,7 +308,7 @@
             name: containerd
             state: restarted
             daemon_reload: yes
-      when: "proxy == true and cnc_version == 6.1 and 'running' not in k8sup.stdout"
+      when: "proxy == true and cnc_version >= 6.1 and 'running' not in k8sup.stdout"
 
     - name: Starting and enabling the required services
       become: true

@@ -13,9 +13,7 @@
 
    - name: Reset Kubernetes component
      become: true
-     when: "'running' not in k8sup.stdout"
      shell: "kubeadm reset --force"
-     register: reset_cluster
      no_log: True
      failed_when: false
 
@@ -73,7 +71,7 @@
 
    - name: add default gateway
      shell: route add -net 0.0.0.0/0 gw {{ network.stdout }}
-     when: proxy == true
+     when: gateway.rc | default ('') == 1 and proxy == true
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 5.0
      when: "cnc_version == 5.2 or cnc_version == 5.1 or cnc_version == 5.0 and 'running' not in k8sup.stdout"
@@ -99,6 +97,30 @@
      become: true
      register: kubeadm
 
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.2
+     when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 6.2"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.7"
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.0
+     when: "'running' not in k8sup.stdout and  proxy == false and cnc_version == 7.0 and ansible_distribution_major_version == '22'"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.24.1"
+     become: true
+     register: kubeadm     
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.2
+     when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 6.2"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.7" --apiserver-advertise-address={{ network.stdout }}
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.0
+     when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 7.0 and ansible_distribution_major_version == '22'"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.24.1" --apiserver-advertise-address={{ network.stdout }}
+     become: true
+     register: kubeadm
+
    - name: Create kube directory
      when: "'running' not in k8sup.stdout"
      file:
@@ -119,8 +141,12 @@
        dest:  $HOME/.kube/config
        mode: '0600'
 
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core > 7.0
+     when: "'running' not in k8sup.stdout and cnc_version >= 7.0 and ansible_distribution_major_version == '22'"
+     command: kubectl apply -f https://docs.projectcalico.org/v3.23/manifests/calico.yaml
+
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core > 3.1
-     when: "'running' not in k8sup.stdout and cnc_version >= 3.1"
+     when: "'running' not in k8sup.stdout and cnc_version >= 3.1 and ansible_distribution_major_version == '20'"
      command: kubectl apply -f https://docs.projectcalico.org/v3.21/manifests/calico.yaml
 
    - name: Update Network plugin for Calico on NVIDIA Cloud Native Core > 3.1
@@ -128,8 +154,12 @@
      shell: "sleep 5; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*"
 
    - name: Taint the Kubernetes Control Plane node
-     when: "'running' not in k8sup.stdout"
+     when: "'running' not in k8sup.stdout and cnc_version < 7.0"
      command: kubectl taint nodes --all node-role.kubernetes.io/master-
+
+   - name: Taint the Kubernetes Control Plane node
+     when: "'running' not in k8sup.stdout and cnc_version >= 7.0"
+     command: kubectl taint nodes --all node-role.kubernetes.io/master- node-role.kubernetes.io/control-plane-
 
    - name: Generate join token
      become: true
@@ -258,7 +288,7 @@
        - tar -xvzf helm-v3.6.2-linux-amd64.tar.gz
        - cp linux-amd64/helm /usr/local/bin/
        - rm -rf helm-v3.6.2-linux-amd64.tar.gz linux-amd64
-     when: "helm_exists.rc > 0 and cnc_version == 5.0"
+     when: "cnc_version == 5.1 or cnc_version == 5.0 and helm_exists.rc > 0"
 
    - name: "Install Helm on NVIDIA Cloud Native Core 6.0"
      become: true
@@ -281,10 +311,11 @@
        - curl -O https://get.helm.sh/helm-v3.8.1-linux-amd64.tar.gz
        - tar -xvzf helm-v3.8.1-linux-amd64.tar.gz
        - cp linux-amd64/helm /usr/local/bin/
+       - chmod 755 /usr/local/bin/helm
        - rm -rf helm-v3.8.1-linux-amd64.tar.gz linux-amd64
      when: "cnc_version == 6.1 and helm_exists.rc > 0"
 
-   - name: "Install Helm on NVIDIA Cloud Native Core 5.2"
+   - name: "Install Helm on NVIDIA Cloud Native Core 5.2 or 6.2"
      become: true
      command: "{{ item }}"
      args:
@@ -293,9 +324,23 @@
        - curl -O https://get.helm.sh/helm-v3.8.2-linux-amd64.tar.gz
        - tar -xvzf helm-v3.8.2-linux-amd64.tar.gz
        - cp linux-amd64/helm /usr/local/bin/
+       - chmod 755 /usr/local/bin/helm
        - rm -rf helm-v3.8.2-linux-amd64.tar.gz linux-amd64
      when: "cnc_version == 6.2 or cnc_version == 5.2 and helm_exists.rc > 0"
 
+
+   - name: "Install Helm on NVIDIA Cloud Native Core 7.0"
+     become: true
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+       - curl -O https://get.helm.sh/helm-v3.9.0-linux-amd64.tar.gz
+       - tar -xvzf helm-v3.9.0-linux-amd64.tar.gz
+       - cp linux-amd64/helm /usr/local/bin/
+       - chmod 755 /usr/local/bin/helm
+       - rm -rf helm-v3.9.0-linux-amd64.tar.gz linux-amd64
+     when: "cnc_version == 7.0 and helm_exists.rc > 0"
 
    - name: Checking Nouveau is disabled
      become: true
@@ -375,6 +420,10 @@
      shell: helm show --version=v1.10.1 values nvidia/gpu-operator > /tmp/values.yaml
      when: "cnc_version == 6.1 or cnc_version == 6.0 or cnc_version == 5.1 or cnc_version == 5.2"
 
+   - name: Get the GPU Operator 1.11.0 Values.yaml
+     shell: helm show --version=v1.11.0 values nvidia/gpu-operator > /tmp/values.yaml
+     when: "cnc_version == 7.0 or cnc_version == 6.2"
+
    - name: create GPU Custom Values for proxy
      when: proxy == true
      replace:
@@ -398,11 +447,11 @@
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 5.0
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 5.0"
-     shell: helm install --version 1.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,mig.strategy=single,driver.version=470.103.01 --wait --generate-name
+     shell: helm install --version 1.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version=470.103.01 --wait --generate-name
 
    - name: Installing the GPU Operator with MIG and RDMA and Host MOFED on NVIDIA Cloud Native Core 5.0
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 5.0"
-     shell: helm install --version 1.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy=single,driver.version=470.103.01 --wait --generate-name
+     shell: helm install --version 1.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version=470.103.01 --wait --generate-name
 
    - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Core 5.0
      when: "enable_mig == false and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 5.0"
@@ -410,7 +459,7 @@
 
    - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 5.0
      when: "enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version == 5.0"
-     shell: helm install --version 1.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.version=470.103.01 --wait --generate-name
+     shell: helm install --version 1.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy='{{ mig_strategy }}',driver.version=470.103.01 --wait --generate-name
 
 ## Cloud Native Core 5.1 with GPU Operator
    - name: Installing the GPU Operator on NVIDIA Cloud Native Core 5.1
@@ -432,11 +481,11 @@
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 5.1
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 5.1"
-     shell: helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,mig.strategy=single,driver.version=470.103.01 --wait --generate-name
+     shell: helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version=470.103.01 --wait --generate-name
 
    - name: Installing the GPU Operator with MIG and RDMA and Host MOFED on NVIDIA Cloud Native Core 5.1
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 5.1"
-     shell: helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy=single,driver.version=470.103.01 --wait --generate-name
+     shell: helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version=470.103.01 --wait --generate-name
 
    - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Core 5.1
      when: "enable_mig == false and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 5.1"
@@ -444,7 +493,7 @@
 
    - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 5.1
      when: "enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version == 5.1"
-     shell: helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.version=470.103.01 --wait --generate-name
+     shell: helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy='{{ mig_strategy }}',driver.version=470.103.01 --wait --generate-name
 
 ## Cloud Native Core 5.2 with GPU Operator
    - name: Installing the GPU Operator on NVIDIA Cloud Native Core 5.2
@@ -466,11 +515,11 @@
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 5.2
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 5.2"
-     shell: helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,mig.strategy=single,driver.version=510.47.03 --wait --generate-name
+     shell: helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version=510.47.03 --wait --generate-name
 
    - name: Installing the GPU Operator with MIG and RDMA and Host MOFED on NVIDIA Cloud Native Core 5.2
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 5.2"
-     shell: helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy=single,driver.version=510.47.03 --wait --generate-name
+     shell: helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version=510.47.03 --wait --generate-name
 
    - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Core 5.2
      when: "enable_mig == false and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 5.2"
@@ -478,7 +527,7 @@
 
    - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 5.2
      when: "enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version == 5.2"
-     shell: helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.version=510.47.03 --wait --generate-name
+     shell: helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy='{{ mig_strategy }}',driver.version=510.47.03 --wait --generate-name
 
 ## Cloud Native Core 6.0 with GPU Operator
    - name: Installing the GPU Operator on NVIDIA Cloud Native Core 6.0
@@ -496,11 +545,11 @@
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 6.0
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 6.0"
-     shell: helm install --version 1.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,mig.strategy=single,driver.version='{{ gpu_driver_version }}' --wait --generate-name
+     shell: helm install --version 1.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
    - name: Installing the GPU Operator with RDMA on NVIDIA Cloud Native Core 6.0
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.0"
-     shell: helm install --version 1.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy=single,driver.version='{{ gpu_driver_version }}' --wait --generate-name
+     shell: helm install --version 1.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
    - name: Installing the GPU Operator with RDMA on NVIDIA Cloud Native Core 6.0
      when: "enable_mig == false and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.0"
@@ -508,7 +557,7 @@
 
    - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 6.0
      when: "enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.0"
-     shell: helm install --version 1.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.version='{{ gpu_driver_version }}' --wait --generate-name
+     shell: helm install --version 1.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
 ## Cloud Native Core 6.1 with GPU Operator
    - name: Installing the GPU Operator on NVIDIA Cloud Native Core 6.1
@@ -530,7 +579,7 @@
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 6.1
      when: "enable_mig == true and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 6.1"
-     shell: helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,mig.strategy=single,driver.version='{{ gpu_driver_version }}' --wait --generate-name
+     shell: helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 6.1
      when: "enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 6.1"
@@ -538,7 +587,7 @@
 
    - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Core 6.1
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.1"
-     shell:  helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy=single,driver.version='{{ gpu_driver_version }}' --wait --generate-name
+     shell:  helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
    - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Core 6.1
      when: "enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.1"
@@ -550,7 +599,91 @@
 
    - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 6.1
      when: "enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.1"
-     shell: helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.version='{{ gpu_driver_version }}' --wait --generate-name
+     shell: helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+## Cloud Native Core 6.2 with GPU Operator
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 6.2
+     when: "enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.2"
+     shell: helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+   - name: Installing the Signed GPU Operator on NVIDIA Cloud Native Core 6.2
+     when: "enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == true and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.2"
+     shell: helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.version=515-signed --wait --generate-name
+
+   - name: Install GPU Operator with vGPU on NVIDIA Cloud Native Core 6.2
+     when: "enable_vgpu == true and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.2"
+     shell: "{{ item }}"
+     with_items:
+        - kubectl create namespace gpu-operator-resources
+        - kubectl create configmap licensing-config -n gpu-operator-resources --from-file={{lookup('pipe', 'pwd')}}/gridd.conf
+        - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password='{{ gpu_operator_registry_password }}' --docker-email='{{ gpu_operator_registry_email }}' -n gpu-operator-resources
+        - helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+
+   - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 6.2
+     when: "enable_mig == true and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 6.2"
+     shell: helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+   - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 6.2
+     when: "enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 6.2"
+     shell: helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+   - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Core 6.2
+     when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.2"
+     shell:  helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+   - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Core 6.2
+     when: "enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.2"
+     shell:  helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+   - name: Installing the GPU Operator with GDS and RDMA and Host MOFED on NVIDIA Cloud Native Core 6.2
+     when: "enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == true and gpu_operator.rc == 1 and enable_secure_boot == false and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.2"
+     shell: helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 6.2
+     when: "enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version == 6.2"
+     shell: helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+## Cloud Native Core 7.0 with GPU Operator
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 7.0
+     when: "enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 7.0"
+     shell: helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+   - name: Installing the Signed GPU Operator on NVIDIA Cloud Native Core 7.0
+     when: "enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == true and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 7.0"
+     shell: helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.version=515-signed --wait --generate-name
+
+   - name: Install GPU Operator with vGPU on NVIDIA Cloud Native Core 7.0
+     when: "enable_vgpu == true and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 7.0"
+     shell: "{{ item }}"
+     with_items:
+        - kubectl create namespace gpu-operator-resources
+        - kubectl create configmap licensing-config -n gpu-operator-resources --from-file={{lookup('pipe', 'pwd')}}/gridd.conf
+        - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password='{{ gpu_operator_registry_password }}' --docker-email='{{ gpu_operator_registry_email }}' -n gpu-operator-resources
+        - helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+
+   - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 7.0
+     when: "enable_mig == true and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 7.0"
+     shell: helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+   - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 7.0
+     when: "enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 7.0"
+     shell: helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+   - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Core 7.0
+     when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 7.0"
+     shell:  helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+   - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Core 7.0
+     when: "enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 7.0"
+     shell:  helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+   - name: Installing the GPU Operator with GDS and RDMA and Host MOFED on NVIDIA Cloud Native Core 7.0
+     when: "enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == true and gpu_operator.rc == 1 and enable_secure_boot == false and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and cnc_version == 7.0"
+     shell: helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}' --wait --generate-name
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 7.0
+     when: "enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and cnc_version == 7.0"
+     shell: helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
    - name: Enable MIG profile with GPU Operator on NVIDIA Cloud Native Core
      when: "enable_mig == true and enable_vgpu == false and gpu_operator.rc == 1 and cnc_version >= 4.1"

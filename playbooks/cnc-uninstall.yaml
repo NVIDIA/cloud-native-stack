@@ -19,7 +19,7 @@
      async: 120
      args:
        executable: /bin/bash
-       
+
 - hosts: all
   gather_facts: yes
   become: true
@@ -32,23 +32,51 @@
      failed_when: false
      no_log: True
 
+   - name: IPTables Cleanup
+     ignore_errors: yes
+     become: true
+     shell: "iptables -F"
+
    - name: Remove Conatinerd and Kubernetes packages for Ubuntu
-     when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0"
+     when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0 and cnc_dgx == false"
      ignore_errors: yes
      apt:
-       name: ['kubectl', 'kubeadm','kubelet', 'containerd']
+       name: ['kubectl', 'kubeadm', 'kubelet', 'containerd']
+       state: absent
+       purge: yes
+       force: yes
+
+   - name: Remove Conatinerd and Kubernetes packages for Ubuntu
+     when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0 and cnc_dgx == true"
+     ignore_errors: yes
+     apt:
+       name: ['kubectl', 'kubeadm', 'kubelet']
        state: absent
        purge: yes
        force: yes
 
    - name: Remove Docker and Kubernetes packages for Ubuntu
-     when: "ansible_distribution == 'Ubuntu' and cnc_version <= 3.1"
+     when: "cnc_docker == true or cnc_version <= 3.1 and ansible_distribution == 'Ubuntu'"
      ignore_errors: yes
      apt:
-       name: ['kubectl', 'kubeadm','kubelet', 'docker-ce*']
+       name: ['kubectl', 'kubeadm','kubelet', 'docker*', 'docker-ce*', 'containerd.io', 'nvidia-docker*']
        state: absent
        purge: yes
        force: yes
+
+   - name: Remove NVIDIA Docker for Cloud Native Core Developers
+     when: "cnc_docker == true or cnc_nvidia_driver == true"
+     ignore_errors: yes
+     apt:
+       name: ['cuda-drivers', ' nvidia-driver-*', 'nvidia-dkms-*']
+       state: absent
+       purge: yes
+       force: yes
+
+   - name: Remove dependencies that are no longer required
+     apt:
+      autoremove: yes
+      force: yes
 
    - name: Remove installed packages for RHEL/CentOS
      when:  "ansible_distribution in ['RedHat', 'CentOS']"
@@ -58,10 +86,24 @@
        state: absent
        force: yes
 
-   - name: IPTables Cleanup
+   - name: Cleanup Containerd Process
+     shell: kill -9 $( ps -ef|grep containerd | awk '{print $2}')
+     no_log: true
+     failed_when: false
      ignore_errors: yes
-     become: true
-     shell: "iptables -F"
+
+   - name: Cleanup Directories for Cloud Native Core Developers
+     when: " cnc_docker == true or cnc_version <= 3.1 "
+     ignore_errors: yes
+     file:
+       path: "{{ item }}"
+       state: absent
+     with_items:
+        - /etc/docker
+        - /var/lib/docker
+        - /var/run/docker
+        - /run/docker.sock
+        - /run/docker
 
    - name: Cleanup Directories
      ignore_errors: yes
@@ -69,13 +111,13 @@
        path: "{{ item }}"
        state: absent
      with_items:
+#        - /var/lib/containerd
+#        - /run/containerd
+#        - /etc/containerd
         - /var/lib/etcd
         - /etc/kubernetes
         - /usr/local/bin/helm
-        - /var/lib/containerd
         - /var/lib/crio
-        - /run/containerd
-        - /etc/containerd
         - /etc/crio
         - /usr/local/bin/crio
         - /var/log/containers
@@ -86,3 +128,8 @@
         - /etc/apt/trusted.gpg.d/libcontainers*
         - /etc/default/kubelet
         - /etc/cni/net.d
+
+   - name: Reboot the system
+     when: "cnc_docker == true or cnc_nvidia_driver == true"
+     reboot:
+       reboot_timeout: 900

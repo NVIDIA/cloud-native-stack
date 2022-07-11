@@ -9,7 +9,7 @@ NVIDIA Cloud Native Core v6.1 includes:
 - Kubernetes version 1.23.5
 - Helm 3.8.1
 - NVIDIA GPU Operator 1.10.1
-  - NVIDIA GPU Driver: 510.47.03
+  - NVIDIA GPU Driver: 470.103.01
   - NVIDIA Container Toolkit: 1.9.0
   - NVIDIA K8S Device Plugin: 0.11.0
   - NVIDIA DCGM-Exporter: 2.3.4-2.6.4
@@ -18,7 +18,7 @@ NVIDIA Cloud Native Core v6.1 includes:
   - NVIDIA K8s MIG Manager: 0.3.0
   - NVIDIA Driver Manager: 0.3.0
   - Node Feature Discovery: 0.10.1
-- NVIDIA Network Operator 1.1.0
+- NVIDIA Network Operator 1.2.0
   - Mellanox MOFED Driver 5.5-1.0.3.2
   - Mellanox NV Peer Memory Driver 1.1-0
   - RDMA Shared Device Plugin 1.2.1
@@ -86,12 +86,15 @@ EOF
 
 ```
  sudo modprobe overlay
+```
+
+```
  sudo modprobe br_netfilter
 ```
 
 Setup required sysctl params; these persist across reboots:
 ```
- cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.ipv4.ip_forward                 = 1
 net.bridge.bridge-nf-call-ip6tables = 1
@@ -106,17 +109,27 @@ Apply sysctl params without reboot:
 Download the Containerd tarball:
 
 ```
- wget https://github.com/containerd/containerd/releases/download/v1.6.2/cri-containerd-cni-1.6.2-linux-amd64.tar.gz
- sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.2-linux-amd64.tar.gz
- rm -rf cri-containerd-cni-1.6.2-linux-amd64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.6.2/cri-containerd-cni-1.6.2-linux-amd64.tar.gz
+```
+
+```
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.2-linux-amd64.tar.gz
+```
+
+```
+rm -rf cri-containerd-cni-1.6.2-linux-amd64.tar.gz
 ```
 
 Install Containerd:
 ```
  sudo mkdir -p /etc/containerd
+```
 
+```
  containerd config default | sudo tee /etc/containerd/config.toml
+```
 
+```
  sudo systemctl enable containerd && sudo systemctl restart containerd
 ```
 
@@ -134,14 +147,20 @@ Execute the following to add apt keys:
 
 ```
  sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+```
+
+```
  curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+```
+
+```
  sudo mkdir -p  /etc/apt/sources.list.d/
 ```
 
 Create kubernetes.list:
 
 ```
- cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
 deb https://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 ```
@@ -150,7 +169,13 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 
 ```
  sudo apt-get update
+```
+
+```
  sudo apt-get install -y -q kubelet=1.23.5-00 kubectl=1.23.5-00 kubeadm=1.23.5-00
+```
+
+```
  sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
@@ -169,6 +194,9 @@ Reload the system daemon:
 Disable swap:
 ```
  sudo swapoff -a
+```
+
+```
  sudo nano /etc/fstab
 ```
 
@@ -217,7 +245,13 @@ Following the instructions in the output, execute the commands as shown below:
 
 ```
  mkdir -p $HOME/.kube
+```
+
+```
  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+ ```
+
+ ```
  sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
@@ -282,8 +316,17 @@ Execute the following command to download and install Helm 3.8.1:
 
 ```
  wget https://get.helm.sh/helm-v3.8.1-linux-amd64.tar.gz
+```
+
+```
  tar -zxvf helm-v3.8.1-linux-amd64.tar.gz
+ ```
+ 
+ ```
  sudo mv linux-amd64/helm /usr/local/bin/helm
+ ```
+
+ ```
  rm -rf helm-v3.8.1-linux-amd64.tar.gz linux-amd64/
 ```
 
@@ -462,16 +505,8 @@ Execute the below command to enable the GPU Direct Storage Driver on GPU Operato
 ```
 helm install --version 1.10.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --set gds.enabled=true
 ```
-### GPU Operator with Signed Driver
-
-`NOTE:` Please make sure you configure the UEFI Secure Boot on your system configuration.
-
-Execute the below command to enable the signed dirver for Secure Boot on GPU Operator 
-```
-helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.version=510-signed --wait --generate-name
-```
-For more information please refer [GPU Operator with Signed Driver](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/install-precompiled-signed-drivers.html?highlight=signed)
-
+### TODO
+For more information GPUD Direct Storage, please refer
 
 #### Validating the State of the GPU Operator:
 
@@ -879,7 +914,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 Go through the below steps to install the demo application:
 ```
-1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.7.tgz --untar
+1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.78.tgz --untar
 
 2. cd into the folder video-analytics-demo and update the file values.yaml
 
@@ -901,9 +936,9 @@ Once the Helm chart is deployed, access the application with the VLC player. See
 If you dont have a camera input, please execute the below commands to use the default video already integrated into the application:
 
 ```
-helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.7.tgz
+helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz
 
-helm install video-analytics-demo-0.1.7.tgz --name-template iva
+helm install video-analytics-demo-0.1.8.tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the application with the VLC player as per the below instructions. 
@@ -913,7 +948,7 @@ For more information about the demo application, please refer to the [applicatio
 
 Use the below WebUI URL to access the video analytic demo application from the browser:
 ```
-http://IPAddress of Node:31115/WebRTCApp/play.html?name=videoanalytics
+http://IPAddress of Node:31115/
 ```
 
 #### Access from VLC

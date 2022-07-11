@@ -60,7 +60,7 @@ The Below instructions are based on the assumption that you've a NGC Private Reg
   ```
 - To download (or "fetch") a Helm Chart package from the repo, run the below command.
   ```
-  $ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.5.tgz
+  $ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz
   ```
 - Run the below command to install the Helm push plugin
   ```
@@ -69,7 +69,7 @@ The Below instructions are based on the assumption that you've a NGC Private Reg
   `NOTE:` The Helm push plugin does not support Helm v3 yet - make sure you are using v2.16.x.
 - To push (upload) a Helm Chart to your org space, run the below command. Where <repo-name> is the name of the helm repository created for your organization's private registry.
   ```
-  $ helm push video-analytics-demo-0.1.5.tgz <repo-name>
+  $ helm push video-analytics-demo-0.1.8.tgz <repo-name>
   ```
 
 #### Deploy a Helm Chart from NGC Private Registry

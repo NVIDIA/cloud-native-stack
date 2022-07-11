@@ -1,4 +1,4 @@
-<h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) for Developers </h1>
+<h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) for Developers with vGPU Driver </h1>
 
 This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Core for Developers
 
@@ -7,7 +7,7 @@ NVIDIA Cloud Native Core for Developers includes:
 - Containerd 1.6.2
 - Kubernetes version 1.23.5
 - Helm 3.8.1
-- NVIDIA GPU Driver: 510.60.02
+- NVIDIA vGPU Driver: 510.47.03
 - NVIDIA Container Toolkit: 1.9.0
 - NVIDIA GPU Operator 1.10.1
   - NVIDIA K8S Device Plugin: 0.11.0
@@ -29,8 +29,9 @@ NVIDIA Cloud Native Core for Developers includes:
 
 The following instructions assume the following:
 
-- You have [NVIDIA-Certified Systems](https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html). 
+- You have VM with vGPU Profile 
 - You will perform a clean install.
+- Access to Enterprise Catalog 
 
 To determine if your system qualifies as an NVIDIA Certified System, review the list of NVIDIA Certified Systems [here](https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html). 
 
@@ -62,12 +63,14 @@ nano hosts
 [master]
 10.110.16.178 ansible_ssh_user=nvidia ansible_ssh_pass=nvidipass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 [node]
-10.110.16.179 ansible_ssh_user=nvidia ansible_ssh_pass=nvidiapass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
 ### Installation
 
 Install the NVIDIA Cloud Native Core stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
+
+`NOTE:` Update `ngc_apy_key` value in `cnc_values.yaml` below and make sure copy the `client_configuration_token_*.tok` file to `cloud-native-core/playbooks` directory. 
+
 ```
 $ nano cnc_values.yaml
 
@@ -101,16 +104,18 @@ http_proxy: ""
 https_proxy: "" 
 
 # Cloud Native Core for Developers Values
-## Enable for Cloud Native Core Developers 
+## Enable for Cloud Native Core Developers and DGX System
 cnc_docker: yes
 ## Enable For Cloud Native Core Developers with TRD Driver
-cnc_nvidia_driver: yes
+cnc_nvidia_driver: no
+## Enable for Cloud Native Core for Developers with vGPU driver
+cnc_nvidia_vgpu: yes
+## Provide NGC API key to download the vGPU driver and license token
+ngc_api_key: ""
 
 ## Kubernetes apt resources
 k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 k8s_apt_repository: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
-
-
 ```
 
 `NOTE:` The host may reboot through the install. if it does, wait for the host to finish the reboot and run the installer again. 
@@ -123,14 +128,54 @@ By default Cloud Native Core uses Google kubernetes apt repository, if you want 
 
 Example:
 ```
+cnc_version: 6.1
+
+# GPU Operator Values
+gpu_driver_version: "510.47.03"
+enable_mig: no
+mig_profile: all-disabled
+enable_gds: no
+enable_secure_boot: no
+enable_vgpu: no
+vgpu_license_server: ""
+## This is most likely GPU Operator Driver Registry
+gpu_operator_driver_registry: "nvcr.io/nvidia"
+gpu_operator_registry_username: "$oauthtoken"
+## This is most likely an NGC API key
+gpu_operator_registry_password: ""
+## This is most likely an NGC email
+gpu_operator_registry_email: ""
+
+# Network Operator Values
+## If the Network Operator is yes then make sure enable_rdma as well yes
+enable_network_operator: no
+## Enable RDMA yes for NVIDIA Certification
+enable_rdma: no
+
+# Prxoy Configuration
+proxy: no
+http_proxy: ""
+https_proxy: "" 
+
+# Cloud Native Core for Developers Values
+## Enable for Cloud Native Core Developers and DGX System
+cnc_docker: no
+## Enable For Cloud Native Core Developers with TRD Driver
+cnc_nvidia_driver: no
+## Enable for Cloud Native Core for Developers with vGPU driver
+cnc_nvidia_vgpu: no
+## Provide NGC API key to download the vGPU driver and license token
+ngc_api_key: ""
+
 ## Kubernetes apt resources
-k8s_apt_key: "https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg"
-k8s_apt_repository: "deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main"
+k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+k8s_apt_repository: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+
 ```
 
 ### Uninstall
 
-Run the below command to uninstall the NVIDIA Cloud Native Core. Tasks being "ignored" refers to no kubernetes cluster being available.
+Run the below command to uninstall the NVIDIA Cloud Native Core. Taks being "ignored" refers to no kubernetes cluster being available.
 
 ```
 bash setup.sh uninstall

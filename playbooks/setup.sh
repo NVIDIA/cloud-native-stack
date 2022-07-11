@@ -36,21 +36,45 @@ ansible_install() {
 		fi
 	fi
 }
+# Prechecks
+prerequisites() {
+code=$(curl --connect-timeout 3 -s -o /dev/null -w "%{http_code}" http://www.google.com)
+echo "Checking this system has valid prerequisites"
+echo
+if [ $code == 200 ]; then
+	echo "This system has an internet access"
+	echo
+elif [ $code != 200 ]; then
+    echo "This system does not have a internet access"
+	echo
+    exit 1
+fi
+}
+
 if ! hash sudo ansible 2>/dev/null
-then 
+then
+    prerequisites
 	ansible_install 
 else
 	echo "Ansible Already Installed"
 	echo
 fi
 
+version=$(cat cnc_version.yaml | awk -F':' '{print $2}' | head -n1 | tr -d ' ' | tr -d '\n\r')
+cp cnc_values_$version.yaml cnc_values.yaml
+sed -i "1s/^/cnc_version: $version\n/" cnc_values.yaml
+
 	if [ $1 == "install" ]; then
 	echo
-	version=$(cat cnc_values.yaml | awk -F':' '{print $2}' | head -n1)
         echo "Installing NVIDIA Cloud Native Core Version $version"
 		id=$(sudo dmidecode --string system-uuid | awk -F'-' '{print $1}' | cut -c -3)
-		if [ $id == 'ec2' ]; then
+		manufacturer=$(sudo dmidecode -s system-manufacturer | egrep -i "microsoft corporation|Google")
+		if [[ $id == 'ec2' || $manufacturer == 'Microsoft Corporation' || $manufacturer == 'Google' ]]; then
 			sed -ie 's/- hosts: master/- hosts: all/g' *.yaml
+			nvidia_driver=$(ls /usr/src/ | grep nvidia | awk -F'-' '{print $1}')
+			if [[ $nvidia_driver == 'nvidia' ]]; then
+				ansible -c local -i localhost, all -m lineinfile -a "path={{lookup('pipe', 'pwd')}}/cnc_values.yaml regexp='cnc_docker: no' line='cnc_docker: yes'"
+			fi
 			ansible-playbook -c local -i localhost, cnc-installation.yaml
 			exit 1
 		fi

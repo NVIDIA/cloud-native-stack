@@ -23,8 +23,7 @@ spec:
                     "type": "whereabouts"
                 },
                 "type": "macvlan",
-                "master": "ens160f0",
-                "vlan": 111
+                "master": "ens160f0"
             },
             {
                 "mtu": 1500,

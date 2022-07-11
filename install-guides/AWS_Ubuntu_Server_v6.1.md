@@ -121,6 +121,8 @@ EOF
 
 ```
 sudo modprobe overlay
+```
+```
 sudo modprobe br_netfilter
 ```
 
@@ -141,16 +143,26 @@ Download the Containerd tarball
 
 ```
 wget https://github.com/containerd/containerd/releases/download/v1.6.2/cri-containerd-cni-1.6.2-linux-amd64.tar.gz
+```
+
+```
 sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.2-linux-amd64.tar.gz
+```
+
+```
 rm -rf cri-containerd-cni-1.6.2-linux-amd64.tar.gz
 ```
 
 Install the Containerd
 ```
 sudo mkdir -p /etc/containerd
+```
 
+```
 containerd config default | sudo tee /etc/containerd/config.toml
+```
 
+```
 sudo systemctl restart containerd
 ```
 
@@ -168,7 +180,9 @@ Execute the following to install kubelet kubeadm and kubectl:
 
 ```
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+```
 
+```
 sudo mkdir -p  /etc/apt/sources.list.d/
 ```
 
@@ -184,7 +198,13 @@ Now execute the commands below:
 
 ```
 sudo apt-get update
+```
+
+```
 sudo apt-get install -y -q kubelet=1.23.5-00 kubectl=1.23.5-00 kubeadm=1.23.5-00
+```
+
+```
 sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
@@ -193,7 +213,9 @@ sudo apt-mark hold kubelet kubeadm kubectl
 #### Disable swap
 ```
 sudo swapoff -a
+```
 
+```
 sudo nano /etc/fstab
 ```
 
@@ -217,7 +239,13 @@ Following the instructions in the output, execute the commands as shown below:
 
 ```
 mkdir -p $HOME/.kube
+```
+
+```
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+```
+
+```
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
@@ -274,8 +302,14 @@ For additional information, refer to [kubeadm installation guide](https://kubern
 Execute the following command to download Helm 3.8.1: 
 
 ```
-sudo wget https://get.helm.sh/helm-v3.8.1-linux-amd64.tar.gz
-sudo tar -zxvf helm-v3.8.1-linux-amd64.tar.gz
+wget https://get.helm.sh/helm-v3.8.1-linux-amd64.tar.gz
+```
+
+```
+tar -zxvf helm-v3.8.1-linux-amd64.tar.gz
+```
+
+```
 sudo mv linux-amd64/helm /usr/local/bin/helm
 ```
 
@@ -463,7 +497,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 Go through the below steps to install the demo application. 
 ```
-1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.7.tgz --untar
+1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz --untar
 
 2. cd into the folder video-analytics-demo and update the file values.yaml
 
@@ -485,9 +519,9 @@ Once the helm chart is deployed, access the application with the VLC player. See
 If you do not have a camera input, please execute the below commands to use the default video integrated with the application. 
 
 ```
-helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.7.tgz
+helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz
 
-helm install video-analytics-demo-0.1.7.tgz --name-template iva
+helm install video-analytics-demo-0.1.8.tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the Application with VLC player with the instructions below. 
@@ -497,7 +531,7 @@ For additional information about the Demo application, please refer to https://n
 
 Use the below WebUI URL to access the video analytics demo application from the browser.
 ```
-http://IPAddress of Node:31115/WebRTCApp/play.html?name=videoanalytics
+http://IPAddress of Node:31115/
 ```
 
 #### Access from VLC

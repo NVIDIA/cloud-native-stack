@@ -79,41 +79,30 @@ Install the NVIDIA Cloud Native Core stack by running the below command. "Skippi
 ```
 $ nano cnc_values.yaml
 
-cnc_version: 5.0
-
-# GPU Operator Values
+cnc_version: 6.0
+## NVIDIA Driver Version (https://www.nvidia.com/Download/index.aspx?lang=en-us)
+## enable 51.0.47.03 for cnc_version: 6.0
 gpu_driver_version: "510.47.03"
-enable_mig: no
-mig_profile: all-disabled
-enable_gds: no
-enable_secure_boot: no
-enable_vgpu: no
-vgpu_license_server: ""
-## This is most likely GPU Operator Driver Registry
-gpu_operator_driver_registry: "nvcr.io/nvidia"
-gpu_operator_registry_username: "$oauthtoken"
-## This is most likely an NGC API key
-gpu_operator_registry_password: ""
-## This is most likely an NGC email
-gpu_operator_registry_email: ""
-
-# Network Operator Values
 ## If the Network Operator is yes then make sure enable_rdma as well yes
 enable_network_operator: no
 ## Enable RDMA yes for NVIDIA Certification
 enable_rdma: no
-
-# Prxoy Configuration
-proxy: no
-http_proxy: ""
-https_proxy: "" 
-
-# Cloud Native Core for Developers Values
-## Enable for Cloud Native Core Developers 
-cnc_docker: no
-## Enable For Cloud Native Core Developers with TRD Driver
-cnc_nvidia_driver: no
-
+## enable MIG with GPU Operator 
+enable_mig: no
+## MIG Profile for GPU Operator 
+mig_profile: all-disabled
+## Enable vGPU for GPU Operator 
+enable_vgpu: no
+## vGPU License Server
+vgpu_license_server: ""
+## GPU Operator Driver Registry
+gpu_operator_driver_registry: "nvcr.io/nvidia"
+## This should remain as $oauthtoken if using an NGC API key
+gpu_operator_registry_username: "$oauthtoken"
+## NGC API key
+gpu_operator_registry_password: ""
+## NGC email
+gpu_operator_registry_email: ""
 ## Kubernetes apt resources
 k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 k8s_apt_repository: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
@@ -169,7 +158,7 @@ bash setup.sh validate
 
 ### Uninstall
 
-Run the below command to uninstall the NVIDIA Cloud Native Core. Tasks being "ignored" refers to no kubernetes cluster being available.
+Run the below command to uninstall the NVIDIA Cloud Native Core. Taks being "ignored" refers to no kubernetes cluster being available.
 
 ```
 bash setup.sh uninstall

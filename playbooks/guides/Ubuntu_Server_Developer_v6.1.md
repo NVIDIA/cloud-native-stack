@@ -1,6 +1,7 @@
-<h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) with Proxy </h1>
+<h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) for Developers </h1>
 
-This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Core with Proxy configration 
+This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Core for Developers
+
 NVIDIA Cloud Native Core for Developers includes:
 - Ubuntu 20.04.4 LTS
 - Containerd 1.6.2
@@ -67,14 +68,14 @@ nano hosts
 ### Installation
 
 Install the NVIDIA Cloud Native Core stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
-
-`NOTE:` 
-- If you only have http proxy, please add the same proxy details in https_proxy also. 
-- Cloud Native Core 5.2 and 6.1 versions only supports proxy configuration.
 ```
-$ nano cnc_values.yaml
+$ nano cnc_version.yaml
 
 cnc_version: 6.1
+```
+
+```
+$ nano cnc_values_6.1.yaml
 
 # GPU Operator Values
 gpu_driver_version: "510.47.03"
@@ -99,15 +100,15 @@ enable_network_operator: no
 enable_rdma: no
 
 # Prxoy Configuration
-proxy: yes
-http_proxy: "http://<proxy-ip>:proxy-port>"
-https_proxy: "http://<proxy-ip>:proxy-port>" 
+proxy: no
+http_proxy: ""
+https_proxy: "" 
 
 # Cloud Native Core for Developers Values
 ## Enable for Cloud Native Core Developers 
-cnc_docker: no
+cnc_docker: yes
 ## Enable For Cloud Native Core Developers with TRD Driver
-cnc_nvidia_driver: no
+cnc_nvidia_driver: yes
 
 ## Kubernetes apt resources
 k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
@@ -122,7 +123,7 @@ bash setup.sh install
 ```
 
 #### Custom Configuration
-By default Cloud Native Core uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` parameters from the `cnc_values.yaml` file
+By default Cloud Native Core uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` parameters from the `cnc_values_6.1.yaml` file
 
 Example:
 ```

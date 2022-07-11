@@ -1,0 +1,43 @@
+
+
+# GPU Operator Values
+#gpu_driver_version: "510.47.03"
+gpu_driver_version: "515.48.07"
+enable_mig: no
+mig_profile: all-disabled
+mig_strategy: single
+enable_gds: no
+enable_secure_boot: no
+enable_vgpu: no
+vgpu_license_server: ""
+## This is most likely GPU Operator Driver Registry
+gpu_operator_driver_registry: "nvcr.io/nvidia"
+gpu_operator_registry_username: "$oauthtoken"
+## This is most likely an NGC API key
+gpu_operator_registry_password: ""
+## This is most likely an NGC email
+gpu_operator_registry_email: ""
+
+cnc_validation: no
+
+# Network Operator Values
+## If the Network Operator is yes then make sure enable_rdma as well yes
+enable_network_operator: no
+## Enable RDMA yes for NVIDIA Certification
+enable_rdma: no
+
+# Prxoy Configuration
+proxy: no
+http_proxy: ""
+https_proxy: ""
+
+
+# Cloud Native Core for Developers Values
+## Enable for Cloud Native Core Developers
+cnc_docker: no
+## Enable For Cloud Native Core Developers with TRD Driver
+cnc_nvidia_driver: no
+
+## Kubernetes apt resources
+k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+k8s_apt_repository: "deb https://apt.kubernetes.io/ kubernetes-xenial main"

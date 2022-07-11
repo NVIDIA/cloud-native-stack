@@ -79,9 +79,13 @@ nano hosts
 
 Install the NVIDIA Cloud Native Core stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
 ```
-$ nano cnc_values.yaml
+$ nano cnc_version.yaml
 
 cnc_version: 6.1
+```
+
+```
+$ nano cnc_values_6.1.yaml
 
 # GPU Operator Values
 gpu_driver_version: "510.47.03"
@@ -126,7 +130,7 @@ k8s_apt_repository: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
 bash setup.sh install
 ```
 #### Custom Configuration
-By default Cloud Native Core uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` parameters from the `cnc_values.yaml` file
+By default Cloud Native Core uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` parameters from the `cnc_values_6.1.yaml` file
 
 Example:
 ```

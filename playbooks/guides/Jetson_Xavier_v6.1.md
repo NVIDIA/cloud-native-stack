@@ -72,7 +72,7 @@ $ sudo nano hosts
 Install the NVIDIA Cloud Native Core stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
 
 ```
-sudo nano cnc_values.yaml
+sudo nano cnc_version.yaml
 
 cnc_version: 6.1
 
@@ -84,7 +84,7 @@ $ bash setup.sh install
 
 ### Uninstall
 
-Run the below command to uninstall the NVIDIA Cloud Native Core. Tasks being "ignored" refers to no kubernetes cluster being available.
+Run the below command to uninstall the NVIDIA Cloud Native Core. Taks being "ignored" refers to no kubernetes cluster being available.
 
 ```
 $ bash setup.sh uninstall

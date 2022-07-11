@@ -133,9 +133,6 @@
 - import_playbook: nvidia-driver.yaml
   when: "cnc_docker == true and cnc_nvidia_driver == true and ansible_architecture == 'x86_64'"
 
-- when: "cnc_docker == true and cnc_nvidia_vgpu == true and ansible_architecture == 'x86_64'"
-  import_playbook: nvidia-vgpu-driver.yaml
-
 - when: "cnc_docker == true and ansible_architecture == 'x86_64'" 
   import_playbook: cnc-docker.yaml
 

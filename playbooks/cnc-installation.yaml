@@ -63,12 +63,15 @@
         update_cache: yes
 
     - name: Check Internet Speed
+      ignore_errors: true
+      failed_when: false
       shell: speedtest-cli --simple
       register: speed
 
     - name: Report Valid Internet Speed
       shell: echo {{ speed.stdout_lines[1] }} | awk '{print $3}'
       register: speedtest
+      ignore_errors: true
       failed_when: "'Kbit/s' in speedtest.stdout"
 
     - name: Check DNS Configuration

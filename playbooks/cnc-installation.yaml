@@ -106,7 +106,7 @@
         path: /root/.kube
         state: absent
 
-    - name: Add DHCP Mac to netplan
+    - name: Add DHCP Mac to netplan 
       ignore_errors: true
       no_log: true
       failed_when: false 

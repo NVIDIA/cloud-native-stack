@@ -116,7 +116,7 @@
       become: true 
       args: 
         warn: false 
-      shell: 'sudo sed -ie "/dhcp4: .*/a\      dhcp-identifier: mac" /etc/netplan/*' 
+      shell: 'sed -ie "/dhcp4: .*/a\      dhcp-identifier: mac" /etc/netplan/*' 
  
  #   - name: Apply DHCP mac to NetPlan 
  #     become: true 

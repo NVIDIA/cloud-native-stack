@@ -109,18 +109,18 @@
         path: /root/.kube
         state: absent
 
-    - name: Add DHCP Mac to netplan 
-      ignore_errors: true
-      no_log: true
-      failed_when: false 
-      become: true 
-      args: 
-        warn: false 
-      shell: 'sed -ie "/dhcp4: .*/a\      dhcp-identifier: mac" /etc/netplan/*' 
+#    - name: Add DHCP Mac to netplan 
+#      ignore_errors: true
+#      no_log: true
+#      failed_when: false 
+#      become: true 
+#      args: 
+#        warn: false 
+#      shell: 'sed -i "/dhcp4: .*/a\      dhcp-identifier: mac" /etc/netplan/*' 
  
- #   - name: Apply DHCP mac to NetPlan 
- #     become: true 
- #     shell: netplan apply 
+#   - name: Apply DHCP mac to NetPlan 
+#     become: true 
+#     shell: netplan apply 
 
   handlers:
     - name: update-initramfs

@@ -443,7 +443,7 @@
         - kubectl create namespace gpu-operator-resources
         - kubectl create configmap licensing-config -n gpu-operator-resources --from-file={{lookup('pipe', 'pwd')}}/gridd.conf
         - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password='{{ gpu_operator_registry_password }}' --docker-email='{{ gpu_operator_registry_email }}' -n gpu-operator-resources
-        - helm install --version 1.9.1 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+        - helm install --version 1.9.1 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config,driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 5.0
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 5.0"
@@ -477,7 +477,7 @@
         - kubectl create namespace gpu-operator-resources
         - kubectl create configmap licensing-config -n gpu-operator-resources --from-file={{lookup('pipe', 'pwd')}}/gridd.conf
         - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password='{{ gpu_operator_registry_password }}' --docker-email='{{ gpu_operator_registry_email }}' -n gpu-operator-resources
-        - helm install --version 1.10.1 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+        - helm install --version 1.10.1 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config,driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 5.1
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 5.1"
@@ -511,7 +511,7 @@
         - kubectl create namespace gpu-operator-resources
         - kubectl create configmap licensing-config -n gpu-operator-resources --from-file={{lookup('pipe', 'pwd')}}/gridd.conf
         - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password='{{ gpu_operator_registry_password }}' --docker-email='{{ gpu_operator_registry_email }}' -n gpu-operator-resources
-        - helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+        - helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config,driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 5.2
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 5.2"
@@ -541,7 +541,7 @@
         - kubectl create namespace gpu-operator-resources
         - kubectl create configmap licensing-config -n gpu-operator-resources --from-file={{lookup('pipe', 'pwd')}}/gridd.conf
         - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password='{{ gpu_operator_registry_password }}' --docker-email='{{ gpu_operator_registry_email }}' -n gpu-operator-resources
-        - helm install --version 1.9.1 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+        - helm install --version 1.9.1 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config,driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 6.0
      when: "enable_mig == true and  enable_rdma == true and enable_vgpu == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 6.0"
@@ -575,7 +575,7 @@
         - kubectl create namespace gpu-operator-resources
         - kubectl create configmap licensing-config -n gpu-operator-resources --from-file={{lookup('pipe', 'pwd')}}/gridd.conf
         - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password='{{ gpu_operator_registry_password }}' --docker-email='{{ gpu_operator_registry_email }}' -n gpu-operator-resources
-        - helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+        - helm install --version 1.10.1 --values /tmp/values.yaml --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config,driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 6.1
      when: "enable_mig == true and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 6.1"
@@ -617,7 +617,7 @@
         - kubectl create namespace gpu-operator-resources
         - kubectl create configmap licensing-config -n gpu-operator-resources --from-file={{lookup('pipe', 'pwd')}}/gridd.conf
         - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password='{{ gpu_operator_registry_password }}' --docker-email='{{ gpu_operator_registry_email }}' -n gpu-operator-resources
-        - helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+        - helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config,driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 6.2
      when: "enable_mig == true and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 6.2"
@@ -659,7 +659,7 @@
         - kubectl create namespace gpu-operator-resources
         - kubectl create configmap licensing-config -n gpu-operator-resources --from-file={{lookup('pipe', 'pwd')}}/gridd.conf
         - kubectl create secret docker-registry registry-secret --docker-server='{{ gpu_operator_driver_registry }}' --docker-username='{{ gpu_operator_registry_username }}' --docker-password='{{ gpu_operator_registry_password }}' --docker-email='{{ gpu_operator_registry_email }}' -n gpu-operator-resources
-        - helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+        - helm install --version 1.11.0 --values /tmp/values.yaml --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --set driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config,driver.version='{{ gpu_driver_version }}' --wait --generate-name
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Core 7.0
      when: "enable_mig == true and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and cnc_version == 7.0"

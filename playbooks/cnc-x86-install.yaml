@@ -75,49 +75,49 @@
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 5.0
      when: "cnc_version == 5.2 or cnc_version == 5.1 or cnc_version == 5.0 and 'running' not in k8sup.stdout"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.22.5"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.22.5" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
      
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.0
      when: "'running' not in k8sup.stdout and cnc_version == 6.0"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.2"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.2" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.1
      when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 6.1"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.5"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.5" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.1
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 6.1"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.5" --apiserver-advertise-address={{ network.stdout }}
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.5" --apiserver-advertise-address={{ network.stdout }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.2
      when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 6.2"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.7"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.7" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.0
      when: "'running' not in k8sup.stdout and  proxy == false and cnc_version == 7.0 and ansible_distribution_major_version == '22'"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.24.1"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.24.2" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm     
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.2
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 6.2"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.7" --apiserver-advertise-address={{ network.stdout }}
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.7" --apiserver-advertise-address={{ network.stdout }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.0
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 7.0 and ansible_distribution_major_version == '22'"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.24.1" --apiserver-advertise-address={{ network.stdout }}
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.24.2" --apiserver-advertise-address={{ network.stdout }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 

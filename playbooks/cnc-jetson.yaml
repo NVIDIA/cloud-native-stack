@@ -357,7 +357,7 @@
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.2
-     when: "cnc_version == 6.1 and 'running' not in k8sup.stdout"
+     when: "cnc_version == 6.2 and 'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.8" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm

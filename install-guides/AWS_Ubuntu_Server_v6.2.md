@@ -1,4 +1,4 @@
-<h1>NVIDIA Cloud Native Core v6.1 for AWS - Install Guide for Ubuntu Server x86-64</h1>
+<h1>NVIDIA Cloud Native Core v6.2 for AWS - Install Guide for Ubuntu Server x86-64</h1>
 <h2>Introduction</h2>
 
 This document describes how to setup the NVIDIA Cloud Native Core collection on a single or multiple AWS instances. NVIDIA Cloud Native Core can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster. 
@@ -484,7 +484,7 @@ EOF
 Execute the below command to create a sample GPU pod:
 
 ```
-sudo kubectl apply -f cuda-samples.yaml
+kubectl apply -f cuda-samples.yaml
 ```
 
 Execute the below command to confirm the cuda-samples pod was created:

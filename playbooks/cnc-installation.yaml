@@ -97,6 +97,7 @@
       shell: mokutil --sb-state | awk '{print $2}'
       register: secure_boot
       failed_when: "'enabled' in secure_boot.stdout"
+      ignore_errors: true
 
     - name: check enough storage
       shell: df --block-size 1g / --output=avail | tail -1 | sed "s/ //g"

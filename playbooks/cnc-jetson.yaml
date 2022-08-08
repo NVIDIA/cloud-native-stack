@@ -24,6 +24,7 @@
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.22.5-00', 'kubeadm=1.22.5-00', 'kubectl=1.22.5-00']
         state: present
+        force: yes
 
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.0
       become: true
@@ -31,6 +32,7 @@
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.2-00', 'kubeadm=1.23.2-00', 'kubectl=1.23.2-00']
         state: present
+        force: yes
 
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.1
       become: true
@@ -38,6 +40,7 @@
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.5-00', 'kubeadm=1.23.5-00', 'kubectl=1.23.5-00']
         state: present
+        force: yes
 
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.2
       become: true
@@ -45,6 +48,7 @@
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.8-00', 'kubeadm=1.23.8-00', 'kubectl=1.23.8-00']
         state: present
+        force: yes
 
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 7.0
       become: true
@@ -52,6 +56,7 @@
       apt:
         name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.24.2-00', 'kubeadm=1.24.2-00', 'kubectl=1.24.2-00']
         state: present
+        force: yes
 
     - name: Hold the installed Packages
       become: true
@@ -264,6 +269,7 @@
             name: ['nvidia-container-runtime=3.8.0-1']
             state: present
             update_cache: yes
+            force: yes
       when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
 
     - name: Installing Latest Nvidia Container Runtime on Cloud Native Core 6.1
@@ -286,6 +292,7 @@
             name: ['nvidia-container-runtime=3.9.0-1']
             state: present
             update_cache: yes
+            force: yes
       when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
 
     - name: Installing Latest Nvidia Container Runtime on Cloud Native Core 6.2 or 7.0
@@ -310,6 +317,7 @@
             name: ['nvidia-container-runtime=3.10.0-1']
             state: present
             update_cache: yes
+            force: yes
       when: "cnc_version >= 6.2 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
 
 
@@ -523,7 +531,7 @@
      with_items:
        - curl -O https://get.helm.sh/helm-v3.8.2-linux-arm64.tar.gz
        - tar -xvzf helm-v3.8.2-linux-arm64.tar.gz
-       - cp linux-amd64/helm /usr/local/bin/
+       - cp linux-arm64/helm /usr/local/bin/
        - chmod 755 /usr/local/bin/helm
        - rm -rf helm-v3.8.2-linux-arm64.tar.gz linux-arm64
      when: "cnc_version == 6.2 or cnc_version == 5.2 and helm_exists.rc > 0"

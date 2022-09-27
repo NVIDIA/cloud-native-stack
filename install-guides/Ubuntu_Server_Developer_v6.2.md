@@ -438,7 +438,7 @@ Following the instructions in the output, execute the commands as shown below:
 With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
- kubectl apply -f https://docs.projectcalico.org/v3.21/manifests/calico.yaml 
+ kubectl apply -f https://projectcalico.docs.tigera.io/archive/v3.23/manifests/calico.yaml
 ```
 
 Update the Calico Daemonset 

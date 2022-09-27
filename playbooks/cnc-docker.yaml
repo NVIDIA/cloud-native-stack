@@ -432,7 +432,7 @@
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core
      when: "cnc_version >= 5.0 and 'running' not in k8sup.stdout"
-     command: kubectl apply -f https://docs.projectcalico.org/v3.23/manifests/calico.yaml
+     command: kubectl apply -f https://projectcalico.docs.tigera.io/archive/v3.23/manifests/calico.yaml
 
    - name: Update Network plugin for Calico on NVIDIA Cloud Native Core > 3.1
      when: "'running' not in k8sup.stdout and cnc_version >= 3.1 "

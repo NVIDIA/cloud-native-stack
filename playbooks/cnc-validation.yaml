@@ -521,6 +521,7 @@
       failed_when: false
 
     - name: Report Nvidia SMI Validation
+      when: cnc_version >= 7.0
       ignore_errors: yes
       debug:
         msg: "{{ smi.stdout_lines }}"

@@ -1,15 +1,15 @@
-<h1> NVIDIA Cloud Native Core - v7.0 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit</h1>
+<h1> NVIDIA Cloud Native Core - v7.1 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit or Jetson Orin</h1>
 
 <h2>Introduction</h2>
 
-This document describes how to setup the NVIDIA Cloud Native Core collection on a single or multiple Jetson AGX Xavier or Jetson Xavier NX DevKits. NVIDIA Cloud Native Core can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
+This document describes how to setup the NVIDIA Cloud Native Core collection on a single or multiple Jetson AGX Xavier or Jetson Xavier NX DevKits or Jetson Orin. NVIDIA Cloud Native Core can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
 The final environment will include:
 
 - JetPack 5.0
-- Kubernetes version 1.24.2
-- Helm 3.9.0
-- Containerd 1.6.6
+- Kubernetes version 1.24.6
+- Helm 3.10.0
+- Containerd 1.6.8
 
 
 <h2>Table of Contents</h2>
@@ -28,7 +28,7 @@ The final environment will include:
 
 ### Prerequisites
  
-These instructions assume you have a Jetson Xavier or Xavier NX Developer Kit.
+These instructions assume you have a Jetson Xavier or Xavier NX Developer Kit or Jetson Orin.
 
 - You will perform a clean install.
 - The server has internet connectivity.
@@ -74,7 +74,7 @@ distribution=$(. /etc/os-release;echo $ID$VERSION_ID) &&  curl -s -L https://nvi
 Now execute the commands below:
 
 ```
-sudo apt-get update && sudo apt install nvidia-container-runtime=3.10.0
+sudo apt-get update && sudo apt install nvidia-container-runtime=3.11.0
 ```
 
 
@@ -117,9 +117,9 @@ Apply sysctl params without reboot:
 Download the Containerd tarball:
 
 ```
- wget https://github.com/containerd/containerd/releases/download/v1.6.6/cri-containerd-cni-1.6.6-linux-arm64.tar.gz
- sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.6-linux-arm64.tar.gz
- rm -rf cri-containerd-cni-1.6.6-linux-arm64.tar.gz
+ wget https://github.com/containerd/containerd/releases/download/v1.6.8/cri-containerd-cni-1.6.8-linux-arm64.tar.gz
+ sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.8-linux-arm64.tar.gz
+ rm -rf cri-containerd-cni-1.6.8-linux-arm64.tar.gz
 ```
 
 Install Containerd:
@@ -161,7 +161,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 
 ```
  sudo apt-get update
- sudo apt-get install -y -q kubelet=1.24.2-00 kubectl=1.24.2-00 kubeadm=1.24.2-00
+ sudo apt-get install -y -q kubelet=1.24.6-00 kubectl=1.24.6-00 kubeadm=1.24.6-00
  sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
@@ -196,7 +196,7 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command:
 
 ```
- sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.5"
+ sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.6"
 ```
 
 Output:
@@ -268,7 +268,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane          10m   v1.24.2
+#yourhost        Ready    control-plane          10m   v1.24.6
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -282,16 +282,16 @@ for more information.
 
 ### Installing Helm 
 
-Execute the following command to download and install Helm 3.9.0: 
+Execute the following command to download and install Helm 3.10.0: 
 
 ```
- wget https://get.helm.sh/helm-v3.9.0-linux-arm64.tar.gz
- tar -zxvf helm-v3.9.0-linux-arm64.tar.gz
+ wget https://get.helm.sh/helm-v3.10.0-linux-arm64.tar.gz
+ tar -zxvf helm-v3.10.0-linux-arm64.tar.gz
  sudo mv linux-arm64/helm /usr/local/bin/helm
- rm -rf helm-v3.9.0-linux-arm64.tar.gz linux-arm64/
+ rm -rf helm-v3.10.0-linux-arm64.tar.gz linux-arm64/
 ```
 
-Refer to the Helm 3.9.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
+Refer to the Helm 3.10.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
 
 
 ### Adding an Additional Node to NVIDIA Cloud Native Core
@@ -327,8 +327,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.24.1
-#yourhost-worker Ready                           10m   v1.24.1
+#yourhost        Ready    control-plane,master   10m   v1.24.6
+#yourhost-worker Ready                           10m   v1.24.6
 ```
 
 ### Validating the Installation
@@ -445,7 +445,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 Go through the below steps to install the demo application:
 ```
-1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-l4t-0.121.tgz --untar
+1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-l4t-0.1.2.tgz --untar
 
 2. cd into the folder video-analytics-demo-l4t and update the file values.yaml
 

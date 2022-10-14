@@ -1,0 +1,283 @@
+- hosts: all
+  become: true
+  become_method: sudo
+  vars:
+    daemon_json:
+      default-runtime: nvidia
+      runtimes:
+        nvidia:
+          path: /usr/bin/nvidia-container-runtime
+          runtimeArgs: []
+  tasks:
+
+    - name: Check docker is installed
+      shell: docker
+      register: docker_exists
+      no_log: true
+      failed_when: false
+
+    - name: Check NVIDIA docker is installed
+      shell: nvidia-docker
+      register: nvidia_docker_exists
+      no_log: true
+      failed_when: false
+
+    - name: Install Docker Dependencies
+      when: docker_exists.rc >= 1 or nvidia_docker_exists.rc >= 1
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - lsb-release
+          - gnupg
+          - apt-utils
+          - unzip
+        state: latest
+        update_cache: true
+
+    - name: Add Docker APT signing key
+      when: docker_exists.rc >= 1
+      ansible.builtin.apt_key:
+        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+        state: present
+
+    - name: Add Docker repository into sources list
+      when: docker_exists.rc >= 1
+      ansible.builtin.apt_repository:
+        repo: "deb https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+
+    - name: Create docker systemd file
+      when: docker_exists.rc >= 1
+      become: true
+      copy:
+        dest: /etc/systemd/system/docker.service
+        content: |
+          [Unit]
+          Description=Docker Application Container Engine
+          Documentation=https://docs.docker.com
+          After=network-online.target docker.socket firewalld.service containerd.service
+          Wants=network-online.target
+          Requires=docker.socket containerd.service
+
+          [Service]
+          Type=notify
+          ExecStart=/usr/bin/dockerd -H unix:// --containerd=/run/containerd/containerd.sock
+          ExecReload=/bin/kill -s HUP $MAINPID
+          TimeoutSec=0
+          RestartSec=2
+          Restart=always
+          StartLimitBurst=3
+          StartLimitInterval=60s
+          LimitNOFILE=infinity
+          LimitNPROC=infinity
+          LimitCORE=infinity
+          TasksMax=infinity
+          Delegate=yes
+          KillMode=process
+          OOMScoreAdjust=-500
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Install Docker
+      when: docker_exists.rc >= 1
+      apt:
+        name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+        state: latest
+        force: yes
+        update_cache: true
+
+    - name: remove nvidia-docker v1
+      when: nvidia_docker_exists.rc == 0
+      apt:
+        name: nvidia-docker
+        state: absent
+        purge: yes
+
+    - name: Add NVIDIA Docker APT signing key
+      when: nvidia_docker_exists.rc >= 1
+      apt_key:
+        url: https://nvidia.github.io/nvidia-docker/gpgkey
+        state: present
+
+    - name: Add NVIDIA Docker repository into sources list
+      when: ansible_architecture == 'aarch64' and nvidia_docker_exists.rc >= 1
+      apt_repository:
+        repo: "{{ item }}"
+        state: present
+        filename: 'nvidia-docker'
+        update_cache: yes
+      with_items:
+        - "deb https://nvidia.github.io/libnvidia-container/ubuntu18.04/arm64 /"
+        - "deb https://nvidia.github.io/nvidia-container-runtime/ubuntu18.04/arm64 /"
+        - "deb https://nvidia.github.io/nvidia-docker/ubuntu18.04/arm64 /"
+
+    - name: Add NVIDIA Docker repository into sources list
+      when: ansible_architecture == 'x86_64' and nvidia_docker_exists.rc >= 1
+      apt_repository:
+        repo: "{{ item }}"
+        state: present
+        filename: 'nvidia-docker'
+        update_cache: yes
+      with_items:
+        - "deb https://nvidia.github.io/libnvidia-container/ubuntu18.04/amd64 /"
+        - "deb https://nvidia.github.io/nvidia-container-runtime/ubuntu18.04/amd64 /"
+        - "deb https://nvidia.github.io/nvidia-docker/ubuntu18.04/amd64 /"
+
+    - name: Install NVIDIA Docker and NVIDIA Container Runtime
+      when: nvidia_docker_exists.rc >= 1
+      apt:
+        name: [ "nvidia-docker2", "nvidia-container-runtime" ]
+        state: present
+        update_cache: true
+
+    - name: Update docker default runtime
+      when: docker_exists.rc >= 1 and nvidia_docker_exists.rc >= 1
+      copy:
+        content: "{{ daemon_json | to_nice_json }}"
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Restart Docker Service
+      service: name=docker state=restarted enabled=yes
+
+    - name: Update Containerd Runtime for NVIDIA Cloud Native Core
+      become: true
+      block:
+        - name: Write defaults to config.toml
+          get_url:
+            dest: /etc/containerd/config.toml
+            url: https://raw.githubusercontent.com/NVIDIA/cloud-native-core/master/playbooks/config.toml
+            mode: 0664
+
+        - name: Enable systemd cgroups
+          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20'"
+
+    - name: NGC CLI Setup
+      become: true
+      block:
+        - name: Download CLI
+          get_url:
+            url: https://ngc.nvidia.com/downloads/ngccli_linux.zip
+            dest: /tmp/ngccli_linux.zip
+            mode: 0664
+
+        - name: Install NGC CLI
+          unarchive:
+            src: /tmp/ngccli_linux.zip
+            dest: /usr/local/bin/
+            remote_src: yes
+
+- hosts: all
+  vars_files:
+    - cnc_values.yaml
+  tasks:
+   - name: Validate whether Kubernetes cluster installed
+     shell: kubectl cluster-info
+     register: k8sup
+     no_log: True
+     failed_when: false
+
+   - name: Get Node name
+     shell: "kubectl get nodes  | grep -v master | awk '{print $1}' | grep -v NAME"
+     register: node_name
+     no_log: True
+     failed_when: false
+     when: "'running' in k8sup.stdout"
+
+   - name: Lable the node
+     shell: "kubectl label node {{ item }} node-role.kubernetes.io/node="
+     with_items: "{{ node_name.stdout_lines }}"
+     when: "'running' in k8sup.stdout"
+     no_log: True
+     failed_when: false
+
+   - name: Checking if GPU Operator is installed
+     shell: helm ls -A | grep gpu-operator
+     register: gpu_operator
+     failed_when: false
+     no_log: True
+
+   - name: Add nvidia Helm repo
+     shell: " {{ item }}"
+     with_items:
+        - helm repo add nvidia '{{ helm_repository }}' --force-update
+        - helm repo update
+     when: 'gpu_operator_registry_password == ""'
+
+   - name: Add custom Helm repo
+     shell: " {{ item }}"
+     with_items:
+        - helm repo add nvidia '{{ helm_repository }}' --force-update --username=\$oauthtoken --password='{{ gpu_operator_registry_password }}'
+        - helm repo update
+     when: 'gpu_operator_registry_password != ""'
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 6.1
+     when: "enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and 'running' in k8sup.stdout and cnc_version == 6.1"
+     shell: helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 6.1
+     when: "enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc >= 1 and 'running' in k8sup.stdout and cnc_version == 6.1"
+     shell: helm install --version 1.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 6.2
+     when: "cnc_version == 6.2 and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and 'running' in k8sup.stdout"
+     shell: helm install --version 1.11.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 7.0
+     when: "cnc_version == 7.0 and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and 'running' in k8sup.stdout"
+     shell: helm install --version 1.11.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 6.2
+     when: "cnc_version == 6.2 and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc >= 1 and 'running' in k8sup.stdout"
+     shell: helm install --version 1.11.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 7.0
+     when: "cnc_version == 7.0 and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc >= 1 and 'running' in k8sup.stdout"
+     shell: helm install --version 1.11.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 6.3
+     when: "cnc_version == 6.3 and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and 'running' in k8sup.stdout "
+     shell: helm install --version 22.09 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 7.1
+     when: "cnc_version == 7.1 and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and 'running' in k8sup.stdout "
+     shell: helm install --version 22.09 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Core 8.0
+     when: "cnc_version == 8.0 and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and 'running' in k8sup.stdout"
+     shell: helm install --version 22.09 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 6.3
+     when: "cnc_version == 6.3 and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc >= 1 and 'running' in k8sup.stdout"
+     shell: helm install --version 22.09 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 7.1
+     when: "cnc_version == 7.1 and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc >= 1 and 'running' in k8sup.stdout "
+     shell: helm install --version 22.09 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Core 8.0
+     when: "cnc_version == 8.0 and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc >= 1 and 'running' in k8sup.stdout"
+     shell: helm install --version 22.09 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Enable MIG profile with GPU Operator on NVIDIA Cloud Native Core
+     when: "enable_mig == true and enable_vgpu == false and gpu_operator.rc >= 1 and cnc_version >= 4.1"
+     shell: "kubectl label nodes --all nvidia.com/mig.config={{ mig_profile }} --overwrite"
+     args:
+       warn: false
+
+   - name: Container Networking Plugin changes
+     when: "'running' in k8sup.stdout"
+     shell: "sleep 20; timeout 15 kubectl delete pods $(kubectl get pods -n kube-system | grep core | awk '{print $1}') -n kube-system; for ns in `kubectl get pods -A  | grep node-feature | grep -v master | awk '{print $1}'`; do kubectl get pods -n $ns  | grep node-feature | grep -v master | awk '{print $1}' | xargs kubectl delete pod -n $ns; done"
+     args:
+       warn: false

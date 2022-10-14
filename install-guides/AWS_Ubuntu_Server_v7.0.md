@@ -253,7 +253,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 With the following command, you install a pod-network add-on to the control plane node. Calico is used as the pod-network add-on here:
 
 ```
-kubectl apply -f  https://projectcalico.docs.tigera.io/archive/v3.23/manifests/calico.yaml 
+kubectl apply -f  https://projectcalico.docs.tigera.io/archive/v3.23/manifests/calico.yaml
 ```
 
 You can execute the below commands to ensure that all pods are up and running:

@@ -40,13 +40,17 @@
       notify:
       - update-initramfs
 
+    - name: Get URL
+      shell: "echo {{ k8s_apt_key }} | awk -F '//' '{print $2}' | awk -F'/' '{print $1}'"
+      register: url
+
     - name: Test Internet Connection
       register: connection
       no_log: true
       failed_when: false
       ignore_errors: true
       uri:
-        url: https://google.com
+        url: https://{{ url.stdout }}
         timeout: 5
 
     - name: Report Internet Connection status
@@ -65,7 +69,7 @@
     - name: Check Internet Speed
       ignore_errors: true
       failed_when: false
-      shell: speedtest-cli --simple
+      shell: speedtest-cli --secure --simple
       register: speed
 
     - name: Report Valid Internet Speed
@@ -75,15 +79,15 @@
       failed_when: "'Kbit/s' in speedtest.stdout"
 
     - name: Check DNS Configuration
-      shell: dig google.com +cmd +noall +answer
+      shell: "dig {{ url.stdout }} +cmd +noall +answer"
       register: dns
       failed_when: "dns.stdout | length < 0"
 
-    - name: Check Google Repo access
-      register: google_repo
-      failed_when: "google_repo.status != 200"
+    - name: Check K8s Repo access
+      register: k8s_repo
+      failed_when: "k8s_repo.status != 200"
       uri:
-        url: https://packages.cloud.google.com
+        url: https://{{ url.stdout }}
         timeout: 5
 
     - name: Install secure boot dependencies
@@ -102,7 +106,7 @@
     - name: check enough storage
       shell: df --block-size 1g / --output=avail | tail -1 | sed "s/ //g"
       register: size
-      failed_when: " size.stdout | int <= 40"
+      failed_when: " size.stdout | int <= 40 and ansible_architecture == 'x86_64'"
 
     - name: Clean up kube config
       become: true
@@ -110,18 +114,22 @@
         path: /root/.kube
         state: absent
 
+    - name: Get Nvidia Tegra Release
+      shell: uname -r | awk -F'-' '{print $2}'
+      register: release
+
+    - set_fact:
+       release: "{{ release.stdout }}"
+
 #    - name: Add DHCP Mac to netplan 
-#      ignore_errors: true
-#      no_log: true
-#      failed_when: false 
 #      become: true 
 #      args: 
 #        warn: false 
-#      shell: 'sed -i "/dhcp4: .*/a\      dhcp-identifier: mac" /etc/netplan/*' 
+#      shell: 'sudo sed -ie "/dhcp4: .*/a\      dhcp-identifier: mac" /etc/netplan/*' 
  
-#   - name: Apply DHCP mac to NetPlan 
-#     become: true 
-#     shell: netplan apply 
+ #   - name: Apply DHCP mac to NetPlan 
+ #     become: true 
+ #     shell: netplan apply 
 
   handlers:
     - name: update-initramfs
@@ -129,30 +137,30 @@
       command: update-initramfs -u
       when: ansible_os_family == "Debian" and nouveau_result.rc != 0
 
-#- import_playbook: cnc-uninstall.yaml
-#  when: "cnc_version > 4.1"
-
-- when: ansible_architecture == "aarch64"
+- when: "release == 'tegra'"
   import_playbook: cnc-jetson.yaml
   name: Install Cloud Native Core on Jetson
   
 - import_playbook: nvidia-driver.yaml
-  when: "cnc_docker == true and cnc_nvidia_driver == true and ansible_architecture == 'x86_64'"
+  when: "cnc_docker == true and cnc_nvidia_driver == true and release != 'tegra'"
 
-- when: "cnc_docker == true and ansible_architecture == 'x86_64'" 
-  import_playbook: cnc-docker.yaml
-
-- when: "cnc_version <= 4.1 and cnc_docker != true and ansible_architecture == 'x86_64'"
+- when: "cnc_version <= 4.1 and cnc_docker != true and ansible_architecture == 'x86_64' and release != 'tegra'"
   import_playbook: older_versions/prerequisites.yaml
 
-- when: "cnc_version <= 4.1 and cnc_docker != true and ansible_architecture == 'x86_64'"
+- when: "cnc_version <= 4.1 and cnc_docker != true and ansible_architecture == 'x86_64' and release != 'tegra'"
   import_playbook: older_versions/cnc-installation.yaml
 
-- when: "cnc_version > 4.1 and cnc_docker != true and ansible_architecture == 'x86_64'"
+- when: "cnc_version > 4.1 and release != 'tegra'"
   import_playbook: prerequisites.yaml
 
-- when: "cnc_version > 4.1 and cnc_docker != true and ansible_architecture == 'x86_64'"
-  import_playbook: cnc-x86-install.yaml
+- when: "cnc_version > 4.1 and release != 'tegra'"
+  import_playbook: k8s-install.yaml
+
+- when: "cnc_docker == true and release != 'tegra'"
+  import_playbook: cnc-pre-nvidia-driver.yaml
+
+- when: "cnc_version > 4.1 and cnc_docker != true and release != 'tegra'"
+  import_playbook: operators-install.yaml
 
 - hosts: all
   gather_facts: yes
@@ -174,5 +182,5 @@
       register: status
       when: "cnc_version > 4.1 and cnc_validation == true and ansible_architecture == 'x86_64'"
 
-- when: "cnc_version > 4.1 and cnc_validation == true and ansible_architecture == 'x86_64'"
+- when: "cnc_version > 4.1 and cnc_validation == true and release != 'tegra'"
   import_playbook: cnc-validation.yaml

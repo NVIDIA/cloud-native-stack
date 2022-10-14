@@ -1,24 +1,25 @@
-<h1>NVIDIA Cloud Native Core v6.1 for AWS - Install Guide for Ubuntu Server x86-64</h1>
+<h1>NVIDIA Cloud Native Core v6.3 for AWS - Install Guide for Ubuntu Server x86-64</h1>
 <h2>Introduction</h2>
 
 This document describes how to setup the NVIDIA Cloud Native Core collection on a single or multiple AWS instances. NVIDIA Cloud Native Core can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster. 
 
-NVIDIA Cloud Native Core v6.1 includes:
+NVIDIA Cloud Native Core v6.3 includes:
 
-- Ubuntu 20.04.3 LTS
-- Containerd 1.6.2
-- Kubernetes version 1.23.5
-- Helm 3.8.1
-- NVIDIA GPU Operator 1.10.1
-  - NVIDIA GPU Driver: 510.47.03
-  - NVIDIA Container Toolkit: 1.9.0
-  - NVIDIA K8S Device Plugin: 0.11.0
-  - NVIDIA DCGM-Exporter: 2.3.4-2.6.4
-  - NVIDIA DCGM: 2.3.4.1
-  - NVIDIA GPU Feature Discovery: 0.5.0
-  - NVIDIA K8s MIG Manager: 0.3.0
-  - NVIDIA Driver Manager: 0.3.0
+- Ubuntu 22.04.3 LTS
+- Containerd 1.6.8
+- Kubernetes version 1.23.12
+- Helm 3.10.0
+- NVIDIA GPU Operator 22.09
+  - NVIDIA GPU Driver: 520.61.05
+  - NVIDIA Container Toolkit: 22.09
+  - NVIDIA K8S Device Plugin: 0.12.3
+  - NVIDIA DCGM-Exporter: 3.0.4-3.0.0
+  - NVIDIA DCGM: 3.0.4-1
+  - NVIDIA GPU Feature Discovery: 0.6.2
+  - NVIDIA K8s MIG Manager: 0.5.0
+  - NVIDIA Driver Manager: 0.4.2
   - Node Feature Discovery: 0.10.1
+  - NVIDIA KubeVirt GPU Device Plugin: 1.2.1
 
 <h2>Table of Contents</h2>
 
@@ -45,7 +46,7 @@ First, log in to the AWS console, go to the EC2 management page, and launch a ne
 
 ![AWS_Launch_Instance](screenshots/AWS_Launch_instance.png)
 
-Step 1: Select the Ubuntu Server 20.04 LTS image with 64-bit (x86), available in the QuickStart area.
+Step 1: Select the Ubuntu Server 22.04 LTS image with 64-bit (x86), available in the QuickStart area.
 
 ![AWS_Choose_AMI](screenshots/AWS_Choose_AMI.png)
 
@@ -142,15 +143,15 @@ sudo sysctl --system
 Download the Containerd tarball
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.6.2/cri-containerd-cni-1.6.2-linux-amd64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.6.8/cri-containerd-cni-1.6.8-linux-amd64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.2-linux-amd64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.8-linux-amd64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.6.2-linux-amd64.tar.gz
+rm -rf cri-containerd-cni-1.6.8-linux-amd64.tar.gz
 ```
 
 Install the Containerd
@@ -201,7 +202,7 @@ sudo apt-get update
 ```
 
 ```
-sudo apt-get install -y -q kubelet=1.23.5-00 kubectl=1.23.5-00 kubeadm=1.23.5-00
+sudo apt-get install -y -q kubelet=1.23.12-00 kubectl=1.23.12-00 kubeadm=1.23.12-00
 ```
 
 ```
@@ -230,7 +231,7 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.5"
+sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.12"
 ```
 
 The output will show you the commands that, when executed, deploy a pod network to the cluster and commands to join the cluster.
@@ -252,7 +253,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 With the following command, you install a pod-network add-on to the control plane node. Calico is used as the pod-network add-on here:
 
 ```
-kubectl apply -f  https://docs.projectcalico.org/v3.21/manifests/calico.yaml 
+kubectl apply -f  https://projectcalico.docs.tigera.io/archive/v3.21/manifests/calico.yaml
 ```
 
 You can execute the below commands to ensure that all pods are up and running:
@@ -286,7 +287,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.23.5
+#yourhost        Ready    control-plane          10m   v1.23.12
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -299,21 +300,21 @@ For additional information, refer to [kubeadm installation guide](https://kubern
 
 ## Installing Helm 
 
-Execute the following command to download Helm 3.8.1: 
+Execute the following command to download Helm 3.10.0: 
 
 ```
-wget https://get.helm.sh/helm-v3.8.1-linux-amd64.tar.gz
+wget https://get.helm.sh/helm-v3.10.0-linux-amd64.tar.gz
 ```
 
 ```
-tar -zxvf helm-v3.8.1-linux-amd64.tar.gz
+tar -zxvf helm-v3.10.0-linux-amd64.tar.gz
 ```
 
 ```
 sudo mv linux-amd64/helm /usr/local/bin/helm
 ```
 
-For additional information about Helm, refer to the Helm 3.8.1 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information. 
+For additional information about Helm, refer to the Helm 3.10.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information. 
 
 ### Adding additional node to NVIDIA Cloud Native Core
 
@@ -348,8 +349,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.23.5
-#yourhost-worker Ready                           10m   v1.23.5
+#yourhost        Ready    control-plane,master   10m   v1.23.12
+#yourhost-worker Ready                           10m   v1.23.12
 ```
 
 ## Installing GPU Operator
@@ -368,7 +369,7 @@ helm repo update
 To install GPU Operator for AWS G4 instance with Tesla T4:
 
 ```
-helm install --version 1.10.1 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --wait --generate-name
+helm install --version 22.09 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --wait --generate-name
 ```
 
 ### Validate the state of GPU Operator:
@@ -415,15 +416,34 @@ This section provides two examples of how to validate that the GPU is usable fro
 Execute the following:
 
 ```
-kubectl run nvidia-smi --rm -t -i --restart=Never --image=nvidia/cuda:11.6.0-base-ubuntu20.04 --limits=nvidia.com/gpu=1 -- nvidia-smi
+cat <<EOF | tee nvidia-smi.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nvidia-smi
+spec:
+  restartPolicy: OnFailure
+  containers:
+    - name: nvidia-smi
+      image: "nvidia/cuda:11.7.0-base-ubuntu22.04"
+      args: ["nvidia-smi"]
+EOF
+```
+
+```
+kubectl apply -f nvidia-smi.yaml
+```
+
+```
+kubectl logs nvidia-smi
 ```
 
 Output:
 
 ``` 
-Fri Apr  3 17:17:10 2022
+Wed Oct 12 12:47:29 2022
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 510.47.03    Driver Version: 510.47.03    CUDA Version: 11.6     |
+| NVIDIA-SMI 520.61.05    Driver Version: 520.61.05    CUDA Version: 11.8     |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
@@ -441,7 +461,6 @@ Fri Apr  3 17:17:10 2022
 |=============================================================================|
 |  No running processes found                                                 |
 +-----------------------------------------------------------------------------+
-pod "nvidia-smi" deleted
 ```
 
 #### Example 2: CUDA-Vector-Add

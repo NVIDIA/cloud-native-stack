@@ -1,5 +1,8 @@
 - hosts: all
   gather_facts: yes
+  environment:
+    http_proxy: "{{ http_proxy }}"
+    https_proxy: "{{ https_proxy }}"
   vars_files:
     - cnc_values.yaml
   tasks:
@@ -7,14 +10,14 @@
       become: true
       when: "ansible_distribution == 'Ubuntu'"
       apt_key:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        url: "{{ k8s_apt_key }}"
         state: present
 
     - name: Adding Kubernetes apt repository for Ubuntu
       become: true
       when: "ansible_distribution == 'Ubuntu'"
       apt_repository:
-        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+        repo: "{{ k8s_apt_repository }}"
         state: present
         filename: kubernetes
 
@@ -22,15 +25,14 @@
       become: true
       when: "cnc_version == 5.0 and ansible_distribution == 'Ubuntu'"
       apt:
-        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.22.5-00', 'kubeadm=1.22.5-00', 'kubectl=1.22.5-00']
+        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.22.5-00', 'kubeadm=1.22.5-00', 'kubectl=1.22.5-00']
         state: present
-        force: yes
 
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.0
       become: true
       when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu'"
       apt:
-        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.2-00', 'kubeadm=1.23.2-00', 'kubectl=1.23.2-00']
+        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.2-00', 'kubeadm=1.23.2-00', 'kubectl=1.23.2-00']
         state: present
         force: yes
 
@@ -38,7 +40,7 @@
       become: true
       when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu'"
       apt:
-        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.5-00', 'kubeadm=1.23.5-00', 'kubectl=1.23.5-00']
+        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.5-00', 'kubeadm=1.23.5-00', 'kubectl=1.23.5-00']
         state: present
         force: yes
 
@@ -46,7 +48,15 @@
       become: true
       when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu'"
       apt:
-        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.8-00', 'kubeadm=1.23.8-00', 'kubectl=1.23.8-00']
+        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.8-00', 'kubeadm=1.23.8-00', 'kubectl=1.23.8-00']
+        state: present
+        force: yes
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.3
+      become: true
+      when: "cnc_version == 6.3 and ansible_distribution == 'Ubuntu'"
+      apt:
+        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.12-00', 'kubeadm=1.23.12-00', 'kubectl=1.23.12-00']
         state: present
         force: yes
 
@@ -54,7 +64,23 @@
       become: true
       when: "cnc_version == 7.0 and ansible_distribution == 'Ubuntu'"
       apt:
-        name: ['apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.24.2-00', 'kubeadm=1.24.2-00', 'kubectl=1.24.2-00']
+        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.24.2-00', 'kubeadm=1.24.2-00', 'kubectl=1.24.2-00']
+        state: present
+        force: yes
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 7.1
+      become: true
+      when: "cnc_version == 7.1 and ansible_distribution == 'Ubuntu'"
+      apt:
+        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.24.6-00', 'kubeadm=1.24.6-00', 'kubectl=1.24.6-00']
+        state: present
+        force: yes
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 8.0
+      become: true
+      when: "cnc_version == 8.0 and ansible_distribution == 'Ubuntu'"
+      apt:
+        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.25.2-00', 'kubeadm=1.25.2-00', 'kubectl=1.25.2-00']
         state: present
         force: yes
 
@@ -129,6 +155,7 @@
             name: libseccomp2
             state: present
             update_cache: yes
+            force: yes
         
         - name: Create /etc/containerd
           file:
@@ -213,6 +240,24 @@
             extra_opts:
               - --no-overwrite-dir
       when: "cnc_version == 7.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18' and 'running' not in k8sup.stdout"
+
+    - name: Install Containerd for NVIDIA Cloud Native Core 6.3 or 7.1 or 8.0
+      become: true
+      block:
+        - name: Download cri-containerd-cni
+          get_url:
+            url: https://github.com/containerd/containerd/releases/download/v1.6.8/cri-containerd-cni-1.6.8-linux-arm64.tar.gz
+            dest: /tmp/cri-containerd-cni-1.6.8-linux-arm64.tar.gz
+            mode: 0664
+
+        - name: Untar cri-containerd-cni
+          unarchive:
+            src: /tmp/cri-containerd-cni-1.6.8-linux-arm64.tar.gz
+            dest: /
+            remote_src: yes
+            extra_opts:
+              - --no-overwrite-dir
+      when: "cnc_version == 6.3 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18' or cnc_version == 7.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18' or cnc_version == 8.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18'"
 
 
     - name: Configure Containerd for NVIDIA Cloud Native Core
@@ -318,8 +363,68 @@
             state: present
             update_cache: yes
             force: yes
-      when: "cnc_version >= 6.2 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout or cnc_version == 7.0 and ansible_distribution == 'Ubuntu'"
 
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Core 6.3 or 7.1 or 8.0
+      become: true
+      block:
+        - name: Enable systemd cgroups
+          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+        - name: Add NVIDIA Docker apt signing key for Ubuntu
+          apt_key:
+            url: https://nvidia.github.io/libnvidia-container/gpgkey
+            state: present
+
+        - name: Get NVIDIA Docker Apt list
+          get_url:
+            url: https://nvidia.github.io/libnvidia-container/ubuntu20.04/libnvidia-container.list
+            dest: /etc/apt/sources.list.d/libnvidia-container.list
+            mode: 0644
+
+        - name: Install NVIDIA Container Runtime
+          apt:
+            name: ['nvidia-container-runtime=3.11.0-1']
+            state: present
+            update_cache: yes
+            force: yes
+      when: "cnc_version == 6.3 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout or cnc_version == 7.1 and ansible_distribution == 'Ubuntu' or cnc_version == 8.0 and ansible_distribution == 'Ubuntu'"
+
+    - name: Add Containerd Proxy configuration
+      become: true
+      block:
+        - name: Get Host IP
+          shell: interface=$(ip a | grep 'state UP' |  egrep 'enp*|ens*|eth*|enc*|bond*|wlan*' | awk '{print $2}' | sed 's/://g'); ifconfig $interface | grep -iw inet | awk '{print $2}'
+          register: network
+
+        - name: subnet
+          shell: echo {{ network.stdout }} | cut -d. -f1-3
+          register: subnet
+
+        - name: Create containerd.service.d
+          file:
+            path: /etc/systemd/system/containerd.service.d
+            state: directory
+            recurse: yes
+
+        - name: create http-proxy.conf
+          lineinfile:
+            create: yes
+            mode: 666
+            path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+            line: "{{ item }}"
+          loop:
+          - "[Service]"
+          - "Environment='NO_PROXY={{ network.stdout }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24'"
+          - "Environment='HTTPS_PROXY={{ https_proxy }}'"
+          - "Environment='HTTP_PROXY={{ http_proxy }}'"
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "proxy == true and cnc_version >= 6.1"
 
 - hosts: master
   vars_files:
@@ -346,6 +451,55 @@
        path: "/var/lib/etcd"
        state: absent
 
+   - name: Check proxy conf exists
+     when: proxy == true
+     lineinfile:
+       path: /etc/environment
+       regexp: '^http_proxy=*'
+       state: absent
+     check_mode: yes
+     changed_when: false
+     register: proxyconf
+
+   - name: Get Host IP
+     shell: interface=$(ip a | grep 'state UP' |  egrep 'enp*|ens*|eth*|enc*|bond*|wlan*' | awk '{print $2}' | sed 's/://g'); ifconfig $interface | grep -iw inet | awk '{print $2}'
+     register: network
+
+   - name: subnet
+     shell: echo {{ network.stdout }} | cut -d. -f1-3
+     register: subnet
+
+   - name: add proxy lines to environment
+     when: proxy == true and not proxyconf.found
+     become: true
+     lineinfile:
+       dest: /etc/environment
+       insertafter: "PATH="
+       line: "{{ item }}"
+     loop:
+       - http_proxy={{ http_proxy }}
+       - HTTP_PROXY={{ http_proxy }}
+       - https_proxy={{ https_proxy }}
+       - HTTPS_PROXY={{ https_proxy }}
+       - no_proxy={{ network.stdout }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24
+       - NO_PROXY={{ network.stdout }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24
+
+   - name: source the env
+     when: proxy == true and not proxyconf.found
+     shell: source /etc/environment
+     args:
+       executable: /bin/bash
+
+   - name: check default gateway
+     shell: ip r | grep default
+     failed_when: false
+     register: gateway
+     when: proxy == true
+
+   - name: add default gateway
+     shell: route add -net 0.0.0.0/0 gw {{ network.stdout }}
+     when: gateway.rc | default ('') == 1 and proxy == true
+
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 5.0
      when: "cnc_version == 5.0 and 'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.22.5" --image-repository={{ k8s_registry }}
@@ -365,14 +519,56 @@
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.2
-     when: "cnc_version == 6.2 and 'running' not in k8sup.stdout"
+     when: "cnc_version == 6.1 and 'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.8" --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+     
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.3
+     when: "cnc_version == 6.3 and proxy == false and 'running' not in k8sup.stdout"
+     command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.12" --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.3
+     when: "cnc_version == 6.3 and proxy == true and 'running' not in k8sup.stdout"
+     command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.12" --apiserver-advertise-address={{ network.stdout }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.0
-     when: "'running' not in k8sup.stdout and cnc_version == 7.0"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.2" --image-repository={{ k8s_registry }}
+     when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 7.0"
+     command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.2" --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+    
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.0
+     when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 7.0"
+     command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.2" --apiserver-advertise-address={{ network.stdout }} --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.1
+     when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 7.1"
+     command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.6" --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.1
+     when: "cnc_version == 7.1 and proxy == true and 'running' not in k8sup.stdout"
+     command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.6" --apiserver-advertise-address={{ network.stdout }} --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 8.0
+     when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 8.0 "
+     command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.25.2" --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 8.0
+     when: "cnc_version == 8.0 and proxy == true and 'running' not in k8sup.stdout"
+     command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.25.2" --apiserver-advertise-address={{ network.stdout }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
@@ -405,7 +601,11 @@
      command: kubectl taint nodes --all node-role.kubernetes.io/master-
 
    - name: Taint the Kubernetes Control Plane node
-     when: "'running' not in k8sup.stdout and cnc_version >= 7.0"
+     when: "'running' not in k8sup.stdout and cnc_version == 8.0"
+     command: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
+   - name: Taint the Kubernetes Control Plane node
+     when: "'running' not in k8sup.stdout and cnc_version == 7.0 or 'running' not in k8sup.stdout and cnc_version == 7.1"
      command: kubectl taint nodes --all node-role.kubernetes.io/master- node-role.kubernetes.io/control-plane-
 
    - name: Generate join token
@@ -534,7 +734,7 @@
        - cp linux-arm64/helm /usr/local/bin/
        - chmod 755 /usr/local/bin/helm
        - rm -rf helm-v3.8.2-linux-arm64.tar.gz linux-arm64
-     when: "cnc_version == 6.2 or cnc_version == 5.2 and helm_exists.rc > 0"
+     when: "cnc_version == 6.2 and helm_exists.rc > 0 or cnc_version == 5.2 and helm_exists.rc > 0"
 
    - name: "Install Helm on NVIDIA Cloud Native Core 7.0"
      become: true
@@ -547,3 +747,15 @@
        - cp linux-arm64/helm /usr/local/bin/
        - rm -rf helm-v3.9.0-linux-arm64.tar.gz linux-arm64
      when: "cnc_version == 7.0 and helm_exists.rc > 0"
+
+   - name: "Install Helm on NVIDIA Cloud Native Core 6.3 or 7.1 or 8.0"
+     become: true
+     command: "{{ item }}"
+     args:
+       warn: false
+     with_items:
+       - curl -O https://get.helm.sh/helm-v3.10.0-linux-arm64.tar.gz
+       - tar -xvzf helm-v3.10.0-linux-arm64.tar.gz
+       - cp linux-arm64/helm /usr/local/bin/
+       - rm -rf helm-v3.10.0-linux-arm64.tar.gz linux-arm64
+     when: "cnc_version == 6.3 and helm_exists.rc > 0 or cnc_version == 7.1 and helm_exists.rc > 0 or cnc_version == 8.0 and helm_exists.rc > 0  "

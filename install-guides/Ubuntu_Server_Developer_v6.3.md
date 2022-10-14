@@ -1,22 +1,22 @@
-<h1>NVIDIA Cloud Native Core v7.0 - Install Guide for Developers</h1>
+<h1>NVIDIA Cloud Native Core v6.3 - Install Guide for Developers</h1>
 <h2>Introduction</h2>
 
 This document describes how to setup the NVIDIA Cloud Native Core collection on a single or multiple systems. NVIDIA Cloud Native Core can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
-NVIDIA Cloud Native Core v7.0 includes:
-- Ubuntu 22.04.3 LTS
-- Containerd 1.6.6
-- Kubernetes version 1.24.1
-- Helm 3.9.0
-- NVIDIA GPU Driver: 515.48.07
-- NVIDIA Container Toolkit: 1.10.0
-- NVIDIA GPU Operator 1.11.0
-  - NVIDIA K8S Device Plugin: 0.12.2
-  - NVIDIA DCGM-Exporter: 2.4.5-2.6.7
-  - NVIDIA DCGM: 2.4.5-1
-  - NVIDIA GPU Feature Discovery: 0.6.1
-  - NVIDIA K8s MIG Manager: 0.4.2
-  - NVIDIA Driver Manager: 0.4.0
+NVIDIA Cloud Native Core v6.3 includes:
+- Ubuntu 20.04.4 LTS
+- Containerd 1.6.8
+- Kubernetes version 1.23.12
+- Helm 3.9.3
+- NVIDIA GPU Driver: 520.61.05
+- NVIDIA Container Toolkit: 1.11.0
+- NVIDIA GPU Operator 22.09
+  - NVIDIA K8S Device Plugin: 0.12.3
+  - NVIDIA DCGM-Exporter: 3.0.4-3.0.0
+  - NVIDIA DCGM: 3.0.4-1
+  - NVIDIA GPU Feature Discovery: 0.6.2
+  - NVIDIA K8s MIG Manager: 0.5.0
+  - NVIDIA Driver Manager: 0.4.2
   - Node Feature Discovery: 0.10.1
 
 <h2>Table of Contents</h2>
@@ -54,25 +54,16 @@ For more information on installing Ubuntu server please reference the [Ubuntu Se
 
 ### Installing NVIDIA Driver 
 
-Add NVIDIA Apt key
-
-```
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
-```
-```
-sudo apt-key add ./7fa2af80.pub
-```
-
 Install NVIDIA TRD Driver
 
 ```
 sudo apt update 
 ```
 ```
-wget https://us.download.nvidia.com/tesla/510.47.03/nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
 ```
 ```
-sudo apt install ./nvidia-driver-local-repo-ubuntu2004-510.47.03_1.0-1_amd64.deb -y
+sudo dpkg -i cuda-keyring_1.0-1_all.deb
 ```
 
 Update package index:
@@ -84,7 +75,7 @@ sudo apt update
 Install Cuda Drivers
 
 ```
-sudo apt install cuda-drivers -y
+sudo apt install cuda-11-8 -y
 ```
 
 Once the NVIDIA Drivers installed, please reboot the system and run the below command to validate NVIDIA drivers are loaded 
@@ -96,9 +87,9 @@ nvidia-smi
 Expected Output:
 
 ```
-Wed May 11 12:47:29 2022
+Wed Oct 5 12:47:29 2022
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 510.60.02    Driver Version: 510.60.02    CUDA Version: 11.6     |
+| NVIDIA-SMI 520.61.05    Driver Version: 520.61.05    CUDA Version: 11.8     |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |

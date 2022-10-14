@@ -1,8 +1,8 @@
-<h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) for Developers </h1>
+<h1> NVIDIA Cloud Native Core Ubuntu Server (x86-64) for DGX Systems </h1>
 
 This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Core for Developers
 
-NVIDIA Cloud Native Core for Developers includes:
+NVIDIA Cloud Native Core for DGX includes:
 - Ubuntu 22.04.4 LTS
 - Containerd 1.6.6
 - Kubernetes version 1.24.2

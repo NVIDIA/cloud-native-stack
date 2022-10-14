@@ -38,10 +38,19 @@
      shell: "iptables -F"
 
    - name: Remove Conatinerd and Kubernetes packages for Ubuntu
-     when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0"
+     when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0 "
      ignore_errors: yes
      apt:
        name: ['kubectl', 'kubeadm', 'kubelet', 'containerd']
+       state: absent
+       purge: yes
+       force: yes
+
+   - name: Remove Conatinerd and Kubernetes packages for Ubuntu
+     when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0 "
+     ignore_errors: yes
+     apt:
+       name: ['kubectl', 'kubeadm', 'kubelet']
        state: absent
        purge: yes
        force: yes
@@ -59,7 +68,7 @@
      when: "cnc_docker == true or cnc_nvidia_driver == true"
      ignore_errors: yes
      apt:
-       name: ['cuda-drivers', ' nvidia-driver-*', 'nvidia-dkms-*']
+       name: ['cuda-drivers', ' nvidia-driver-*', 'nvidia-dkms-*', 'cuda']
        state: absent
        purge: yes
        force: yes
@@ -103,7 +112,7 @@
        warn: false
      with_items:
         - /var/lib/containerd
- #       - /run/containerd
+#        - /run/containerd
         - /etc/containerd
         - /opt/containerd
         - /usr/local/sbin/runc

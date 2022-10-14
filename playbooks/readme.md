@@ -5,11 +5,16 @@
 <h3> Ubuntu Systems </h3>
 
 - [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v5.0.md)
+- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v5.1.md)
+- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v5.2.md)
 - [Ubuntu(x86-64) v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.0.md)
 - [Ubuntu(x86-64) v5.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v5.1.md)
 - [Ubuntu(x86-64) v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.1.md)
 - [Ubuntu(x86-64) v6.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.2.md)
+- [Ubuntu(x86-64) v6.3](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.3.md)
 - [Ubuntu(x86-64) v7.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v7.0.md)
+- [Ubuntu(x86-64) v7.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v7.1.md)
+- [Ubuntu(x86-64) v8.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v8.0.md)
 
 <h3> Jetson Systems </h3>
 
@@ -17,8 +22,29 @@
 - [Jetson Xavier v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.0.md)
 - [Jetson Xavier v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.1.md)
 - [Jetson Xavier v6.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.2.md)
+- [Jetson Xavier v6.3](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.3.md)
 - [Jetson Xavier v7.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v7.0.md)
+- [Jetson Xavier v7.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v7.1.md)
+- [Jetson Xavier v8.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v8.0.md)
 
+### AWS Systems
+- [AWS - Ubuntu Server v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v5.0.md)
+- [AWS - Ubuntu Server v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v6.0.md)
+- [AWS - Ubuntu Server v5.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v5.1.md)
+- [AWS - Ubuntu Server v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v6.1.md)
+- [AWS - Ubuntu Server v6.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v6.2.md)
+- [AWS - Ubuntu Server v6.3](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v6.3.md)
+- [AWS - Ubuntu Server v7.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v7.0.md)
+- [AWS - Ubuntu Server v7.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v7.1.md)
+- [AWS - Ubuntu Server v8.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v8.0.md)
+
+### Ubuntu Server for Developers
+- [Ubuntu Server v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_Developer_v6.1.md)
+- [Ubuntu Server v6.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_Developer_v6.2.md)
+- [Ubuntu Server v6.3](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_Developer_v6.3.md)
+- [Ubuntu Server v7.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_Developer_v7.0.md)
+- [Ubuntu Server v7.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_Developer_v7.1.md)
+- [Ubuntu Server v8.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_Developer_v8.0.md)
 
 `NOTE`
 A list of older NVIDIA Cloud Native Core versions (formerly known as EGX Stack) can be found [here](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/older_versions/readme.md)

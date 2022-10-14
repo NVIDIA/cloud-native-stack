@@ -1,4 +1,4 @@
-<h1> NVIDIA Cloud Native Core - v6.1 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit</h1>
+<h1> NVIDIA Cloud Native Core - v6.0 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit</h1>
 
 <h2>Introduction</h2>
 

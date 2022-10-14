@@ -1,4 +1,4 @@
-
+cnc_version: 6.1
 
 # GPU Operator Values
 gpu_driver_version: "510.47.03"
@@ -9,13 +9,20 @@ enable_gds: no
 enable_secure_boot: no
 enable_vgpu: no
 vgpu_license_server: ""
-## This is most likely GPU Operator Driver Registry
-gpu_operator_driver_registry: "nvcr.io/nvidia"
-gpu_operator_registry_username: "$oauthtoken"
-## This is most likely an NGC API key
+
+## NGC Values
+# URL of Helm repo to be added. If using NGC get this from the fetch command in the console
+helm_repository: https://helm.ngc.nvidia.com/nvidia
+# Name of the helm chart to be deployed
+gpu_operator_helm_chart: nvidia/gpu-operator
+## If using a private/protected registry. NGC API Key. Leave blank for public registries
 gpu_operator_registry_password: ""
 ## This is most likely an NGC email
 gpu_operator_registry_email: ""
+
+## This is most likely GPU Operator Driver Registry
+gpu_operator_driver_registry: "nvcr.io/nvidia"
+gpu_operator_registry_username: "$oauthtoken"
 
 cnc_validation: no
 
@@ -30,11 +37,18 @@ proxy: no
 http_proxy: ""
 https_proxy: ""
 
+# Cloud Native Core for DGX
+cnc_dgx: no
+
 # Cloud Native Core for Developers Values
 ## Enable for Cloud Native Core Developers
 cnc_docker: no
 ## Enable For Cloud Native Core Developers with TRD Driver
 cnc_nvidia_driver: no
+## Enable for Cloud Native Core for Developers with vGPU driver
+cnc_nvidia_vgpu: no
+## Provide NGC API key to download the vGPU driver and license token
+ngc_api_key: ""
 
 ## Kubernetes apt resources
 k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"

@@ -4,19 +4,6 @@
     - cnc_values.yaml
     - gpu_operator.yaml
   tasks:
-    - name: Waiting for the Cluster to become available 
-      args:
-        executable: /bin/bash
-      shell: |
-        state=$(kubectl get pods -n nvidia-gpu-operator | egrep -v 'Running|Completed|NAME' | wc -l)
-        while [ $state != 0 ]
-          do
-            sleep 10
-            state=$(kubectl get pods -n nvidia-gpu-operator | egrep -v 'Running|Completed|NAME' | wc -l)
-          done
-      register: status
-      when: "cnc_version > 4.1 and ansible_architecture == 'x86_64'"
-
     - name: Validate kubernetes cluster is up
       shell:  kubectl cluster-info | grep master
       register: cluster
@@ -115,43 +102,43 @@
 
     - name: Check Mellanox Network Operator version
       when: "enable_network_operator == true"
-      shell: kubectl get pods -n network-operator -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'network-operator'  | awk -F':' '{print $2}' | head -n1
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep 'network-operator'  | awk -F':' '{print $2}' | head -n1
       register: networkoperator
       ignore_errors: yes
 
     - name: Check Mellanox MOFED Driver Version
       when: "enable_network_operator == true"
-      shell: kubectl get pods -n nvidia-network-operator-resources -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep mellanox/mofed | awk -F'mofed-' '{print $3}' | awk -F":" '{print $1}' | head -n1
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"   | grep mofed | awk -F":" '{print $2}' | head -n1
       register: mofed_version
       ignore_errors: yes
 
     - name: Check RDMA Shared Device Plugin Version
       when: "enable_network_operator == true"
-      shell: kubectl get pods -n nvidia-network-operator-resources -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep rdma-shared | awk -F':' '{print $2}' | head -n1
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep rdma-shared | awk -F':' '{print $2}' | head -n1
       register: rdma_version
       ignore_errors: yes
 
     - name: Check SRIOV Device Plugin Version
       when: "enable_network_operator == true"
-      shell: kubectl get pods -n nvidia-network-operator-resources -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep sriov-device | awk -F':' '{print $2}' | head -n1
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep sriov-device | awk -F':' '{print $2}' | head -n1
       register: sriov_version
       ignore_errors: yes
 
     - name: Check Container Networking Plugins Version
       when: "enable_network_operator == true"
-      shell: kubectl get pods -n nvidia-network-operator-resources -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep plugins | awk -F':' '{print $2}' | head -n1
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep plugins | awk -F':' '{print $2}' | head -n1
       register: cni_version
       ignore_errors: yes
 
     - name: Check Multus Version
       when: "enable_network_operator == true"
-      shell: kubectl get pods -n nvidia-network-operator-resources -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep multus | awk -F':' '{print $2}' | head -n1
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep multus | awk -F':' '{print $2}' | head -n1
       register: multus_version
       ignore_errors: yes
 
     - name: Check Whereabouts Version
       when: "enable_network_operator == true"
-      shell: kubectl get pods -n nvidia-network-operator-resources -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep whereabouts | awk -F':' '{print $2}' | head -n1
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}"  | grep whereabouts | awk -F':' '{print $2}' | head -n1
       register: whereabouts_version
       ignore_errors: yes
 
@@ -180,7 +167,23 @@
       ignore_errors: yes
 
     - name: Create NVIDIA-SMI yaml
-      when: cnc_version >= 7.0
+      when: "cnc_version == 7.1 and ansible_architecture == 'x86_64' or cnc_version == 8.0 and ansible_architecture == 'x86_64'"
+      copy:
+        content:  |
+                 apiVersion: v1
+                 kind: Pod
+                 metadata:
+                   name: nvidia-smi
+                 spec:
+                   restartPolicy: OnFailure
+                   containers:
+                     - name: nvidia-smi
+                       image: "nvidia/cuda:11.8.0-base-ubuntu22.04"
+                       args: ["nvidia-smi"]
+        dest: nvidia-smi.yaml
+
+    - name: Create NVIDIA-SMI yaml
+      when: "cnc_version == 7.0 or cnc_version == 7.1 and ansible_architecture == 'aarch64' or cnc_version == 8.0 and ansible_architecture == 'aarch64'"
       copy:
         content:  |
                  apiVersion: v1
@@ -229,16 +232,16 @@
       debug:
         msg: "Helm Version {{ helmversion.stdout }}"
 
-    - name: Report Nvidia GPU Operator version
+    - name: Report NVIDIA GPU Operator version
       ignore_errors: yes
       debug:
-        msg: "Nvidia GPU Operator versions {{ gpuoperator.stdout }}"
+        msg: "NVIDIA GPU Operator versions {{ gpuoperator.stdout }}"
 
-    - name: Report Nvidia Container Driver Version
-      when: cnc_docker == false 
+    - name: Report NVIDIA Container Driver Version
+      when: cnc_docker == false
       ignore_errors: yes
       debug:
-        msg: "Nvidia Container Driver Version {{ nvcdriver.stdout }}"
+        msg: "NVIDIA Container Driver Version {{ nvcdriver.stdout }}"
 
     - name: Report GPU Operator NV Toolkit Driver
       when: cnc_docker == false
@@ -246,14 +249,14 @@
       debug:
         msg: "NV Container Toolkit Version {{ nvtoolkit.stdout }}"
 
-    - name: Report Nvidia Container Driver Version
-      when: cnc_docker == true
+    - name: Report NVIDIA Container Driver Version
+      when: cnc_docker == true 
       ignore_errors: yes
       debug:
-        msg: "Nvidia Container Driver Version {{ nvidia_driver.stdout }}"
+        msg: "NVIDIA Container Driver Version {{ nvidia_driver.stdout }}"
 
-    - name: Report GPU Operator NV Toolkit Driver
-      when: cnc_docker == true
+    - name: Report GPU Operator NVIDIA Toolkit Driver
+      when: cnc_docker == true 
       ignore_errors: yes
       debug:
         msg: "NV Container Toolkit Version {{ nvidia_ct.stdout }}"
@@ -278,104 +281,162 @@
       debug:
         msg: "GPU Feature Discovery Version {{ gpudiscover.stdout }}"
 
-    - name: Report Nvidia validator version
+    - name: Report NVIDIA validator version
       ignore_errors: yes
       debug:
-        msg: "Nvidia validator version {{ validator.stdout }}"
+        msg: "NVIDIA validator version {{ validator.stdout }}"
 
-    - name: Report Nvidia DCGM Exporter version
+    - name: Report NVIDIA DCGM Exporter version
       ignore_errors: yes
       debug:
-        msg: "Nvidia DCGM Exporter version {{ dcgm_exporter.stdout }}"
+        msg: "NVIDIA DCGM Exporter version {{ dcgm_exporter.stdout }}"
 
-    - name: Report Nvidia MIG Maanger version
+    - name: Report NVIDIA MIG Maanger version
       ignore_errors: yes
       debug:
-        msg: "Nvidia MIG Maanger version {{ mig_manager.stdout }}"
+        msg: "NVIDIA MIG Maanger version {{ mig_manager.stdout }}"
 
-    - name: Componenets Matrix Versions Vs Installed Versions
+    - name: Componenets Target Versions Vs Installed Versions
       when: cnc_version == 6.1
       register: compare_61
       args:
         executable: /bin/bash
       shell: |
         echo -e "==========================================================================================="
-        echo -e "  Components                          Matrix Version          ||     Installed Version    "
+        echo -e "  Components                          Target Version          ||     Installed Version    "
         echo -e "==========================================================================================="
         echo -e "GPU Operator Version                  {{ release_1_10['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
-        echo -e "Nvidia Container Driver Version       {{ release_1_10['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
+        echo -e "NVIDIA Container Driver Version       {{ release_1_10['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
         echo -e "GPU Operator NV Toolkit Driver        {{ release_1_10['container_toolkit'] }}                  ||     {{ nvtoolkit.stdout }}"
         echo -e "K8sDevice Plugin Version              {{ release_1_10['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
         echo -e "Data Center GPU Manager(DCGM) Version {{ release_1_10['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
         echo -e "Node Feature Discovery Version        {{ release_1_10['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
         echo -e "GPU Feature Discovery Version         {{ release_1_10['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "Nvidia validator version              {{ release_1_10['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "Nvidia MIG Manager version            {{ release_1_10['mig_manager_version'] }}                   ||     {{ mig_manager.stdout }}"
+        echo -e "NVIDIA validator version              {{ release_1_10['validator_version'] }}                 ||     {{ validator.stdout }}"
+        echo -e "NVIDIA MIG Manager version            {{ release_1_10['mig_manager_version'] }}                   ||     {{ mig_manager.stdout }}"
         echo -e
-        echo -e "Note: NVIDIA Mig Manager is valid for only Amphere GPU's like A100, A30"
+        echo -e "Note: NVIDIA Mig Manager is valid for only A100 and A30 GPU's"
         echo -e
-        echo -e "Please validate between Matrix Version and Installed Version listed above"
+        echo -e "Please validate between Target Version and Installed Version listed above"
 
     - name: Report Versions
       when: cnc_version == 6.1
       debug:
         msg: "{{ compare_61.stdout_lines }}"
 
-    - name: Componenets Matrix Versions Vs Installed Versions
+    - name: Componenets Target Versions Vs Installed Versions
       when: cnc_docker == false and cnc_version == 6.2 or cnc_docker == false and cnc_version == 7.0
       register: compare_70
       args:
         executable: /bin/bash
       shell: |
         echo -e "==========================================================================================="
-        echo -e "  Components                          Matrix Version          ||     Installed Version    "
+        echo -e "  Components                          Target Version          ||     Installed Version    "
         echo -e "==========================================================================================="
         echo -e "GPU Operator Version                  {{ release_1_11_0['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
-        echo -e "Nvidia Container Driver Version       {{ release_1_11_0['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
+        echo -e "NVIDIA Container Driver Version       {{ release_1_11_0['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
         echo -e "GPU Operator NV Toolkit Driver        {{ release_1_11_0['container_toolkit'] }}                 ||     {{ nvtoolkit.stdout }}"
         echo -e "K8sDevice Plugin Version              {{ release_1_11_0['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
         echo -e "Data Center GPU Manager(DCGM) Version {{ release_1_11_0['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
         echo -e "Node Feature Discovery Version        {{ release_1_11_0['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
         echo -e "GPU Feature Discovery Version         {{ release_1_11_0['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "Nvidia validator version              {{ release_1_11_0['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "Nvidia MIG Manager version            {{ release_1_11_0['mig_manager_version'] }}                   ||     {{ mig_manager.stdout }}"
+        echo -e "NVIDIA validator version              {{ release_1_11_0['validator_version'] }}                 ||     {{ validator.stdout }}"
+        echo -e "NVIDIA MIG Manager version            {{ release_1_11_0['mig_manager_version'] }}                   ||     {{ mig_manager.stdout }}"
         echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only Amphere GPU's like A100, A30"
+        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 GPU's"
         echo -e
-        echo -e "Please validate between Matrix Version and Installed Version listed above"
+        echo -e "Please validate between Target Version and Installed Version listed above"
 
     - name: Report Versions
       when: cnc_docker == false and cnc_version == 6.2 or cnc_docker == false and cnc_version == 7.0
       debug:
         msg: "{{ compare_70.stdout_lines }}"
 
-    - name: Componenets Matrix Versions Vs Installed Versions
-      when: cnc_docker == true and cnc_version == 6.2 or cnc_docker == true and cnc_version == 7.0
+    - name: Componenets Target Versions Vs Installed Versions
+      when: cnc_docker == false and cnc_version == 6.3 or cnc_docker == false and cnc_version == 7.1 or cnc_docker == false and cnc_version == 8.0 
+      register: compare_71
+      args:
+        executable: /bin/bash
+      shell: |
+        echo -e "==========================================================================================="
+        echo -e "  Components                          Target Version          ||     Installed Version    "
+        echo -e "==========================================================================================="
+        echo -e "GPU Operator Version                  {{ release_22_09['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
+        echo -e "NVIDIA Container Driver Version       {{ release_22_09['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
+        echo -e "GPU Operator NV Toolkit Driver        {{ release_22_09['container_toolkit'] }}                 ||     {{ nvtoolkit.stdout }}"
+        echo -e "K8sDevice Plugin Version              {{ release_22_09['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
+        echo -e "Data Center GPU Manager(DCGM) Version {{ release_22_09['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
+        echo -e "Node Feature Discovery Version        {{ release_22_09['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
+        echo -e "GPU Feature Discovery Version         {{ release_22_09['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
+        echo -e "NVIDIA validator version              {{ release_22_09['validator_version'] }}                 ||     {{ validator.stdout }}"
+        echo -e "NVIDIA MIG Manager version            {{ release_22_09['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
+        echo -e
+        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
+        echo -e
+        echo -e "Please validate between Target Version and Installed Version listed above"
+
+    - name: Report Versions
+      when: cnc_docker == false and cnc_version == 6.3 or cnc_docker == false and cnc_version == 7.1 or cnc_docker == false and cnc_version == 8.0
+      debug:
+        msg: "{{ compare_71.stdout_lines }}"
+
+
+    - name: Componenets Target Versions Vs Installed Versions
+      when: cnc_version == 7.0 and cnc_docker == true or cnc_version == 6.2 and cnc_docker == true
       register: compare_70
       args:
         executable: /bin/bash
       shell: |
         echo -e "==========================================================================================="
-        echo -e "  Components                          Matrix Version          ||     Installed Version    "
+        echo -e "  Components                          Target Version          ||     Installed Version    "
         echo -e "==========================================================================================="
         echo -e "GPU Operator Version                  {{ release_1_11_0['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
-        echo -e "Nvidia Container Driver Version       {{ release_1_11_0['gpu_driver_version'] }}               ||     {{ nvidia_driver.stdout }}"
+        echo -e "NVIDIA Container Driver Version       {{ release_1_11_0['gpu_driver_version'] }}               ||     {{ nvidia_driver.stdout }}"
         echo -e "NVIDIA Toolkit Driver                 {{ release_1_11_0['container_toolkit'] }}                 ||     {{ nvidia_ct.stdout }}"
         echo -e "K8sDevice Plugin Version              {{ release_1_11_0['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
         echo -e "Data Center GPU Manager(DCGM) Version {{ release_1_11_0['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
         echo -e "Node Feature Discovery Version        {{ release_1_11_0['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
         echo -e "GPU Feature Discovery Version         {{ release_1_11_0['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "Nvidia validator version              {{ release_1_11_0['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "Nvidia MIG Manager version            {{ release_1_11_0['mig_manager_version'] }}                   ||     {{ mig_manager.stdout }}"
+        echo -e "NVIDIA validator version              {{ release_1_11_0['validator_version'] }}                 ||     {{ validator.stdout }}"
+        echo -e "NVIDIA MIG Manager version            {{ release_1_11_0['mig_manager_version'] }}                   ||     {{ mig_manager.stdout }}"
         echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only Amphere GPU's like A100, A30"
+        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 GPU's"
         echo -e
-        echo -e "Please validate between Matrix Version and Installed Version listed above"
+        echo -e "Please validate between Target Version and Installed Version listed above"
 
     - name: Report Versions
-      when: cnc_docker == true and cnc_version == 6.2 or cnc_docker == true and cnc_version == 7.0
+      when: cnc_version == 7.0 and cnc_docker == true or cnc_version == 6.2 and cnc_docker == true
       debug:
         msg: "{{ compare_70.stdout_lines }}"
+
+    - name: Componenets Target Versions Vs Installed Versions
+      when: cnc_version == 6.3 and cnc_docker == true or cnc_version == 7.1 and cnc_docker == true or cnc_version == 8.0 and cnc_docker == true
+      register: compare_71
+      args:
+        executable: /bin/bash
+      shell: |
+        echo -e "==========================================================================================="
+        echo -e "  Components                          Target Version          ||     Installed Version    "
+        echo -e "==========================================================================================="
+        echo -e "GPU Operator Version                  {{ release_22_09['gpu_operator_version'] }}                ||     {{ gpuoperator.stdout }}"
+        echo -e "NVIDIA Container Driver Version       {{ release_22_09['gpu_driver_version'] }}             ||     {{ nvidia_driver.stdout }}"
+        echo -e "NVIDIA Toolkit Driver                 {{ release_22_09['container_toolkit'] }}                 ||     {{ nvidia_ct.stdout }}"
+        echo -e "K8sDevice Plugin Version              {{ release_22_09['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
+        echo -e "Data Center GPU Manager(DCGM) Version {{ release_22_09['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
+        echo -e "Node Feature Discovery Version        {{ release_22_09['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
+        echo -e "GPU Feature Discovery Version         {{ release_22_09['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
+        echo -e "NVIDIA validator version              {{ release_22_09['validator_version'] }}                 ||     {{ validator.stdout }}"
+        echo -e "NVIDIA MIG Manager version            {{ release_22_09['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
+        echo -e
+        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
+        echo -e
+        echo -e "Please validate between Target Version and Installed Version listed above"
+
+    - name: Report Versions
+      when: cnc_version == 6.3 and cnc_docker == true or cnc_version == 7.1 and cnc_docker == true or cnc_version == 8.0 and cnc_docker == true
+      debug:
+        msg: "{{ compare_71.stdout_lines }}"
+
 
     - name: Validate the GPU Operator pods State
       shell: kubectl get pods --all-namespaces | egrep -v 'kube-system|NAME'
@@ -387,10 +448,25 @@
       debug:
         msg: "{{ pods.stdout_lines }}"
 
+    - name: Validate GPU Operator Version for Cloud Native Core 6.3
+      shell: helm ls -A | grep gpu-operator |  awk '{print $NF}' | grep -v VERSION | sed 's/v//g' | tr -d '\n\r'
+      register: operator_version
+      failed_when: cnc_version == 6.3 and operator_version.stdout != '22.9.0'
+
+    - name: Validate GPU Operator Version for Cloud Native Core 7.1
+      shell: helm ls -A | grep gpu-operator |  awk '{print $NF}' | grep -v VERSION | sed 's/v//g' | tr -d '\n\r'
+      register: operator_version
+      failed_when: cnc_version == 7.1 and operator_version.stdout != '22.9.0'
+
+    - name: Validate GPU Operator Version for Cloud Native Core 6.3
+      shell: helm ls -A | grep gpu-operator |  awk '{print $NF}' | grep -v VERSION | sed 's/v//g' | tr -d '\n\r'
+      register: operator_version
+      failed_when: cnc_version == 8.0 and operator_version.stdout != '22.9.0'
+
     - name: Validate GPU Operator Version for Cloud Native Core 6.2 and 7.0
       shell: helm ls -A | grep gpu-operator |  awk '{print $NF}' | grep -v VERSION | sed 's/v//g' | tr -d '\n\r'
       register: operator_version
-      failed_when: cnc_version >= 6.2 and operator_version.stdout != '1.11.0'
+      failed_when: cnc_version == 6.2 and operator_version.stdout != '1.11.0' or cnc_version == 7.0 and operator_version.stdout != '1.11.0'
 
     - name: Validate GPU Operator Version for Cloud Native Core 6.1
       shell: helm ls -A | grep gpu-operator |  awk '{print $NF}' | grep -v VERSION | sed 's/v//g'
@@ -399,7 +475,7 @@
 
     - name: Validating the nvidia-smi on NVIDIA Cloud Native Core
       command: "kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.4.0-base-ubuntu20.04 --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
-      when: "cnc_version <= 5.2"
+      when: "cnc_version <= 5.2 "
       register: smi
       ignore_errors: yes
       async: 60
@@ -411,32 +487,46 @@
       ignore_errors: yes
       async: 60
 
-    - name: Report Nvidia SMI Validation
-      when: cnc_version <= 6.2
+    - name: Validating the nvidia-smi on NVIDIA Cloud Native Core
+      command: "kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.7.0-base-ubuntu20.04 --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
+      when: "cnc_version == 6.3"
+      register: smi
+      ignore_errors: yes
+      async: 60
+
+    - name: Report NVIDIA SMI Validation
+      when: cnc_version <= 6.3
       ignore_errors: yes
       debug:
         msg: "{{ smi.stdout_lines }}"
 
     - name: Validating the CUDA with GPU
       shell: kubectl run cuda-vector-add --rm -t -i --restart=Never --image=k8s.gcr.io/cuda-vector-add:v0.1
+      when: ansible_architecture == 'x86_64'
       register: cuda
       ignore_errors: yes
       async: 60
 
-    - name: Validating the nvidia-smi on NVIDIA Cloud Native Core 7.0
+    - name: Validating the nvidia-smi on NVIDIA Cloud Native Core 
       shell: "kubectl delete -f nvidia-smi.yaml; sleep 10; kubectl apply -f nvidia-smi.yaml; sleep 25; kubectl logs nvidia-smi"
-      when: cnc_version == 7.0
+      when: cnc_version >= 7.0
       register: smi
       ignore_errors: yes
       async: 60
 
+    - name: Clean up pods if exists
+      shell: kubectl delete pod cuda-vector-add nvidia-smi
+      ignore_errors: true
+      no_log: true
+      failed_when: false
+
     - name: Report Nvidia SMI Validation
-      when: cnc_version == 7.0
       ignore_errors: yes
       debug:
         msg: "{{ smi.stdout_lines }}"
 
     - name: Report Cuda Validation
+      when: ansible_architecture == 'x86_64'
       ignore_errors: yes
       debug:
         msg: "{{ cuda.stdout_lines }}"

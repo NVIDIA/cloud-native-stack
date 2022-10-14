@@ -141,7 +141,7 @@
 
     - name: Add CUDA APT Key
       become: true
-      when:  "cnc_version == 6.3 and nvidia_mod.rc >= 1 and ansible_architecture == 'x86_64"
+      when:  "cnc_version == 6.3 and nvidia_mod.rc >= 1 and ansible_architecture == 'x86_64'"
       apt:
         deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
         state: "present"

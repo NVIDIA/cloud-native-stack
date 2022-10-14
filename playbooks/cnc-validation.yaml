@@ -458,7 +458,7 @@
       register: operator_version
       failed_when: cnc_version == 7.1 and operator_version.stdout != '22.9.0'
 
-    - name: Validate GPU Operator Version for Cloud Native Core 6.3
+    - name: Validate GPU Operator Version for Cloud Native Core 8.0
       shell: helm ls -A | grep gpu-operator |  awk '{print $NF}' | grep -v VERSION | sed 's/v//g' | tr -d '\n\r'
       register: operator_version
       failed_when: cnc_version == 8.0 and operator_version.stdout != '22.9.0'
@@ -480,12 +480,24 @@
       ignore_errors: yes
       async: 60
 
+    - name: Report NVIDIA SMI Validation
+      when: "cnc_version <= 5.2 "
+      ignore_errors: yes
+      debug:
+        msg: "{{ smi.stdout_lines }}"
+
     - name: Validating the nvidia-smi on NVIDIA Cloud Native Core
       command: "kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.6.0-base-ubuntu20.04 --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
       when: "cnc_version == 6.2 or cnc_version == 6.0 or cnc_version == 6.1"
       register: smi
       ignore_errors: yes
       async: 60
+
+    - name: Report NVIDIA SMI Validation
+      when: "cnc_version == 6.2 or cnc_version == 6.0 or cnc_version == 6.1"
+      ignore_errors: yes
+      debug:
+        msg: "{{ smi.stdout_lines }}"
 
     - name: Validating the nvidia-smi on NVIDIA Cloud Native Core
       command: "kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.7.0-base-ubuntu20.04 --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
@@ -495,7 +507,7 @@
       async: 60
 
     - name: Report NVIDIA SMI Validation
-      when: cnc_version <= 6.3
+      when: cnc_version == 6.3
       ignore_errors: yes
       debug:
         msg: "{{ smi.stdout_lines }}"

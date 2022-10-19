@@ -74,6 +74,7 @@ if [ $1 == "install" ]; then
 			sed -ie 's/- hosts: master/- hosts: all/g' *.yaml
 			nvidia_driver=$(ls /usr/src/ | grep nvidia | awk -F'-' '{print $1}')
 			if [[ $nvidia_driver == 'nvidia' ]]; then
+			    ansible-playbook -c local -i localhost, prerequisites.yaml
 				ansible-playbook -c local -i localhost, cnc-pre-nvidia-driver.yaml
 			else
 				ansible-playbook -c local -i localhost, cnc-installation.yaml
@@ -100,7 +101,7 @@ elif [ $1 == "validate" ]; then
 		manufacturer=$(sudo dmidecode -s system-manufacturer | egrep -i "microsoft corporation|Google")
 		if [[ $id == 'ec2' || $manufacturer == 'Microsoft Corporation' || $manufacturer == 'Google' ]]; then
 		    sed -i 's/- hosts: master/- hosts: all/g' *.yaml
-			ansible-playbook -c local -i localhost, cnc-uninstall.yaml
+			ansible-playbook -c local -i localhost, cnc-validation.yaml
 		else
         	ansible-playbook -i hosts cnc-validation.yaml
 		fi

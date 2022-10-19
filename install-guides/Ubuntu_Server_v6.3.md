@@ -4,7 +4,7 @@
 This document describes how to setup the NVIDIA Cloud Native Core collection on a single or multiple NVIDIA Certified Systems. NVIDIA Cloud Native Core can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
 NVIDIA Cloud Native Core v6.3 includes:
-- Ubuntu 22.04 LTS
+- Ubuntu 20.04 LTS
 - Containerd 1.6.8
 - Kubernetes version 1.24.6
 - Helm 3.10.0

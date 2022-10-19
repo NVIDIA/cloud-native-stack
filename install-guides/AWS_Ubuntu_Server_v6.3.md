@@ -5,7 +5,7 @@ This document describes how to setup the NVIDIA Cloud Native Core collection on 
 
 NVIDIA Cloud Native Core v6.3 includes:
 
-- Ubuntu 22.04.3 LTS
+- Ubuntu 20.04.4 LTS
 - Containerd 1.6.8
 - Kubernetes version 1.23.12
 - Helm 3.10.0
@@ -46,7 +46,7 @@ First, log in to the AWS console, go to the EC2 management page, and launch a ne
 
 ![AWS_Launch_Instance](screenshots/AWS_Launch_instance.png)
 
-Step 1: Select the Ubuntu Server 22.04 LTS image with 64-bit (x86), available in the QuickStart area.
+Step 1: Select the Ubuntu Server 20.04 LTS image with 64-bit (x86), available in the QuickStart area.
 
 ![AWS_Choose_AMI](screenshots/AWS_Choose_AMI.png)
 

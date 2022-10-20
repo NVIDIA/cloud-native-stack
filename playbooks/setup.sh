@@ -60,7 +60,7 @@ else
 	os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
         if [[ $os == "ubuntu" ]]; then
 		ansible_version=$(sudo pip3 list | grep ansible | awk '{print $2}' | head -n1 | awk -F'.' '{print $1}')
-                if [ $ansible_version -le 2 ]; then
+                if [[ $ansible_version -le 2 ]]; then
                 	sudo apt purge ansible -y && sudo apt autoremove -y
 	         		ansible_install
   		fi

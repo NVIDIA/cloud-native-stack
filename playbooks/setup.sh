@@ -78,15 +78,13 @@ if [ $1 == "install" ]; then
 			sed -ie 's/- hosts: master/- hosts: all/g' *.yaml
 			nvidia_driver=$(ls /usr/src/ | grep nvidia | awk -F'-' '{print $1}')
 			if [[ $nvidia_driver == 'nvidia' ]]; then
-			    ansible-playbook -c local -i localhost, prerequisites.yaml
-				ansible-playbook -c local -i localhost, cnc-pre-nvidia-driver.yaml
-			else
-				ansible-playbook -c local -i localhost, cnc-installation.yaml
+				ansible -c local -i localhost, all -m lineinfile -a "path={{lookup('pipe', 'pwd')}}/cnc_values.yaml regexp='cnc_docker: no' line='cnc_docker: yes'"
 			fi
-			exit 1
+				ansible-playbook -c local -i localhost, cnc-installation.yaml
+		else
+			ansible-playbook -i hosts cnc-installation.yaml
 		fi
 
-	ansible-playbook -i hosts cnc-installation.yaml
 elif [ $1 == "uninstall" ]; then
 		echo
 		echo "Unstalling NVIDIA Cloud Native Core"

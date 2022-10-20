@@ -15,18 +15,22 @@ cp cnc_values_$version.yaml cnc_values.yaml
 # Ansible Install
 
 ansible_install() {
+  os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
   if ! hash sudo python 2>/dev/null
   then
     if ! hash sudo python3 2>/dev/null
     then
-      os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
       if [[ $os == "ubuntu" ]]; then
-        sudo apt install python3 python3-pip sshpass -y
+        sudo apt update && sudo apt install python3 python3-pip sshpass -y
       elif [ $os == "rhel*" ]; then
         sudo yum install python3 python3-pip -y
       fi
 	else
-		sudo apt install python3-pip sshpass -y
+		if [[ $os == "ubuntu" ]]; then
+			sudo apt update && sudo apt install python3-pip sshpass -y
+		elif [ $os == "rhel*" ]; then
+			sudo yum update && sudo yum install python3-pip sshpass -y
+		fi
     fi
   fi
   pip3 install ansible

@@ -9,7 +9,7 @@ NVIDIA Cloud Native Core v8.0 includes:
 - Kubernetes version 1.24.6
 - Helm 3.10.0
 - NVIDIA GPU Operator 22.09
-  - NVIDIA GPU Driver: 520.61.05
+  - NVIDIA GPU Driver: 520.61.07
   - NVIDIA Container Toolkit: 1.11.0
   - NVIDIA K8S Device Plugin: 0.12.3
   - NVIDIA DCGM-Exporter: 3.0.4-3.0.0
@@ -863,7 +863,7 @@ Output:
 ``` 
 Wed Oct 12 12:47:29 2022
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 520.61.05    Driver Version: 520.61.05    CUDA Version: 11.8     |
+| NVIDIA-SMI 520.61.07    Driver Version: 520.61.07    CUDA Version: 11.8     |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |

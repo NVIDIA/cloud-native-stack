@@ -8,7 +8,7 @@ NVIDIA Cloud Native Core v8.0 includes:
 - Kubernetes version 1.2
 - Helm 3.10.0
 - NVIDIA GPU Operator 22.09
-  - NVIDIA GPU Driver: 520.61.05
+  - NVIDIA GPU Driver: 520.61.07
   - NVIDIA Container Toolkit: 1.11.0
   - NVIDIA K8S Device Plugin: 0.12.3
   - NVIDIA DCGM-Exporter: 3.0.4-3.0.0
@@ -89,11 +89,10 @@ cnc_version: 8.0
 $ nano cnc_values_8.0.yaml
 
 
-cnc_version: 7.1
+cnc_version: 8.0
 
 # GPU Operator Values
-#gpu_driver_version: "510.47.03"
-gpu_driver_version: "520.61.05"
+gpu_driver_version: "520.61.07"
 enable_mig: no
 mig_profile: all-disabled
 mig_strategy: single

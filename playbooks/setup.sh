@@ -1,7 +1,7 @@
 #!/bin/bash
 set -a
 if [ -z $1 ]; then
-	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      install           Install NVIDIA Cloud Native Stack\n      validate          Validate NVIDIA Cloud Native Stack x86 only\n      upgrade         Upgrade NVIDIA Cloud Native Stack\n      uninstall         Uninstall NVIDIA Cloud Native Stack"
+	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      install           Install NVIDIA Cloud Native Stack\n      validate          Validate NVIDIA Cloud Native Stack x86 only\n      uninstall         Uninstall NVIDIA Cloud Native Stack"
 	echo
 	exit 1
 fi
@@ -84,17 +84,6 @@ if [ $1 == "install" ]; then
 		else
 			ansible-playbook -i hosts cnc-installation.yaml
 		fi
-elif [ $1 == "upgrade" ]; then
-		echo
-		echo "Upgarding NVIDIA Cloud Native Stack"
-		id=$(sudo dmidecode --string system-uuid | awk -F'-' '{print $1}' | cut -c -3)
-		manufacturer=$(sudo dmidecode -s system-manufacturer | egrep -i "microsoft corporation|Google")
-		if [[ $id == 'ec2' || $manufacturer == 'Microsoft Corporation' || $manufacturer == 'Google' ]]; then
-		    sed -i 's/- hosts: master/- hosts: all/g' *.yaml
-			ansible-playbook -c local -i localhost, cnc-upgrade.yaml
-		else
-     		ansible-playbook -i hosts cnc-upgrade.yaml
-		fi
 elif [ $1 == "uninstall" ]; then
 		echo
 		echo "Unstalling NVIDIA Cloud Native Stack"
@@ -118,7 +107,7 @@ elif [ $1 == "validate" ]; then
         	ansible-playbook -i hosts cnc-validation.yaml
 		fi
 else
-	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      install     Install NVIDIA Cloud Native Stack\n      validate    Validate NVIDIA Cloud Native Stack\n      upgrade         Upgrade NVIDIA Cloud Native Stack\n      uninstall   Uninstall NVIDIA Cloud Native Stack"
+	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      install     Install NVIDIA Cloud Native Stack\n      validate    Validate NVIDIA Cloud Native Stack\n      uninstall   Uninstall NVIDIA Cloud Native Stack"
         echo
         exit 1
 	fi

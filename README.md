@@ -46,6 +46,7 @@ Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA L
 - Cloud Native Stack allows to deploy:
     - 1 node with both control plane and worker functionalities
     - 1 control plane node and any number of worker nodes
+
 `NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
 
 #### Getting help or Providing feedback

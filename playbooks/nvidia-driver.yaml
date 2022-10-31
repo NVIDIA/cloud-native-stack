@@ -49,7 +49,7 @@
           shell:
             cmd: "apt-key del 7fa2af80"
 
-    - name: Install NVIDIA TRD Driver on NVIDIA Cloud Native Core 6.1
+    - name: Install NVIDIA TRD Driver on NVIDIA Cloud Native Stack 6.1
       become: true
       when:  nvidia_mod.rc >= 1 and cnc_version <= 6.1 and ansible_architecture == 'x86_64'
       block:

@@ -37,15 +37,12 @@ proxy: no
 http_proxy: ""
 https_proxy: ""
 
-# Cloud Native Core for DGX
-cnc_dgx: no
-
-# Cloud Native Core for Developers Values
-## Enable for Cloud Native Core Developers
+# Cloud Native Stack for Developers Values
+## Enable for Cloud Native Stack Developers
 cnc_docker: no
-## Enable For Cloud Native Core Developers with TRD Driver
+## Enable For Cloud Native Stack Developers with TRD Driver
 cnc_nvidia_driver: no
-## Enable for Cloud Native Core for Developers with vGPU driver
+## Enable for Cloud Native Stack for Developers with vGPU driver
 cnc_nvidia_vgpu: no
 ## Provide NGC API key to download the vGPU driver and license token
 ngc_api_key: ""

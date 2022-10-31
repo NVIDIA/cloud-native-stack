@@ -139,7 +139,7 @@
 
 - when: "release == 'tegra'"
   import_playbook: cnc-jetson.yaml
-  name: Install Cloud Native Core on Jetson
+  name: Install Cloud Native Stack on Jetson
   
 - import_playbook: nvidia-driver.yaml
   when: "cnc_docker == true and cnc_nvidia_driver == true and release != 'tegra'"

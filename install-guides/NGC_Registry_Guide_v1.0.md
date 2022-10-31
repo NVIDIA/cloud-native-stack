@@ -12,7 +12,7 @@ This document describes how to deploy an application from NGC Registry, how to s
 
 ## Deploy an Application from NGC Catalog
 
-The Below instructions are based on the assumption that you have a NVIDIA Certified System for Edge Server with the NVIDIA Cloud Native Core installed. If not, please refer to the [NVIDIA Cloud Native Core](https://github.com/NVIDIA/cloud-native-core)
+The Below instructions are based on the assumption that you have a NVIDIA Certified System for Edge Server with the NVIDIA Cloud Native Stack installed. If not, please refer to the [NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack)
 
 First, Go to https://ngc.nvidia.com. 
 
@@ -26,13 +26,13 @@ You can find multiple Helm Charts under the Helm Chart Tab.  If you already know
 
 ![ngc_app_catalog](screenshots/ngc_app_catalog.png)
 
-Once you find the right Helm Chart on NGC, click on the Helm chart to access the Helm Chart detail view and  get instructions on how to deploy the Helm Chart on NVIDIA Cloud Native Core.
+Once you find the right Helm Chart on NGC, click on the Helm chart to access the Helm Chart detail view and  get instructions on how to deploy the Helm Chart on NVIDIA Cloud Native Stack.
 
 In this Helm Chart, you can see proper instructions on the DeepStream Helm Chart overview section such as how can you deploy a Helm Chart and how can you view the application as per below. 
 
 ![ngc_deepstream_app](screenshots/ngc_deepstream_app.png)
 
-If you don't see any instructions in the overview section, run the below commands with Helm Chart Name and Helm Chart Version to install the Chart on NVIDIA Cloud Native Core. 
+If you don't see any instructions in the overview section, run the below commands with Helm Chart Name and Helm Chart Version to install the Chart on NVIDIA Cloud Native Stack. 
 
 ```
 $ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/ChartName-Version.tgz

@@ -1,6 +1,6 @@
 release_22_09:
   gpu_operator_version: v22.9.0
-  gpu_driver_version: 520.61.05
+  gpu_driver_version: 520.61.07
   driver_manager_version: 0.4.1
   container_toolkit: v1.11.0
   device_plugin: v0.12.3

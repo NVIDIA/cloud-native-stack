@@ -1,63 +1,52 @@
-<h1>Ansible Playbooks for NVIDIA Cloud Native Core </h1>
+<h1>Ansible Playbooks for NVIDIA Cloud Native Stack </h1>
 
 <h2> Available Ansible Playbooks </h2>
 
 <h3> Ubuntu Systems </h3>
 
-- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v5.0.md)
-- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v5.1.md)
-- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v5.2.md)
-- [Ubuntu(x86-64) v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.0.md)
-- [Ubuntu(x86-64) v5.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v5.1.md)
-- [Ubuntu(x86-64) v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.1.md)
-- [Ubuntu(x86-64) v6.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.2.md)
-- [Ubuntu(x86-64) v6.3](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v6.3.md)
-- [Ubuntu(x86-64) v7.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v7.0.md)
-- [Ubuntu(x86-64) v7.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v7.1.md)
-- [Ubuntu(x86-64) v8.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_v8.0.md)
+- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v5.0.md)
+- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v5.1.md)
+- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v5.2.md)
+- [Ubuntu(x86-64) v6.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v6.0.md)
+- [Ubuntu(x86-64) v5.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v5.1.md)
+- [Ubuntu(x86-64) v6.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v6.1.md)
+- [Ubuntu(x86-64) v6.2](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v6.2.md)
+- [Ubuntu(x86-64 & arm64) v6.3](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86-arm64_v6.3.md)
+- [Ubuntu(x86-64) v7.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_x86_v7.0.md)
+- [Ubuntu(x86-64 & arm64) v7.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_x86-arm64_v7.1.md)
+- [Ubuntu(x86-64 & arm64) v8.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_x86-arm64_v8.0.md)
 
 <h3> Jetson Systems </h3>
 
-- [Jetson Xavier v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v5.0.md)
-- [Jetson Xavier v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.0.md)
-- [Jetson Xavier v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.1.md)
-- [Jetson Xavier v6.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.2.md)
-- [Jetson Xavier v6.3](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v6.3.md)
-- [Jetson Xavier v7.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v7.0.md)
-- [Jetson Xavier v7.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v7.1.md)
-- [Jetson Xavier v8.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Jetson_Xavier_v8.0.md)
-
-### AWS Systems
-- [AWS - Ubuntu Server v5.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v5.0.md)
-- [AWS - Ubuntu Server v6.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v6.0.md)
-- [AWS - Ubuntu Server v5.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v5.1.md)
-- [AWS - Ubuntu Server v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v6.1.md)
-- [AWS - Ubuntu Server v6.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v6.2.md)
-- [AWS - Ubuntu Server v6.3](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v6.3.md)
-- [AWS - Ubuntu Server v7.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v7.0.md)
-- [AWS - Ubuntu Server v7.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v7.1.md)
-- [AWS - Ubuntu Server v8.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/AWS_Ubuntu_Server_v8.0.md)
+- [Jetson Xavier v5.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v5.0.md)
+- [Jetson Xavier v6.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v6.0.md)
+- [Jetson Xavier v6.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v6.1.md)
+- [Jetson Xavier v6.2](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v6.2.md)
+- [Jetson Xavier v6.3](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v6.3.md)
+- [Jetson Xavier v7.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v7.0.md)
+- [Jetson Xavier v7.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v7.1.md)
+- [Jetson Xavier v8.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v8.0.md)
 
 ### Ubuntu Server for Developers
-- [Ubuntu Server v6.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_Developer_v6.1.md)
-- [Ubuntu Server v6.2](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_Developer_v6.2.md)
-- [Ubuntu Server v6.3](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_Developer_v6.3.md)
-- [Ubuntu Server v7.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_Developer_v7.0.md)
-- [Ubuntu Server v7.1](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_Developer_v7.1.md)
-- [Ubuntu Server v8.0](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/guides/Ubuntu_Server_Developer_v8.0.md)
+- [Ubuntu 20.04 Server Developer x86 v6.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_Developer_x86_v6.1.md)
+- [Ubuntu 20.04 Server Developer x86 v6.2](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_Developer_x86_v6.2.md)
+- [Ubuntu 20.04 Server Developer x86 & arm64 v6.3](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_Developer_x86-arm64_v6.3.md)
+- [Ubuntu 22.04 Server Developer x86 v7.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_Developer_x86_v7.0.md)
+- [Ubuntu 22.04 Server Developer x86 & arm64 v7.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_Developer_x86-arm64_v7.1.md)
+- [Ubuntu 22.04 Server Developer x86 & arm64 v8.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_Developer_x86-arm64_v8.0.md)
 
 `NOTE`
-A list of older NVIDIA Cloud Native Core versions (formerly known as EGX Stack) can be found [here](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/older_versions/readme.md)
+A list of older NVIDIA Cloud Native Stack versions (formerly known as Cloud Native Core) can be found [here](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/older_versions/readme.md)
 
 <h2> Ansible Playbook Descriptions </h2>
 
-- [Install NVIDIA Cloud Native Core](#Install-NVIDIA-Cloud-Native-Core)
-- [Validate NVIDIA Cloud Native Core](#Validate-NVIDIA-Cloud-Native-Core)
-- [Uninstall NVIDIA Cloud Native Core](#Uninstall-NVIDIA-Cloud-Native-Core)
+- [Install NVIDIA Cloud Native Stack](#Install-NVIDIA-Cloud-Native-Stack)
+- [Validate NVIDIA Cloud Native Stack](#Validate-NVIDIA-Cloud-Native-Stack)
+- [Uninstall NVIDIA Cloud Native Stack](#Uninstall-NVIDIA-Cloud-Native-Stack)
 
-### Install NVIDIA Cloud Native Core 
+### Install NVIDIA Cloud Native Stack 
 
-The Ansible NVIDIA Cloud Native Core installation playbook will do the following:
+The Ansible NVIDIA Cloud Native Stack installation playbook will do the following:
 
 - Validate if Kubernetes is already installed
 - Setup the Kubernetes repository
@@ -79,9 +68,9 @@ The Ansible NVIDIA Cloud Native Core installation playbook will do the following
 - Install the NVIDIA GPU Operator
 - Install the NVIDIA Network Operator 
 
-### Validate NVIDIA Cloud Native Core 
+### Validate NVIDIA Cloud Native Stack 
 
-The Ansible NVIDIA Cloud Native Core validation playbook will do the following:
+The Ansible NVIDIA Cloud Native Stack validation playbook will do the following:
 
 - Validate if Kubernetes cluster is up
 - Check if node is up and running
@@ -91,9 +80,9 @@ The Ansible NVIDIA Cloud Native Core validation playbook will do the following:
 - Report Operating System, Docker, Kubernetes, Helm, GPU Operator versions
 - Validate nvidia-smi and cuda liberaries on kubernetes
 
-### Uninstall NVIDIA Cloud Native Core 
+### Uninstall NVIDIA Cloud Native Stack 
 
-The Ansible NVIDIA Cloud Native Core uninstall playbook will do the following:
+The Ansible NVIDIA Cloud Native Stack uninstall playbook will do the following:
 
 - Reset the Kubernetes cluster
 - Remove the Helm package
@@ -101,6 +90,6 @@ The Ansible NVIDIA Cloud Native Core uninstall playbook will do the following:
 
 ### Getting Help
 
-Please [open an issue on the GitHub project](https://github.com/NVIDIA/cloud-native-core/issues) for any questions. Your feedback is appreciated.
+Please [open an issue on the GitHub project](https://github.com/NVIDIA/cloud-native-stack/issues) for any questions. Your feedback is appreciated.
 
 

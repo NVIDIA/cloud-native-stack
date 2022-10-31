@@ -1,8 +1,8 @@
-<h1> NVIDIA Cloud Native Core Jetson Xavier v6.0 </h1>
+<h1> NVIDIA Cloud Native Stack Jetson Xavier v6.0 </h1>
 
-This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Core.
+This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Stack.
 
-The final NVIDIA Cloud Native Core will include:
+The final NVIDIA Cloud Native Stack will include:
 
 
 - JetPack 4.6.1
@@ -14,11 +14,11 @@ The final NVIDIA Cloud Native Core will include:
 
 ### The following Ansible Playbooks are available
 
-- [Install NVIDIA Cloud Native Core](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/jetson-xavier.yaml)
+- [Install NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/jetson-xavier.yaml)
 
-- [Validate NVIDIA Cloud Native Core ](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/cnc-validation.yaml)
+- [Validate NVIDIA Cloud Native Stack ](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cnc-validation.yaml)
 
-- [Uninstall NVIDIA Cloud Native Core](https://github.com/NVIDIA/cloud-native-core/blob/master/playbooks/cnc-uninstall.yaml)
+- [Uninstall NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cnc-uninstall.yaml)
 
 
 ### Prerequisites
@@ -41,7 +41,7 @@ Download the SDK Manager from [here](https://developer.nvidia.com/nvidia-sdk-man
 2. Use the SD Card Image method to download the JetPack and load the OS image to external drive. For more information, please refer [flash using SD Card method](https://developer.nvidia.com/embedded/learn/get-started-jetson-xavier-nx-devkit#prepare)
 
 ### Jetson Xavier NX Storage
-Running NVIDIA Cloud Native Core on Xavier NX production modules (16GB) might not provide sufficient storage capacity with fully loaded JetPack 4.5 to host your specific container images. If you require additional storage, use the Jetson Xavier NX Development Kit during the development phase, as you can insert greater than 16GB via microSD cards and/or remove unused JetPack 4.6 packages. For production deployments, remove packages that are not required from fully loaded JetPack 4.6 and/or extend the storage capacity via NVMe or SSD.
+Running NVIDIA Cloud Native Stack on Xavier NX production modules (16GB) might not provide sufficient storage capacity with fully loaded JetPack 4.5 to host your specific container images. If you require additional storage, use the Jetson Xavier NX Development Kit during the development phase, as you can insert greater than 16GB via microSD cards and/or remove unused JetPack 4.6 packages. For production deployments, remove packages that are not required from fully loaded JetPack 4.6 and/or extend the storage capacity via NVMe or SSD.
 
  
 ## Using the Ansible playbooks 
@@ -49,11 +49,11 @@ This section describes how to use the ansible playbooks.
 
 ### Clone the git repository
 
-Run the below commands to clone the NVIDIA Cloud Native Core ansible playbooks.
+Run the below commands to clone the NVIDIA Cloud Native Stack ansible playbooks.
 
 ```
-$ git clone https://github.com/NVIDIA/cloud-native-core.git
-$ cd cloud-native-core/playbooks
+$ git clone https://github.com/NVIDIA/cloud-native-stack.git
+$ cd cloud-native-stack/playbooks
 ```
 
 Update the hosts file in playbooks directory with master and worker nodes(if you have) IP's with username and password like below
@@ -69,7 +69,7 @@ $ sudo nano hosts
 
 ### Installation
 
-Install the NVIDIA Cloud Native Core stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
+Install the NVIDIA Cloud Native Stack stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
 
 ```
 sudo nano cnc_values.yaml
@@ -84,7 +84,7 @@ $ bash setup.sh install jetson
 
 ### Uninstall
 
-Run the below command to uninstall the NVIDIA Cloud Native Core. Taks being "ignored" refers to no kubernetes cluster being available.
+Run the below command to uninstall the NVIDIA Cloud Native Stack. Taks being "ignored" refers to no kubernetes cluster being available.
 
 ```
 $ bash setup.sh uninstall

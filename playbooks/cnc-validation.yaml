@@ -448,32 +448,32 @@
       debug:
         msg: "{{ pods.stdout_lines }}"
 
-    - name: Validate GPU Operator Version for Cloud Native Core 6.3
+    - name: Validate GPU Operator Version for Cloud Native Stack 6.3
       shell: helm ls -A | grep gpu-operator |  awk '{print $NF}' | grep -v VERSION | sed 's/v//g' | tr -d '\n\r'
       register: operator_version
       failed_when: cnc_version == 6.3 and operator_version.stdout != '22.9.0'
 
-    - name: Validate GPU Operator Version for Cloud Native Core 7.1
+    - name: Validate GPU Operator Version for Cloud Native Stack 7.1
       shell: helm ls -A | grep gpu-operator |  awk '{print $NF}' | grep -v VERSION | sed 's/v//g' | tr -d '\n\r'
       register: operator_version
       failed_when: cnc_version == 7.1 and operator_version.stdout != '22.9.0'
 
-    - name: Validate GPU Operator Version for Cloud Native Core 8.0
+    - name: Validate GPU Operator Version for Cloud Native Stack 8.0
       shell: helm ls -A | grep gpu-operator |  awk '{print $NF}' | grep -v VERSION | sed 's/v//g' | tr -d '\n\r'
       register: operator_version
       failed_when: cnc_version == 8.0 and operator_version.stdout != '22.9.0'
 
-    - name: Validate GPU Operator Version for Cloud Native Core 6.2 and 7.0
+    - name: Validate GPU Operator Version for Cloud Native Stack 6.2 and 7.0
       shell: helm ls -A | grep gpu-operator |  awk '{print $NF}' | grep -v VERSION | sed 's/v//g' | tr -d '\n\r'
       register: operator_version
       failed_when: cnc_version == 6.2 and operator_version.stdout != '1.11.0' or cnc_version == 7.0 and operator_version.stdout != '1.11.0'
 
-    - name: Validate GPU Operator Version for Cloud Native Core 6.1
+    - name: Validate GPU Operator Version for Cloud Native Stack 6.1
       shell: helm ls -A | grep gpu-operator |  awk '{print $NF}' | grep -v VERSION | sed 's/v//g'
       register: operator_version
       failed_when: cnc_version == 6.1 and operator_version.stdout != '1.10.1'
 
-    - name: Validating the nvidia-smi on NVIDIA Cloud Native Core
+    - name: Validating the nvidia-smi on NVIDIA Cloud Native Stack
       command: "kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.4.0-base-ubuntu20.04 --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
       when: "cnc_version <= 5.2 "
       register: smi
@@ -486,7 +486,7 @@
       debug:
         msg: "{{ smi.stdout_lines }}"
 
-    - name: Validating the nvidia-smi on NVIDIA Cloud Native Core
+    - name: Validating the nvidia-smi on NVIDIA Cloud Native Stack
       command: "kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.6.0-base-ubuntu20.04 --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
       when: "cnc_version == 6.2 or cnc_version == 6.0 or cnc_version == 6.1"
       register: smi
@@ -499,7 +499,7 @@
       debug:
         msg: "{{ smi.stdout_lines }}"
 
-    - name: Validating the nvidia-smi on NVIDIA Cloud Native Core
+    - name: Validating the nvidia-smi on NVIDIA Cloud Native Stack
       command: "kubectl run gpu-test --rm -t -i --restart=Never --image=nvidia/cuda:11.7.0-base-ubuntu20.04 --limits=nvidia.com/gpu={{ gpus.stdout }} -- nvidia-smi"
       when: "cnc_version == 6.3"
       register: smi
@@ -519,7 +519,7 @@
       ignore_errors: yes
       async: 60
 
-    - name: Validating the nvidia-smi on NVIDIA Cloud Native Core 
+    - name: Validating the nvidia-smi on NVIDIA Cloud Native Stack 
       shell: "kubectl delete -f nvidia-smi.yaml; sleep 10; kubectl apply -f nvidia-smi.yaml; sleep 25; kubectl logs nvidia-smi"
       when: cnc_version >= 7.0
       register: smi

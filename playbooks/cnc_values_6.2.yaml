@@ -1,7 +1,6 @@
 cnc_version: 6.2
 
 # GPU Operator Values
-#gpu_driver_version: "510.47.03"
 gpu_driver_version: "515.48.07"
 enable_mig: no
 mig_profile: all-disabled
@@ -38,10 +37,10 @@ proxy: no
 http_proxy: ""
 https_proxy: ""
 
-# Cloud Native Core for Developers Values
-## Enable for Cloud Native Core Developers
+# Cloud Native Stack for Developers Values
+## Enable for Cloud Native Stack Developers
 cnc_docker: no
-## Enable For Cloud Native Core Developers with TRD Driver
+## Enable For Cloud Native Stack Developers with TRD Driver
 cnc_nvidia_driver: no
 
 ## Kubernetes apt resources

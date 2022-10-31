@@ -21,14 +21,14 @@
         state: present
         filename: kubernetes
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 5.0
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 5.0
       become: true
       when: "cnc_version == 5.0 and ansible_distribution == 'Ubuntu'"
       apt:
         name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.22.5-00', 'kubeadm=1.22.5-00', 'kubectl=1.22.5-00']
         state: present
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.0
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 6.0
       become: true
       when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu'"
       apt:
@@ -36,7 +36,7 @@
         state: present
         force: yes
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.1
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 6.1
       become: true
       when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu'"
       apt:
@@ -44,7 +44,7 @@
         state: present
         force: yes
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.2
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 6.2
       become: true
       when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu'"
       apt:
@@ -52,7 +52,7 @@
         state: present
         force: yes
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 6.3
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 6.3
       become: true
       when: "cnc_version == 6.3 and ansible_distribution == 'Ubuntu'"
       apt:
@@ -60,7 +60,7 @@
         state: present
         force: yes
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 7.0
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 7.0
       become: true
       when: "cnc_version == 7.0 and ansible_distribution == 'Ubuntu'"
       apt:
@@ -68,7 +68,7 @@
         state: present
         force: yes
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 7.1
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 7.1
       become: true
       when: "cnc_version == 7.1 and ansible_distribution == 'Ubuntu'"
       apt:
@@ -76,7 +76,7 @@
         state: present
         force: yes
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Core 8.0
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 8.0
       become: true
       when: "cnc_version == 8.0 and ansible_distribution == 'Ubuntu'"
       apt:
@@ -169,7 +169,7 @@
             create: yes
       when: "cnc_version >= 5.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18' and 'running' not in k8sup.stdout"
 
-    - name: Install Containerd for NVIDIA Cloud Native Core 6.0
+    - name: Install Containerd for NVIDIA Cloud Native Stack 6.0
       become: true
       block:
         - name: Download cri-containerd-cni
@@ -187,7 +187,7 @@
               - --no-overwrite-dir
       when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
 
-    - name: Install Containerd for NVIDIA Cloud Native Core 6.1
+    - name: Install Containerd for NVIDIA Cloud Native Stack 6.1
       become: true
       block:
         - name: Download cri-containerd-cni
@@ -205,7 +205,7 @@
               - --no-overwrite-dir
       when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
 
-    - name: Install Containerd for NVIDIA Cloud Native Core 6.2
+    - name: Install Containerd for NVIDIA Cloud Native Stack 6.2
       become: true
       block:
         - name: Download cri-containerd-cni
@@ -223,7 +223,7 @@
               - --no-overwrite-dir
       when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18' and 'running' not in k8sup.stdout"
 
-    - name: Install Containerd for NVIDIA Cloud Native Core 7.0
+    - name: Install Containerd for NVIDIA Cloud Native Stack 7.0
       become: true
       block:
         - name: Download cri-containerd-cni
@@ -241,7 +241,7 @@
               - --no-overwrite-dir
       when: "cnc_version == 7.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18' and 'running' not in k8sup.stdout"
 
-    - name: Install Containerd for NVIDIA Cloud Native Core 6.3 or 7.1 or 8.0
+    - name: Install Containerd for NVIDIA Cloud Native Stack 6.3 or 7.1 or 8.0
       become: true
       block:
         - name: Download cri-containerd-cni
@@ -260,13 +260,13 @@
       when: "cnc_version == 6.3 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18' or cnc_version == 7.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18' or cnc_version == 8.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18'"
 
 
-    - name: Configure Containerd for NVIDIA Cloud Native Core
+    - name: Configure Containerd for NVIDIA Cloud Native Stack
       become: true
       block:
         - name: Write defaults to config.toml
           get_url:
             dest: /etc/containerd/config.toml
-            url: https://raw.githubusercontent.com/NVIDIA/cloud-native-core/master/playbooks/config.toml
+            url: https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/config.toml
             mode: 0664
 
         - name: restart containerd
@@ -295,7 +295,7 @@
 #            update_cache: yes
 #      when: "cnc_version == 5.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
 
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Core 6.0
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 6.0
       become: true
       block:
         - name: Add NVIDIA Docker apt signing key for Ubuntu 
@@ -317,7 +317,7 @@
             force: yes
       when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
 
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Core 6.1
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 6.1
       become: true
       block:
 
@@ -340,7 +340,7 @@
             force: yes
       when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout"
 
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Core 6.2 or 7.0
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 6.2 or 7.0
       become: true
       block:
         - name: Enable systemd cgroups
@@ -365,7 +365,7 @@
             force: yes
       when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout or cnc_version == 7.0 and ansible_distribution == 'Ubuntu'"
 
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Core 6.3 or 7.1 or 8.0
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 6.3 or 7.1 or 8.0
       become: true
       block:
         - name: Enable systemd cgroups
@@ -500,73 +500,73 @@
      shell: route add -net 0.0.0.0/0 gw {{ network.stdout }}
      when: gateway.rc | default ('') == 1 and proxy == true
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 5.0
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 5.0
      when: "cnc_version == 5.0 and 'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.22.5" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.0
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.0
      when: "cnc_version == 6.0 and 'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.2" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.1
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.1
      when: "cnc_version == 6.1 and 'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.5" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.2
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.2
      when: "cnc_version == 6.1 and 'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.8" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
      
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.3
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.3
      when: "cnc_version == 6.3 and proxy == false and 'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.12" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.3
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.3
      when: "cnc_version == 6.3 and proxy == true and 'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.12" --apiserver-advertise-address={{ network.stdout }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.0
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 7.0
      when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 7.0"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.2" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
     
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.0
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 7.0
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 7.0"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.2" --apiserver-advertise-address={{ network.stdout }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.1
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 7.1
      when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 7.1"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.6" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.1
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 7.1
      when: "cnc_version == 7.1 and proxy == true and 'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.6" --apiserver-advertise-address={{ network.stdout }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 8.0
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 8.0
      when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 8.0 "
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.25.2" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 8.0
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 8.0
      when: "cnc_version == 8.0 and proxy == true and 'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.25.2" --apiserver-advertise-address={{ network.stdout }} --image-repository={{ k8s_registry }}
      become: true
@@ -592,7 +592,7 @@
        dest:  $HOME/.kube/config
        mode: '0600'
 
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
      when: "cnc_version >= 5.0 and 'running' not in k8sup.stdout"
      command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 
@@ -687,7 +687,7 @@
      no_log: True
      failed_when: false
 
-   - name: "Install Helm on NVIDIA Cloud Native Core"
+   - name: "Install Helm on NVIDIA Cloud Native Stack"
      become: true
      command: "{{ item }}"
      args:
@@ -699,7 +699,7 @@
        - rm -rf helm-v3.6.3-linux-arm64.tar.gz linux-arm64
      when: "cnc_version == 5.0 and helm_exists.rc > 0"
 
-   - name: "Install Helm on NVIDIA Cloud Native Core 6.0"
+   - name: "Install Helm on NVIDIA Cloud Native Stack 6.0"
      become: true
      command: "{{ item }}"
      args:
@@ -711,7 +711,7 @@
        - rm -rf helm-v3.8.0-linux-arm64.tar.gz linux-arm64
      when: "cnc_version == 6.0 and helm_exists.rc > 0"
 
-   - name: "Install Helm on NVIDIA Cloud Native Core 6.1"
+   - name: "Install Helm on NVIDIA Cloud Native Stack 6.1"
      become: true
      command: "{{ item }}"
      args:
@@ -723,7 +723,7 @@
        - rm -rf helm-v3.8.1-linux-arm64.tar.gz linux-arm64
      when: "cnc_version == 6.1 and helm_exists.rc > 0"
 
-   - name: "Install Helm on NVIDIA Cloud Native Core 5.2 or 6.2"
+   - name: "Install Helm on NVIDIA Cloud Native Stack 5.2 or 6.2"
      become: true
      command: "{{ item }}"
      args:
@@ -736,7 +736,7 @@
        - rm -rf helm-v3.8.2-linux-arm64.tar.gz linux-arm64
      when: "cnc_version == 6.2 and helm_exists.rc > 0 or cnc_version == 5.2 and helm_exists.rc > 0"
 
-   - name: "Install Helm on NVIDIA Cloud Native Core 7.0"
+   - name: "Install Helm on NVIDIA Cloud Native Stack 7.0"
      become: true
      command: "{{ item }}"
      args:
@@ -748,7 +748,7 @@
        - rm -rf helm-v3.9.0-linux-arm64.tar.gz linux-arm64
      when: "cnc_version == 7.0 and helm_exists.rc > 0"
 
-   - name: "Install Helm on NVIDIA Cloud Native Core 6.3 or 7.1 or 8.0"
+   - name: "Install Helm on NVIDIA Cloud Native Stack 6.3 or 7.1 or 8.0"
      become: true
      command: "{{ item }}"
      args:

@@ -1,8 +1,8 @@
-<h1> NVIDIA Cloud Native Core - v7.0 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit</h1>
+<h1> NVIDIA Cloud Native Stack - v7.0 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit</h1>
 
 <h2>Introduction</h2>
 
-This document describes how to setup the NVIDIA Cloud Native Core collection on a single or multiple Jetson AGX Xavier or Jetson Xavier NX DevKits. NVIDIA Cloud Native Core can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
+This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple Jetson AGX Xavier or Jetson Xavier NX DevKits. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
 The final environment will include:
 
@@ -21,9 +21,9 @@ The final environment will include:
 - [Installing Containerd](#Installing-Containerd)
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Installing Helm](#Installing-Helm)
-- [Adding an Additional Node to NVIDIA Cloud Native Core](#Adding-additional-node-to-NVIDIA-Cloud-Native-Core)
+- [Adding an Additional Node to NVIDIA Cloud Native Stack](#Adding-additional-node-to-NVIDIA-Cloud-Native-Stack)
 - [Validating the Installation](#Validating-the-Installation)
-- [Validate NVIDIA Cloud Native Core with an Application from NGC](#Validate-NVIDIA-Cloud-Native-Core-with-an-application-from-NGC)
+- [Validate NVIDIA Cloud Native Stack with an Application from NGC](#Validate-NVIDIA-Cloud-Native-Stack-with-an-application-from-NGC)
 
 
 ### Prerequisites
@@ -46,7 +46,7 @@ Download the SDK Manager from [here](https://developer.nvidia.com/nvidia-sdk-man
 2. Use the SD Card Image method to download the JetPack and load the OS image to external drive. For more information, please refer [flash using SD Card method](https://developer.nvidia.com/embedded/learn/get-started-jetson-xavier-nx-devkit#prepare)
 
 ### Jetson Xavier NX Storage
-Running NVIDIA Cloud Native Core on Xavier NX production modules (16GB) might not provide sufficient storage capacity with fully loaded JetPack 4.5 to host your specific container images. If you require additional storage, use the Jetson Xavier NX Development Kit during the development phase, as you can insert greater than 16GB via microSD cards and/or remove unused JetPack 4.6 packages. For production deployments, remove packages that are not required from fully loaded JetPack 4.6 and/or extend the storage capacity via NVMe or SSD.
+Running NVIDIA Cloud Native Stack on Xavier NX production modules (16GB) might not provide sufficient storage capacity with fully loaded JetPack 4.5 to host your specific container images. If you require additional storage, use the Jetson Xavier NX Development Kit during the development phase, as you can insert greater than 16GB via microSD cards and/or remove unused JetPack 4.6 packages. For production deployments, remove packages that are not required from fully loaded JetPack 4.6 and/or extend the storage capacity via NVMe or SSD.
 
 ### Upgrading Nvidia Container Runtime
 
@@ -126,7 +126,7 @@ Install Containerd:
 ```
  sudo mkdir -p /etc/containerd
 
- sudo wget -q https://raw.githubusercontent.com/NVIDIA/cloud-native-core/master/playbooks/config.toml -P /etc/containerd/
+ sudo wget -q https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/config.toml -P /etc/containerd/
 
  sudo systemctl enable containerd && sudo systemctl restart containerd
 ```
@@ -294,7 +294,7 @@ Execute the following command to download and install Helm 3.9.0:
 Refer to the Helm 3.9.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
 
 
-### Adding an Additional Node to NVIDIA Cloud Native Core
+### Adding an Additional Node to NVIDIA Cloud Native Stack
 
 
 Make sure to install the Containerd and Kubernetes packages on additional nodes.
@@ -304,7 +304,7 @@ Prerequisites:
 - [Installing Kubernetes](#Installing-Kubernetes)
 - [Disable swap](#Disable-swap)
 
-Once the prerequisites are completed on the additional nodes, execute the below command on the control-plane node and then execute the join command output on an additional node to add the additional node to NVIDIA Cloud Native Core:
+Once the prerequisites are completed on the additional nodes, execute the below command on the control-plane node and then execute the join command output on an additional node to add the additional node to NVIDIA Cloud Native Stack:
 
 ```
  sudo kubeadm token create --print-join-command
@@ -376,7 +376,7 @@ Validate the sample pod logs to support CUDA libraries:
 ```
 kubectl logs nvidia-l4t-base
 ```
-NVIDIA Cloud Native Core works as expected if the get pods command shows the pod status as completed. You can also verify the successful run of the cuda-samples.yaml by confirming that the output shows Result=PASS
+NVIDIA Cloud Native Stack works as expected if the get pods command shows the pod status as completed. You can also verify the successful run of the cuda-samples.yaml by confirming that the output shows Result=PASS
 
 Output:
 
@@ -422,18 +422,18 @@ Device 0: "Xavier"
 deviceQuery, CUDA Driver = CUDART, CUDA Driver Version = 10.2, CUDA Runtime Version = 10.2, NumDevs = 1
 Result = PASS
 ```
-NVIDIA Cloud Native Core works as expected if the get pods command shows the pod status as completed.
+NVIDIA Cloud Native Stack works as expected if the get pods command shows the pod status as completed.
 
-### Validate NVIDIA Cloud Native Core with an Application from NGC
-Another option to validate NVIDIA Cloud Native Core is by running a demo application hosted on NGC.
+### Validate NVIDIA Cloud Native Stack with an Application from NGC
+Another option to validate NVIDIA Cloud Native Stack is by running a demo application hosted on NGC.
 
 NGC is NVIDIA's GPU-optimized software hub. NGC provides a curated set of GPU-optimized software for AI, HPC, and visualization. The content provided by NVIDIA and third-party ISVs simplify building, customizing, and integrating GPU-optimized software into workflows, accelerating the time to solutions for users.
 
-Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkits with software development kits (SDKs) are hosted on NGC. For more information about how to deploy an application that is hosted on NGC or the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/NVIDIA/cloud-native-core/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information.
+Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkits with software development kits (SDKs) are hosted on NGC. For more information about how to deploy an application that is hosted on NGC or the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/NVIDIA/cloud-native-stack/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information.
 
-The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm Chart. The application can validate the full NVIDIA Cloud Native Core and test the connectivity of NVIDIA Cloud Native Core to remote sensors. DeepStream delivers real-time AI-based video and image understanding and multi-sensor processing on GPUs. For more information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo-l4t).
+The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm Chart. The application can validate the full NVIDIA Cloud Native Stack and test the connectivity of NVIDIA Cloud Native Stack to remote sensors. DeepStream delivers real-time AI-based video and image understanding and multi-sensor processing on GPUs. For more information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo-l4t).
 
-There are two ways to configure the DeepStream - Intelligent Video Analytics Demo Application on your NVIDIA Cloud Native Core
+There are two ways to configure the DeepStream - Intelligent Video Analytics Demo Application on your NVIDIA Cloud Native Stack
 
 - Using a camera
 - Using the integrated video file (no camera required)

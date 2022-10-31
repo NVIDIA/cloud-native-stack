@@ -73,85 +73,85 @@
      shell: route add -net 0.0.0.0/0 gw {{ network.stdout_lines[0] }}
      when: gateway.rc | default ('') == 1 and proxy == true
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 5.0
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 5.0
      when: "cnc_version == 5.2 or cnc_version == 5.1 or cnc_version == 5.0 and 'running' not in k8sup.stdout"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.22.5" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.0
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.0
      when: "'running' not in k8sup.stdout and cnc_version == 6.0"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.2" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.1
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.1
      when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 6.1"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.5" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.1
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.1
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 6.1"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.5" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.2
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.2
      when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 6.2"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.7" --image-repository={{ k8s_registry }}
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.8" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.3
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.3
      when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 6.3"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.9" --image-repository={{ k8s_registry }}
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.12" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.0
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 7.0
      when: "'running' not in k8sup.stdout and  proxy == false and cnc_version == 7.0 and ansible_distribution_major_version == '22'"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.24.2" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.1
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 7.1
      when: "'running' not in k8sup.stdout and  proxy == false and cnc_version == 7.1 and ansible_distribution_major_version == '22'"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.24.6" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 8.0
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 8.0
      when: "'running' not in k8sup.stdout and  proxy == false and cnc_version == 8.0 and ansible_distribution_major_version == '22'"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.25.2" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.2
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.2
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 6.2"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.7" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.8" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 6.3
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.3
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 6.3"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.12" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.0
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 7.0
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 7.0 and ansible_distribution_major_version == '22'"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.24.2" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 7.1
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 7.1
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 7.1 and ansible_distribution_major_version == '22'"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.24.6" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Core 8.0
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 8.0
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 8.0 and ansible_distribution_major_version == '22'"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.25.2" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
      become: true
@@ -177,23 +177,23 @@
        dest:  $HOME/.kube/config
        mode: '0600'
 
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core 7.1 or 8.0
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 7.1 or 8.0
      when: "'running' not in k8sup.stdout and cnc_version >= 7.1 and ansible_distribution_major_version == '22'"
      command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/calico.yaml
 
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core 7.0
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 7.0
      when: "'running' not in k8sup.stdout and cnc_version == 7.0 and ansible_distribution_major_version == '22'"
      command: kubectl apply -f https://projectcalico.docs.tigera.io/archive/v3.23/manifests/calico.yaml
 
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core > 6.3
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack > 6.3
      when: "'running' not in k8sup.stdout and cnc_version >= 6.3 and ansible_distribution_major_version == '20'"
      command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/calico.yaml
 
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Core < 6.2
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack < 6.2
      when: "'running' not in k8sup.stdout and cnc_version <= 6.2 and ansible_distribution_major_version == '20'"
      command: kubectl apply -f https://projectcalico.docs.tigera.io/archive/v3.21/manifests/calico.yaml
 
-   - name: Update Network plugin for Calico on NVIDIA Cloud Native Core > 3.1
+   - name: Update Network plugin for Calico on NVIDIA Cloud Native Stack > 3.1
      when: "'running' not in k8sup.stdout and cnc_version >= 3.1 "
      shell: "sleep 5; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*"
 

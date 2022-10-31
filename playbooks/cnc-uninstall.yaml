@@ -38,7 +38,7 @@
      shell: "iptables -F"
 
    - name: Remove Conatinerd and Kubernetes packages for Ubuntu
-     when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0 "
+     when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0"
      ignore_errors: yes
      apt:
        name: ['kubectl', 'kubeadm', 'kubelet', 'containerd']
@@ -64,7 +64,7 @@
        purge: yes
        force: yes
 
-   - name: Remove NVIDIA Docker for Cloud Native Core Developers
+   - name: Remove NVIDIA Docker for Cloud Native Stack Developers
      when: "cnc_docker == true or cnc_nvidia_driver == true"
      ignore_errors: yes
      apt:
@@ -92,7 +92,7 @@
      failed_when: false
      ignore_errors: yes
 
-   - name: Cleanup Directories for Cloud Native Core Developers
+   - name: Cleanup Directories for Cloud Native Stack Developers
      when: " cnc_docker == true or cnc_version <= 3.1 "
      ignore_errors: yes
      file:
@@ -134,6 +134,7 @@
         - /etc/apt/trusted.gpg.d/libcontainers*
         - /etc/default/kubelet
         - /etc/cni/net.d
+        - /etc/systemd/system/containerd.service.d/http-proxy.conf
 
    - name: Reboot the system
      when: "cnc_docker == true or cnc_nvidia_driver == true"

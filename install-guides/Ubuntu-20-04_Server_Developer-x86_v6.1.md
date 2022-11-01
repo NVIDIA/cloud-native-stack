@@ -23,7 +23,7 @@ NVIDIA Cloud Native Stack v6.1 includes:
 
 - [Prerequisites](#Prerequisites)
 - [Installing the Ubuntu Operating System](#Installing-the-Ubuntu-Operating-System)
-- [Installing NVIDIA Driver](#(Installing-NVIDIA-Driver)
+- [Installing NVIDIA Driver](#Installing-NVIDIA-Driver)
 - [Installing Docker and Nvidia Container Toolkit](#Installing-Docker-and-Nvidia-Container-Toolkit)
 - [Update the Docker Default Runtime](#Update-the-Docker-Default-Runtime)
 - [Installing Containerd](#Installing-Containerd)

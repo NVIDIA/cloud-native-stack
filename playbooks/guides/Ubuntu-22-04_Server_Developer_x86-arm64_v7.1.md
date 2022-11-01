@@ -3,11 +3,11 @@
 NVIDIA Cloud Native Stack for Developers is focused to provide the Docker based experince. This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Stack for Developers
 
 NVIDIA Cloud Native Stack for Developers includes:
-- Ubuntu 20.04.4 LTS
-- Containerd 1.6.8
-- Kubernetes version 1.23.12
-- Helm 3.9.3
-- NVIDIA GPU Driver: 5520.61.05
+- Ubuntu 22.04.4 LTS
+- Containerd 1.6.6
+- Kubernetes version 1.24.2
+- Helm 3.9.0
+- NVIDIA GPU Driver: 520.61.05
 - NVIDIA Container Toolkit: 1.11.0
 - NVIDIA GPU Operator 22.09
   - NVIDIA K8S Device Plugin: 0.12.3
@@ -39,7 +39,7 @@ To determine if your system qualifies as an NVIDIA Certified System, review the 
 Please note that NVIDIA Cloud Native Stack is validated only on systems with the default kernel (not HWE).
 
 ### Installing the Ubuntu Operating System
-These instructions require having Ubuntu Server LTS 20.04.4 on your system. The Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/20.04.4/release/.
+These instructions require having Ubuntu Server LTS 22.04 on your system. The Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/22.04/release/.
 
 
 For more information on installing Ubuntu server please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
@@ -73,12 +73,12 @@ Install the NVIDIA Cloud Native Stack stack by running the below command. "Skipp
 ```
 $ nano cnc_version.yaml
 
-cnc_version: 6.2
+cnc_version: 7.0
 
 ```
 
 ```
-$ nano cnc_values_6.2.yaml
+$ nano cnc_values_7.0.yaml
 
 # GPU Operator Values
 gpu_driver_version: "515.48.07"
@@ -126,7 +126,7 @@ bash setup.sh install
 ```
 
 #### Custom Configuration
-By default Cloud Native Stack uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` parameters from the `cnc_values_6.2.yaml` file
+By default Cloud Native Stack uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` parameters from the `cnc_values_7.0.yaml` file
 
 Example:
 ```

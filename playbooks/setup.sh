@@ -33,7 +33,7 @@ ansible_install() {
 		fi
     fi
   fi
-  pip3 install ansible 2>&1 >/dev/null
+  pip3 install ansible==6.0.0 2>&1 >/dev/null
   export PATH=$PATH:$HOME/.local/bin
 }
 # Prechecks

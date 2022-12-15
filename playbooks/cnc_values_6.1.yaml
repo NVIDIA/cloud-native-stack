@@ -1,6 +1,7 @@
 cnc_version: 6.1
 
 # GPU Operator Values
+enable_gpu_operator: yes
 gpu_driver_version: "510.47.03"
 enable_mig: no
 mig_profile: all-disabled
@@ -42,10 +43,6 @@ https_proxy: ""
 cnc_docker: no
 ## Enable For Cloud Native Stack Developers with TRD Driver
 cnc_nvidia_driver: no
-## Enable for Cloud Native Stack for Developers with vGPU driver
-cnc_nvidia_vgpu: no
-## Provide NGC API key to download the vGPU driver and license token
-ngc_api_key: ""
 
 ## Kubernetes apt resources
 k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"

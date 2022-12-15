@@ -1,8 +1,6 @@
 deployCR: true
 ofedDriver:
   deploy: true
-nvPeerDriver:
-  deploy: true
 rdmaSharedDevicePlugin:
   deploy: true
   resources:

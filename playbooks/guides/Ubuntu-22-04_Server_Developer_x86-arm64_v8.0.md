@@ -73,12 +73,12 @@ Install the NVIDIA Cloud Native Stack stack by running the below command. "Skipp
 ```
 $ nano cnc_version.yaml
 
-cnc_version: 7.0
+cnc_version: 8.0
 
 ```
 
 ```
-$ nano cnc_values_7.0.yaml
+$ nano cnc_values_8.0.yaml
 
 # GPU Operator Values
 gpu_driver_version: "515.48.07"
@@ -126,7 +126,7 @@ bash setup.sh install
 ```
 
 #### Custom Configuration
-By default Cloud Native Stack uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` parameters from the `cnc_values_7.0.yaml` file
+By default Cloud Native Stack uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` parameters from the `cnc_values_8.0.yaml` file
 
 Example:
 ```

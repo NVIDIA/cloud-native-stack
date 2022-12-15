@@ -108,6 +108,14 @@
       register: size
       failed_when: " size.stdout | int <= 40 and ansible_architecture == 'x86_64'"
 
+    - name: Check Number of CPU's
+      failed_when: ansible_processor_vcpus < 2
+      shell: "echo 'minimum 2 CPUs required'"
+
+    - name: Check memory requirements
+      failed_when: ansible_memtotal_mb < 4096
+      shell: "echo 'minimum 4GB memory required'"
+
     - name: Clean up kube config
       become: true
       file:
@@ -120,6 +128,16 @@
 
     - set_fact:
        release: "{{ release.stdout }}"
+       
+    - name: Check OS Support x86/ARM systems
+      shell: "echo 'Not a Valid Installation please use Ubuntu to 20.04 and retry'"
+      when: cnc_version <= 6.4
+      failed_when: "cnc_version <= 6.4 and ansible_distribution_major_version >= '22' and release != 'tegra'"
+
+    - name: Check OS Support x86/ARM systems
+      shell: "echo 'Not a Valid Installation please use Ubuntu to 22.04 and retry'"
+      when: cnc_version >= 7.0
+      failed_when: "cnc_version >= 7.0 and ansible_distribution_major_version <= '20' and release != 'tegra'"
 
 #    - name: Add DHCP Mac to netplan 
 #      become: true 

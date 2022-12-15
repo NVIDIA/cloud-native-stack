@@ -1,23 +1,25 @@
-<h1>NVIDIA Cloud Native Stack v8.0 - Install Guide for Developers</h1>
+<h1>NVIDIA Cloud Native Stack v6.4 - Install Guide for Developers</h1>
 <h2>Introduction</h2>
 
 NVIDIA Cloud Native Stack for Developers is focused to provide the Docker based experince. This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
-NVIDIA Cloud Native Stack v8.0 includes:
-- Ubuntu 22.04.4 LTS
-- Containerd 1.6.8
-- Kubernetes version 1.25.2
-- Helm 3.10.0
-- NVIDIA GPU Driver: 520.61.07
+NVIDIA Cloud Native Stack v6.4 includes:
+- Ubuntu 20.04 LTS
+- Containerd 1.6.10
+- Kubernetes version 1.23.14
+- Helm 3.10.2
+- NVIDIA GPU Driver: 520.61.05
 - NVIDIA Container Toolkit: 1.11.0
-- NVIDIA GPU Operator 22.09
-  - NVIDIA K8S Device Plugin: 0.12.3
-  - NVIDIA DCGM-Exporter: 3.0.4-3.0.0
-  - NVIDIA DCGM: 3.0.4-1
-  - NVIDIA GPU Feature Discovery: 0.6.2
+- NVIDIA GPU Operator 22.9.1
+  - NVIDIA K8S Device Plugin: 0.13.0
+  - NVIDIA DCGM-Exporter: 3.1.3-3.1.2
+  - NVIDIA DCGM: 3.1.3-1
+  - NVIDIA GPU Feature Discovery: 0.7.0
   - NVIDIA K8s MIG Manager: 0.5.0
-  - NVIDIA Driver Manager: 0.4.2
+  - NVIDIA Driver Manager: 0.5.1
   - Node Feature Discovery: 0.10.1
+  - NVIDIA KubeVirt GPU Device Plugin: 1.2.1
+  - NVIDIA GDS Driver: 2.14.13
 
 <h2>Table of Contents</h2>
 
@@ -50,7 +52,7 @@ To determine if your system qualifies as an NVIDIA Certified System, review the 
 Please note that NVIDIA Cloud Native Stack is validated only on systems with the default kernel (not HWE).
 
 ### Installing the Ubuntu Operating System
-These instructions require having Ubuntu Server LTS 22.04.4 on your system. The Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/20.04.4/release/.
+These instructions require having Ubuntu Server LTS 20.04 on your system. The Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/20.04/release/.
 
 For more information on installing Ubuntu server please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
 
@@ -61,7 +63,7 @@ Install NVIDIA TRD Driver
 sudo apt update 
 ```
 ```
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
 ```
 ```
 sudo dpkg -i cuda-keyring_1.0-1_all.deb
@@ -76,7 +78,7 @@ sudo apt update
 Install Cuda Drivers
 
 ```
-sudo apt install cuda-11-8 -y
+sudo apt install cuda -y
 ```
 
 Once the NVIDIA Drivers installed, please reboot the system and run the below command to validate NVIDIA drivers are loaded 
@@ -88,9 +90,9 @@ nvidia-smi
 Expected Output:
 
 ```
-Wed Oct 24 12:47:29 2022
+Wed Dec 14 12:47:29 2022
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 520.61.07    Driver Version: 520.61.07    CUDA Version: 11.8     |
+| NVIDIA-SMI 525.60.13    Driver Version: 525.60.13    CUDA Version: 12.0     |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
@@ -295,13 +297,13 @@ Apply sysctl params without reboot:
 Download the Containerd tarball:
 
 ```
- wget https://github.com/containerd/containerd/releases/download/v1.6.6/cri-containerd-cni-1.6.6-linux-amd64.tar.gz
+ wget https://github.com/containerd/containerd/releases/download/v1.6.10/cri-containerd-cni-1.6.10-linux-amd64.tar.gz
 ```
 ```
- sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.6-linux-amd64.tar.gz
+ sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.10-linux-amd64.tar.gz
 ```
 ```
- rm -rf cri-containerd-cni-1.6.6-linux-amd64.tar.gz
+ rm -rf cri-containerd-cni-1.6.10-linux-amd64.tar.gz
 ```
 
 Install Containerd:
@@ -354,7 +356,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
  sudo apt-get update
 ```
 ```
- sudo apt-get install -y -q kubelet=1.24.1-00 kubectl=1.24.1-00 kubeadm=1.24.1-00
+ sudo apt-get install -y -q kubelet=1.23.14-00 kubectl=1.23.14-00 kubeadm=1.23.14-00
 ```
 ```
  sudo apt-mark hold kubelet kubeadm kubectl
@@ -393,7 +395,7 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command:
 
 ```
- sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.1"
+ sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.14"
 ```
 
 Output:
@@ -432,7 +434,7 @@ Following the instructions in the output, execute the commands as shown below:
 With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
- kubectl apply -f https://docs.projectcalico.org/v3.21/manifests/calico.yaml 
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.5/manifests/calico.yaml
 ```
 
 Update the Calico Daemonset 
@@ -472,7 +474,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.24.1
+#yourhost        Ready    control-plane,master   10m   v1.23.14
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -486,16 +488,16 @@ for more information.
 
 ### Installing Helm 
 
-Execute the following command to download and install Helm 3.9.0: 
+Execute the following command to download and install Helm 3.10.02: 
 
 ```
- wget https://get.helm.sh/helm-v3.9.0-linux-amd64.tar.gz && \
- tar -zxvf helm-v3.9.0-linux-amd64.tar.gz && \
+ wget https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz && \
+ tar -zxvf helm-v3.10.2-linux-amd64.tar.gz && \
  sudo mv linux-amd64/helm /usr/local/bin/helm && \ 
- rm -rf helm-v3.9.0-linux-amd64.tar.gz linux-amd64/
+ rm -rf helm-v3.10.2-linux-amd64.tar.gz linux-amd64/
 ```
 
-Refer to the Helm 3.9.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
+Refer to the Helm 3.10.2 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
 
 
 ### Adding an Additional Node to NVIDIA Cloud Native Stack
@@ -533,8 +535,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.24.1
-#yourhost-worker Ready                           10m   v1.24.1
+#yourhost        Ready    control-plane,master   10m   v1.23.14
+#yourhost-worker Ready                           10m   v1.23.14
 ```
 
 ### Installing GPU Operator
@@ -556,7 +558,7 @@ Install GPU Operator:
 `NOTE:` As we are preinstalled with NVIDIA Driver and NVIDIA Container Toolkit, we need to set as `false` when installing the GPU Operator
 
 ```
- helm install --version 1.11.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+ helm install --version 22.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 ```
 
 #### Validating the State of the GPU Operator:
@@ -615,7 +617,7 @@ spec:
   restartPolicy: OnFailure
   containers:
     - name: nvidia-smi
-      image: "nvidia/cuda:11.7.0-base-ubuntu22.04"
+      image: "nvidia/cuda:12.0.0-base-ubuntu20.04"
       args: ["nvidia-smi"]
 EOF
 ```
@@ -630,17 +632,18 @@ kubectl logs nvidia-smi
 
 Output:
 
+
 ``` 
-Wed Oct 24 12:47:29 2022
+Wed Dec 14 12:47:29 2022
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 520.61.07    Driver Version: 520.61.07    CUDA Version: 11.8     |
+| NVIDIA-SMI 525.60.13    Driver Version: 525.60.13    CUDA Version: 12.0     |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
 |                               |                      |               MIG M. |
 |===============================+======================+======================|
-|   0  Quadro RTX 6000     Off  | 00000000:65:00.0  On |                  Off |
-| 33%   32C    P8    30W / 260W |    154MiB / 24576MiB |      0%      Default |
+|   0  Tesla T4            On   | 00000000:14:00.0 Off |                  Off |
+| N/A   47C    P8    16W /  70W |      0MiB / 16127MiB |      0%      Default |
 |                               |                      |                  N/A |
 +-------------------------------+----------------------+----------------------+
 
@@ -649,9 +652,7 @@ Wed Oct 24 12:47:29 2022
 |  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
 |        ID   ID                                                   Usage      |
 |=============================================================================|
-|    0   N/A  N/A      1236      G   /usr/lib/xorg/Xorg                 39MiB |
-|    0   N/A  N/A      2278      G   /usr/lib/xorg/Xorg                 58MiB |
-|    0   N/A  N/A      2405      G   /usr/bin/gnome-shell               46MiB |
+|  No running processes found                                                 |
 +-----------------------------------------------------------------------------+
 ```
 
@@ -776,7 +777,7 @@ Execute the below commands to uninstall the GPU Operator:
 ```
 $ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 gpu-operator-resources         1               2022-05-11 20:23:28.063421701 +0000 UTC deployed        gpu-operator-1.11.0      1.11.0
+gpu-operator-1606173805 gpu-operator-resources         1               2022-12-11 20:23:28.063421701 +0000 UTC deployed        gpu-operator-22.9.1      22.9.1
 
 $ helm del gpu-operator-1606173805 -n gpu-operator-resources
 ```

@@ -99,13 +99,19 @@
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.2
      when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 6.2"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.8" --image-repository={{ k8s_registry }}
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.10" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.3
      when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 6.3"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.12" --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.4
+     when: "'running' not in k8sup.stdout and proxy == false and cnc_version == 6.4"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.14" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
@@ -121,21 +127,39 @@
      become: true
      register: kubeadm
 
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 7.2
+     when: "'running' not in k8sup.stdout and  proxy == false and cnc_version == 7.2 and ansible_distribution_major_version == '22'"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.24.8" --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 8.0
      when: "'running' not in k8sup.stdout and  proxy == false and cnc_version == 8.0 and ansible_distribution_major_version == '22'"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.25.2" --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 8.1
+     when: "'running' not in k8sup.stdout and  proxy == false and cnc_version == 8.1 and ansible_distribution_major_version == '22'"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.25.4" --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.2
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 6.2"
-     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.8" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.10" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.3
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 6.3"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.12" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 6.4
+     when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 6.4"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.14" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
@@ -151,9 +175,21 @@
      become: true
      register: kubeadm
 
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 7.2
+     when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 7.2 and ansible_distribution_major_version == '22'"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.24.8" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 8.0
      when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 8.0 and ansible_distribution_major_version == '22'"
      command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.25.2" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack 8.1
+     when: "'running' not in k8sup.stdout and proxy == true and cnc_version == 8.1 and ansible_distribution_major_version == '22'"
+     command: kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.25.4" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}
      become: true
      register: kubeadm
 
@@ -177,8 +213,12 @@
        dest:  $HOME/.kube/config
        mode: '0600'
 
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 7.2 or 8.1
+     when: "'running' not in k8sup.stdout and cnc_version == 7.2 and ansible_distribution_major_version == '22' or 'running' not in k8sup.stdout and cnc_version == 8.1 and ansible_distribution_major_version == '22'"
+     command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.5/manifests/calico.yaml
+
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 7.1 or 8.0
-     when: "'running' not in k8sup.stdout and cnc_version >= 7.1 and ansible_distribution_major_version == '22'"
+     when: "'running' not in k8sup.stdout and cnc_version == 7.1 and ansible_distribution_major_version == '22' or 'running' not in k8sup.stdout and cnc_version == 8.0 and ansible_distribution_major_version == '22'"
      command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/calico.yaml
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 7.0
@@ -202,11 +242,11 @@
      command: kubectl taint nodes --all node-role.kubernetes.io/master-
 
    - name: Taint the Kubernetes Control Plane node
-     when: "'running' not in k8sup.stdout and cnc_version == 7.0 or 'running' not in k8sup.stdout and cnc_version == 7.1"
+     when: "'running' not in k8sup.stdout and cnc_version == 7.0 or 'running' not in k8sup.stdout and cnc_version == 7.1 or 'running' not in k8sup.stdout and cnc_version == 7.2"
      command: kubectl taint nodes --all node-role.kubernetes.io/master- node-role.kubernetes.io/control-plane-
 
    - name: Taint the Kubernetes Control Plane node
-     when: "'running' not in k8sup.stdout and cnc_version == 8.0"
+     when: "'running' not in k8sup.stdout and cnc_version >= 8.0"
      command: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 
    - name: Generate join token
@@ -295,3 +335,15 @@
      become: true
      shell: "{{ kubeadm_join }}"
      when: "'running' not in k8sup.stdout"
+
+   - name: Get Node name
+     shell: "kubectl get nodes  | grep -v master | awk '{print $1}' | grep -v NAME"
+     register: node_name
+     no_log: True
+     failed_when: false
+
+   - name: Lable the node
+     shell: "kubectl label node {{ item }} node-role.kubernetes.io/node= node-role.kubernetes.io/worker="
+     with_items: "{{ node_name.stdout_lines }}"
+     no_log: True
+     failed_when: false

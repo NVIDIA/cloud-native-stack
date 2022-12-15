@@ -1,25 +1,26 @@
-<h1>NVIDIA Cloud Native Stack v8.0 for AWS - Install Guide for Ubuntu Server</h1>
+<h1>NVIDIA Cloud Native Stack v8.1 for AWS - Install Guide for Ubuntu Server</h1>
 <h2>Introduction</h2>
 
 This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple AWS instances. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster. 
 
-NVIDIA Cloud Native Stack v8.0 includes:
+NVIDIA Cloud Native Stack v8.1 includes:
 
 - Ubuntu 22.04 LTS
-- Containerd 1.6.8
-- Kubernetes version 1.25.2
-- Helm 3.10.0
-- NVIDIA GPU Operator 22.9
-  - NVIDIA GPU Driver: 520.61.07
+- Containerd 1.6.10
+- Kubernetes version 1.25.4
+- Helm 3.11.0
+- NVIDIA GPU Operator 22.9.1
+  - NVIDIA GPU Driver: 525.60.13
   - NVIDIA Container Toolkit: 1.11.0
-  - NVIDIA K8S Device Plugin: 0.12.3
-  - NVIDIA DCGM-Exporter: 3.0.4-3.0.0
-  - NVIDIA DCGM: 3.0.4-1
-  - NVIDIA GPU Feature Discovery: 0.6.2
+  - NVIDIA K8S Device Plugin: 0.13.0
+  - NVIDIA DCGM-Exporter: 3.1.3-3.1.2
+  - NVIDIA DCGM: 3.1.3-1
+  - NVIDIA GPU Feature Discovery: 0.7.0
   - NVIDIA K8s MIG Manager: 0.5.0
-  - NVIDIA Driver Manager: 0.4.2
+  - NVIDIA Driver Manager: 0.5.1
   - Node Feature Discovery: 0.10.1
   - NVIDIA KubeVirt GPU Device Plugin: 1.2.1
+  - NVIDIA GDS Driver: 2.14.13
 
   - Whereabouts 0.5.2
 
@@ -145,15 +146,15 @@ sudo sysctl --system
 Download the Containerd tarball
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.6.8/cri-containerd-cni-1.6.8-linux-amd64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.6.10/cri-containerd-cni-1.6.10-linux-amd64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.8-linux-amd64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.10-linux-amd64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.6.8-linux-amd64.tar.gz
+rm -rf cri-containerd-cni-1.6.10-linux-amd64.tar.gz
 ```
 
 Install the Containerd
@@ -204,7 +205,7 @@ sudo apt-get update
 ```
 
 ```
-sudo apt-get install -y -q kubelet=1.25.2-00 kubectl=1.25.2-00 kubeadm=1.25.2-00
+sudo apt-get install -y -q kubelet=1.25.4-00 kubectl=1.25.4-00 kubeadm=1.25.4-00
 ```
 
 ```
@@ -289,7 +290,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane          10m   v1.25.2
+#yourhost        Ready    control-plane          10m   v1.25.4
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -302,21 +303,21 @@ For additional information, refer to [kubeadm installation guide](https://kubern
 
 ## Installing Helm 
 
-Execute the following command to download Helm 3.10.0: 
+Execute the following command to download Helm 3.10.2: 
 
 ```
-wget https://get.helm.sh/helm-v3.10.0-linux-amd64.tar.gz
+wget https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz
 ```
 
 ```
-tar -zxvf helm-v3.10.0-linux-amd64.tar.gz
+tar -zxvf helm-v3.10.2-linux-amd64.tar.gz
 ```
 
 ```
 sudo mv linux-amd64/helm /usr/local/bin/helm
 ```
 
-For additional information about Helm, refer to the Helm 3.10.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information. 
+For additional information about Helm, refer to the Helm 3.11.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information. 
 
 ### Adding additional node to NVIDIA Cloud Native Stack
 
@@ -351,8 +352,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.25.2
-#yourhost-worker Ready                           10m   v1.25.2
+#yourhost        Ready    control-plane,master   10m   v1.25.4
+#yourhost-worker Ready                           10m   v1.25.4
 ```
 
 ## Installing GPU Operator
@@ -371,7 +372,7 @@ helm repo update
 To install GPU Operator for AWS G4 instance with Tesla T4:
 
 ```
-helm install --version 22.09 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --wait --generate-name
+helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources --devel nvidia/gpu-operator --wait --generate-name
 ```
 
 ### Validate the state of GPU Operator:
@@ -427,7 +428,7 @@ spec:
   restartPolicy: OnFailure
   containers:
     - name: nvidia-smi
-      image: "nvidia/cuda:11.7.0-base-ubuntu22.04"
+      image: "nvidia/cuda:12.0.0-base-ubuntu22.04"
       args: ["nvidia-smi"]
 EOF
 ```
@@ -443,9 +444,9 @@ kubectl logs nvidia-smi
 Output:
 
 ``` 
-Wed Oct 24 12:47:29 2022
+Wed Dec 14 12:47:29 2022
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 520.61.07    Driver Version: 520.61.07    CUDA Version: 11.8     |
+| NVIDIA-SMI 525.60.13    Driver Version: 525.60.13    CUDA Version: 12.0     |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |

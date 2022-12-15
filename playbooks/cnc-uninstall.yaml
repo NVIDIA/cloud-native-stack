@@ -3,7 +3,14 @@
   vars_files:
     - cnc_values.yaml
   tasks:
+  
+   - name: Get Nvidia Tegra Release
+     shell: uname -r | awk -F'-' '{print $2}'
+     register: release
 
+   - set_fact:
+       release: "{{ release.stdout }}"
+       
    - name: Uninstall the GPU Operator with MIG
      shell: |
        kubectl label nodes --all nvidia.com/mig.config=all-disabled --overwrite
@@ -14,7 +21,7 @@
          sleep 5
          config_state=$(kubectl describe nodes  |grep mig.config.state | head -n1 |awk -F'=' '{print $2}')
        done
-     when: "enable_mig == true and cnc_version >= 4.1 and ansible_architecture == 'x86_64'"
+     when: "enable_mig == true and cnc_version >= 4.1 and release != 'tegra'"
      #failed_when: false
      async: 120
      args:
@@ -108,8 +115,6 @@
    - name: Cleanup Directories
      ignore_errors: yes
      shell: rm -rf "{{ item }}"
-     args:
-       warn: false
      with_items:
         - /var/lib/containerd
 #        - /run/containerd

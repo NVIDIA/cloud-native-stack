@@ -98,7 +98,9 @@
      ignore_errors: true
      with_items:
        - kubectl delete crd clusterpolicies.nvidia.com
-       - kubectl apply -f https://raw.githubusercontent.com/NVIDIA/gpu-operator/release-22.9.1/deployments/gpu-operator/crds/nvidia.com_clusterpolicies_crd.yaml
+       - helm pull --version=v22.9.1 nvidia/gpu-operator --untar --untardir gpu-operator-chart
+       - kubectl apply -f gpu-operator-chart/gpu-operator/crds
+       - rm -rf gpu-operator-chart
        - helm show --version=v22.9.1 values nvidia/gpu-operator > /tmp/values.yaml
        - sleep 20
 

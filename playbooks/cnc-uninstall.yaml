@@ -99,12 +99,6 @@
      failed_when: false
      ignore_errors: yes
 
-   - name: NVIDIA FS Module Cleanup
-     ignore_errors: yes
-     failed_when: false
-     become: true
-     shell: rmmod nvidia_fs
-
    - name: Cleanup Directories for Cloud Native Stack Developers
      when: " cnc_docker == true or cnc_version <= 3.1 "
      ignore_errors: yes

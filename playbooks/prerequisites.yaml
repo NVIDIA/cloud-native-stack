@@ -17,13 +17,14 @@
       when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
       apt_key:
         url: "{{ k8s_apt_key }}"
+        keyring: "{{ k8s_apt_ring }}"
         state: present
 
     - name: Adding Kubernetes apt repository for Ubuntu
       become: true
       when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
       apt_repository:
-        repo: "{{ k8s_apt_repository }}"
+        repo: "deb [signed-by={{ k8s_apt_ring }}] {{ k8s_apt_repository }}"
         state: present
         filename: kubernetes
 

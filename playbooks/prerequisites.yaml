@@ -12,6 +12,14 @@
       no_log: True
       failed_when: false
 
+    - name: Create a APT KeyRing directory
+      become: true
+      when: "ansible_distribution == 'Ubuntu' and ansible_distribution_major_version <= '20' and 'running' not in k8sup.stdout"
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
     - name: Add an Kubernetes apt signing key for Ubuntu
       become: true
       when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"

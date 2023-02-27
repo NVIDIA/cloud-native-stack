@@ -46,8 +46,7 @@ cnc_docker: no
 cnc_nvidia_driver: no
 
 ## Kubernetes apt resources
-#k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
-k8s_apt_key: "https://dl.k8s.io/apt/doc/apt-key.gpg"
+k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 k8s_apt_repository: " https://apt.kubernetes.io/ kubernetes-xenial main"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-archive-keyring.gpg"
 k8s_registry: "registry.k8s.io"

@@ -58,19 +58,51 @@
       debug:
         msg: "Internet Connection status {{ connection.status }}"
 
-    - name: Install Internet Speed dependencies
-      when: connection.status != '-1'
+    - name: Install PreRequisistes dependencies
+      when: connection.status != '-1' and ansible_distribution == 'Ubuntu'
       become: true
       apt:
-        name: ['speedtest-cli']
+        name: ['speedtest-cli', 'mokutil']
         state: present
         update_cache: yes
 
+    - name: Install PreRequisistes dependencies
+      when: connection.status != '-1' and ansible_distribution == 'RedHat'
+      become: true
+      yum:
+        name: ['mokutil']
+        state: present
+        update_cache: yes
+
+    - name: Get Speedtest CLI
+      when: ansible_distribution == 'RedHat'
+      get_url:
+        url: https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py
+        dest: /tmp/speedtest-cli
+        mode: '0777'
+
     - name: Check Internet Speed
+      when: ansible_distribution == 'RedHat'
+      ignore_errors: true
+      failed_when: false
+      shell: /tmp/speedtest-cli --secure --simple
+      register: speed
+      async: 30
+
+    - name: Report Valid Internet Speed
+      when: ansible_distribution == 'RedHat'
+      shell: echo {{ speed.stdout_lines[1] }} | awk '{print $3}'
+      register: speedtest
+      ignore_errors: true
+      failed_when: "'Kbit/s' in speedtest.stdout"
+
+    - name: Check Internet Speed
+      when: ansible_distribution == 'Ubuntu'
       ignore_errors: true
       failed_when: false
       shell: speedtest-cli --secure --simple
       register: speed
+      async: 30
 
     - name: Report Valid Internet Speed
       shell: echo {{ speed.stdout_lines[1] }} | awk '{print $3}'
@@ -89,13 +121,6 @@
       uri:
         url: https://{{ url.stdout }}
         timeout: 5
-
-    - name: Install secure boot dependencies
-      become: true
-      apt:
-        name: ['mokutil']
-        state: present
-        update_cache: yes
 
     - name: check secure boot
       shell: mokutil --sb-state | awk '{print $2}'
@@ -155,9 +180,10 @@
       command: update-initramfs -u
       when: ansible_os_family == "Debian" and nouveau_result.rc != 0
 
-- when: "release == 'tegra'"
-  import_playbook: cnc-jetson.yaml
-  name: Install Cloud Native Stack on Jetson
+    - name: update-initramfs
+      become: true
+      command: dracut --force 
+      when: ansible_os_family == "RedHat" and nouveau_result.rc != 0
   
 - import_playbook: nvidia-driver.yaml
   when: "cnc_docker == true and cnc_nvidia_driver == true and release != 'tegra'"
@@ -168,16 +194,16 @@
 - when: "cnc_version <= 4.1 and cnc_docker != true and ansible_architecture == 'x86_64' and release != 'tegra'"
   import_playbook: older_versions/cnc-installation.yaml
 
-- when: "cnc_version > 4.1 and release != 'tegra'"
+- when: "cnc_version > 4.1"
   import_playbook: prerequisites.yaml
 
-- when: "cnc_version > 4.1 and release != 'tegra'"
+- when: "cnc_docker == true and release != 'tegra'"
+  import_playbook: nvidia-docker.yaml
+
+- when: "cnc_version > 4.1"
   import_playbook: k8s-install.yaml
 
-- when: "cnc_docker == true and release != 'tegra'"
-  import_playbook: cnc-pre-nvidia-driver.yaml
-
-- when: "cnc_version > 4.1 and cnc_docker != true and release != 'tegra'"
+- when: "cnc_version > 4.1 and release != 'tegra'"
   import_playbook: operators-install.yaml
 
 - hosts: all

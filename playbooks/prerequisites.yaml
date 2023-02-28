@@ -36,115 +36,36 @@
         state: present
         filename: kubernetes
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 5.0
+    - name: Add kubernetes repo for RHEL
       become: true
-      when: "cnc_version == 5.2 or cnc_version == 5.1 or cnc_version == 5.0 and ansible_distribution == 'Ubuntu'"
+      when: "ansible_distribution == 'RedHat' and 'running' not in k8sup.stdout"
+      yum_repository:
+        name: kubernetes
+        description: Kubernetes repo
+        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-$basearch
+        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+        gpgcheck: yes
+        enabled: yes
+        repo_gpgcheck: yes        
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack
+      become: true
+      when: "ansible_distribution == 'Ubuntu'"
       apt:
-        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.22.5-00', 'kubeadm=1.22.5-00', 'kubectl=1.22.5-00']
+        name: ['net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet={{ k8s_version }}-00', 'kubeadm={{ k8s_version }}-00', 'kubectl={{ k8s_version }}-00']
         state: present
         update_cache: true
         allow_change_held_packages: yes
         force: yes
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 6.0
+    - name: Install kubernetes components for RedHat on NVIDIA Cloud Native Stack
       become: true
-      when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu'"
-      apt:
-        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.2-00', 'kubeadm=1.23.2-00', 'kubectl=1.23.2-00']
+      when: "ansible_distribution == 'RedHat'"
+      yum:
+        name: ['net-tools', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}-0', 'kubeadm-{{ k8s_version }}-0', 'kubectl-{{ k8s_version }}-0']
         state: present
         update_cache: true
-        allow_change_held_packages: yes
-        force: yes
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 6.1
-      become: true
-      when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu'"
-      apt:
-        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.5-00', 'kubeadm=1.23.5-00', 'kubectl=1.23.5-00']
-        state: present
-        update_cache: true
-        allow_change_held_packages: yes
-        force: yes
-
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 6.2
-      become: true
-      when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu'"
-      apt:
-        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.10-00', 'kubeadm=1.23.10-00', 'kubectl=1.23.10-00']
-        state: present
-        update_cache: true
-        allow_change_held_packages: yes
-        force: yes
-
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 6.3
-      become: true
-      when: "cnc_version == 6.3 and ansible_distribution == 'Ubuntu'"
-      apt:
-        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.12-00', 'kubeadm=1.23.12-00', 'kubectl=1.23.12-00']
-        state: present
-        update_cache: true
-        allow_change_held_packages: yes
-        force: yes
-
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 6.4
-      become: true
-      when: "cnc_version == 6.4 and ansible_distribution == 'Ubuntu'"
-      apt:
-        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.23.14-00', 'kubeadm=1.23.14-00', 'kubectl=1.23.14-00']
-        state: present
-        update_cache: true
-        allow_change_held_packages: yes
-        force: yes
-
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 7.0
-      become: true
-      when: "cnc_version == 7.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '22'"
-      apt:
-        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.24.2-00', 'kubeadm=1.24.2-00', 'kubectl=1.24.2-00']
-        state: present
-        update_cache: true
-        allow_change_held_packages: yes
-        force: yes
-
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 7.1
-      become: true
-      when: "cnc_version == 7.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '22'"
-      apt:
-        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.24.6-00', 'kubeadm=1.24.6-00', 'kubectl=1.24.6-00']
-        state: present
-        update_cache: true
-        allow_change_held_packages: yes
-        force: yes
-
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 7.2
-      become: true
-      when: "cnc_version == 7.2 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '22'"
-      apt:
-        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.24.8-00', 'kubeadm=1.24.8-00', 'kubectl=1.24.8-00']
-        state: present
-        update_cache: true
-        allow_change_held_packages: yes
-        force: yes
-
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 8.0
-      become: true
-      when: "cnc_version == 8.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '22'"
-      apt:
-        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.25.2-00', 'kubeadm=1.25.2-00', 'kubectl=1.25.2-00']
-        state: present
-        update_cache: true
-        allow_change_held_packages: yes
-        force: yes
-
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack 8.1
-      become: true
-      when: "cnc_version == 8.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '22'"
-      apt:
-        name: ['net-tools', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet=1.25.4-00', 'kubeadm=1.25.4-00', 'kubectl=1.25.4-00']
-        state: present
-        update_cache: true
-        allow_change_held_packages: yes
-        force: yes
 
     - name: Hold the installed Packages
       become: true
@@ -179,14 +100,33 @@
       when: "'running' not in k8sup.stdout"
       command: swapoff -a
 
-    - name: Setup Containerd for Ubuntu
+    - name: disable SELinux
+      become: true
+      when: "'running' not in k8sup.stdout and ansible_distribution == 'RedHat'"
+      command: "sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config"
+
+    - name: Firewall Rules
+      become: true
+      when: "'running' not in k8sup.stdout and ansible_distribution == 'RedHat'"
+      firewalld:
+        permanent: yes
+        immediate: yes
+        port: "{{item.port}}/{{item.proto}}"
+        state: "{{item.state}}"
+      with_items:
+       - {port: "6443", proto: "tcp", state: "enabled"}
+       - {port: "2379-2380", proto: "tcp", state: "enabled"}
+       - {port: "10230-10260", proto: "tcp", state: "enabled"}
+       - {port: "30000-32767", proto: "tcp", state: "enabled"}
+
+    - name: Setup kernel modules for container runtime
       become: true
       block:
-        - name: Create containerd.conf
+        - name: Create kubernetes.conf
           lineinfile:
             create: yes
             mode: 666
-            path: /etc/modules-load.d/containerd.conf
+            path: /etc/modules-load.d/kubernetes.conf
             line: "{{ item }}"
           loop:
             - "overlay"
@@ -211,13 +151,11 @@
             - {name: "net.bridge.bridge-nf-call-ip6tables", value: "1", reload: no}
             - {name: "net.bridge.bridge-nf-call-iptables", value: "1", reload: no}
             - {name: "net.ipv4.ip_forward", value: "1", reload: yes}
+      when: "cnc_version >= 4.0"
 
-        - name: Install libseccomp2
-          apt:
-            name: libseccomp2
-            state: present
-            update_cache: yes
-
+    - name: Setup Containerd for Ubuntu
+      become: true
+      block:
         - name: Create /etc/containerd
           file:
             path: /etc/containerd
@@ -228,247 +166,49 @@
             line: KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
             path: /etc/default/kubelet
             create: yes
-      when: "cnc_version >= 4.0 and ansible_distribution == 'Ubuntu'"
+      when: "cnc_version >= 4.0 and container_runtime == 'containerd'"
 
-    - name: Install Containerd for NVIDIA Cloud Native Stack 5.0
+    - name: Install Containerd for NVIDIA Cloud Native Stack
       become: true
       block:
         - name: Download cri-containerd-cni
           get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.4.9/cri-containerd-cni-1.4.9-linux-amd64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.4.9-linux-amd64.tar.gz
+            url: https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/cri-containerd-cni-{{ containerd_version }}-linux-amd64.tar.gz
+            dest: /tmp/cri-containerd-cni-{{ containerd_version }}-linux-amd64.tar.gz
             mode: 0664
 
         - name: Untar cri-containerd-cni
           unarchive:
-            src: /tmp/cri-containerd-cni-1.4.9-linux-amd64.tar.gz
+            src: /tmp/cri-containerd-cni-{{ containerd_version }}-linux-amd64.tar.gz
             dest: /
             remote_src: yes
             extra_opts:
               - --no-overwrite-dir
-      when: "cnc_version == 5.2 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and ansible_architecture == 'x86_64' or cnc_version == 5.1 or cnc_version == 5.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and ansible_architecture == 'x86_64'"
+      when: "ansible_system == 'Linux' and ansible_architecture == 'x86_64'"
 
-    - name: Install Containerd for NVIDIA Cloud Native Stack 6.0
+    - name: Install Containerd for NVIDIA Cloud Native Stack
       become: true
       block:
         - name: Download cri-containerd-cni
           get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.6.0/cri-containerd-cni-1.6.0-linux-amd64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.6.0-linux-amd64.tar.gz
+            url: https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/cri-containerd-cni-{{ containerd_version }}-linux-arm64.tar.gz
+            dest: /tmp/cri-containerd-cni-{{ containerd_version }}-linux-arm64.tar.gz
             mode: 0664
 
         - name: Untar cri-containerd-cni
           unarchive:
-            src: /tmp/cri-containerd-cni-1.6.0-linux-amd64.tar.gz
+            src: /tmp/cri-containerd-cni-{{ containerd_version }}-linux-arm64.tar.gz
             dest: /
             remote_src: yes
             extra_opts:
               - --no-overwrite-dir
-      when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and ansible_architecture == 'x86_64'"
-
-    - name: Install Containerd for NVIDIA Cloud Native Stack 6.1
-      become: true
-      block:
-        - name: Download cri-containerd-cni
-          get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.6.2/cri-containerd-cni-1.6.2-linux-amd64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.6.2-linux-amd64.tar.gz
-            mode: 0664
-
-        - name: Untar cri-containerd-cni
-          unarchive:
-            src: /tmp/cri-containerd-cni-1.6.2-linux-amd64.tar.gz
-            dest: /
-            remote_src: yes
-            extra_opts:
-              - --no-overwrite-dir
-      when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and ansible_architecture == 'x86_64'"
-
-    - name: Install Containerd for NVIDIA Cloud Native Stack 6.2
-      become: true
-      block:
-        - name: Download cri-containerd-cni
-          get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.6.5/cri-containerd-cni-1.6.5-linux-amd64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.6.5-linux-amd64.tar.gz
-            mode: 0664
-
-        - name: Untar cri-containerd-cni
-          unarchive:
-            src: /tmp/cri-containerd-cni-1.6.5-linux-amd64.tar.gz
-            dest: /
-            remote_src: yes
-            extra_opts:
-              - --no-overwrite-dir
-      when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'x86_64'"
-
-    - name: Install Containerd for NVIDIA Cloud Native Stack 7.0
-      become: true
-      block:
-        - name: Download cri-containerd-cni
-          get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.6.6/cri-containerd-cni-1.6.6-linux-amd64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.6.6-linux-amd64.tar.gz
-            mode: 0664
-
-        - name: Untar cri-containerd-cni
-          unarchive:
-            src: /tmp/cri-containerd-cni-1.6.6-linux-amd64.tar.gz
-            dest: /
-            remote_src: yes
-            extra_opts:
-              - --no-overwrite-dir
-      when: "cnc_version == 7.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'x86_64'"
-
-    - name: Install Containerd for NVIDIA Cloud Native Stack 6.3 or 7.1 or 8.0
-      become: true
-      block:
-        - name: Download cri-containerd-cni
-          get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.6.8/cri-containerd-cni-1.6.8-linux-amd64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.6.8-linux-amd64.tar.gz
-            mode: 0664
-
-        - name: Untar cri-containerd-cni
-          unarchive:
-            src: /tmp/cri-containerd-cni-1.6.8-linux-amd64.tar.gz
-            dest: /
-            remote_src: yes
-            extra_opts:
-              - --no-overwrite-dir
-      when: "cnc_version == 6.3 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'x86_64' or cnc_version == 7.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'x86_64' or cnc_version == 8.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'x86_64'"
-
-    - name: Install Containerd for NVIDIA Cloud Native Stack 6.4 or 7.2 or 8.1
-      become: true
-      block:
-        - name: Download cri-containerd-cni
-          get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.6.10/cri-containerd-cni-1.6.10-linux-amd64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.6.10-linux-amd64.tar.gz
-            mode: 0664
-
-        - name: Untar cri-containerd-cni
-          unarchive:
-            src: /tmp/cri-containerd-cni-1.6.10-linux-amd64.tar.gz
-            dest: /
-            remote_src: yes
-            extra_opts:
-              - --no-overwrite-dir
-      when: "cnc_version == 6.4 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'x86_64'  or cnc_version == 7.2 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'x86_64' or cnc_version == 8.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'x86_64'"
-
-    - name: Install Containerd for NVIDIA Cloud Native Stack 6.0
-      become: true
-      block:
-        - name: Download cri-containerd-cni
-          get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.6.0/cri-containerd-cni-1.6.0-linux-arm64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.6.0-linux-arm64.tar.gz
-            mode: 0664
-
-        - name: Untar cri-containerd-cni
-          unarchive:
-            src: /tmp/cri-containerd-cni-1.6.0-linux-arm64.tar.gz
-            dest: /
-            remote_src: yes
-            extra_opts:
-              - --no-overwrite-dir
-      when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and ansible_architecture == 'aarch64'"
-
-    - name: Install Containerd for NVIDIA Cloud Native Stack 6.1
-      become: true
-      block:
-        - name: Download cri-containerd-cni
-          get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.6.2/cri-containerd-cni-1.6.2-linux-arm64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.6.2-linux-arm64.tar.gz
-            mode: 0664
-
-        - name: Untar cri-containerd-cni
-          unarchive:
-            src: /tmp/cri-containerd-cni-1.6.2-linux-arm64.tar.gz
-            dest: /
-            remote_src: yes
-            extra_opts:
-              - --no-overwrite-dir
-      when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and ansible_architecture == 'aarch64'"
-
-    - name: Install Containerd for NVIDIA Cloud Native Stack 6.2
-      become: true
-      block:
-        - name: Download cri-containerd-cni
-          get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.6.5/cri-containerd-cni-1.6.5-linux-arm64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.6.5-linux-arm64.tar.gz
-            mode: 0664
-
-        - name: Untar cri-containerd-cni
-          unarchive:
-            src: /tmp/cri-containerd-cni-1.6.5-linux-arm64.tar.gz
-            dest: /
-            remote_src: yes
-            extra_opts:
-              - --no-overwrite-dir
-      when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'aarch64'"
-
-    - name: Install Containerd for NVIDIA Cloud Native Stack 7.0
-      become: true
-      block:
-        - name: Download cri-containerd-cni
-          get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.6.6/cri-containerd-cni-1.6.6-linux-arm64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.6.6-linux-arm64.tar.gz
-            mode: 0664
-
-        - name: Untar cri-containerd-cni
-          unarchive:
-            src: /tmp/cri-containerd-cni-1.6.6-linux-arm64.tar.gz
-            dest: /
-            remote_src: yes
-            extra_opts:
-              - --no-overwrite-dir
-      when: "cnc_version == 7.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'aarch64'"
-
-    - name: Install Containerd for NVIDIA Cloud Native Stack 6.3 or 7.1 or 8.0
-      become: true
-      block:
-        - name: Download cri-containerd-cni
-          get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.6.8/cri-containerd-cni-1.6.8-linux-arm64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.6.8-linux-arm64.tar.gz
-            mode: 0664
-
-        - name: Untar cri-containerd-cni
-          unarchive:
-            src: /tmp/cri-containerd-cni-1.6.8-linux-arm64.tar.gz
-            dest: /
-            remote_src: yes
-            extra_opts:
-              - --no-overwrite-dir
-      when: "cnc_version == 6.3 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'aarch64' or cnc_version == 7.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'aarch64' or cnc_version == 8.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'aarch64'"
-
-    - name: Install Containerd for NVIDIA Cloud Native Stack 7.2 or 8.1
-      become: true
-      block:
-        - name: Download cri-containerd-cni
-          get_url:
-            url: https://github.com/containerd/containerd/releases/download/v1.6.10/cri-containerd-cni-1.6.10-linux-arm64.tar.gz
-            dest: /tmp/cri-containerd-cni-1.6.10-linux-arm64.tar.gz
-            mode: 0664
-
-        - name: Untar cri-containerd-cni
-          unarchive:
-            src: /tmp/cri-containerd-cni-1.6.10-linux-arm64.tar.gz
-            dest: /
-            remote_src: yes
-            extra_opts:
-              - --no-overwrite-dir
-      when: "cnc_version == 6.4 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'aarch64'  or cnc_version == 7.2 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'aarch64' or cnc_version == 8.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and ansible_architecture == 'aarch64'"
+      when: "ansible_system == 'Linux' and ansible_architecture == 'aarch64'"
 
     - name: Configure Containerd for NVIDIA Cloud Native Stack
       become: true
       block:
         - name: Get defaults from containerd
-          command: containerd config default
+          command: /usr/local/bin/containerd config default
           changed_when: false
           register: containerd_config_default
 
@@ -477,16 +217,6 @@
             dest: /etc/containerd/config.toml
             content: "{{ containerd_config_default.stdout }}"
 
-        - name: restart containerd
-          service:
-            name: containerd
-            state: restarted
-            daemon_reload: yes
-      when: "cnc_version >= 4.1 and ansible_distribution == 'Ubuntu'"
-
-    - name: Update Containerd for NVIDIA Cloud Native Stack
-      become: true
-      block:
         - name: Enable systemd cgroups
           shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
@@ -495,7 +225,7 @@
             name: containerd
             state: restarted
             daemon_reload: yes
-      when: "cnc_version >= 4.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '22' and'running' not in k8sup.stdout"
+      when: "cnc_version >= 4.1 and ansible_system == 'Linux' and container_runtime == 'containerd'"
 
     - name: Add Containerd Proxy configuration
       become: true
@@ -531,7 +261,175 @@
             name: containerd
             state: restarted
             daemon_reload: yes
-      when: "proxy == true and cnc_version >= 6.1"
+      when: "proxy == true and cnc_version >= 6.1 and container_runtime == 'containerd'"
+
+    - name: Install CRI-O on Ubuntu 22.04
+      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '22'"
+      become: true
+      block:
+        - name: trim k8s version
+          shell: echo {{ k8s_version }} | awk -F'.' '{print $1"."$2}'
+          register: k8_version
+
+        - name: set version
+          set_fact:
+            version: "{{ k8_version.stdout }}"
+
+        - name: Adding CRI-O apt key
+          apt_key:
+            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_22.04/Release.key"
+            state: present
+
+        - name: Adding CRI-O apt key
+          apt_key:
+            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/x{{ ansible_distribution }}_22.04/Release.key"
+            state: present
+
+        - name: copy the apt keys
+          shell: "{{ item }}"
+          with_items:
+            - cp /etc/apt/trusted.gpg /etc/apt/trusted.gpg.d
+
+        - name: Add CRIO repository
+          apt_repository:
+            repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_22.04 /"
+            state: present
+            filename: devel:kubic:libcontainers:stable.list
+
+        - name: Add CRIO repository
+          apt_repository:
+            repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/x{{ ansible_distribution }}_22.04 /"
+            state: present
+            filename: devel:kubic:libcontainers:stable:cri-o:{{ k8s_version }}.list
+
+    - name: Install CRI-O on Ubuntu 20.04
+      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version <= '20'"
+      become: true
+      block:
+        - name: trim k8s version
+          shell: echo {{ k8s_version }} | awk -F'.' '{print $1"."$2}'
+          register: k8_version
+
+        - name: set version
+          set_fact:
+            version: "{{ k8_version.stdout }}"
+
+        - name: Adding CRI-O apt key
+          apt_key:
+            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_20.04/Release.key"
+            state: present
+
+        - name: Adding CRI-O apt key
+          apt_key:
+            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/x{{ ansible_distribution }}_20.04/Release.key"
+            state: present
+
+        - name: copy the apt keys
+          shell: "{{ item }}"
+          with_items:
+            - cp /etc/apt/trusted.gpg /etc/apt/trusted.gpg.d
+
+        - name: Add CRIO repository
+          apt_repository:
+            repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_20.04 /"
+            state: present
+            filename: devel:kubic:libcontainers:stable.list
+
+        - name: Add CRIO repository
+          apt_repository:
+            repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/x{{ ansible_distribution }}_20.04 /"
+            state: present
+            filename: devel:kubic:libcontainers:stable:cri-o:{{ k8s_version }}.list
+
+    - name: Install CRI-O on Ubuntu
+      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu'"
+      become: true
+      block:
+        - name: Setup CRI-O for Ubuntu
+          become: true
+          lineinfile:
+            line: KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:///var/run/crio/crio.sock"
+            path: /etc/default/kubelet
+            create: yes
+
+        - name: install CRI-O
+          apt:
+            name: ['cri-o', 'cri-o-runc']
+            state: present
+            update_cache: true
+            allow_change_held_packages: yes
+            force: yes
+
+        - name: Create overlay-images directory
+          file:
+            path: /var/lib/containers/storage/overlay-images
+            state: directory
+
+        - name: Update crio.conf
+          blockinfile:
+            path: /etc/crio/crio.conf
+            block: |
+              hooks_dir = [
+                    "/usr/share/containers/oci/hooks.d",
+              ]
+
+    - name: Install CRI-O on RHEL
+      when: "container_runtime == 'cri-o' and ansible_distribution == 'RedHat'"
+      become: true
+      block:
+        - name: trim k8s version
+          shell: echo {{ k8s_version }} | rev | cut -c3- | rev
+          register: k8_version
+
+        - name: set version
+          set_fact:
+            version: "{{ k8_version.stdout }}"
+
+        - name: Add CRIO repository
+          yum_repository:
+            name: devel:kubic:libcontainers:stable:cri-o:{{ version }}
+            baseurl: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/CentOS_8/
+            gpgcheck: 1
+            gpgkey: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/CentOS_8/repodata/repomd.xml.key
+            enabled: 1
+            description: CRIO Repo
+
+        - name: Add CRIO repository
+          yum_repository:
+            baseurl: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8/
+            gpgcheck: 1
+            gpgkey: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8/repodata/repomd.xml.key
+            enabled: 1
+            name: devel:kubic:libcontainers:stable
+            description: CRIO Repo
+
+        - name: install CRI-O
+          yum:
+            name: ['cri-o', 'cri-tools']
+            state: present
+            update_cache: true
+
+    - name: Enable OCI hook for CRI-O
+      when: cnc_docker == true and container_runtime == 'cri-o' or release == 'tegra' and container_runtime == 'cri-o'
+      become: true
+      copy:
+        dest: /usr/share/containers/oci/hooks.d/oci-nvidia-hook.json
+        content: |
+          {
+              "version": "1.0.0",
+              "hook": {
+                  "path": "/usr/bin/nvidia-container-runtime-hook",
+                  "args": ["nvidia-container-runtime-hook", "prestart"],
+                  "env": [
+                      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+                  ]
+              },
+              "when": {
+                  "always": true,
+                  "commands": [".*"]
+              },
+              "stages": ["prestart"]
+          }
 
     - name: Starting and enabling the required services
       become: true
@@ -545,159 +443,189 @@
         - docker
         - kubelet
         - containerd
+        - crio
 
-    - name: Check If Helm is Installed
-      shell: command -v helm >/dev/null 2>&1
-      register: helm_exists
-      no_log: True
-      failed_when: false
-
-    - name: "Install Helm on NVIDIA Cloud Native Stack 5.0"
+    - name: "Install Helm on NVIDIA Cloud Native Stack"
       become: true
       command: "{{ item }}"
       with_items:
-        - curl -O https://get.helm.sh/helm-v3.6.2-linux-amd64.tar.gz
-        - tar -xvzf helm-v3.6.2-linux-amd64.tar.gz
+        - curl -O https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz
+        - tar -xvzf helm-v{{ helm_version }}-linux-amd64.tar.gz
         - cp linux-amd64/helm /usr/local/bin/
-        - rm -rf helm-v3.6.2-linux-amd64.tar.gz linux-amd64
-      when: "cnc_version == 5.1 and ansible_architecture == 'x86_64' or cnc_version == 5.0 and ansible_architecture == 'x86_64'  and ansible_architecture == 'x86_64'"
+        - rm -rf helm-v{{ helm_version }}-linux-amd64.tar.gz linux-amd64
+      when: "ansible_architecture == 'x86_64'"
 
-    - name: "Install Helm on NVIDIA Cloud Native Stack 6.0"
+
+    - name: "Install Helm on NVIDIA Cloud Native Stack"
       become: true
       command: "{{ item }}"
       with_items:
-        - curl -O https://get.helm.sh/helm-v3.8.0-linux-amd64.tar.gz
-        - tar -xvzf helm-v3.8.0-linux-amd64.tar.gz
-        - cp linux-amd64/helm /usr/local/bin/
-        - rm -rf helm-v3.8.0-linux-amd64.tar.gz linux-amd64
-      when: "cnc_version == 6.0 and ansible_architecture == 'x86_64'"
-
-    - name: "Install Helm on NVIDIA Cloud Native Stack 6.1"
-      become: true
-      command: "{{ item }}"
-      with_items:
-        - curl -O https://get.helm.sh/helm-v3.8.1-linux-amd64.tar.gz
-        - tar -xvzf helm-v3.8.1-linux-amd64.tar.gz
-        - cp linux-amd64/helm /usr/local/bin/
-        - chmod 755 /usr/local/bin/helm
-        - rm -rf helm-v3.8.1-linux-amd64.tar.gz linux-amd64
-      when: "cnc_version == 6.1 and ansible_architecture == 'x86_64'"
-
-    - name: "Install Helm on NVIDIA Cloud Native Stack 5.2 or 6.2"
-      become: true
-      command: "{{ item }}"
-      with_items:
-        - curl -O https://get.helm.sh/helm-v3.8.2-linux-amd64.tar.gz
-        - tar -xvzf helm-v3.8.2-linux-amd64.tar.gz
-        - cp linux-amd64/helm /usr/local/bin/
-        - chmod 755 /usr/local/bin/helm
-        - rm -rf helm-v3.8.2-linux-amd64.tar.gz linux-amd64
-      when: "cnc_version == 6.2 and ansible_architecture == 'x86_64' or cnc_version == 5.2 and ansible_architecture == 'x86_64'"
-
-    - name: "Install Helm on NVIDIA Cloud Native Stack 7.0"
-      become: true
-      command: "{{ item }}"
-      with_items:
-        - curl -O https://get.helm.sh/helm-v3.9.0-linux-amd64.tar.gz
-        - tar -xvzf helm-v3.9.0-linux-amd64.tar.gz
-        - cp linux-amd64/helm /usr/local/bin/
-        - chmod 755 /usr/local/bin/helm
-        - rm -rf helm-v3.9.0-linux-amd64.tar.gz linux-amd64
-      when: "cnc_version == 7.0 and ansible_architecture == 'x86_64'"
-
-    - name: "Install Helm on NVIDIA Cloud Native Stack 6.3 or 7.1 or 8.0"
-      become: true
-      command: "{{ item }}"
-      with_items:
-        - curl -O https://get.helm.sh/helm-v3.10.0-linux-amd64.tar.gz
-        - tar -xvzf helm-v3.10.0-linux-amd64.tar.gz
-        - cp linux-amd64/helm /usr/local/bin/
-        - chmod 755 /usr/local/bin/helm
-        - rm -rf helm-v3.10.0-linux-amd64.tar.gz linux-amd64
-      when: "cnc_version == 6.3 and ansible_architecture == 'x86_64' or cnc_version == 7.1 and ansible_architecture == 'x86_64' or cnc_version == 8.0 and ansible_architecture == 'x86_64'"
-
-    - name: "Install Helm on NVIDIA Cloud Native Stack 6.4 or 7.2 or 8.1"
-      become: true
-      command: "{{ item }}"
-      with_items:
-        - curl -O https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz
-        - tar -xvzf helm-v3.10.2-linux-amd64.tar.gz
-        - cp linux-amd64/helm /usr/local/bin/
-        - chmod 755 /usr/local/bin/helm
-        - rm -rf helm-v3.10.2-linux-amd64.tar.gz linux-amd64
-      when: "cnc_version == 6.4 and ansible_architecture == 'x86_64' or cnc_version == 7.2 and ansible_architecture == 'x86_64' or cnc_version == 8.1 and ansible_architecture == 'x86_64'"
-
-    - name: "Install Helm on NVIDIA Cloud Native Stack 5.0"
-      become: true
-      command: "{{ item }}"
-      with_items:
-        - curl -O https://get.helm.sh/helm-v3.6.2-linux-arm64.tar.gz
-        - tar -xvzf helm-v3.6.2-linux-arm64.tar.gz
+        - curl -O https://get.helm.sh/helm-v{{ helm_version }}-linux-arm64.tar.gz
+        - tar -xvzf helm-v{{ helm_version }}-linux-arm64.tar.gz
         - cp linux-arm64/helm /usr/local/bin/
-        - rm -rf helm-v3.6.2-linux-arm64.tar.gz linux-arm64
-      when: "cnc_version == 5.1 and ansible_architecture == 'aarch64' or cnc_version == 5.0  and ansible_architecture == 'aarch64'"
+        - rm -rf helm-v{{ helm_version }}-linux-arm64.tar.gz linux-arm64
+      when: "ansible_architecture == 'aarch64'"
 
-    - name: "Install Helm on NVIDIA Cloud Native Stack 6.0"
-      become: true
-      command: "{{ item }}"
-      with_items:
-        - curl -O https://get.helm.sh/helm-v3.8.0-linux-arm64.tar.gz
-        - tar -xvzf helm-v3.8.0-linux-arm64.tar.gz
-        - cp linux-arm64/helm /usr/local/bin/
-        - rm -rf helm-v3.8.0-linux-arm64.tar.gz linux-arm64
-      when: "cnc_version == 6.0 and ansible_architecture == 'aarch64'"
+## For Jetson Only
+    - name: Get Nvidia Tegra Release
+      shell: uname -r | awk -F'-' '{print $2}'
+      register: release
 
-    - name: "Install Helm on NVIDIA Cloud Native Stack 6.1"
-      become: true
-      command: "{{ item }}"
-      with_items:
-        - curl -O https://get.helm.sh/helm-v3.8.1-linux-arm64.tar.gz
-        - tar -xvzf helm-v3.8.1-linux-arm64.tar.gz
-        - cp linux-arm64/helm /usr/local/bin/
-        - chmod 755 /usr/local/bin/helm
-        - rm -rf helm-v3.8.1-linux-arm64.tar.gz linux-arm64
-      when: "cnc_version == 6.1 and ansible_architecture == 'aarch64'"
+    - set_fact:
+       release: "{{ release.stdout }}"
 
-    - name: "Install Helm on NVIDIA Cloud Native Stack 5.2 or 6.2"
+    - name: Configure Containerd for NVIDIA Cloud Native Stack
       become: true
-      command: "{{ item }}"
-      with_items:
-        - curl -O https://get.helm.sh/helm-v3.8.2-linux-arm64.tar.gz
-        - tar -xvzf helm-v3.8.2-linux-arm64.tar.gz
-        - cp linux-arm64/helm /usr/local/bin/
-        - chmod 755 /usr/local/bin/helm
-        - rm -rf helm-v3.8.2-linux-arm64.tar.gz linux-arm64
-      when: "cnc_version == 6.2 and ansible_architecture == 'aarch64' or cnc_version == 5.2 and ansible_architecture == 'aarch64'"
+      block:
+        - name: Create /etc/containerd
+          file:
+            path: /etc/containerd
+            state: directory
+            
+        - name: Write defaults to config.toml
+          get_url:
+            dest: /etc/containerd/config.toml
+            url: https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/config.toml
+            mode: 0664
 
-    - name: "Install Helm on NVIDIA Cloud Native Stack 7.0"
-      become: true
-      command: "{{ item }}"
-      with_items:
-        - curl -O https://get.helm.sh/helm-v3.9.0-linux-arm64.tar.gz
-        - tar -xvzf helm-v3.9.0-linux-arm64.tar.gz
-        - cp linux-arm64/helm /usr/local/bin/
-        - chmod 755 /usr/local/bin/helm
-        - rm -rf helm-v3.9.0-linux-arm64.tar.gz linux-arm64
-      when: "cnc_version == 7.0 and ansible_architecture == 'aarch64'"
+        - name: Enable systemd cgroups
+          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
-    - name: "Install Helm on NVIDIA Cloud Native Stack 6.3 or 7.1 or 8.0"
-      become: true
-      command: "{{ item }}"
-      with_items:
-        - curl -O https://get.helm.sh/helm-v3.10.0-linux-arm64.tar.gz
-        - tar -xvzf helm-v3.10.0-linux-arm64.tar.gz
-        - cp linux-arm64/helm /usr/local/bin/
-        - chmod 755 /usr/local/bin/helm
-        - rm -rf helm-v3.10.0-linux-arm64.tar.gz linux-arm64
-      when: "cnc_version == 6.3 and ansible_architecture == 'aarch64' or cnc_version == 7.1 and ansible_architecture == 'aarch64' or cnc_version == 8.0 and ansible_architecture == 'aarch64'"
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "cnc_version >= 5.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18' and 'running' not in k8sup.stdout and release == 'tegra' and container_runtime == 'containerd'"
 
-    - name: "Install Helm on NVIDIA Cloud Native Stack 6.4 or 7.2 or 8.1"
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 6.0
       become: true
-      command: "{{ item }}"
-      with_items:
-        - curl -O https://get.helm.sh/helm-v3.10.2-linux-arm64.tar.gz
-        - tar -xvzf helm-v3.10.2-linux-arm64.tar.gz
-        - cp linux-arm64/helm /usr/local/bin/
-        - chmod 755 /usr/local/bin/helm
-        - rm -rf helm-v3.10.2-linux-arm64.tar.gz linux-arm64
-      when: " cnc_version == 6.4 and ansible_architecture == 'aarch64' or cnc_version == 7.2 and ansible_architecture == 'aarch64' or cnc_version == 8.1 and ansible_architecture == 'aarch64'"
+      block:
+        - name: Add NVIDIA Docker apt signing key for Ubuntu
+          apt_key:
+            url: https://nvidia.github.io/nvidia-docker/gpgkey
+            state: present
+
+        - name: Get NVIDIA Docker Apt list
+          get_url:
+            url: https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list
+            dest: /etc/apt/sources.list.d/nvidia-docker.list
+            mode: 0644
+
+        - name: Install NVIDIA Container Runtime
+          apt:
+            name: ['nvidia-container-runtime=3.8.0-1']
+            state: present
+            update_cache: yes
+            force: yes
+      when: "cnc_version == 6.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout and release == 'tegra'"
+
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 6.1
+      become: true
+      block:
+        - name: Add NVIDIA Docker apt signing key for Ubuntu
+          apt_key:
+            url: https://nvidia.github.io/nvidia-docker/gpgkey
+            state: present
+
+        - name: Get NVIDIA Docker Apt list
+          get_url:
+            url: https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list
+            dest: /etc/apt/sources.list.d/nvidia-docker.list
+            mode: 0644
+
+        - name: Install NVIDIA Container Runtime
+          apt:
+            name: ['nvidia-container-runtime=3.9.0-1']
+            state: present
+            update_cache: yes
+            force: yes
+      when: "cnc_version == 6.1 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18' and 'running' not in k8sup.stdout and release == 'tegra'"
+
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 6.2 or 7.0
+      become: true
+      block:
+        - name: Add NVIDIA Docker apt signing key for Ubuntu
+          apt_key:
+            url: https://nvidia.github.io/nvidia-docker/gpgkey
+            state: present
+
+        - name: Get NVIDIA Docker Apt list
+          get_url:
+            url: https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list
+            dest: /etc/apt/sources.list.d/nvidia-docker.list
+            mode: 0644
+
+        - name: Install NVIDIA Container Runtime
+          apt:
+            name: ['nvidia-container-runtime=3.10.0-1']
+            state: present
+            update_cache: yes
+            force: yes
+      when: "cnc_version == 6.2 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout and release == 'tegra' or cnc_version == 7.0 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
+
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 6.3
+      become: true
+      block:
+        - name: Add NVIDIA Docker apt signing key for Ubuntu
+          apt_key:
+            url: https://nvidia.github.io/libnvidia-container/gpgkey
+            state: present
+
+        - name: Get NVIDIA Docker Apt list
+          get_url:
+            url: https://nvidia.github.io/libnvidia-container/ubuntu20.04/libnvidia-container.list
+            dest: /etc/apt/sources.list.d/libnvidia-container.list
+            mode: 0644
+
+        - name: Install NVIDIA Container Runtime
+          apt:
+            name: ['nvidia-container-runtime=3.11.0-1']
+            state: present
+            update_cache: yes
+            force: yes
+      when: "cnc_version == 6.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 6.3 and ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout and release == 'tegra'"
+
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 7.1 or 7.2 or 7.3 or 8.0 or 8.1 or 9.0 
+      become: true
+      block:
+        - name: Add NVIDIA Docker apt signing key for Ubuntu
+          apt_key:
+            url: https://nvidia.github.io/libnvidia-container/gpgkey
+            state: present
+
+        - name: Get NVIDIA Docker Apt list
+          get_url:
+            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
+            dest: /etc/apt/sources.list.d/libnvidia-container.list
+            mode: 0644
+
+        - name: Install NVIDIA Container Runtime
+          apt:
+            name: ['nvidia-container-runtime=3.11.0-1']
+            state: present
+            update_cache: yes
+            force: yes
+      when: "cnc_version == 7.1 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 8.0 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 7.2 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 8.1 and ansible_distribution == 'Ubuntu' and release == 'tegra' "
+
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 7.3 or 8.2 or 9.0 
+      become: true
+      block:
+        - name: Add NVIDIA Docker apt signing key for Ubuntu
+          apt_key:
+            url: https://nvidia.github.io/libnvidia-container/gpgkey
+            state: present
+
+        - name: Get NVIDIA Docker Apt list
+          get_url:
+            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
+            dest: /etc/apt/sources.list.d/libnvidia-container.list
+            mode: 0644
+
+        - name: Install NVIDIA Container Runtime
+          apt:
+            name: ['nvidia-container-runtime=3.12.0-1']
+            state: present
+            update_cache: yes
+            force: yes
+      when: "cnc_version == 7.3 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 8.2 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 9.0 and ansible_distribution == 'Ubuntu' and release == 'tegra' "

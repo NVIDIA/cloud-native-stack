@@ -1,0 +1,209 @@
+- hosts: all
+  become: true
+  become_method: sudo
+  vars_files:
+    - cnc_values.yaml
+  vars:
+    daemon_json:
+      default-runtime: nvidia
+      runtimes:
+        nvidia:
+          path: /usr/bin/nvidia-container-runtime
+          runtimeArgs: []
+  tasks:
+
+    - name: Check docker is installed
+      shell: docker
+      register: docker_exists
+      no_log: true
+      failed_when: false
+
+    - name: Check NVIDIA docker is installed
+      shell: nvidia-docker
+      register: nvidia_docker_exists
+      no_log: true
+      failed_when: false
+
+    - name: Install Docker Dependencies
+      when: docker_exists.rc >= 1 or nvidia_docker_exists.rc >= 1
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - lsb-release
+          - gnupg
+          - apt-utils
+          - unzip
+        state: latest
+        update_cache: true
+
+    - name: Add Docker APT signing key
+      when: docker_exists.rc >= 1
+      ansible.builtin.apt_key:
+        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+        state: present
+
+    - name: Add Docker repository into sources list
+      when: docker_exists.rc >= 1
+      ansible.builtin.apt_repository:
+        repo: "deb https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+
+    - name: Create docker systemd file
+      when: docker_exists.rc >= 1
+      become: true
+      copy:
+        dest: /etc/systemd/system/docker.service
+        content: |
+          [Unit]
+          Description=Docker Application Container Engine
+          Documentation=https://docs.docker.com
+          After=network-online.target docker.socket firewalld.service containerd.service
+          Wants=network-online.target
+          Requires=docker.socket containerd.service
+
+          [Service]
+          Type=notify
+          ExecStart=/usr/bin/dockerd -H unix:// --containerd=/run/containerd/containerd.sock
+          ExecReload=/bin/kill -s HUP $MAINPID
+          TimeoutSec=0
+          RestartSec=2
+          Restart=always
+          StartLimitBurst=3
+          StartLimitInterval=60s
+          LimitNOFILE=infinity
+          LimitNPROC=infinity
+          LimitCORE=infinity
+          TasksMax=infinity
+          Delegate=yes
+          KillMode=process
+          OOMScoreAdjust=-500
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Install Docker
+      when: docker_exists.rc >= 1
+      apt:
+        name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+        state: latest
+        force: yes
+        update_cache: true
+
+    - name: remove nvidia-docker v1
+      when: nvidia_docker_exists.rc == 0
+      apt:
+        name: nvidia-docker
+        state: absent
+        purge: yes
+
+    - name: Add NVIDIA Docker APT signing key
+      when: nvidia_docker_exists.rc >= 1
+      apt_key:
+        url: https://nvidia.github.io/nvidia-docker/gpgkey
+        state: present
+
+    - name: Add NVIDIA Docker repository into sources list
+      when: ansible_architecture == 'aarch64' and nvidia_docker_exists.rc >= 1
+      apt_repository:
+        repo: "{{ item }}"
+        state: present
+        filename: 'nvidia-docker'
+        update_cache: yes
+      with_items:
+        - "deb https://nvidia.github.io/libnvidia-container/ubuntu18.04/arm64 /"
+        - "deb https://nvidia.github.io/nvidia-container-runtime/ubuntu18.04/arm64 /"
+        - "deb https://nvidia.github.io/nvidia-docker/ubuntu18.04/arm64 /"
+
+    - name: Add NVIDIA Docker repository into sources list
+      when: ansible_architecture == 'x86_64' and nvidia_docker_exists.rc >= 1
+      apt_repository:
+        repo: "{{ item }}"
+        state: present
+        filename: 'nvidia-docker'
+        update_cache: yes
+      with_items:
+        - "deb https://nvidia.github.io/libnvidia-container/ubuntu18.04/amd64 /"
+        - "deb https://nvidia.github.io/nvidia-container-runtime/ubuntu18.04/amd64 /"
+        - "deb https://nvidia.github.io/nvidia-docker/ubuntu18.04/amd64 /"
+
+    - name: Install NVIDIA Docker and NVIDIA Container Runtime
+      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.1 or nvidia_docker_exists.rc >= 1 and cnc_version == 7.2
+      apt:
+        name: [ "nvidia-docker2", "nvidia-container-runtime=3.11.0-1" ]
+        state: present
+        update_cache: true
+
+    - name: Install NVIDIA Docker and NVIDIA Container Runtime
+      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.2 or nvidia_docker_exists.rc >= 1 and cnc_version == 7.3 or nvidia_docker_exists.rc >= 1 and cnc_version == 9.0
+      apt:
+        name: [ "nvidia-docker2", "nvidia-container-runtime=3.12.0-1" ]
+        state: present
+        update_cache: true
+
+    - name: Update docker default runtime
+      when: docker_exists.rc >= 1 and nvidia_docker_exists.rc >= 1
+      copy:
+        content: "{{ daemon_json | to_nice_json }}"
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Restart Docker Service
+      service: name=docker state=restarted enabled=yes
+
+    - name: Update Containerd Runtime for NVIDIA Cloud Native Stack
+      become: true
+      block:
+        - name: Create /etc/containerd
+          file:
+            path: /etc/containerd
+            state: directory
+
+        - name: Write defaults to config.toml
+          get_url:
+            dest: /etc/containerd/config.toml
+            url: https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/config.toml
+            mode: 0664
+
+        - name: Enable systemd cgroups
+          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and container_runtime == 'containerd'"
+
+    - name: NGC CLI Setup
+      become: true
+      block:
+        - name: Download CLI
+          get_url:
+            url: https://ngc.nvidia.com/downloads/ngccli_linux.zip
+            dest: /tmp/ngccli_linux.zip
+            mode: 0664
+
+        - name: Install NGC CLI
+          unarchive:
+            src: /tmp/ngccli_linux.zip
+            dest: /usr/local/bin/
+            remote_src: yes
+
+    - name: Reload the CRI-O configuration
+      when: container_runtime == 'cri-o'
+      become: true
+      block:
+       - name: reload
+         systemd:
+           daemon_reload: true
+
+       - name: restart
+         service:
+           name: "{{ item }}"
+           state: restarted
+         with_items:
+           - crio
+           - cri-o

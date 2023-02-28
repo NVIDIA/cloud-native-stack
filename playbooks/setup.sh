@@ -16,28 +16,52 @@ cp cnc_values_$version.yaml cnc_values.yaml
 
 ansible_install() {
   os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
-  if ! hash sudo python 2>/dev/null
+  if ! command -v python 2>/dev/null
   then
-    if ! hash sudo python3 2>/dev/null
+    if ! command -v python3 2>/dev/null
     then
       if [[ $os == "ubuntu" ]]; then
         sudo apt update 2>&1 >/dev/null && sudo apt install python3 python3-pip sshpass -y 2>&1 >/dev/null
-      elif [ $os == "rhel*" ]; then
-        sudo yum install python3 python3-pip -y 2>&1 >/dev/null
+      elif [ $os == '"rhel"' ]; then
+       sudo yum update -y && sudo yum install python39 python39-pip sshpass -y 2>&1 >/dev/null
       fi
 	else
 		if [[ $os == "ubuntu" ]]; then
 			sudo apt update 2>&1 >/dev/null && sudo apt install python3-pip sshpass -y 2>&1 >/dev/null
-		elif [ $os == "rhel*" ]; then
-			sudo yum update 2>&1 >/dev/null && sudo yum install python3-pip sshpass -y 2>&1 >/dev/null
+		elif [ $os == '"rhel"' ]; then
+			sudo yum update -y 2>&1 >/dev/null && sudo yum install python39-pip sshpass -y 2>&1 >/dev/null
 		fi
     fi
+	else
+ 		if [[ $os == "ubuntu" ]]; then
+			sudo apt update 2>&1 >/dev/null && sudo apt install python3-pip sshpass -y 2>&1 >/dev/null
+		elif [ $os == '"rhel"' ]; then
+			sudo yum update -y 2>&1 >/dev/null && sudo yum install python39-pip sshpass -y 2>&1 >/dev/null
+		fi 
   fi
-  pip3 install ansible==6.7.0 2>&1 >/dev/null
+  uname=$(uname -r | awk -F'-' '{print $NF}')
+  if [[ $uname == 'tegra' ]]; then
+          pip3 install ansible 2>&1 >/dev/null
+  else
+        pip3 install ansible==7.0.0 2>&1 >/dev/null
+  fi
+
   export PATH=$PATH:$HOME/.local/bin
 }
 # Prechecks
 prerequisites() {
+os=$(uname -o)
+if [[ $os == 'GNU/Linux' ]]; then
+os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
+      if [[ $os == "ubuntu" ]]; then
+    	sudo apt update 2>&1 >/dev/null && sudo apt install curl -y 2>&1 >/dev/null
+      elif [ $os == '"rhel"' ]; then
+    	sudo yum update -y && sudo yum install curl -y 2>&1 >/dev/null
+      fi
+elif [[ $os == 'Darwin' ]]; then
+	ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
+	brew install curl
+fi
 url=$(cat cnc_values.yaml | grep k8s_apt_key | awk -F '//' '{print $2}' | awk -F'/' '{print $1}')
 code=$(curl --connect-timeout 3 -s -o /dev/null -w "%{http_code}" http://$url)
 echo "Checking this system has valid prerequisites"
@@ -52,10 +76,10 @@ elif [ $code != 200 ]; then
 fi
 }
 
-if ! hash sudo ansible 2>/dev/null
+if ! command -v ansible 2>/dev/null
 then
     prerequisites
-	ansible_install
+    ansible_install
 else
 	os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
         if [[ $os == "ubuntu" ]]; then

@@ -1,5 +1,14 @@
 cnc_version: 7.1
 
+## Components Versions
+# Container Runtime options are containerd, cri-o
+container_runtime: "containerd"
+containerd_version: "1.6.8"
+k8s_version: "1.24.6"
+helm_version: "3.10.0"
+gpu_operator_version: "22.9.0"
+network_operator_version: "1.3.0"
+
 # GPU Operator Values
 enable_gpu_operator: yes
 gpu_driver_version: "520.61.07"
@@ -10,8 +19,6 @@ enable_gds: no
 enable_secure_boot: no
 enable_vgpu: no
 vgpu_license_server: ""
-
-## NGC Values
 # URL of Helm repo to be added. If using NGC get this from the fetch command in the console
 helm_repository: https://helm.ngc.nvidia.com/nvidia
 # Name of the helm chart to be deployed
@@ -20,12 +27,9 @@ gpu_operator_helm_chart: nvidia/gpu-operator
 gpu_operator_registry_password: ""
 ## This is most likely an NGC email
 gpu_operator_registry_email: ""
-
 ## This is most likely GPU Operator Driver Registry
 gpu_operator_driver_registry: "nvcr.io/nvidia"
 gpu_operator_registry_username: "$oauthtoken"
-
-cnc_validation: no
 
 # Network Operator Values
 ## If the Network Operator is yes then make sure enable_rdma as well yes
@@ -44,8 +48,11 @@ cnc_docker: no
 ## Enable For Cloud Native Stack Developers with TRD Driver
 cnc_nvidia_driver: no
 
-## Kubernetes apt resources
+## Kubernetes resources
 k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 k8s_apt_repository: " https://apt.kubernetes.io/ kubernetes-xenial main"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-archive-keyring.gpg"
 k8s_registry: "k8s.gcr.io"
+
+## Cloud Native Stack Validation
+cnc_validation: no

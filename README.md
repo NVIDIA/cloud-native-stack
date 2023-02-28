@@ -11,12 +11,17 @@ Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA L
 | Version | Initial Release Date   | Platform              | OS    | Containerd | CRI-O | K8s    | Helm  | NVIDIA GPU Operator | NVIDIA Network Operator | NVIDIA Data Center Driver |
 | :---:   |    :---:     | :---:                           | :---:  | :---:      | :----: |  :---: | :---:        | :---:            | :---:      | :---: |
 | 9.0    | 28 Feb 2023   | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS            | 1.6.16 | 1.26.1 | 1.26.1 |  3.11.0 | 22.9.2       | 1.4.0(x86 only)            | 525.85.12  |
+| 9.0     | 28 Feb 2023   | Jetson Devices(AGX, NX, Orin)  | JetPack 5.1 and JetPack 5.0   | 1.6.16 | 1.26.1 | 1.26.1 | 3.11.0 | N/A         | N/A              | N/A         |
 |         |                |                               |                             |            |       |       |                  |            |                  | 
 | 8.2    | 28 Feb 2023   | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS            | 1.6.16 | 1.25.2 | 1.25.6 |  3.11.0 | 22.9.2       | 1.4.0(x86 only)            | 525.85.12  |
+| 8.2     | 28 Feb 2023   | Jetson Devices(AGX, NX, Orin)  | JetPack 5.1 and JetPack 5.0   | 1.6.16 | 1.25.2 | 1.25.2 | 3.11.0 | N/A         | N/A              | N/A         |
 | 8.1    | 15 Dec 2022   | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS            | 1.6.10 | N/A | 1.25.4 |  3.10.2 | 22.9.1       | 1.4.0(x86 only)            | 525.60.13  |
+| 8.1     | 15 Dec 2022   | Jetson Devices(AGX, NX, Orin)  | JetPack 5.0 and JetPack 4.6.1   | 1.6.10 | N/A | 1.25.4 | 3.10.2 | N/A         | N/A              | N/A         |
 | 8.0     | 14 Oct 2022   | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS            | 1.6.8 | N/A | 1.25.2 |  3.10.0 | 22.9.0       | 1.3.0(x86 only)            | 520.61.07  |
+| 8.0     | 15 Dec 2022   | Jetson Devices(AGX, NX)  | JetPack 5.0 and JetPack 4.6.1   | 1.6.8 | N/A | 1.25.2 | 3.10.0 | N/A         | N/A              | N/A         |
 |         |                |                               |                             |            |       |       |                  |            |                  | 
 | 7.3    | 28 Feb 2023   | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS            | 1.6.16 | 1.24.4 | 1.24.10 |  3.11.0 | 22.9.2       | 1.4.0(x86 only)            | 525.85.12  |
+| 7.3     | 28 Feb 2023   | Jetson Devices(AGX, NX, Orin)  | JetPack 5.1 and JetPack 5.0   | 1.6.16 | 1.24.4 | 1.24.10 | 3.11.0 | N/A         | N/A              | N/A  
 | 7.2    | 15 Dec 2022   | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS            | 1.6.10 | N/A | 1.24.8 |  3.10.2 | 22.9.1       | 1.4.0(x86 only)            | 525.60.13  |
 | 7.1     | 14 Oct 2022   | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS            | 1.6.8 | N/A | 1.24.6 |  3.10.0 | 22.9.0       | 1.3.0(x86 only)            | 520.61.07  | 
 | 7.0     | 11 Jul 2022   | NVIDIA Certified Server (x86)  | Ubuntu 22.04 LTS            | 1.6.6 | N/A | 1.24.2 |  3.9.0 | 1.11.0       | 1.2.0            | 515.48.07   | 

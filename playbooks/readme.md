@@ -1,45 +1,188 @@
 <h1>Ansible Playbooks for NVIDIA Cloud Native Stack </h1>
 
-<h2> Available Ansible Playbooks </h2>
+<h1> NVIDIA Cloud Native Stack </h1>
 
-<h3> Ubuntu Systems </h3>
+This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Stack.
 
-- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v5.0.md)
-- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v5.1.md)
-- [Ubuntu(x86-64) v5.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v5.2.md)
-- [Ubuntu(x86-64) v6.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v6.0.md)
-- [Ubuntu(x86-64) v5.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v5.1.md)
-- [Ubuntu(x86-64) v6.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v6.1.md)
-- [Ubuntu(x86-64) v6.2](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86_v6.2.md)
-- [Ubuntu(x86-64 & arm64) v6.3](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_x86-arm64_v6.3.md)
-- [Ubuntu(x86-64) v7.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_x86_v7.0.md)
-- [Ubuntu(x86-64 & arm64) v7.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_x86-arm64_v7.1.md)
-- [Ubuntu(x86-64 & arm64) v7.2](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_x86-arm64_v7.2.md)
-- [Ubuntu(x86-64 & arm64) v8.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_x86-arm64_v8.0.md)
-- [Ubuntu(x86-64 & arm64) v8.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_x86-arm64_v8.1.md)
+### The following Ansible Playbooks are available
 
-<h3> Jetson Systems </h3>
+- [Install NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cnc-installation.yaml)
 
-- [Jetson Xavier v5.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v5.0.md)
-- [Jetson Xavier v6.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v6.0.md)
-- [Jetson Xavier v6.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v6.1.md)
-- [Jetson Xavier v6.2](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v6.2.md)
-- [Jetson Xavier v6.3](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v6.3.md)
-- [Jetson Xavier v7.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v7.0.md)
-- [Jetson Xavier v7.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v7.1.md)
-- [Jetson Xavier v7.2](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v7.2.md)
-- [Jetson Xavier v8.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v8.0.md)
-- [Jetson Xavier v8.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Jetson_Xavier_v8.1.md)
+- [Upgrade NVIDIA Cloud Native Stack ](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cnc-upgrade.yaml)
 
-### Ubuntu Server for Developers
-- [Ubuntu 20.04 Server Developer x86 v6.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_Developer_x86_v6.1.md)
-- [Ubuntu 20.04 Server Developer x86 v6.2](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_Developer_x86_v6.2.md)
-- [Ubuntu 20.04 Server Developer x86 & arm64 v6.3](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-20-04_Server_Developer_x86-arm64_v6.3.md)
-- [Ubuntu 22.04 Server Developer x86 v7.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_Developer_x86_v7.0.md)
-- [Ubuntu 22.04 Server Developer x86 & arm64 v7.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_Developer_x86-arm64_v7.1.md)
-- [Ubuntu 22.04 Server Developer x86 & arm64 v7.2](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_Developer_x86-arm64_v7.2.md)
-- [Ubuntu 22.04 Server Developer x86 & arm64 v8.0](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_Developer_x86-arm64_v8.0.md)
-- [Ubuntu 22.04 Server Developer x86 & arm64 v8.1](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/guides/Ubuntu-22-04_Server_Developer_x86-arm64_v8.1.md)
+- [Validate NVIDIA Cloud Native Stack ](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cnc-validation.yaml)
+
+- [Uninstall NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cnc-uninstall.yaml)
+
+## Prerequisites
+
+The following instructions assume the following:
+
+- You have [NVIDIA-Certified Systems](https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html) with Mellanox CX NICs for x86-64 servers 
+- You have [NVIDIA Qualified Systems](https://www.nvidia.com/en-us/data-center/data-center-gpus/qualified-system-catalog/?start=0&count=50&pageNumber=1&filters=eyJmaWx0ZXJzIjpbXSwic3ViRmlsdGVycyI6eyJwcm9jZXNzb3JUeXBlIjpbIkFSTS1UaHVuZGVyWDIiLCJBUk0tQWx0cmEiXX0sImNlcnRpZmllZEZpbHRlcnMiOnt9LCJwYXlsb2FkIjpbXX0=) for arm64 servers 
+  `NOTE:` For ARM systems, NVIDIA Network Operator is not supported yet. 
+- You will perform a clean install.
+
+To determine if your system qualifies as an NVIDIA Certified System, review the list of NVIDIA Certified Systems [here](https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html). 
+
+Please note that NVIDIA Cloud Native Stack is validated only on systems with the default kernel (not HWE).
+
+### Installing the Ubuntu Operating System
+These instructions require Ubuntu server please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
+ 
+## Using the Ansible playbooks 
+This section describes how to use the ansible playbooks.
+
+### Clone the git repository
+
+Run the below commands to clone the NVIDIA Cloud Native Stack ansible playbooks.
+
+```
+git clone https://github.com/NVIDIA/cloud-native-stack.git
+cd cloud-native-stack/playbooks
+```
+
+Update the hosts file in playbooks directory with master and worker nodes(if you have) IP's with username and password like below
+
+```
+nano hosts
+
+[master]
+10.110.16.178 ansible_ssh_user=nvidia ansible_ssh_pass=nvidipass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+[node]
+10.110.16.179 ansible_ssh_user=nvidia ansible_ssh_pass=nvidiapass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+```
+
+### Installation
+Cloud Native Stack Supports below versions.
+
+Available versions are:
+
+- 9.0
+- 8.2
+- 8.1
+- 7.3
+- 7.2
+- 7.1
+- 7.0
+- 6.4
+- 6.3
+- 6.2
+- 6.1
+
+Edit the `cnc_version.yaml` and update the version you want to install
+
+```
+nano cnc_version.yaml
+```
+
+If you want to cusomize any predefined components versions or any other custom paramenters, modify the respective CNS version values file like below and trigger the installation. 
+
+Example:
+```
+$ nano cnc_values_8.1.yaml
+
+cnc_version: 8.1
+
+## Components Versions
+# Container Runtime options are containerd, cri-o
+container_runtime: "containerd"
+containerd_version: "1.6.10"
+k8s_version: "1.25.4"
+helm_version: "3.10.2"
+gpu_operator_version: "22.9.1"
+network_operator_version: "1.4.0"
+
+# GPU Operator Values
+enable_gpu_operator: yes
+gpu_driver_version: "525.85.12"
+enable_mig: no
+mig_profile: all-disabled
+mig_strategy: single
+enable_gds: no
+enable_secure_boot: no
+enable_vgpu: no
+vgpu_license_server: ""
+# URL of Helm repo to be added. If using NGC get this from the fetch command in the console
+helm_repository: https://helm.ngc.nvidia.com/nvidia
+# Name of the helm chart to be deployed
+gpu_operator_helm_chart: nvidia/gpu-operator
+## If using a private/protected registry. NGC API Key. Leave blank for public registries
+gpu_operator_registry_password: ""
+## This is most likely an NGC email
+gpu_operator_registry_email: ""
+## This is most likely GPU Operator Driver Registry
+gpu_operator_driver_registry: "nvcr.io/nvidia"
+gpu_operator_registry_username: "$oauthtoken"
+
+# Network Operator Values
+## If the Network Operator is yes then make sure enable_rdma as well yes
+enable_network_operator: no
+## Enable RDMA yes for NVIDIA Certification
+enable_rdma: no
+
+# Prxoy Configuration
+proxy: no
+http_proxy: ""
+https_proxy: ""
+
+# Cloud Native Stack for Developers Values
+## Enable for Cloud Native Stack Developers
+cnc_docker: no
+## Enable For Cloud Native Stack Developers with TRD Driver
+cnc_nvidia_driver: no
+
+## Kubernetes resources
+k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+k8s_apt_repository: " https://apt.kubernetes.io/ kubernetes-xenial main"
+k8s_apt_ring: "/etc/apt/keyrings/kubernetes-archive-keyring.gpg"
+k8s_registry: "registry.k8s.io"
+
+## Cloud Native Stack Validation
+cnc_validation: no
+
+```
+
+Install the NVIDIA Cloud Native Stack stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
+```
+bash setup.sh install
+```
+#### Custom Configuration
+By default Cloud Native Stack uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` in `cnc_values_<version>.yaml`.
+
+Example:
+```
+
+## Kubernetes apt resources
+k8s_apt_key: "https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg"
+k8s_apt_repository: "deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main"
+k8s_registry: "registry.aliyuncs.com/google_containers"
+```
+
+### Validation
+
+Run the below command to check if the installed versions are match with predefined versions of the NVIDIA Cloud Native Stack. Here' "Ignored" tasks refer to failed and "Changed/Ok" tasks refer to success.
+
+Run the validation playbook after 5 minutes once completing the NVIDIA Cloud Native Stack Installation. Depends on your internet speed, you need to wait more time.
+
+```
+bash setup.sh validate
+```
+### Upgrade 
+
+Cloud Native Stack can be support life cycle management with upgrade option. you can upgrade the current running stack version to next available version. 
+
+Upgrade option is available from one minor version to next minor version of CNS.
+
+Example: Cloud Native Stack 8.0 can upgrade to 8.1 but 8.x can not upgrade to 9.x
+
+### Uninstall
+
+Run the below command to uninstall the NVIDIA Cloud Native Stack. Tasks being "ignored" refers to no kubernetes cluster being available.
+
+```
+bash setup.sh uninstall
+```
 
 `NOTE`
 A list of older NVIDIA Cloud Native Stack versions (formerly known as Cloud Native Core) can be found [here](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/older_versions/readme.md)

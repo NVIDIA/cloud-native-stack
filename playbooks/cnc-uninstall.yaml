@@ -27,6 +27,29 @@
      args:
        executable: /bin/bash
 
+   - name: Uninstall Helm Charts on NVIDIA Cloud Native Stack
+     when:  release != 'tegra'
+     async: 120
+     shell: |
+       count=$(helm ls -A | grep -v NAME | wc -l)
+       if [[ $count > 0 ]]; then
+        for name in `helm ls -A | awk '{print $1}' | grep -v NAME`
+        do
+          for namespace in `helm ls -A | grep $name |  awk '{print $2}' | grep -v NAMESPACE`
+            do
+              helm del $name -n $namespace --wait
+              pods=$(kubectl get pods -n $namespace | grep -v NAME | wc -l)
+              while [ $pods != 0 ]
+              do
+                sleep 10
+                pods=$(kubectl get pods -n $namespace | grep -v NAME | wc -l)
+              done
+            done
+        done
+       fi
+     args:
+      executable: /bin/bash
+
 - hosts: all
   gather_facts: yes
   become: true

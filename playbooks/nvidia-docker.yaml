@@ -127,8 +127,16 @@
         - "deb https://nvidia.github.io/nvidia-container-runtime/ubuntu18.04/amd64 /"
         - "deb https://nvidia.github.io/nvidia-docker/ubuntu18.04/amd64 /"
 
+
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
-      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.1 or nvidia_docker_exists.rc >= 1 and cnc_version == 7.2
+      when: nvidia_docker_exists.rc >= 1 and cnc_version == 7.0 or nvidia_docker_exists.rc >= 1 and cnc_version == 6.2
+      apt:
+        name: [ "nvidia-docker2", "nvidia-container-runtime=3.10.0-1" ]
+        state: present
+        update_cache: true
+
+    - name: Install NVIDIA Docker and NVIDIA Container Runtime
+      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.0 or nvidia_docker_exists.rc >= 1 and cnc_version == 8.1 or nvidia_docker_exists.rc >= 1 and cnc_version == 7.1 or nvidia_docker_exists.rc >= 1 and cnc_version == 7.2 or nvidia_docker_exists.rc >= 1 and cnc_version == 6.4
       apt:
         name: [ "nvidia-docker2", "nvidia-container-runtime=3.11.0-1" ]
         state: present

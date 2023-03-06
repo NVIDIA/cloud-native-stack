@@ -42,13 +42,12 @@ ansible_install() {
                 sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
                 sudo ln -sf /usr/bin/python3.9 /usr/bin/python
             fi
-        else
-            if [[ $os == "ubuntu" ]]; then
-                sudo apt update 2>&1 >/dev/null && sudo apt install python3-pip sshpass -y 2>&1 >/dev/null
-            elif [ $os == "rhel*" ]; then
-                sudo yum update 2>&1 >/dev/null && sudo yum install python3-pip sshpass -y 2>&1 >/dev/null
-            fi
         fi
+    	if [[ $os == "ubuntu" ]]; then
+        	sudo apt update 2>&1 >/dev/null && sudo apt install python3-pip sshpass -y 2>&1 >/dev/null
+    	elif [ $os == "rhel*" ]; then
+        	sudo yum update 2>&1 >/dev/null && sudo yum install python3-pip sshpass -y 2>&1 >/dev/null
+    	fi
     fi
   fi
 

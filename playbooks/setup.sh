@@ -26,8 +26,8 @@ ansible_install() {
         sudo yum install python3 python3-pip -y 2>&1 >/dev/null
       fi
     else
-      version=$(python3 --version | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
-        if [[ $version < 3.8 ]]; then
+      pversion=$(python3 --version | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
+        if [[ $pversion < 3.8 ]]; then
             if [[ $os == "ubuntu" ]]; then
 			os_version=$(cat /etc/os-release  | grep -iw 'VERSION_ID' | awk -F'=' '{print $2}')
                 if [[ $os_version == '"20.04"' ]]; then

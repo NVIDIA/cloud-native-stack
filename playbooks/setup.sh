@@ -27,7 +27,7 @@ ansible_install() {
       fi
     else
       pversion=$(python3 --version | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
-        if [[ $pversion < 3.8 ]]; then
+        if [[ $pversion < 3.8 || $pversion == 3.8 ]]; then
             if [[ $os == "ubuntu" ]]; then
 			os_version=$(cat /etc/os-release  | grep -iw 'VERSION_ID' | awk -F'=' '{print $2}')
                 if [[ $os_version == '"20.04"' ]]; then

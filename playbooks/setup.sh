@@ -22,23 +22,36 @@ ansible_install() {
     then
       if [[ $os == "ubuntu" ]]; then
         sudo apt update 2>&1 >/dev/null && sudo apt install python3 python3-pip sshpass -y 2>&1 >/dev/null
-      elif [ $os == '"rhel"' ]; then
-       sudo yum update -y && sudo yum install python39 python39-pip sshpass -y 2>&1 >/dev/null
+      elif [ $os == "rhel*" ]; then
+        sudo yum install python3 python3-pip -y 2>&1 >/dev/null
       fi
-	else
-		if [[ $os == "ubuntu" ]]; then
-			sudo apt update 2>&1 >/dev/null && sudo apt install python3-pip sshpass -y 2>&1 >/dev/null
-		elif [ $os == '"rhel"' ]; then
-			sudo yum update -y 2>&1 >/dev/null && sudo yum install python39-pip sshpass -y 2>&1 >/dev/null
-		fi
+    else
+      version=$(python3 --version | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
+        if [[ $version < 3.8 ]]; then
+            if [[ $os == "ubuntu" ]]; then
+			os_version=$(cat /etc/os-release  | grep -iw 'VERSION_ID' | awk -F'=' '{print $2}')
+                if [[ $os_version == '"20.04"' ]]; then
+                	sudo apt update 2>&1 >/dev/null && sudo apt install python3.9 python3-pip sshpass -y 2>&1 >/dev/null
+                	sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
+                	sudo ln -sf /usr/bin/python3.9 /usr/bin/python
+					sudo ln -sf /usr/lib/python3/dist-packages/apt_pkg.cpython-* /usr/lib/python3/dist-packages/apt_pkg.so
+					sudo ln -sf /usr/lib/python3/dist-packages/apt_inst.cpython-* /usr/lib/python3/dist-packages/apt_inst.so
+				fi
+            elif [ $os == "rhel*" ]; then
+                sudo yum update 2>&1 >/dev/null && sudo yum install python39 python3-pip sshpass -y 2>&1 >/dev/null
+                sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
+                sudo ln -sf /usr/bin/python3.9 /usr/bin/python
+            fi
+        else
+            if [[ $os == "ubuntu" ]]; then
+                sudo apt update 2>&1 >/dev/null && sudo apt install python3-pip sshpass -y 2>&1 >/dev/null
+            elif [ $os == "rhel*" ]; then
+                sudo yum update 2>&1 >/dev/null && sudo yum install python3-pip sshpass -y 2>&1 >/dev/null
+            fi
+        fi
     fi
-	else
- 		if [[ $os == "ubuntu" ]]; then
-			sudo apt update 2>&1 >/dev/null && sudo apt install python3-pip sshpass -y 2>&1 >/dev/null
-		elif [ $os == '"rhel"' ]; then
-			sudo yum update -y 2>&1 >/dev/null && sudo yum install python39-pip sshpass -y 2>&1 >/dev/null
-		fi 
   fi
+
   uname=$(uname -r | awk -F'-' '{print $NF}')
   if [[ $uname == 'tegra' ]]; then
           pip3 install ansible 2>&1 >/dev/null
@@ -66,10 +79,10 @@ url=$(cat cnc_values.yaml | grep k8s_apt_key | awk -F '//' '{print $2}' | awk -F
 code=$(curl --connect-timeout 3 -s -o /dev/null -w "%{http_code}" http://$url)
 echo "Checking this system has valid prerequisites"
 echo
-if [ $code == 200 ]; then
+if [[ $code == 200 ]]; then
 	echo "This system has an internet access"
 	echo
-elif [ $code != 200 ]; then
+elif [[ $code != 200 ]]; then
     echo "This system does not have a internet access"
 	echo
     exit 1

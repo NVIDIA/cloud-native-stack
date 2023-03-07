@@ -12,6 +12,7 @@
        release: "{{ release.stdout }}"
        
    - name: Uninstall the GPU Operator with MIG
+     ignore_errors: true
      shell: |
        kubectl label nodes --all nvidia.com/mig.config=all-disabled --overwrite
        sleep 5
@@ -28,10 +29,11 @@
        executable: /bin/bash
 
    - name: Uninstall Helm Charts on NVIDIA Cloud Native Stack
+     ignore_errors: true
      when:  release != 'tegra'
      async: 120
      shell: |
-       count=$(helm ls -A | grep -v NAME | wc -l)
+       count=$(helm ls -A | egrep 'gpu-operator|network-operator' | grep -v NAME | wc -l)
        if [[ $count > 0 ]]; then
         for name in `helm ls -A | awk '{print $1}' | grep -v NAME`
         do

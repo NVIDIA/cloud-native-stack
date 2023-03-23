@@ -16,49 +16,55 @@ cp cnc_values_$version.yaml cnc_values.yaml
 
 ansible_install() {
   os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
-  if ! command -v python 2>/dev/null
+  if [ ! command -v python 2>/dev/null || ! command -v python3 2>/dev/null ]
   then
-    if ! command -v python3 2>/dev/null
-    then
-      if [[ $os == "ubuntu" ]]; then
-        sudo apt update 2>&1 >/dev/null && sudo apt install python3 python3-pip sshpass -y 2>&1 >/dev/null
-      elif [ $os == "rhel*" ]; then
-        sudo yum install python3 python3-pip -y 2>&1 >/dev/null
-      fi
-    else
-      pversion=$(python3 --version | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
-        if [[ $pversion < 3.8 || $pversion == 3.8 ]]; then
-            if [[ $os == "ubuntu" ]]; then
-			os_version=$(cat /etc/os-release  | grep -iw 'VERSION_ID' | awk -F'=' '{print $2}')
-                if [[ $os_version == '"20.04"' ]]; then
-                	sudo apt update 2>&1 >/dev/null && sudo apt install python3.9 python3-pip sshpass -y 2>&1 >/dev/null
-                	sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
-                	sudo ln -sf /usr/bin/python3.9 /usr/bin/python
-					sudo ln -sf /usr/lib/python3/dist-packages/apt_pkg.cpython-* /usr/lib/python3/dist-packages/apt_pkg.so
-					sudo ln -sf /usr/lib/python3/dist-packages/apt_inst.cpython-* /usr/lib/python3/dist-packages/apt_inst.so
-				fi
-            elif [ $os == "rhel*" ]; then
-                sudo yum update 2>&1 >/dev/null && sudo yum install python39 python3-pip sshpass -y 2>&1 >/dev/null
+    if [[ $os == "ubuntu" ]]; then
+  	  sudo apt update 2>&1 >/dev/null && sudo apt install python3 python3-pip sshpass -y 2>&1 >/dev/null
+    elif [ $os == '"rhel"' ]; then
+      sudo yum install python39 python39-pip -y 2>&1 >/dev/null
+    fi
+  else
+    pversion=$(python3 --version | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
+	p2version=$(python --version 2>&1 | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
+    if [[ $pversion < 3.8 || $pversion == 3.8 || $p2version == 3.8 || $p2version < 3.8 ]]; then
+        if [[ $os == "ubuntu" ]]; then
+		os_version=$(cat /etc/os-release  | grep -iw 'VERSION_ID' | awk -F'=' '{print $2}')
+            if [[ $os_version == '"20.04"' ]]; then
+                sudo apt update 2>&1 >/dev/null && sudo apt install python3.9 python3-pip sshpass -y 2>&1 >/dev/null
                 sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
                 sudo ln -sf /usr/bin/python3.9 /usr/bin/python
-            fi
+				sudo ln -sf /usr/lib/python3/dist-packages/apt_pkg.cpython-* /usr/lib/python3/dist-packages/apt_pkg.so
+				sudo ln -sf /usr/lib/python3/dist-packages/apt_inst.cpython-* /usr/lib/python3/dist-packages/apt_inst.so
+			fi
+        elif [ $os == '"rhel"' ]; then
+            sudo yum update 2>&1 >/dev/null && sudo yum install python39 python3-pip sshpass -y 2>&1 >/dev/null
+            sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
+            sudo ln -sf /usr/bin/python3.9 /usr/bin/python
         fi
-    	if [[ $os == "ubuntu" ]]; then
-        	sudo apt update 2>&1 >/dev/null && sudo apt install python3-pip sshpass -y 2>&1 >/dev/null
-    	elif [ $os == "rhel*" ]; then
-        	sudo yum update 2>&1 >/dev/null && sudo yum install python3-pip sshpass -y 2>&1 >/dev/null
-    	fi
     fi
   fi
+
+if [[ $os == "ubuntu" ]]; then
+    sudo apt update 2>&1 >/dev/null && sudo apt install python3-pip sshpass -y 2>&1 >/dev/null
+elif [ $os == '"rhel"' ]; then
+    sudo yum update 2>&1 >/dev/null && sudo yum install python39-pip sshpass -y 2>&1 >/dev/null
+fi
 
   uname=$(uname -r | awk -F'-' '{print $NF}')
   if [[ $uname == 'tegra' ]]; then
           pip3 install ansible 2>&1 >/dev/null
   else
-        pip3 install ansible==7.0.0 2>&1 >/dev/null
+         python3 -m pip install ansible==7.0.0 2>&1 >/dev/null
   fi
+  if [[ $os == "ubuntu" || $os == '"rhel"' ]]; then
+          echo PATH=$PATH:$HOME/.local/bin >> ~/.bashrc
+          source ~/.bashrc
+		  export PATH=$PATH:$HOME/.local/bin
+  else
+          export PATH=$PATH:$HOME/.local/bin
+  fi
+  ansible-galaxy collection install community.general ansible.posix --force 2>&1 >/dev/null
 
-  export PATH=$PATH:$HOME/.local/bin
 }
 # Prechecks
 prerequisites() {

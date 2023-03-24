@@ -552,7 +552,7 @@ Update the Helm repo:
 Install Network Operator:
 ```
  kubectl label nodes --all node-role.kubernetes.io/master- --overwrite
- helm install -f --version 1.4.0 ./network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
+ helm install -f ./network-operator-values.yaml --version 1.4.0 -n network-operator --create-namespace --wait network-operator mellanox/network-operator
 ```
 #### Validating the State of the Network Operator
 

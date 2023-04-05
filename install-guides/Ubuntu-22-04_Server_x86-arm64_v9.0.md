@@ -1,5 +1,5 @@
-<h1>NVIDIA Cloud Native Stack v9.0 - Install Guide for Ubuntu Server</h1>
-<h2>Introduction</h2>
+# NVIDIA Cloud Native Stack v9.0 - Install Guide for Ubuntu Server
+## Introduction
 
 This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple NVIDIA Certified Systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
@@ -29,7 +29,7 @@ NVIDIA Cloud Native Stack v9.0 includes:
   - Multus 3.8
   - Whereabouts 0.5.2
 
-<h2>Table of Contents</h2>
+## Table of Contents
 
 - [Prerequisites](#Prerequisites)
 - [Installing the Ubuntu Operating System](#Installing-the-Ubuntu-Operating-System)
@@ -68,26 +68,26 @@ Please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutor
 
 ## Installing Container Runtime
 
-You need to install a container runtime into each node in the cluster so that Pods can run there. Currently Cloud Native Stack provides below container runtimes
+You need to install a container runtime into each node in the cluster so that Pods can run there. Currently Cloud Native Stack provides below container runtimes:
 
 - [Installing Containerd](#Installing-Containerd)
 - [Installing CRI-O](#Installing-CRI-O)
 
-### Installing Containerd
+These steps apply to both runtimes.
 
 Set up the repository and update the apt package index:
 
 ```
-sudo apt-get update
+sudo apt update
 ```
 
 Install packages to allow apt to use a repository over HTTPS:
 
 ```
-sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
+sudo apt install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
 ```
 
-Configure the Prerequisites for Containerd
+Configure the `overlay` and `br_netfilter` kernel modules required by Kubernetes:
 
 ```
 cat <<EOF | sudo tee /etc/modules-load.d/kubernetes.conf
@@ -116,6 +116,11 @@ Apply sysctl params without reboot
 ```
 sudo sysctl --system
 ```
+
+### Installing Containerd (Option 1)
+
+`NOTE:` Only install one of either `containerd` or `CRI-O`, not both!
+
 Download the Containerd for `x86-64` system:
 
 ```
@@ -145,7 +150,7 @@ sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.16-linux-arm64.tar.
 rm -rf cri-containerd-cni-1.6.16-linux-arm64.tar.gz
 ```
 
-Install the Containerd
+Install the Containerd configuration and start the service
 ```
 sudo mkdir -p /etc/containerd
 ```
@@ -155,54 +160,14 @@ containerd config default | sudo tee /etc/containerd/config.toml
 ```
 
 ```
-sudo systemctl restart containerd
+sudo systemctl enable containerd && sudo systemctl start containerd
 ```
 
 For additional information on installing Containerd, please reference [Install Containerd with Release Tarball](https://github.com/containerd/containerd/blob/master/docs/cri/installation.md).
 
-### Installing CRI-O
+### Installing CRI-O (Option 2)
 
-Set up the repository and update the apt package index:
-
-```
-sudo apt-get update
-```
-
-Install packages to allow apt to use a repository over HTTPS:
-
-```
-sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
-```
-
-Configure the Prerequisites for Containerd
-
-```
-cat <<EOF | sudo tee /etc/modules-load.d/kubernetes.conf
-overlay
-br_netfilter
-EOF
-```
-
-```
-sudo modprobe overlay
-```
-```
-sudo modprobe br_netfilter
-```
-
-Setup required sysctl params; these persist across reboots.
-```
-cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
-net.bridge.bridge-nf-call-iptables  = 1
-net.ipv4.ip_forward                 = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-EOF
-```
-
-Apply sysctl params without reboot
-```
-sudo sysctl --system
-```
+`NOTE:` Only install one of either `containerd` or `CRI-O`, not both!
 
 Setup the Apt repositry for CRI-O
 
@@ -213,19 +178,23 @@ VERSION=1.26
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 
 ```
-echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+echo "deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
 ```
 
 ```
-curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | sudo apt-key add -
+sudo mkdir -p /usr/share/keyrings
 ```
 
 ```
-echo "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
+curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | sudo gpg --dearmor -o /usr/share/keyrings/libcontainers-archive-keyring.gpg
 ```
 
 ```
-curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/Release.key | sudo apt-key add -
+echo "deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
+```
+
+```
+curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/Release.key | sudo gpg --dearmor -o /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
 ```
 
 Install the CRI-O and dependencies 
@@ -242,67 +211,68 @@ sudo systemctl enable crio.service && sudo systemctl start crio.service
 
 ### Installing Kubernetes 
 
-Make sure Containerd has been started and enabled before beginning installation:
-
-```
- sudo systemctl start containerd && sudo systemctl enable containerd
-```
+Make sure your container runtime has been enabled and started before beginning installation.
 
 Execute the following to add apt keys:
 
 ```
- sudo apt-get update && sudo apt-get install -y apt-transport-https curl
-```
-
-```
- curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-```
-
-```
- sudo mkdir -p  /etc/apt/sources.list.d/
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg
 ```
 
 Create kubernetes.list:
 
 ```
 cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
-deb https://apt.kubernetes.io/ kubernetes-xenial main
+deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 ```
 
 Now execute the below to install kubelet, kubeadm, and kubectl:
 
 ```
- sudo apt-get update
+sudo apt update
 ```
 
 ```
- sudo apt-get install -y -q kubelet=1.26.1-00 kubectl=1.26.1-00 kubeadm=1.26.1-00
+sudo apt install -y -q kubelet=1.26.1-00 kubectl=1.26.1-00 kubeadm=1.26.1-00
 ```
 
 ```
- sudo apt-mark hold kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
-Create a kubelet default with Containerd:
+Create a kubelet default with your container runtime:
+
+`NOTE`: The container runtime endpoint will be `unix:/run/containerd/containerd.sock` or `unix:/run/crio/crio.sock` depending on which container runtime you chose in the previous steps.
+
+For `containerd` systems: 
+
 ```
- cat <<EOF | sudo tee /etc/default/kubelet
+cat <<EOF | sudo tee /etc/default/kubelet
 KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
+EOF
+```
+
+For `CRI-O` systems:
+
+```
+cat <<EOF | sudo tee /etc/default/kubelet
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/crio/crio.sock"
 EOF
 ```
 
 Reload the system daemon:
 ```
- sudo systemctl daemon-reload
+sudo systemctl daemon-reload
 ```
 
 Disable swap:
 ```
- sudo swapoff -a
+sudo swapoff -a
 ```
 
 ```
- sudo nano /etc/fstab
+sudo nano /etc/fstab
 ```
 
 `NOTE:` Add a # before all the lines that start with /swap. # is a comment, and the result should look something like this:
@@ -315,10 +285,16 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 
 #### Initializing the Kubernetes cluster to run as a control-plane node
 
-Execute the following command:
+Execute the following command for `containerd` systems:
 
 ```
- sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.26.1"
+sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=unix:/run/containerd/containerd.sock --kubernetes-version="v1.26.1"
+```
+
+Execute the following command for `CRI-O` systems:
+
+```
+sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.26.1"
 ```
 
 Output:
@@ -349,21 +325,21 @@ kubeadm join <your-host-IP>:6443 --token 489oi5.sm34l9uh7dk4z6cm \
 Following the instructions in the output, execute the commands as shown below:
 
 ```
- mkdir -p $HOME/.kube
+mkdir -p $HOME/.kube
 ```
 
 ```
- sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
  ```
 
  ```
- sudo chown $(id -u):$(id -g) $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
 With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
- kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.5/manifests/calico.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.5/manifests/calico.yaml
 ```
 
 Update the Calico Daemonset 
@@ -375,7 +351,7 @@ kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=int
 You can execute the below commands to ensure that all pods are up and running:
 
 ```
- kubectl get pods --all-namespaces
+kubectl get pods --all-namespaces
 ```
 
 Output:
@@ -396,7 +372,7 @@ kube-system   kube-scheduler-#yourhost                   1/1     Running   0    
 The get nodes command shows that the control-plane node is up and ready:
 
 ```
- kubectl get nodes
+kubectl get nodes
 ```
 
 Output:
@@ -420,37 +396,37 @@ for more information.
 Execute the following command to download and install Helm 3.11.0 for `x86-64` system: 
 
 ```
- wget https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
+wget https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
 ```
 
 ```
- tar -zxvf helm-v3.11.0-linux-amd64.tar.gz
+tar -zxvf helm-v3.11.0-linux-amd64.tar.gz
  ```
  
  ```
- sudo mv linux-amd64/helm /usr/local/bin/helm
+sudo mv linux-amd64/helm /usr/local/bin/helm
  ```
 
  ```
- rm -rf helm-v3.11.0-linux-amd64.tar.gz linux-amd64/
+rm -rf helm-v3.11.0-linux-amd64.tar.gz linux-amd64/
 ```
 
 Download and install Helm 3.11.0 for `ARM` system: 
 
 ```
- wget https://get.helm.sh/helm-v3.11.0-linux-arm64.tar.gz
+wget https://get.helm.sh/helm-v3.11.0-linux-arm64.tar.gz
 ```
 
 ```
- tar -zxvf helm-v3.11.0-linux-arm64.tar.gz
+tar -zxvf helm-v3.11.0-linux-arm64.tar.gz
  ```
  
  ```
- sudo mv linux-arm64/helm /usr/local/bin/helm
+sudo mv linux-arm64/helm /usr/local/bin/helm
  ```
 
  ```
- rm -rf helm-v3.11.0-linux-arm64.tar.gz linux-arm64/
+rm -rf helm-v3.11.0-linux-arm64.tar.gz linux-arm64/
 ```
 
 Refer to the Helm 3.11.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
@@ -470,7 +446,7 @@ Prerequisites:
 Once the prerequisites are completed on the additional nodes, execute the below command on the control-plane node and then execute the join command output on an additional node to add the additional node to NVIDIA Cloud Native Stack:
 
 ```
- sudo kubeadm token create --print-join-command
+sudo kubeadm token create --print-join-command
 ```
 
 Output:
@@ -483,7 +459,7 @@ sudo kubeadm join 10.110.0.34:6443 --token kg2h7r.e45g9uyrbm1c0w3k     --discove
 The get nodes command shows that the master and worker nodes are up and ready:
 
 ```
- kubectl get nodes
+kubectl get nodes
 ```
 
 Output:
@@ -503,7 +479,7 @@ The below instructions assume that Mellanox NICs are connected to your machines.
 Execute the below command to verify Mellanox NICs are enabled on your machines:
 
 ```
- lspci | grep -i "Mellanox"
+lspci | grep -i "Mellanox"
 ```
 
 Output:
@@ -542,17 +518,17 @@ For more information about custom network operator values.yaml, please refer [Ne
 
 Add the NVIDIA repo:
 ```
- helm repo add mellanox https://mellanox.github.io/network-operator
+helm repo add mellanox https://mellanox.github.io/network-operator
 ```
 
 Update the Helm repo:
 ```
- helm repo update
+helm repo update
 ```
 Install Network Operator:
 ```
- kubectl label nodes --all node-role.kubernetes.io/master- --overwrite
- helm install -f --version 1.4.0 ./network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
+kubectl label nodes --all node-role.kubernetes.io/master- --overwrite
+helm install -f --version 1.4.0 ./network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
 ```
 #### Validating the State of the Network Operator
 
@@ -582,13 +558,13 @@ Please refer to the [Network Operator page](https://docs.mellanox.com/display/CO
 Add the NVIDIA repo:
 
 ```
- helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
 ```
 
 Update the Helm repo:
 
 ```
- helm repo update
+helm repo update
 ```
 
 Install GPU Operator:
@@ -596,7 +572,7 @@ Install GPU Operator:
 `NOTE:` If you installed Network Operator, please skip the below command and follow the [GPU Operator with RDMA](#GPU-Operator-with-RDMA)
 
 ```
- helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --wait --generate-name
+helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --wait --generate-name
 ```
 
 #### GPU Operator with RDMA 
@@ -607,7 +583,7 @@ Install GPU Operator:
 After Network Operator installation is completed, execute the below command to install the GPU Operator to load nv_peer_mem modules:
 
 ```
- helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator  --set driver.rdma.enabled=true  --wait --generate-name
+helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator  --set driver.rdma.enabled=true  --wait --generate-name
 ```
 
 #### GPU Operator with Host MOFED Driver and RDMA 
@@ -615,8 +591,7 @@ After Network Operator installation is completed, execute the below command to i
 If the host is already installed MOFED driver without network operator, execute the below command to install the GPU Operator to load nv_peer_mem module 
 
 ```
- helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait --generate-name 
-
+helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait --generate-name 
 ```
 
 ### GPU Operator with GPU Direct Storage(GDS) 
@@ -650,7 +625,6 @@ gpu-operator-resources   nvidia-device-plugin-daemonset-hzzdt                   
 gpu-operator-resources   nvidia-device-plugin-validator-9nkxq                              0/1     Completed   0          17s
 gpu-operator-resources   nvidia-driver-daemonset-kt8g5                                     1/1     Running     0          2m20s
 gpu-operator-resources   nvidia-operator-validator-cw4j5                                   1/1     Running     0          2m20s
-
 ```
 
 Please refer to the [GPU Operator page](https://ngc.nvidia.com/catalog/helm-charts/nvidia:gpu-operator) on NGC for more information.

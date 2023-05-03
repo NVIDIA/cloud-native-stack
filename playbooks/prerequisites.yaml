@@ -6,6 +6,13 @@
     http_proxy: "{{ http_proxy }}"
     https_proxy: "{{ https_proxy }}"
   tasks:
+    - name: Get Nvidia Tegra Release
+      shell: uname -r | awk -F'-' '{print $2}'
+      register: release
+
+    - set_fact:
+       release: "{{ release.stdout }}"
+
     - name: Validate whether Kubernetes cluster installed
       shell: kubectl cluster-info
       register: k8sup
@@ -467,12 +474,6 @@
       when: "ansible_architecture == 'aarch64'"
 
 ## For Jetson Only
-    - name: Get Nvidia Tegra Release
-      shell: uname -r | awk -F'-' '{print $2}'
-      register: release
-
-    - set_fact:
-       release: "{{ release.stdout }}"
 
     - name: Configure Containerd for NVIDIA Cloud Native Stack
       become: true

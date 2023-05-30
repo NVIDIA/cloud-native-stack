@@ -104,25 +104,25 @@
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
+   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-O for Cloud Native Stack
      when: "'running' not in k8sup.stdout and proxy == false and container_runtime == 'cri-o' and release != 'tegra'"
      command: 'kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:///var/run/crio/crio.sock --kubernetes-version="v{{ k8s_version }}" --image-repository={{ k8s_registry }}'
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
+   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-O for Cloud Native Stack
      when: "'running' not in k8sup.stdout and proxy == true and container_runtime == 'cri-o' and release != 'tegra'"
      command: 'kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:///var/run/crio/crio.sock --kubernetes-version="v{{ k8s_version }}" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}'
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
+   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-O for Cloud Native Stack
      when: "'running' not in k8sup.stdout and proxy == false and container_runtime == 'cri-o' and release == 'tegra'"
      command: 'kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///var/run/crio/crio.sock --kubernetes-version="v{{ k8s_version }}" --image-repository={{ k8s_registry }}'
      become: true
      register: kubeadm
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
+   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-O for Cloud Native Stack
      when: "'running' not in k8sup.stdout and proxy == true and container_runtime == 'cri-o' and release == 'tegra'"
      command: 'kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///var/run/crio/crio.sock --kubernetes-version="v{{ k8s_version }}" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}'
      become: true
@@ -148,52 +148,28 @@
        dest:  $HOME/.kube/config
        mode: '0600'
 
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 7.3 or 8.2 or 9.0
-     when: "'running' not in k8sup.stdout and cnc_version == 7.3 and release != 'tegra'or 'running' not in k8sup.stdout and cnc_version == 8.2  and release != 'tegra' or 'running' not in k8sup.stdout and cnc_version == 9.0  and release != 'tegra'"
-     command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
+     when: "'running' not in k8sup.stdout and cnc_version >= 7.1 and release != 'tegra' or cnc_version == 6.4 and release != 'tegra'"
+     command: "kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/calico.yaml"
 
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 7.2 or 8.1
-     when: "'running' not in k8sup.stdout and cnc_version == 7.2  and release != 'tegra'or 'running' not in k8sup.stdout and cnc_version == 8.1  and release != 'tegra'"
-     command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.5/manifests/calico.yaml
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
+     when: "cnc_version <= 6.3 and ansible_distribution_major_version == '20' and release != 'tegra' or cnc_version == 7.0 and release != 'tegra' and ansible_distribution_major_version == '22'"
+     command: "kubectl apply -f https://projectcalico.docs.tigera.io/archive/v{{ calico_version }}/manifests/calico.yaml"
 
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 7.1 or 8.0
-     when: "'running' not in k8sup.stdout and cnc_version == 7.1  and release != 'tegra' or 'running' not in k8sup.stdout and cnc_version == 8.0  and release != 'tegra'"
-     command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/calico.yaml
-
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 7.0
-     when: "'running' not in k8sup.stdout and cnc_version == 7.0  and release != 'tegra'"
-     command: kubectl apply -f https://projectcalico.docs.tigera.io/archive/v3.23/manifests/calico.yaml
-
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack > 6.3
-     when: "'running' not in k8sup.stdout and cnc_version >= 6.3 and ansible_distribution_major_version == '20' and release != 'tegra'"
-     command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/calico.yaml
-
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack < 6.2
-     when: "'running' not in k8sup.stdout and cnc_version <= 6.2 and ansible_distribution_major_version == '20' and release != 'tegra'"
-     command: kubectl apply -f https://projectcalico.docs.tigera.io/archive/v3.21/manifests/calico.yaml
-
-   - name: Update Network plugin for Calico on NVIDIA Cloud Native Stack > 3.1
+   - name: Update Network plugin for Calico on NVIDIA Cloud Native Stack
      when: "'running' not in k8sup.stdout and cnc_version >= 3.1 and release != 'tegra'"
      shell: "sleep 5; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*"
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
-     when: "cnc_version <= 6.3 and 'running' not in k8sup.stdout and release == 'tegra' or cnc_version == 8.0 and 'running' not in k8sup.stdout and release == 'tegra' or cnc_version == 7.1 and 'running' not in k8sup.stdout and release == 'tegra'"
-     command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.19.2/Documentation/kube-flannel.yml
-
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
-     when: "cnc_version == 6.4 and 'running' not in k8sup.stdout and release == 'tegra'or cnc_version == 7.2 and 'running' not in k8sup.stdout and release == 'tegra' or cnc_version == 8.1 and 'running' not in k8sup.stdout and release == 'tegra'"
-     command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.20.0/Documentation/kube-flannel.yml
-
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
-     when: "cnc_version == 6.4 and 'running' not in k8sup.stdout and release == 'tegra'or cnc_version == 7.3 and 'running' not in k8sup.stdout and release == 'tegra' or cnc_version == 8.2 and 'running' not in k8sup.stdout and release == 'tegra' or cnc_version == 9.0 and 'running' not in k8sup.stdout and release == 'tegra'"
-     command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.20.2/Documentation/kube-flannel.yml
+     when: "'running' not in k8sup.stdout and release == 'tegra'"
+     command: "kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v{{ flannel_version }}/Documentation/kube-flannel.yml"
 
    - name: Taint the Kubernetes Control Plane node
      when: "'running' not in k8sup.stdout and cnc_version < 7.0"
      command: kubectl taint nodes --all node-role.kubernetes.io/master-
 
    - name: Taint the Kubernetes Control Plane node
-     when: "'running' not in k8sup.stdout and cnc_version == 7.0 or 'running' not in k8sup.stdout and cnc_version == 7.1 or 'running' not in k8sup.stdout and cnc_version == 7.2 or 'running' not in k8sup.stdout and cnc_version == 7.3"
+     when: "'running' not in k8sup.stdout and cnc_version == 7.0 or 'running' not in k8sup.stdout and cnc_version == 7.1 or 'running' not in k8sup.stdout and cnc_version == 7.2 or 'running' not in k8sup.stdout and cnc_version == 7.3 or 'running' not in k8sup.stdout and cnc_version == 7.4"
      command: kubectl taint nodes --all node-role.kubernetes.io/master- node-role.kubernetes.io/control-plane-
 
    - name: Taint the Kubernetes Control Plane node

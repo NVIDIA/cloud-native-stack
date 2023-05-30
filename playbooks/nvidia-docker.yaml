@@ -24,8 +24,8 @@
       no_log: true
       failed_when: false
 
-    - name: Install Docker Dependencies
-      when: docker_exists.rc >= 1 or nvidia_docker_exists.rc >= 1
+    - name: Install Docker Dependencies on Ubuntu
+      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt:
         name:
           - apt-transport-https
@@ -36,19 +36,36 @@
           - unzip
         state: latest
         update_cache: true
+ 
+    - name: Install Docker Dependencies on RHEL
+      when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat' or nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
+      yum:
+        name:
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+          - unzip
+        state: latest
+        update_cache: true
 
     - name: Add Docker APT signing key
-      when: docker_exists.rc >= 1
+      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_key:
         url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
         state: present
 
     - name: Add Docker repository into sources list
-      when: docker_exists.rc >= 1
+      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_repository:
         repo: "deb https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
+
+    - name: Add Docker repo on RHEL
+      when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
+      get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docer-ce.repo
 
     - name: Create docker systemd file
       when: docker_exists.rc >= 1
@@ -82,29 +99,44 @@
           [Install]
           WantedBy=multi-user.target
 
-    - name: Install Docker
-      when: docker_exists.rc >= 1
-      apt:
+    - name: Install Docker on Ubuntu
+      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      package:
         name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
         state: latest
-        force: yes
+
+    - name: Install Docker on RHEL
+      when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
+      yum:
+        name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+        state: latest
+        allowerasing: true
         update_cache: true
 
+    - name: remove nvidia-docker on RHEL
+      when: nvidia_docker_exists.rc == 0 and ansible_distribution == 'RedHat'
+      yum:
+        name:
+          - nvidia-docker
+          - nvidia-docker2
+        state: absent
+        autoremove: yes
+
     - name: remove nvidia-docker v1
-      when: nvidia_docker_exists.rc == 0
+      when: nvidia_docker_exists.rc == 0 and ansible_distribution == 'Ubuntu'
       apt:
         name: nvidia-docker
         state: absent
         purge: yes
 
     - name: Add NVIDIA Docker APT signing key
-      when: nvidia_docker_exists.rc >= 1
+      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       apt_key:
         url: https://nvidia.github.io/nvidia-docker/gpgkey
         state: present
 
     - name: Add NVIDIA Docker repository into sources list
-      when: ansible_architecture == 'aarch64' and nvidia_docker_exists.rc >= 1
+      when: ansible_architecture == 'aarch64' and nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       apt_repository:
         repo: "{{ item }}"
         state: present
@@ -116,7 +148,7 @@
         - "deb https://nvidia.github.io/nvidia-docker/ubuntu18.04/arm64 /"
 
     - name: Add NVIDIA Docker repository into sources list
-      when: ansible_architecture == 'x86_64' and nvidia_docker_exists.rc >= 1
+      when: ansible_architecture == 'x86_64' and nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       apt_repository:
         repo: "{{ item }}"
         state: present
@@ -127,30 +159,62 @@
         - "deb https://nvidia.github.io/nvidia-container-runtime/ubuntu18.04/amd64 /"
         - "deb https://nvidia.github.io/nvidia-docker/ubuntu18.04/amd64 /"
 
+    - name: add NVIDIA Dokcer repo on RHEL
+      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
+      get_url:
+        url:  https://nvidia.github.io/nvidia-docker/rhel{{ ansible_distribution_version }}/nvidia-docker.repo
+        dest: /etc/yum.repos.d/nvidia-docker.repo
+        mode: 0644
+        owner: root
+        group: root
+
+    - name: add NVIDIA Container Toolkit repo on RHEL
+      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
+      get_url:
+        url:  https://nvidia.github.io/libnvidia-container/rhel{{ ansible_distribution_version }}/libnvidia-container.repo
+        dest: /etc/yum.repos.d/nvidia-container-toolkit.repo
+        mode: 0644
+        owner: root
+        group: root
 
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
-      when: nvidia_docker_exists.rc >= 1 and cnc_version == 7.0 or nvidia_docker_exists.rc >= 1 and cnc_version == 6.2
+      when: nvidia_docker_exists.rc >= 1 and cnc_version == 7.0 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 6.2 and ansible_distribution == 'Ubuntu'
       apt:
         name: [ "nvidia-docker2", "nvidia-container-runtime=3.10.0-1" ]
         state: present
         update_cache: true
 
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
-      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.0 or nvidia_docker_exists.rc >= 1 and cnc_version == 8.1 or nvidia_docker_exists.rc >= 1 and cnc_version == 7.1 or nvidia_docker_exists.rc >= 1 and cnc_version == 7.2 or nvidia_docker_exists.rc >= 1 and cnc_version == 6.4
+      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.0 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 8.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 7.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 7.2 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 6.4 and ansible_distribution == 'Ubuntu'
       apt:
         name: [ "nvidia-docker2", "nvidia-container-runtime=3.11.0-1" ]
         state: present
         update_cache: true
 
+
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
-      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.2 or nvidia_docker_exists.rc >= 1 and cnc_version == 7.3 or nvidia_docker_exists.rc >= 1 and cnc_version == 9.0
+      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.2 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 7.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 9.0 and ansible_distribution == 'Ubuntu'
       apt:
-        name: [ "nvidia-docker2", "nvidia-container-runtime=3.12.0-1" ]
+        name: [ "nvidia-docker2", "nvidia-container-runtime=3.12.0-1", 'nvidia-container-toolkit=1.12.0-1', 'nvidia-container-toolkit-base=1.12.0-1' ]
         state: present
         update_cache: true
 
+    - name: Install NVIDIA Docker and NVIDIA Container Runtime
+      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 7.4 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 9.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 10.0 and ansible_distribution == 'Ubuntu'
+      apt:
+        name: [ "nvidia-docker2", "nvidia-container-runtime=3.13.0-1", 'nvidia-container-toolkit=1.13.0-1', 'nvidia-container-toolkit-base=1.13.0-1']
+        state: present
+        update_cache: true
+
+    - name: install NVIDIA container runtime and NVIDIA Docker on RHEL
+      when: nvidia_docker_exists.rc >= 1 and cnc_version == 10.0 and ansible_distribution == 'RedHat'
+      yum:
+        name: ['nvidia-container-runtime', 'nvidia-docker2']
+        state: present
+        update_cache: yes
+
     - name: Update docker default runtime
-      when: docker_exists.rc >= 1 and nvidia_docker_exists.rc >= 1
+      when: docker_exists.rc >= 1 and nvidia_docker_exists.rc >= 1 
       copy:
         content: "{{ daemon_json | to_nice_json }}"
         dest: /etc/docker/daemon.json
@@ -183,7 +247,7 @@
             name: containerd
             state: restarted
             daemon_reload: yes
-      when: "ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20' and container_runtime == 'containerd'"
+      when: "container_runtime == 'containerd'"
 
     - name: NGC CLI Setup
       become: true

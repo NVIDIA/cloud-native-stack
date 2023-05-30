@@ -51,7 +51,7 @@
        fi
      args:
       executable: /bin/bash
-
+      
 - hosts: all
   gather_facts: yes
   become: true
@@ -78,28 +78,59 @@
      when: "ansible_distribution == 'Ubuntu' and cnc_version >= 4.0"
      ignore_errors: yes
      apt:
-       name: ['kubectl', 'kubeadm', 'kubelet', 'containerd', 'cri-o*', 'cri-o-runc*']
+       name: "{{ item }}"
        state: absent
        purge: yes
        force: yes
+     loop:
+       - kubeadm
+       - kubelet
+       - kubectl
+       - cri-o*
+       - cri-o-runc*
 
    - name: Remove Docker and Kubernetes packages for Ubuntu
-     when: "cnc_docker == true or cnc_version <= 3.1 and ansible_distribution == 'Ubuntu'"
+     when: "cnc_docker == true and ansible_distribution == 'Ubuntu' or cnc_version <= 3.1 and ansible_distribution == 'Ubuntu'"
      ignore_errors: yes
      apt:
-       name: ['kubectl', 'kubeadm','kubelet', 'docker*', 'docker-ce*', 'containerd.io', 'nvidia-docker*']
+       name: "{{ item }}"
        state: absent
        purge: yes
        force: yes
+     loop:
+       - kubeadm
+       - kubelet
+       - kubectl
+       - docker*
+       - docker-ce*
+       - containerd*
+       - nvidia-docker*
 
-   - name: Remove NVIDIA Docker for Cloud Native Stack Developers
+   - name: Remove NVIDIA Docker for Cloud Native Stack Developers on Ubuntu
      when: "cnc_docker == true and ansible_distribution == 'Ubuntu' or cnc_nvidia_driver == true and ansible_distribution == 'Ubuntu'"
      ignore_errors: yes
      apt:
-       name: ['cuda-drivers', ' nvidia-driver-*', 'nvidia-dkms-*', 'cuda','nvidia-container*']
+       name: "{{ item }}"
        state: absent
        purge: yes
        force: yes
+     loop:
+       - cuda-drivers
+       - nvidia-driver-*
+       - nvidia-dkms-*
+       - cuda
+       - nvidia-container*
+
+   - name: Remove NVIDIA Docker for Cloud Native Stack Developers on Redhat
+     when: "cnc_docker == true and ansible_distribution == 'RedHat' or cnc_nvidia_driver == true and ansible_distribution == 'RedHat'"
+     ignore_errors: yes
+     yum:
+       name: "{{ item }}"
+       state: absent
+     loop:
+       - '@nvidia-driver:525-dkms'
+       - 'nvidia-container*'
+       - 'nvidia-docker*'
 
    - name: Remove dependencies that are no longer required
      when: "ansible_distribution == 'Ubuntu'"
@@ -107,12 +138,23 @@
       autoremove: yes
       force: yes
 
+   - name: Remove dependencies that are no longer required
+     when: "ansible_distribution == 'RedHat'"
+     yum:
+      autoremove: yes
+
    - name: Remove installed packages for RHEL/CentOS
      when:  "ansible_distribution in ['RedHat', 'CentOS']"
      ignore_errors: yes
      yum:
-       name: ['kubectl', 'kubeadm','kubelet', 'docker*', 'cri*']
+       name: "{{ item }}"
        state: absent
+     loop:
+       - kubectl
+       - kubeadm
+       - kubelet
+       - docker*
+       - cri*
 
    - name: Cleanup Containerd Process
      shell: kill -9 $( ps -ef|grep containerd | awk '{print $2}')
@@ -127,7 +169,7 @@
      shell: rmmod nvidia_fs
 
    - name: Cleanup Directories for Cloud Native Stack Developers
-     when: " cnc_docker == true or cnc_version <= 3.1 "
+     when: " cnc_docker == true and cnc_nvidia_driver == true or cnc_version <= 3.1 "
      ignore_errors: yes
      file:
        path: "{{ item }}"
@@ -141,15 +183,17 @@
         - /usr/lib/nvidia
         - /usr/local/nvidia
         - /run/nvidia
+        - /etc/apt/sources.list.d/nvidia-docker
+        - /etc/apt/sources.list.d/docker
 
    - name: Cleanup Directories
      ignore_errors: yes
      shell: rm -rf "{{ item }}"
      with_items:
-        - /var/lib/containerd
+#        - /var/lib/containerd
 #        - /run/containerd
+#        - /opt/containerd
         - /etc/containerd
-        - /opt/containerd
         - /usr/local/sbin/runc
         - /usr/local/bin/crictl
         - /etc/crictl.yaml
@@ -157,6 +201,10 @@
         - /usr/local/bin/containerd-s*
         - /var/lib/etcd
         - /etc/kubernetes
+        - /etc/apt/sources.list.d/kubernetes.list
+        - /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+        - /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:{{ k8s_version }}.list
+        - /etc/apt/sources.list.d/libnvidia-container.list
         - /usr/local/bin/helm
         - /var/lib/crio
         - /etc/crio

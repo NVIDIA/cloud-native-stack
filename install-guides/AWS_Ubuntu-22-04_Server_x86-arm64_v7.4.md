@@ -1,28 +1,26 @@
-<h1>NVIDIA Cloud Native Stack v9.0 for AWS - Install Guide for Ubuntu Server</h1>
+<h1>NVIDIA Cloud Native Stack v7.4 for AWS - Install Guide for Ubuntu Server</h1>
 <h2>Introduction</h2>
 
 This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple AWS instances. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster. 
 
-NVIDIA Cloud Native Stack v9.0 includes:
+NVIDIA Cloud Native Stack v7.4 includes:
 
 - Ubuntu 22.04 LTS
-- Containerd 1.6.16
-- Kubernetes version 1.26.1
-- Helm 3.11.0
-- NVIDIA GPU Operator 22.9.2
-  - NVIDIA GPU Driver: 525.85.12
-  - NVIDIA Container Toolkit: 1.11.0
-  - NVIDIA K8S Device Plugin: 0.13.0
-  - NVIDIA DCGM-Exporter: 3.1.3-3.1.2
-  - NVIDIA DCGM: 3.1.3-1
+- Containerd 1.7.0
+- Kubernetes version 1.24.12
+- Helm 3.11.2
+- NVIDIA GPU Operator 23.3.2
+  - NVIDIA GPU Driver: 525.105.17
+  - NVIDIA Container Toolkit: 1.13.0
+  - NVIDIA K8S Device Plugin: 0.14.0
+  - NVIDIA DCGM-Exporter: 3.1.7-3.1.4
+  - NVIDIA DCGM: 3.1.7-1
   - NVIDIA GPU Feature Discovery: 0.7.0
-  - NVIDIA K8s MIG Manager: 0.5.0
-  - NVIDIA Driver Manager: 0.6.0
-  - Node Feature Discovery: 0.10.1
+  - NVIDIA K8s MIG Manager: 0.5.2
+  - NVIDIA Driver Manager: 0.6.1
+  - Node Feature Discovery: 0.12.1
   - NVIDIA KubeVirt GPU Device Plugin: 1.2.1
-  - NVIDIA GDS Driver: 2.14.13
-
-  - Whereabouts 0.5.2
+  - NVIDIA GDS Driver: 2.15.1
 
 <h2>Table of Contents</h2>
 
@@ -109,7 +107,9 @@ You need to install a container runtime into each node in the cluster so that Po
 - [Installing Containerd](#Installing-Containerd)
 - [Installing CRI-O](#Installing-CRI-O)
 
-### Installing Containerd
+`NOTE:` Only install one of either `Containerd` or `CRI-O`, not both!
+
+These steps apply to both runtimes.
 
 Set up the repository and update the apt package index:
 
@@ -123,7 +123,7 @@ Install packages to allow apt to use a repository over HTTPS:
 sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
 ```
 
-Configure the Prerequisites for Containerd
+Configure the `overlay` and `br_netfilter` kernel modules required by Kubernetes:
 
 ```
 cat <<EOF | sudo tee /etc/modules-load.d/kubernetes.conf
@@ -152,32 +152,35 @@ Apply sysctl params without reboot
 ```
 sudo sysctl --system
 ```
+
+### Installing Containerd(Option 1)
+
 Download the Containerd for `x86-64` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.6.16/cri-containerd-cni-1.6.16-linux-amd64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.0/cri-containerd-cni-1.7.0-linux-amd64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.16-linux-amd64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.0-linux-amd64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.6.16-linux-amd64.tar.gz
+rm -rf cri-containerd-cni-1.7.0-linux-amd64.tar.gz
 ```
 
 Download the Containerd for `ARM` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.6.16/cri-containerd-cni-1.6.16-linux-arm64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.0/cri-containerd-cni-1.7.0-linux-arm64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.16-linux-arm64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.0-linux-arm64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.6.16-linux-arm64.tar.gz
+rm -rf cri-containerd-cni-1.7.0-linux-arm64.tar.gz
 ```
 
 Install the Containerd
@@ -195,49 +198,7 @@ sudo systemctl restart containerd
 
 For additional information on installing Containerd, please reference [Install Containerd with Release Tarball](https://github.com/containerd/containerd/blob/master/docs/cri/installation.md).
 
-### Installing CRI-O
-
-Set up the repository and update the apt package index:
-
-```
-sudo apt-get update
-```
-
-Install packages to allow apt to use a repository over HTTPS:
-
-```
-sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
-```
-
-Configure the Prerequisites for Containerd
-
-```
-cat <<EOF | sudo tee /etc/modules-load.d/kubernetes.conf
-overlay
-br_netfilter
-EOF
-```
-
-```
-sudo modprobe overlay
-```
-```
-sudo modprobe br_netfilter
-```
-
-Setup required sysctl params; these persist across reboots.
-```
-cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
-net.bridge.bridge-nf-call-iptables  = 1
-net.ipv4.ip_forward                 = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-EOF
-```
-
-Apply sysctl params without reboot
-```
-sudo sysctl --system
-```
+### Installing CRI-O(Option 2)
 
 Setup the Apt repositry for CRI-O
 
@@ -275,58 +236,80 @@ Enable and Start the CRI-O service
 sudo systemctl enable crio.service && sudo systemctl start crio.service
 ```
 
-## Installing Kubernetes 
+### Installing Kubernetes 
 
-Make sure Containerd has been started and enabled before beginning installation:
-
-```
-sudo systemctl start containerd && sudo systemctl enable containerd
-```
-
-Execute the following to install kubelet kubeadm and kubectl:
+Make sure your container runtime has been started and enabled before beginning installation:
 
 ```
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+ sudo systemctl start containerd && sudo systemctl enable containerd
 ```
 
+Execute the following to add apt keys:
+
 ```
-sudo mkdir -p  /etc/apt/sources.list.d/
+ sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+```
+```
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg
+
+```
+```
+ sudo mkdir -p  /etc/apt/sources.list.d/
 ```
 
-Create Kubernetes.list:
+Create kubernetes.list:
 
 ```
 cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
-deb https://apt.kubernetes.io/ kubernetes-xenial main
+deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 ```
 
-Now execute the commands below:
+Now execute the below to install kubelet, kubeadm, and kubectl:
 
 ```
-sudo apt-get update
+ sudo apt-get update
+```
+```
+ sudo apt-get install -y -q kubelet=1.24.12-00 kubectl=1.24.12-00 kubeadm=1.24.12-00
+```
+```
+ sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
-```
-sudo apt-get install -y -q kubelet=1.26.1-00 kubectl=1.26.1-00 kubeadm=1.26.1-00
-```
+Create a kubelet default with your container runtime:
+`NOTE:`  The container runtime endpoint will be `unix:/run/containerd/containerd.sock` or `unix:/run/crio/crio.sock` depending on which container runtime you chose in the previous steps.
+
+For `Containerd` system:
 
 ```
-sudo apt-mark hold kubelet kubeadm kubectl
+ cat <<EOF | sudo tee /etc/default/kubelet
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
+EOF
 ```
 
-### Initializing the Kubernetes cluster to run as master
-
-#### Disable swap
-```
-sudo swapoff -a
-```
+For `CRI-O` system:
 
 ```
-sudo nano /etc/fstab
+cat <<EOF | sudo tee /etc/default/kubelet
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/crio/crio.sock"
+EOF
 ```
 
-Add a # before all the lines that start with /swap. # is a comment, and the result should look similar to this:
+Reload the system daemon:
+```
+ sudo systemctl daemon-reload
+```
+
+Disable swap:
+```
+ sudo swapoff -a
+```
+```
+ sudo nano /etc/fstab
+```
+
+`NOTE:` Add a # before all the lines that start with /swap. # is a comment, and the result should look something like this:
 
 ```
 UUID=e879fda9-4306-4b5b-8512-bba726093f1d / ext4 defaults 0 0
@@ -334,11 +317,21 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 #/swap.img       none    swap    sw      0       0
 ```
 
-Execute the following command:
+#### Initializing the Kubernetes cluster to run as a control-plane node
+
+
+Execute the following command for `Containerd` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.1"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.12"
 ```
+
+Eecute the following command for `CRI-O` systems:
+
+```
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock--kubernetes-version="v1.24.12"
+```
+
 
 The output will show you the commands that, when executed, deploy a pod network to the cluster and commands to join the cluster.
 
@@ -359,7 +352,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 With the following command, you install a pod-network add-on to the control plane node. Calico is used as the pod-network add-on here:
 
 ```
-kubectl apply -f  https://projectcalico.docs.tigera.io/archive/v3.23/manifests/calico.yaml
+kubectl apply -f  https://raw.githubusercontent.com/projectcalico/calico/v3.25.1/manifests/calico.yaml
 ```
 
 You can execute the below commands to ensure that all pods are up and running:
@@ -393,7 +386,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane          10m   v1.26.1
+#yourhost        Ready    control-plane          10m   v1.24.12
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -406,21 +399,35 @@ For additional information, refer to [kubeadm installation guide](https://kubern
 
 ## Installing Helm 
 
-Execute the following command to download Helm 3.11.0: 
+Execute the following command to download Helm 3.11.2: 
 
 ```
-wget https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
+wget https://get.helm.sh/helm-v3.11.2-linux-amd64.tar.gz
 ```
 
 ```
-tar -zxvf helm-v3.11.0-linux-amd64.tar.gz
+tar -zxvf helm-v3.11.2-linux-amd64.tar.gz
 ```
 
 ```
 sudo mv linux-amd64/helm /usr/local/bin/helm
 ```
 
-For additional information about Helm, refer to the Helm 3.11.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information. 
+Execute the following command to download Helm 3.11.2 for `ARM` system : 
+
+```
+wget https://get.helm.sh/helm-v3.11.2-linux-arm64.tar.gz
+```
+
+```
+tar -zxvf helm-v3.11.2-linux-arm64.tar.gz
+```
+
+```
+sudo mv linux-arm64/helm /usr/local/bin/helm
+```
+
+For additional information about Helm, refer to the Helm 3.11.2 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information. 
 
 ### Adding additional node to NVIDIA Cloud Native Stack
 
@@ -455,8 +462,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.26.1
-#yourhost-worker Ready                           10m   v1.26.1
+#yourhost        Ready    control-plane,master   10m   v1.24.12
+#yourhost-worker Ready                           10m   v1.24.12
 ```
 
 ## Installing GPU Operator
@@ -475,7 +482,7 @@ helm repo update
 To install GPU Operator for AWS G4 instance with Tesla T4:
 
 ```
-helm install --version 22.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --wait --generate-name
+helm install --version 23.3.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --wait --generate-name
 ```
 
 ### Validate the state of GPU Operator:
@@ -531,7 +538,7 @@ spec:
   restartPolicy: OnFailure
   containers:
     - name: nvidia-smi
-      image: "nvidia/cuda:12.0.0-base-ubuntu22.04"
+      image: "nvidia/cuda:12.1.0-base-ubuntu22.04"
       args: ["nvidia-smi"]
 EOF
 ```
@@ -547,9 +554,9 @@ kubectl logs nvidia-smi
 Output:
 
 ``` 
-Wed Dec 14 12:47:29 2022
+Wed Apr 14 12:47:29 2023
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 525.85.12    Driver Version: 525.85.12    CUDA Version: 12.0     |
+| NVIDIA-SMI 525.105.17   Driver Version: 525.105.17   CUDA Version: 12.1     |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
@@ -622,7 +629,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 Go through the below steps to install the demo application. 
 ```
-1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz --untar
+1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz --untar
 
 2. cd into the folder video-analytics-demo and update the file values.yaml
 
@@ -644,9 +651,9 @@ Once the helm chart is deployed, access the application with the VLC player. See
 If you do not have a camera input, please execute the below commands to use the default video integrated with the application. 
 
 ```
-helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz
+helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz
 
-helm install video-analytics-demo-0.1.8.tgz --name-template iva
+helm install video-analytics-demo-0.1.9.tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the Application with VLC player with the instructions below. 

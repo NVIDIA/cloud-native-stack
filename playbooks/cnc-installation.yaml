@@ -14,12 +14,12 @@
 
     - name: Checking Nouveau is disabled
       become: true
-      command: lsmod | grep nouveau
+      shell: "lsmod | grep nouveau"
       register: nouveau_result
       failed_when: false
 
     - name: unload nouveau
-      when: nouveau_result.rc != 0
+      when: nouveau_result.rc == 0
       become: true
       modprobe:
         name: nouveau
@@ -27,7 +27,7 @@
       ignore_errors: true
 
     - name: blacklist nouveau
-      when: nouveau_result.rc != 0
+      when: nouveau_result.rc == 0
       become: true
       copy:
         dest: "/etc/modprobe.d/blacklist-nouveau.conf"
@@ -37,8 +37,32 @@
         content: |
           blacklist nouveau
           options nouveau modeset=0
-      notify:
-      - update-initramfs
+
+    - name: update-initramfs-ubuntu
+      become: true
+      command: update-initramfs -u
+      when: ansible_os_family == "Debian" and nouveau_result.rc == 0
+
+    - name: update-initramfs-rhel
+      become: true
+      command: dracut --force
+      when: ansible_os_family == "RedHat" and nouveau_result.rc == 0
+
+    - name: Check SELinux Status on RedHat
+      when: ansible_distribution == 'RedHat'
+      shell: sestatus | grep -i 'Current mode' | awk '{print $3}'
+      register: selinuxstatus
+
+    - name: Update SELinux Status on RHEL system
+      when: ansible_distribution == 'RedHat' and selinuxstatus.stdout == 'enforcing'
+      become: true
+      shell: sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
+    - name: reboot the system
+      when: "nouveau_result.rc == 0 or ansible_os_family == 'RedHat' and selinuxstatus.stdout == 'enforcing'"
+      become: true
+      reboot:
+        reboot_timeout: 900
 
     - name: Get URL
       shell: "echo {{ k8s_apt_key }} | awk -F '//' '{print $2}' | awk -F'/' '{print $1}'"
@@ -62,7 +86,7 @@
       when: connection.status != '-1' and ansible_distribution == 'Ubuntu'
       become: true
       apt:
-        name: ['speedtest-cli', 'mokutil']
+        name: ['mokutil']
         state: present
         update_cache: yes
 
@@ -75,32 +99,15 @@
         update_cache: yes
 
     - name: Get Speedtest CLI
-      when: ansible_distribution == 'RedHat'
       get_url:
         url: https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py
         dest: /tmp/speedtest-cli
         mode: '0777'
 
     - name: Check Internet Speed
-      when: ansible_distribution == 'RedHat'
       ignore_errors: true
       failed_when: false
-      shell: /tmp/speedtest-cli --secure --simple
-      register: speed
-      async: 30
-
-    - name: Report Valid Internet Speed
-      when: ansible_distribution == 'RedHat'
-      shell: echo {{ speed.stdout_lines[1] }} | awk '{print $3}'
-      register: speedtest
-      ignore_errors: true
-      failed_when: "'Kbit/s' in speedtest.stdout"
-
-    - name: Check Internet Speed
-      when: ansible_distribution == 'Ubuntu'
-      ignore_errors: true
-      failed_when: false
-      shell: speedtest-cli --secure --simple
+      shell: /usr/bin/python3 /tmp/speedtest-cli --secure --simple
       register: speed
       async: 30
 
@@ -174,25 +181,8 @@
  #     become: true 
  #     shell: netplan apply 
 
-  handlers:
-    - name: update-initramfs
-      become: true
-      command: update-initramfs -u
-      when: ansible_os_family == "Debian" and nouveau_result.rc != 0
-
-    - name: update-initramfs
-      become: true
-      command: dracut --force 
-      when: ansible_os_family == "RedHat" and nouveau_result.rc != 0
-  
 - import_playbook: nvidia-driver.yaml
   when: "cnc_docker == true and cnc_nvidia_driver == true and release != 'tegra'"
-
-- when: "cnc_version <= 4.1 and cnc_docker != true and ansible_architecture == 'x86_64' and release != 'tegra'"
-  import_playbook: older_versions/prerequisites.yaml
-
-- when: "cnc_version <= 4.1 and cnc_docker != true and ansible_architecture == 'x86_64' and release != 'tegra'"
-  import_playbook: older_versions/cnc-installation.yaml
 
 - when: "cnc_version > 4.1"
   import_playbook: prerequisites.yaml
@@ -211,7 +201,13 @@
   vars_files:
     - cnc_values.yaml
   tasks:
+    - name: Get Nvidia Tegra Release
+      shell: uname -r | awk -F'-' '{print $2}'
+      register: release
 
+    - set_fact:
+       release: "{{ release.stdout }}"
+       
     - name: Waiting for Cluster to up and running
       args:
         executable: /bin/bash
@@ -224,7 +220,7 @@
             state=$(kubectl get pods -n nvidia-gpu-operator | egrep -v 'Running|Completed|NAME' | wc -l)
           done
       register: status
-      when: "cnc_version > 4.1 and cnc_validation == true and ansible_architecture == 'x86_64'"
+      when: "cnc_version > 4.1 and cnc_validation == true and release != 'tegra'"
 
 - when: "cnc_version > 4.1 and cnc_validation == true and release != 'tegra'"
   import_playbook: cnc-validation.yaml

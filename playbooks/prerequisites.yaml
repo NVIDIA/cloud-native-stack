@@ -107,24 +107,26 @@
       when: "'running' not in k8sup.stdout"
       command: swapoff -a
 
-    - name: disable SELinux
+    - name: disable Firewall
       become: true
       when: "'running' not in k8sup.stdout and ansible_distribution == 'RedHat'"
-      command: "sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config"
+      service:
+        state: stopped
+        name: firewalld
 
-    - name: Firewall Rules
-      become: true
-      when: "'running' not in k8sup.stdout and ansible_distribution == 'RedHat'"
-      firewalld:
-        permanent: yes
-        immediate: yes
-        port: "{{item.port}}/{{item.proto}}"
-        state: "{{item.state}}"
-      with_items:
-       - {port: "6443", proto: "tcp", state: "enabled"}
-       - {port: "2379-2380", proto: "tcp", state: "enabled"}
-       - {port: "10230-10260", proto: "tcp", state: "enabled"}
-       - {port: "30000-32767", proto: "tcp", state: "enabled"}
+#    - name: Firewall Rules
+#      become: true
+#     when: "'running' not in k8sup.stdout and ansible_distribution == 'RedHat'"
+#     firewalld:
+#       permanent: yes
+#        immediate: yes
+#        port: "{{item.port}}/{{item.proto}}"
+#        state: "{{item.state}}"
+#      with_items:
+#       - {port: "6443", proto: "tcp", state: "enabled"}
+#       - {port: "2379-2380", proto: "tcp", state: "enabled"}
+#       - {port: "10230-10260", proto: "tcp", state: "enabled"}
+#       - {port: "30000-32767", proto: "tcp", state: "enabled"}
 
     - name: Setup kernel modules for container runtime
       become: true
@@ -162,18 +164,11 @@
 
     - name: Setup Containerd for Ubuntu
       become: true
-      block:
-        - name: Create /etc/containerd
-          file:
-            path: /etc/containerd
-            state: directory
-
-        - name: Create /etc/default/kubelet
-          lineinfile:
-            line: KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
-            path: /etc/default/kubelet
-            create: yes
-      when: "cnc_version >= 4.0 and container_runtime == 'containerd'"
+      lineinfile:
+        line: KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
+        path: /etc/default/kubelet
+        create: yes
+      when: "cnc_version < 10.0 and container_runtime == 'containerd'"
 
     - name: Install Containerd for NVIDIA Cloud Native Stack
       become: true
@@ -191,6 +186,11 @@
             remote_src: yes
             extra_opts:
               - --no-overwrite-dir
+
+        - name: Remove Containerd tar
+          file:
+            path:  /tmp/cri-containerd-cni-{{ containerd_version }}-linux-amd64.tar.gz
+            state: absent
       when: "ansible_system == 'Linux' and ansible_architecture == 'x86_64'"
 
     - name: Install Containerd for NVIDIA Cloud Native Stack
@@ -209,11 +209,21 @@
             remote_src: yes
             extra_opts:
               - --no-overwrite-dir
+
+        - name: Remove Containerd tar
+          file:
+            path:  /tmp/cri-containerd-cni-{{ containerd_version }}-linux-arm64.tar.gz
+            state: absent
       when: "ansible_system == 'Linux' and ansible_architecture == 'aarch64'"
 
     - name: Configure Containerd for NVIDIA Cloud Native Stack
       become: true
       block:
+        - name: Create /etc/containerd
+          file:
+            path: /etc/containerd
+            state: directory
+
         - name: Get defaults from containerd
           command: /usr/local/bin/containerd config default
           changed_when: false
@@ -274,13 +284,13 @@
       when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '22'"
       become: true
       block:
-        - name: trim k8s version
-          shell: echo {{ k8s_version }} | awk -F'.' '{print $1"."$2}'
-          register: k8_version
+        - name: trim CRI-O version
+          shell: echo {{ crio_version }} | awk -F'.' '{print $1"."$2}'
+          register: cri_version
 
         - name: set version
           set_fact:
-            version: "{{ k8_version.stdout }}"
+            version: "{{ cri_version.stdout }}"
 
         - name: Adding CRI-O apt key
           apt_key:
@@ -313,13 +323,13 @@
       when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version <= '20'"
       become: true
       block:
-        - name: trim k8s version
-          shell: echo {{ k8s_version }} | awk -F'.' '{print $1"."$2}'
-          register: k8_version
+        - name: trim CRI-O version
+          shell: echo {{ crio_version }} | awk -F'.' '{print $1"."$2}'
+          register: cri_version
 
         - name: set version
           set_fact:
-            version: "{{ k8_version.stdout }}"
+            version: "{{ cri_version.stdout }}"
 
         - name: Adding CRI-O apt key
           apt_key:
@@ -349,7 +359,7 @@
             filename: devel:kubic:libcontainers:stable:cri-o:{{ k8s_version }}.list
 
     - name: Install CRI-O on Ubuntu
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu'"
+      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and cnc_version < 10.0 "
       become: true
       block:
         - name: Setup CRI-O for Ubuntu
@@ -359,6 +369,10 @@
             path: /etc/default/kubelet
             create: yes
 
+    - name: Install CRI-O on Ubuntu
+      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu'"
+      become: true
+      block:
         - name: install CRI-O
           apt:
             name: ['cri-o', 'cri-o-runc']
@@ -384,13 +398,13 @@
       when: "container_runtime == 'cri-o' and ansible_distribution == 'RedHat'"
       become: true
       block:
-        - name: trim k8s version
-          shell: echo {{ k8s_version }} | rev | cut -c3- | rev
-          register: k8_version
+        - name: trim CRI-O version
+          shell: echo {{ crio_version }} | awk -F'.' '{print $1"."$2}'
+          register: cri_version
 
         - name: set version
           set_fact:
-            version: "{{ k8_version.stdout }}"
+            version: "{{ cri_version.stdout }}"
 
         - name: Add CRIO repository
           yum_repository:
@@ -417,7 +431,7 @@
             update_cache: true
 
     - name: Enable OCI hook for CRI-O
-      when: cnc_docker == true and container_runtime == 'cri-o' or release == 'tegra' and container_runtime == 'cri-o'
+      when: cnc_docker == true and container_runtime == 'cri-o'
       become: true
       copy:
         dest: /usr/share/containers/oci/hooks.d/oci-nvidia-hook.json
@@ -474,6 +488,34 @@
       when: "ansible_architecture == 'aarch64'"
 
 ## For Jetson Only
+<<<<<<< HEAD
+    - name: get current JetPack version
+      shell: cat /etc/nv_tegra_release | awk '{print $5}' | sed 's/,//g'
+      when: release == 'tegra'
+      register: jversion
+
+    - name: Installing Latest Nvidia Jetson JetPack
+      become: true
+      block:
+        - name: get Current Tegra release
+          shell: "cat /etc/apt/sources.list.d/nvidia-l4t-apt-source.list | awk '{print $3}' | tail -1f"
+          register: tver
+
+        - name: update Tegra Release to r35.3
+          shell: sed -i "s/{{ tver.stdout }}/r35.3/g" /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
+          become: true
+
+        - name: Install New Jetapck 5.1.1
+          ignore_errors: yes
+          apt:
+            name: nvidia-jetpack
+            state: present
+            force: yes
+            autoremove: yes
+            update_cache: yes
+      when: "release == 'tegra' and jversion.stdout != '3.1'"
+=======
+>>>>>>> 8c5e7443116ce5dcab6856cc1e4eb8bc5317f785
 
     - name: Configure Containerd for NVIDIA Cloud Native Stack
       become: true
@@ -603,7 +645,7 @@
 
         - name: Install NVIDIA Container Runtime
           apt:
-            name: ['nvidia-container-runtime=3.11.0-1']
+            name: ['nvidia-container-runtime=3.11.0-1', 'nvidia-container-toolkit=1.11.0-1', 'nvidia-container-toolkit-base=1.11.0-1']
             state: present
             update_cache: yes
             force: yes
@@ -625,8 +667,30 @@
 
         - name: Install NVIDIA Container Runtime
           apt:
-            name: ['nvidia-container-runtime=3.12.0-1']
+            name: ['nvidia-container-runtime=3.12.0-1', 'nvidia-container-toolkit=1.12.0-1', 'nvidia-container-toolkit-base=1.12.0-1']
             state: present
             update_cache: yes
             force: yes
       when: "cnc_version == 7.3 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 8.2 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 9.0 and ansible_distribution == 'Ubuntu' and release == 'tegra' "
+
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 7.4 or 8.3 or 9.1 or 10.0
+      become: true
+      block:
+        - name: Add NVIDIA Docker apt signing key for Ubuntu
+          apt_key:
+            url: https://nvidia.github.io/libnvidia-container/gpgkey
+            state: present
+
+        - name: Get NVIDIA Docker Apt list
+          get_url:
+            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
+            dest: /etc/apt/sources.list.d/libnvidia-container.list
+            mode: 0644
+
+        - name: Install NVIDIA Container Runtime
+          apt:
+            name: ['nvidia-container-runtime=3.13.0-1', 'nvidia-container-toolkit=1.13.0-1', 'nvidia-container-toolkit-base=1.13.0-1']
+            state: present
+            update_cache: yes
+            force: yes
+      when: "cnc_version == 7.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 8.3 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 9.1 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 10.0 and ansible_distribution == 'Ubuntu' and release == 'tegra'"

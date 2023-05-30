@@ -200,3 +200,38 @@
 
         - name: Setup root account password policy
           shell: chage -d 0 root
+        
+    - name: Install NVIDIA TRD Driver
+      become: true
+      when:  "nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 7.4 or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 8.3 or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 9.1"
+      ignore_errors: true
+      block:
+        - name: Force an apt update
+          apt:
+            update_cache: true
+          changed_when: false
+          register: update
+          retries: 10
+          until: update is success
+
+        - name: Ensure kmod is installed
+          apt:
+            name: "kmod"
+            state: "present"
+          register: kmod_check
+          retries: 10
+          until: kmod_check is success
+
+        - name: Temporarily adjust account password policy
+          shell: chage -d 1 root
+
+        - name: Install driver packages
+          apt:
+            name: cuda=12.1.0-1
+            state: present
+          register: cuda_install
+          retries: 10
+          until: cuda_install is success
+
+        - name: Setup root account password policy
+          shell: chage -d 0 root

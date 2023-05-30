@@ -1,20 +1,20 @@
-cnc_version: 7.2
+cnc_version: 7.4
 
 ## Components Versions
 # Container Runtime options are containerd, cri-o
 container_runtime: "containerd"
-containerd_version: "1.6.10"
+containerd_version: "1.7.0"
 crio_version: "1.24.5"
-k8s_version: "1.24.8"
-calico_version: "3.24.5"
-flannel_version: "0.20.0"
-helm_version: "3.10.2"
-gpu_operator_version: "22.9.1"
-network_operator_version: "1.4.0"
+k8s_version: "1.24.12"
+calico_version: "3.25.1"
+flannel_version: "0.21.4"
+helm_version: "3.11.2"
+gpu_operator_version: "23.3.2"
+network_operator_version: "23.4.0"
 
 # GPU Operator Values
 enable_gpu_operator: yes
-gpu_driver_version: "525.60.13"
+gpu_driver_version: "525.105.17"
 enable_mig: no
 mig_profile: all-disabled
 mig_strategy: single
@@ -22,8 +22,6 @@ enable_gds: no
 enable_secure_boot: no
 enable_vgpu: no
 vgpu_license_server: ""
-
-## NGC Values
 # URL of Helm repo to be added. If using NGC get this from the fetch command in the console
 helm_repository: https://helm.ngc.nvidia.com/nvidia
 # Name of the helm chart to be deployed
@@ -32,7 +30,6 @@ gpu_operator_helm_chart: nvidia/gpu-operator
 gpu_operator_registry_password: ""
 ## This is most likely an NGC email
 gpu_operator_registry_email: ""
-
 ## This is most likely GPU Operator Driver Registry
 gpu_operator_driver_registry: "nvcr.io/nvidia"
 gpu_operator_registry_username: "$oauthtoken"
@@ -58,7 +55,7 @@ cnc_nvidia_driver: no
 k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 k8s_apt_repository: " https://apt.kubernetes.io/ kubernetes-xenial main"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-archive-keyring.gpg"
-k8s_registry: "k8s.gcr.io"
+k8s_registry: "registry.k8s.io"
 
 ## Cloud Native Stack Validation
 cnc_validation: no

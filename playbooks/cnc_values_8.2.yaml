@@ -4,7 +4,10 @@ cnc_version: 8.2
 # Container Runtime options are containerd, cri-o
 container_runtime: "containerd"
 containerd_version: "1.6.16"
+crio_version: "1.25.3"
 k8s_version: "1.25.6"
+calico_version: "3.25.0"
+flannel_version: "0.20.2"
 helm_version: "3.11.0"
 gpu_operator_version: "22.9.2"
 network_operator_version: "1.4.0"

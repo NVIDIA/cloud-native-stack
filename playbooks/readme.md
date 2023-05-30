@@ -1,6 +1,4 @@
-<h1>Ansible Playbooks for NVIDIA Cloud Native Stack </h1>
-
-<h1> NVIDIA Cloud Native Stack </h1>
+# Ansible Playbooks for NVIDIA Cloud Native Stack
 
 This page describes the steps required to use Ansible to install the NVIDIA Cloud Native Stack.
 
@@ -16,12 +14,23 @@ This page describes the steps required to use Ansible to install the NVIDIA Clou
 
 ## Prerequisites
 
-The following instructions assume the following:
+- system has direct internet access
+- system has adequate internet bandWidth
+- DNS server is working fine on the System
+- system can access Google repo(for k8s installation)
+- system has only 1 network interface configured with internet access. The IP is static and doesn't change
+- UEFI secure boot is disabled
+- Root file system should has at least 40GB capacity
+- system has 4CPU and 8GB Memory
+- At least one NVIDIA GPU attached to the system
+
+## Systems support 
+The following systems are support for Cloud Native Stack:
 
 - You have [NVIDIA-Certified Systems](https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html) with Mellanox CX NICs for x86-64 servers 
 - You have [NVIDIA Qualified Systems](https://www.nvidia.com/en-us/data-center/data-center-gpus/qualified-system-catalog/?start=0&count=50&pageNumber=1&filters=eyJmaWx0ZXJzIjpbXSwic3ViRmlsdGVycyI6eyJwcm9jZXNzb3JUeXBlIjpbIkFSTS1UaHVuZGVyWDIiLCJBUk0tQWx0cmEiXX0sImNlcnRpZmllZEZpbHRlcnMiOnt9LCJwYXlsb2FkIjpbXX0=) for arm64 servers 
   `NOTE:` For ARM systems, NVIDIA Network Operator is not supported yet. 
-- You will perform a clean install.
+- You have [NVIDIA Jetson Systems](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/)
 
 To determine if your system qualifies as an NVIDIA Certified System, review the list of NVIDIA Certified Systems [here](https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html). 
 
@@ -29,7 +38,19 @@ Please note that NVIDIA Cloud Native Stack is validated only on systems with the
 
 ### Installing the Ubuntu Operating System
 These instructions require Ubuntu server please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
- 
+
+### Installing JetPack for Jetson 
+
+JetPack (the Jetson SDK) is an on-demand all-in-one package that bundles developer software for the NVIDIA® Jetson platform. There are two ways to install the JetPack 
+
+1. Use the SDK Manager installer to flash your Jetson Developer Kit with the latest OS image, install developer tools for both host PC and Developer Kit, and install the libraries and APIs, samples, and documentation needed to jump-start your development environment.
+
+Follow the [instructions](https://docs.nvidia.com/sdk-manager/install-with-sdkm-jetson/index.html) on how to install JetPack 5.0There are two ways to install the JetPack 
+
+Download the SDK Manager from [here](https://developer.nvidia.com/nvidia-sdk-manager)
+
+2. Use the SD Card Image method to download the JetPack and load the OS image to external drive. For more information, please refer [flash using SD Card method](https://developer.nvidia.com/embedded/learn/get-started-jetson-xavier-nx-devkit#prepare)
+
 ## Using the Ansible playbooks 
 This section describes how to use the ansible playbooks.
 
@@ -58,17 +79,18 @@ Cloud Native Stack Supports below versions.
 
 Available versions are:
 
+- 10.0
 - 9.0
+- 9.1
+- 8.3
 - 8.2
 - 8.1
+- 7.4
 - 7.3
 - 7.2
 - 7.1
 - 7.0
 - 6.4
-- 6.3
-- 6.2
-- 6.1
 
 Edit the `cnc_version.yaml` and update the version you want to install
 
@@ -80,22 +102,25 @@ If you want to cusomize any predefined components versions or any other custom p
 
 Example:
 ```
-$ nano cnc_values_8.1.yaml
+$ nano cnc_values_8.0.yaml
 
-cnc_version: 8.1
+cnc_version: 8.0
 
 ## Components Versions
 # Container Runtime options are containerd, cri-o
 container_runtime: "containerd"
-containerd_version: "1.6.10"
-k8s_version: "1.25.4"
-helm_version: "3.10.2"
-gpu_operator_version: "22.9.1"
-network_operator_version: "1.4.0"
+containerd_version: "1.6.8"
+crio_version: "1.25.3"
+k8s_version: "1.25.2"
+calico_version: "3.24.1"
+flannel_version: "0.19.2"
+helm_version: "3.10.0"
+gpu_operator_version: "22.9.0"
+network_operator_version: "1.3.0"
 
 # GPU Operator Values
 enable_gpu_operator: yes
-gpu_driver_version: "525.85.12"
+gpu_driver_version: "520.61.07"
 enable_mig: no
 mig_profile: all-disabled
 mig_strategy: single
@@ -191,6 +216,7 @@ A list of older NVIDIA Cloud Native Stack versions (formerly known as Cloud Nati
 
 - [Install NVIDIA Cloud Native Stack](#Install-NVIDIA-Cloud-Native-Stack)
 - [Validate NVIDIA Cloud Native Stack](#Validate-NVIDIA-Cloud-Native-Stack)
+- [Upgrade NVIDIA Cloud Native Stack](#Upgrade-NVIDIA-Cloud-Native-Stack)
 - [Uninstall NVIDIA Cloud Native Stack](#Uninstall-NVIDIA-Cloud-Native-Stack)
 
 ### Install NVIDIA Cloud Native Stack 
@@ -228,6 +254,17 @@ The Ansible NVIDIA Cloud Native Stack validation playbook will do the following:
 - Validate the GPU Operator pods state
 - Report Operating System, Docker, Kubernetes, Helm, GPU Operator versions
 - Validate nvidia-smi and cuda liberaries on kubernetes
+
+### Upgrade NVIDIA Cloud Native Stack
+
+The Ansible NVIDIA Cloud Native Stack upgrade playbook will do the following:
+
+- Validate the Cloud Native stack is running
+- Update the Cloud Native Stack Version 
+- Upgrade the Container runtime and kubernetes components
+- Upgrade the Kubernetes cluster to new version
+- Upgrade the networking plugin to new version
+- Upgrade the GPU Operator to next available version
 
 ### Uninstall NVIDIA Cloud Native Stack 
 

@@ -1,5 +1,5 @@
-<h1>NVIDIA Cloud Native Stack v8.2 - Install Guide for Ubuntu Server</h1>
-<h2>Introduction</h2>
+# NVIDIA Cloud Native Stack v8.2 - Install Guide for Ubuntu Server
+## Introduction
 
 This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple NVIDIA Certified Systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
@@ -29,7 +29,7 @@ NVIDIA Cloud Native Stack v8.2 includes:
   - Multus 3.8
   - Whereabouts 0.5.2
 
-<h2>Table of Contents</h2>
+## Table of Contents
 
 - [Prerequisites](#Prerequisites)
 - [Installing the Ubuntu Operating System](#Installing-the-Ubuntu-Operating-System)
@@ -62,18 +62,20 @@ Please note that NVIDIA Cloud Native Stack is validated only on systems with the
 
 
 ### Installing the Ubuntu Operating System
-These instructions require installing Ubuntu Server LTS 22.04. Ubuntu Server can be downloaded [here](http://cdimage.ubuntu.com/releases/22.04/release/).
+These instructions require installing Ubuntu Server LTS 22.04 Ubuntu Server can be downloaded [here](http://cdimage.ubuntu.com/releases/20.04.4/release/).
 
 Please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
 
 ## Installing Container Runtime
 
-You need to install a container runtime into each node in the cluster so that Pods can run there. Currently Cloud Native Stack provides below container runtimes
+You need to install a container runtime into each node in the cluster so that Pods can run there. Currently Cloud Native Stack provides below container runtimes:
 
 - [Installing Containerd](#Installing-Containerd)
 - [Installing CRI-O](#Installing-CRI-O)
 
-### Installing Containerd
+`NOTE:` Only install one of either `Containerd` or `CRI-O`, not both!
+
+These steps apply to both runtimes.
 
 Set up the repository and update the apt package index:
 
@@ -87,7 +89,7 @@ Install packages to allow apt to use a repository over HTTPS:
 sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
 ```
 
-Configure the Prerequisites for Containerd
+Configure the `overlay` and `br_netfilter` kernel modules required by Kubernetes:
 
 ```
 cat <<EOF | sudo tee /etc/modules-load.d/kubernetes.conf
@@ -116,6 +118,8 @@ Apply sysctl params without reboot
 ```
 sudo sysctl --system
 ```
+### Installing Containerd(Option 1)
+
 Download the Containerd for `x86-64` system:
 
 ```
@@ -155,65 +159,31 @@ containerd config default | sudo tee /etc/containerd/config.toml
 ```
 
 ```
+sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+```
+
+```
 sudo systemctl restart containerd
 ```
 
 For additional information on installing Containerd, please reference [Install Containerd with Release Tarball](https://github.com/containerd/containerd/blob/master/docs/cri/installation.md).
 
-### Installing CRI-O
-
-Set up the repository and update the apt package index:
-
-```
-sudo apt-get update
-```
-
-Install packages to allow apt to use a repository over HTTPS:
-
-```
-sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
-```
-
-Configure the Prerequisites for Containerd
-
-```
-cat <<EOF | sudo tee /etc/modules-load.d/kubernetes.conf
-overlay
-br_netfilter
-EOF
-```
-
-```
-sudo modprobe overlay
-```
-```
-sudo modprobe br_netfilter
-```
-
-Setup required sysctl params; these persist across reboots.
-```
-cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
-net.bridge.bridge-nf-call-iptables  = 1
-net.ipv4.ip_forward                 = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-EOF
-```
-
-Apply sysctl params without reboot
-```
-sudo sysctl --system
-```
+### Installing CRI-O(Option 2)
 
 Setup the Apt repositry for CRI-O
 
 ```
 OS=xUbuntu_22.04
-VERSION=1.25
+VERSION=1.26
 ```
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 
 ```
-echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+echo "deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+```
+
+```
+sudo mkdir -p /usr/share/keyrings
 ```
 
 ```
@@ -221,7 +191,7 @@ curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/
 ```
 
 ```
-echo "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
+echo "deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
 ```
 
 ```
@@ -240,10 +210,9 @@ Enable and Start the CRI-O service
 sudo systemctl enable crio.service && sudo systemctl start crio.service
 ```
 
-
 ### Installing Kubernetes 
 
-Make sure Containerd has been started and enabled before beginning installation:
+Make sure your container runtime has been started and enabled before beginning installation:
 
 ```
  sudo systemctl start containerd && sudo systemctl enable containerd
@@ -256,7 +225,7 @@ Execute the following to add apt keys:
 ```
 
 ```
- curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+ curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg
 ```
 
 ```
@@ -267,7 +236,7 @@ Create kubernetes.list:
 
 ```
 cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
-deb https://apt.kubernetes.io/ kubernetes-xenial main
+deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 ```
 
@@ -278,32 +247,44 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 ```
 
 ```
- sudo apt-get install -y -q kubelet=1.25.6-00 kubectl=1.25.6-00 kubeadm=1.25.6-00
+ sudo apt install -y -q kubelet=1.25.6-00 kubectl=1.25.6-00 kubeadm=1.25.6-00
 ```
 
 ```
  sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
-Create a kubelet default with Containerd:
+Create a kubelet default with your container runtime:
+`NOTE:`  The container runtime endpoint will be `unix:/run/containerd/containerd.sock` or `unix:/run/crio/crio.sock` depending on which container runtime you chose in the previous steps.
+
+For `Containerd` system:
+
 ```
  cat <<EOF | sudo tee /etc/default/kubelet
 KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
 EOF
 ```
 
+For `CRI-O` system:
+
+```
+cat <<EOF | sudo tee /etc/default/kubelet
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/crio/crio.sock"
+EOF
+```
+
 Reload the system daemon:
 ```
- sudo systemctl daemon-reload
+sudo systemctl daemon-reload
 ```
 
 Disable swap:
 ```
- sudo swapoff -a
+sudo swapoff -a
 ```
 
 ```
- sudo nano /etc/fstab
+sudo nano /etc/fstab
 ```
 
 `NOTE:` Add a # before all the lines that start with /swap. # is a comment, and the result should look something like this:
@@ -316,10 +297,16 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 
 #### Initializing the Kubernetes cluster to run as a control-plane node
 
-Execute the following command:
+Execute the following command for `Containerd` systems:
 
 ```
- sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.25.6"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.25.6"
+```
+
+Eecute the following command for `CRI-O` systems:
+
+```
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock--kubernetes-version="v1.25.6"
 ```
 
 Output:
@@ -350,21 +337,21 @@ kubeadm join <your-host-IP>:6443 --token 489oi5.sm34l9uh7dk4z6cm \
 Following the instructions in the output, execute the commands as shown below:
 
 ```
- mkdir -p $HOME/.kube
+mkdir -p $HOME/.kube
 ```
 
 ```
- sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
- ```
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+```
 
- ```
- sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
 With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
- kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.5/manifests/calico.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.5/manifests/calico.yaml
 ```
 
 Update the Calico Daemonset 
@@ -376,7 +363,7 @@ kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=int
 You can execute the below commands to ensure that all pods are up and running:
 
 ```
- kubectl get pods --all-namespaces
+kubectl get pods --all-namespaces
 ```
 
 Output:
@@ -397,7 +384,7 @@ kube-system   kube-scheduler-#yourhost                   1/1     Running   0    
 The get nodes command shows that the control-plane node is up and ready:
 
 ```
- kubectl get nodes
+kubectl get nodes
 ```
 
 Output:
@@ -421,37 +408,37 @@ for more information.
 Execute the following command to download and install Helm 3.11.0 for `x86-64` system: 
 
 ```
- wget https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
+wget https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
 ```
 
 ```
- tar -zxvf helm-v3.11.0-linux-amd64.tar.gz
+tar -zxvf helm-v3.11.0-linux-amd64.tar.gz
  ```
  
  ```
- sudo mv linux-amd64/helm /usr/local/bin/helm
+sudo mv linux-amd64/helm /usr/local/bin/helm
  ```
 
  ```
- rm -rf helm-v3.11.0-linux-amd64.tar.gz linux-amd64/
+rm -rf helm-v3.11.0-linux-amd64.tar.gz linux-amd64/
 ```
 
 Download and install Helm 3.11.0 for `ARM` system: 
 
 ```
- wget https://get.helm.sh/helm-v3.11.0-linux-arm64.tar.gz
+wget https://get.helm.sh/helm-v3.11.0-linux-arm64.tar.gz
 ```
 
 ```
- tar -zxvf helm-v3.11.0-linux-arm64.tar.gz
+tar -zxvf helm-v3.11.0-linux-arm64.tar.gz
  ```
  
- ```
- sudo mv linux-arm64/helm /usr/local/bin/helm
- ```
+```
+sudo mv linux-arm64/helm /usr/local/bin/helm
+```
 
- ```
- rm -rf helm-v3.11.0-linux-arm64.tar.gz linux-arm64/
+```
+rm -rf helm-v3.11.0-linux-arm64.tar.gz linux-arm64/
 ```
 
 Refer to the Helm 3.11.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
@@ -471,7 +458,7 @@ Prerequisites:
 Once the prerequisites are completed on the additional nodes, execute the below command on the control-plane node and then execute the join command output on an additional node to add the additional node to NVIDIA Cloud Native Stack:
 
 ```
- sudo kubeadm token create --print-join-command
+sudo kubeadm token create --print-join-command
 ```
 
 Output:
@@ -484,7 +471,7 @@ sudo kubeadm join 10.110.0.34:6443 --token kg2h7r.e45g9uyrbm1c0w3k     --discove
 The get nodes command shows that the master and worker nodes are up and ready:
 
 ```
- kubectl get nodes
+kubectl get nodes
 ```
 
 Output:
@@ -504,7 +491,7 @@ The below instructions assume that Mellanox NICs are connected to your machines.
 Execute the below command to verify Mellanox NICs are enabled on your machines:
 
 ```
- lspci | grep -i "Mellanox"
+lspci | grep -i "Mellanox"
 ```
 
 Output:
@@ -543,17 +530,20 @@ For more information about custom network operator values.yaml, please refer [Ne
 
 Add the NVIDIA repo:
 ```
- helm repo add mellanox https://mellanox.github.io/network-operator
+helm repo add mellanox https://mellanox.github.io/network-operator
 ```
 
 Update the Helm repo:
 ```
- helm repo update
+ elm repo update
 ```
 Install Network Operator:
 ```
- kubectl label nodes --all node-role.kubernetes.io/master- --overwrite
- helm install -f --version 1.4.0 ./network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
+kubectl label nodes --all node-role.kubernetes.io/master- --overwrite
+```
+
+```
+helm install -f --version 1.4.0 ./network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
 ```
 #### Validating the State of the Network Operator
 
@@ -583,13 +573,13 @@ Please refer to the [Network Operator page](https://docs.mellanox.com/display/CO
 Add the NVIDIA repo:
 
 ```
- helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
 ```
 
 Update the Helm repo:
 
 ```
- helm repo update
+helm repo update
 ```
 
 Install GPU Operator:
@@ -597,7 +587,7 @@ Install GPU Operator:
 `NOTE:` If you installed Network Operator, please skip the below command and follow the [GPU Operator with RDMA](#GPU-Operator-with-RDMA)
 
 ```
- helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --wait --generate-name
+helm install --version 22.9.2 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --wait --generate-name
 ```
 
 #### GPU Operator with RDMA 
@@ -608,7 +598,7 @@ Install GPU Operator:
 After Network Operator installation is completed, execute the below command to install the GPU Operator to load nv_peer_mem modules:
 
 ```
- helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator  --set driver.rdma.enabled=true  --wait --generate-name
+ helm install --version 22.9.2 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.rdma.enabled=true  --wait --generate-name
 ```
 
 #### GPU Operator with Host MOFED Driver and RDMA 
@@ -616,7 +606,7 @@ After Network Operator installation is completed, execute the below command to i
 If the host is already installed MOFED driver without network operator, execute the below command to install the GPU Operator to load nv_peer_mem module 
 
 ```
- helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait --generate-name 
+ helm install --version 22.9.2 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait --generate-name 
 
 ```
 
@@ -625,7 +615,7 @@ If the host is already installed MOFED driver without network operator, execute 
 Execute the below command to enable the GPU Direct Storage Driver on GPU Operator 
 
 ```
-helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --set gds.enabled=true
+helm install --version 22.9.2 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set gds.enabled=true
 ```
 For more information refer, [GPU Direct Storage](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/gpu-operator-rdma.html)
 
@@ -642,15 +632,15 @@ NAMESPACE                NAME                                                   
 default                  gpu-operator-1622656274-node-feature-discovery-master-5cddq96gq   1/1     Running     0          2m39s
 default                  gpu-operator-1622656274-node-feature-discovery-worker-wr88v       1/1     Running     0          2m39s
 default                  gpu-operator-7db468cfdf-mdrdp                                     1/1     Running     0          2m39s
-gpu-operator-resources   gpu-feature-discovery-g425f                                       1/1     Running     0          2m20s
-gpu-operator-resources   nvidia-container-toolkit-daemonset-mcmxj                          1/1     Running     0          2m20s
-gpu-operator-resources   nvidia-cuda-validator-s6x2p                                       0/1     Completed   0          48s
-gpu-operator-resources   nvidia-dcgm-exporter-wtxnx                                        1/1     Running     0          2m20s
-gpu-operator-resources   nvidia-dcgm-jbz94                                                 1/1     Running     0          2m20s
-gpu-operator-resources   nvidia-device-plugin-daemonset-hzzdt                              1/1     Running     0          2m20s
-gpu-operator-resources   nvidia-device-plugin-validator-9nkxq                              0/1     Completed   0          17s
-gpu-operator-resources   nvidia-driver-daemonset-kt8g5                                     1/1     Running     0          2m20s
-gpu-operator-resources   nvidia-operator-validator-cw4j5                                   1/1     Running     0          2m20s
+nvidia-gpu-operator      gpu-feature-discovery-g425f                                       1/1     Running     0          2m20s
+nvidia-gpu-operator      nvidia-container-toolkit-daemonset-mcmxj                          1/1     Running     0          2m20s
+nvidia-gpu-operator      nvidia-cuda-validator-s6x2p                                       0/1     Completed   0          48s
+nvidia-gpu-operator      nvidia-dcgm-exporter-wtxnx                                        1/1     Running     0          2m20s
+nvidia-gpu-operator      nvidia-dcgm-jbz94                                                 1/1     Running     0          2m20s
+nvidia-gpu-operator      nvidia-device-plugin-daemonset-hzzdt                              1/1     Running     0          2m20s
+nvidia-gpu-operator      nvidia-device-plugin-validator-9nkxq                              0/1     Completed   0          17s
+nvidia-gpu-operator      nvidia-driver-daemonset-kt8g5                                     1/1     Running     0          2m20s
+nvidia-gpu-operator      nvidia-operator-validator-cw4j5                                   1/1     Running     0          2m20s
 
 ```
 
@@ -659,7 +649,7 @@ Please refer to the [GPU Operator page](https://ngc.nvidia.com/catalog/helm-char
 For multiple worker nodes, execute the below command to fix the CoreDNS and Node Feature Discovery. 
 
 ```
-kubectl delete pods $(kubectl get pods -n kube-system | grep core | awk '{print $1}') -n kube-system; kubectl delete pod $(kubectl get pods -o wide -n gpu-operator-resources | grep node-feature-discovery | grep -v master | awk '{print $1}') -n gpu-operator-resources
+kubectl delete pods $(kubectl get pods -n kube-system | grep core | awk '{print $1}') -n kube-system; kubectl delete pod $(kubectl get pods -o wide -n nvidia-gpu-operator | grep node-feature-discovery | grep -v master | awk '{print $1}') -n nvidia-gpu-operator
 ```
 
 #### GPU Operator with MIG
@@ -961,7 +951,7 @@ spec:
   restartPolicy: OnFailure
   containers:
     - name: nvidia-smi
-      image: "nvidia/cuda:12.0.0-base-ubuntu22.04"
+      image: "nvidia/cuda:12.1.0-base-ubuntu22.04"
       args: ["nvidia-smi"]
 EOF
 ```
@@ -979,7 +969,7 @@ Output:
 ``` 
 Wed Dec 14 12:47:29 2022
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 525.85.12    Driver Version: 525.85.12    CUDA Version: 12.0     |
+| NVIDIA-SMI 525.105.17   Driver Version: 525.105.17   CUDA Version: 12.1     |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
@@ -1054,7 +1044,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 Go through the below steps to install the demo application:
 ```
-1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz --untar
+1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz --untar
 
 2. cd into the folder video-analytics-demo and update the file values.yaml
 
@@ -1076,9 +1066,9 @@ Once the Helm chart is deployed, access the application with the VLC player. See
 If you dont have a camera input, please execute the below commands to use the default video already integrated into the application:
 
 ```
-helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz
+helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz
 
-helm install video-analytics-demo-0.1.8.tgz --name-template iva
+helm install video-analytics-demo-0.1.9.tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the application with the VLC player as per the below instructions. 
@@ -1115,9 +1105,9 @@ Execute the below commands to uninstall the GPU Operator:
 ```
 $ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 gpu-operator-resources         1               2022-12-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-22.9.1      22.9.1 
+gpu-operator-1606173805 nvidia-gpu-operator         1               2022-12-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-22.9.2      v22.9.2 
 
-$ helm del gpu-operator-1606173805 -n gpu-operator-resources
+$ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 
 ```
 

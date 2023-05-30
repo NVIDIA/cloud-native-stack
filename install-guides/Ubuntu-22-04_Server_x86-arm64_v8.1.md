@@ -513,7 +513,7 @@ Install GPU Operator:
 `NOTE:` If you installed Network Operator, please skip the below command and follow the [GPU Operator with RDMA](#GPU-Operator-with-RDMA)
 
 ```
- helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --wait --generate-name
+ helm install --version 22.9.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --wait --generate-name
 ```
 
 #### GPU Operator with RDMA 
@@ -524,7 +524,7 @@ Install GPU Operator:
 After Network Operator installation is completed, execute the below command to install the GPU Operator to load nv_peer_mem modules:
 
 ```
- helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator  --set driver.rdma.enabled=true  --wait --generate-name
+ helm install --version 22.9.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.rdma.enabled=true  --wait --generate-name
 ```
 
 #### GPU Operator with Host MOFED Driver and RDMA 
@@ -532,7 +532,7 @@ After Network Operator installation is completed, execute the below command to i
 If the host is already installed MOFED driver without network operator, execute the below command to install the GPU Operator to load nv_peer_mem module 
 
 ```
- helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait --generate-name 
+ helm install --version 22.9.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait --generate-name 
 
 ```
 
@@ -541,7 +541,7 @@ If the host is already installed MOFED driver without network operator, execute 
 Execute the below command to enable the GPU Direct Storage Driver on GPU Operator 
 
 ```
-helm install --version 22.9.1 --create-namespace --namespace gpu-operator-resources nvidia/gpu-operator --set gds.enabled=true
+helm install --version 22.9.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set gds.enabled=true
 ```
 For more information refer, [GPU Direct Storage](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/gpu-operator-rdma.html)
 
@@ -558,15 +558,15 @@ NAMESPACE                NAME                                                   
 default                  gpu-operator-1622656274-node-feature-discovery-master-5cddq96gq   1/1     Running     0          2m39s
 default                  gpu-operator-1622656274-node-feature-discovery-worker-wr88v       1/1     Running     0          2m39s
 default                  gpu-operator-7db468cfdf-mdrdp                                     1/1     Running     0          2m39s
-gpu-operator-resources   gpu-feature-discovery-g425f                                       1/1     Running     0          2m20s
-gpu-operator-resources   nvidia-container-toolkit-daemonset-mcmxj                          1/1     Running     0          2m20s
-gpu-operator-resources   nvidia-cuda-validator-s6x2p                                       0/1     Completed   0          48s
-gpu-operator-resources   nvidia-dcgm-exporter-wtxnx                                        1/1     Running     0          2m20s
-gpu-operator-resources   nvidia-dcgm-jbz94                                                 1/1     Running     0          2m20s
-gpu-operator-resources   nvidia-device-plugin-daemonset-hzzdt                              1/1     Running     0          2m20s
-gpu-operator-resources   nvidia-device-plugin-validator-9nkxq                              0/1     Completed   0          17s
-gpu-operator-resources   nvidia-driver-daemonset-kt8g5                                     1/1     Running     0          2m20s
-gpu-operator-resources   nvidia-operator-validator-cw4j5                                   1/1     Running     0          2m20s
+nvidia-gpu-operator      gpu-feature-discovery-g425f                                       1/1     Running     0          2m20s
+nvidia-gpu-operator      nvidia-container-toolkit-daemonset-mcmxj                          1/1     Running     0          2m20s
+nvidia-gpu-operator      nvidia-cuda-validator-s6x2p                                       0/1     Completed   0          48s
+nvidia-gpu-operator      nvidia-dcgm-exporter-wtxnx                                        1/1     Running     0          2m20s
+nvidia-gpu-operator      nvidia-dcgm-jbz94                                                 1/1     Running     0          2m20s
+nvidia-gpu-operator      nvidia-device-plugin-daemonset-hzzdt                              1/1     Running     0          2m20s
+nvidia-gpu-operator      nvidia-device-plugin-validator-9nkxq                              0/1     Completed   0          17s
+nvidia-gpu-operator      nvidia-driver-daemonset-kt8g5                                     1/1     Running     0          2m20s
+nvidia-gpu-operator      nvidia-operator-validator-cw4j5                                   1/1     Running     0          2m20s
 
 ```
 
@@ -575,7 +575,7 @@ Please refer to the [GPU Operator page](https://ngc.nvidia.com/catalog/helm-char
 For multiple worker nodes, execute the below command to fix the CoreDNS and Node Feature Discovery. 
 
 ```
-kubectl delete pods $(kubectl get pods -n kube-system | grep core | awk '{print $1}') -n kube-system; kubectl delete pod $(kubectl get pods -o wide -n gpu-operator-resources | grep node-feature-discovery | grep -v master | awk '{print $1}') -n gpu-operator-resources
+kubectl delete pods $(kubectl get pods -n kube-system | grep core | awk '{print $1}') -n kube-system; kubectl delete pod $(kubectl get pods -o wide -n nvidia-gpu-operator | grep node-feature-discovery | grep -v master | awk '{print $1}') -n nvidia-gpu-operator
 ```
 
 #### GPU Operator with MIG
@@ -1031,9 +1031,9 @@ Execute the below commands to uninstall the GPU Operator:
 ```
 $ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 gpu-operator-resources         1               2022-12-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-22.9.1      22.9.1 
+gpu-operator-1606173805 nvidia-gpu-operator         1               2022-12-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-22.9.1      22.9.1 
 
-$ helm del gpu-operator-1606173805 -n gpu-operator-resources
+$ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 
 ```
 

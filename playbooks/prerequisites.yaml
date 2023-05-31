@@ -488,7 +488,6 @@
       when: "ansible_architecture == 'aarch64'"
 
 ## For Jetson Only
-<<<<<<< HEAD
     - name: get current JetPack version
       shell: cat /etc/nv_tegra_release | awk '{print $5}' | sed 's/,//g'
       when: release == 'tegra'
@@ -514,8 +513,6 @@
             autoremove: yes
             update_cache: yes
       when: "release == 'tegra' and jversion.stdout != '3.1'"
-=======
->>>>>>> 8c5e7443116ce5dcab6856cc1e4eb8bc5317f785
 
     - name: Configure Containerd for NVIDIA Cloud Native Stack
       become: true

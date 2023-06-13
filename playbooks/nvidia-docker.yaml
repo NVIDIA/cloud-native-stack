@@ -202,7 +202,7 @@
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
       when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 7.4 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 9.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 10.0 and ansible_distribution == 'Ubuntu'
       apt:
-        name: [ "nvidia-docker2", "nvidia-container-runtime=3.13.0-1", 'nvidia-container-toolkit=1.13.0-1', 'nvidia-container-toolkit-base=1.13.0-1']
+        name: [ "nvidia-docker2", "nvidia-container-runtime=3.13.0-1", 'nvidia-container-toolkit=1.13.1-1', 'nvidia-container-toolkit-base=1.13.1-1']
         state: present
         update_cache: true
 

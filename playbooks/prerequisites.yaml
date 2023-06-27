@@ -672,13 +672,13 @@
 
         - name: Remove old nvidia container tooklit
           apt:
-            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
+            name: ['nvidia-container-toolkit', 'nvidia-container-runtime']
             state: absent
             autoremove: yes
 
         - name: Install NVIDIA Container Runtime
           apt:
-            name: ['nvidia-container-toolkit=1.13.1-1', 'nvidia-container-toolkit-base=1.13.1-1', 'libnvidia-container-tools=1.13.1-1', 'libnvidia-container1=1.13.1-1']
+            name: ['nvidia-docker2=2.13.0-1', 'nvidia-container-toolkit=1.13.1-1', 'nvidia-container-toolkit-base=1.13.1-1', 'libnvidia-container-tools=1.13.1-1', 'libnvidia-container1=1.13.1-1']
             state: present
             update_cache: yes
             force: yes

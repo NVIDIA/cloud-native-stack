@@ -74,14 +74,14 @@ Open the `/etc/selinux/config` file in a text editor of your choice, for example
 sudo vi /etc/selinux/config
 ```
 
-Configure the `SELINUX=enforcing` option:
+Configure the `SELINUX=permissive` option:
 ```
 # This file controls the state of SELinux on the system.
 # SELINUX= can take one of these three values:
 #       enforcing - SELinux security policy is enforced.
 #       permissive - SELinux prints warnings instead of enforcing.
 #       disabled - No SELinux policy is loaded.
-SELINUX=enforcing
+SELINUX=permissive
 # SELINUXTYPE= can take one of these two values:
 #       targeted - Targeted processes are protected,
 #       mls - Multi Level Security protection.
@@ -107,8 +107,8 @@ SELinux status:                 enabled
 SELinuxfs mount:                /sys/fs/selinux
 SELinux root directory:         /etc/selinux
 Loaded policy name:             targeted
-Current mode:                   enforcing
-Mode from config file:          enforcing
+Current mode:                   permissive
+Mode from config file:          permissive
 Policy MLS status:              enabled
 Policy deny_unknown status:     allowed
 Memory protection checking:     actual (secure)

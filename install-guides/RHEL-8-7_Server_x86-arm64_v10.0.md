@@ -66,7 +66,7 @@ These instructions require installing RedHat Enterprise Linux 8.7,  can be downl
 
 Please reference the [RHEL Server Installation Guide](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html-single/performing_a_standard_rhel_8_installation/index).
 
-## Changing the SELinux State 
+### Changing the SELinux State 
 
 Open the `/etc/selinux/config` file in a text editor of your choice, for example:
 
@@ -126,16 +126,10 @@ You need to install a container runtime into each node in the cluster so that Po
 
 These steps apply to both runtimes.
 
-Set up the repository and update the apt package index:
+Install required packages:
 
 ```
-sudo apt-get update
-```
-
-Install packages to allow apt to use a repository over HTTPS:
-
-```
-sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
+sudo dnf install -y yum-utils device-mapper-persistent-data lvm2
 ```
 
 Configure the `overlay` and `br_netfilter` kernel modules required by Kubernetes:
@@ -219,38 +213,27 @@ For additional information on installing Containerd, please reference [Install C
 
 ### Installing CRI-O(Option 2)
 
-Setup the Apt repositry for CRI-O
+Setup the Yum repositry for CRI-O
 
 ```
-OS=xUbuntu_22.04
-VERSION=1.26
+OS=CentOS_8
+VERSION=1.27
 ```
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 
 ```
-echo "deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+sudo curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8/devel:kubic:libcontainers:stable.repo
 ```
 
 ```
-sudo mkdir -p /usr/share/keyrings
+sudo curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.repo https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/CentOS_8/devel:kubic:libcontainers:stable:cri-o:$VERSION.repo
 ```
 
-```
-curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | sudo apt-key add -
-```
-
-```
-echo "deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
-```
-
-```
-curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/Release.key | sudo apt-key add -
-```
 
 Install the CRI-O and dependencies 
 
 ```
-sudo apt update && sudo apt install cri-o cri-o-runc cri-tools -y
+sudo dnf install cri-o cri-tools
 ```
 
 Enable and Start the CRI-O service 
@@ -261,46 +244,31 @@ sudo systemctl enable crio.service && sudo systemctl start crio.service
 
 ### Installing Kubernetes 
 
-Make sure your container runtime has been started and enabled before beginning installation:
+Execute the following to install prerequisites:
 
 ```
- sudo systemctl start containerd && sudo systemctl enable containerd
-```
-
-Execute the following to add apt keys:
-
-```
- sudo apt-get update && sudo apt-get install -y apt-transport-https curl
-```
-
-```
- curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg
-```
-
-```
- sudo mkdir -p  /etc/apt/sources.list.d/
+ sudo yum update && sudo yum install -y net-tools curl ca-certificates
 ```
 
 Create kubernetes.list:
 
 ```
-cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
-deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main
+cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+[kubernetes] 
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+exclude=kubelet kubeadm kubectl
 EOF
 ```
 
 Now execute the below to install kubelet, kubeadm, and kubectl:
 
 ```
- sudo apt-get update
-```
-
-```
- sudo apt install -y -q kubelet=1.27.0-00 kubectl=1.27.0-00 kubeadm=1.27.0-00
-```
-
-```
- sudo apt-mark hold kubelet kubeadm kubectl
+ sudo dnf install -y kubelet-1.27.0 kubeadm-1.27.0 kubectl-1.27.0
 ```
 
 Create a kubelet default with your container runtime:

@@ -1,16 +1,16 @@
-<h1>NVIDIA Cloud Native Stack v7.4 - Install Guide for Developers</h1>
+<h1>NVIDIA Cloud Native Stack v7.5 - Install Guide for Developers</h1>
 <h2>Introduction</h2>
 
 NVIDIA Cloud Native Stack for Developers is focused to provide the Docker based experince. This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
-NVIDIA Cloud Native Stack v7.4 includes:
+NVIDIA Cloud Native Stack v7.5 includes:
 - Ubuntu 22.04 LTS
-- Containerd 1.7.0
-- Kubernetes version 1.24.12
-- Helm 3.11.2
-- NVIDIA GPU Driver: 525.105.17
+- Containerd 1.7.2
+- Kubernetes version 1.24.14
+- Helm 3.12.1
+- NVIDIA GPU Driver: 535.54.03
 - NVIDIA Container Toolkit: 1.13.0
-- NVIDIA GPU Operator 23.3.1
+- NVIDIA GPU Operator 23.3.2
   - NVIDIA K8S Device Plugin: 0.14.0
   - NVIDIA DCGM-Exporter: 3.1.7-3.1.4
   - NVIDIA DCGM: 3.1.7-1
@@ -92,9 +92,9 @@ nvidia-smi
 Expected Output:
 
 ```
-Wed Mar 24 12:47:29 2023
+Wed Jun 24 12:47:29 2023
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 525.105.17    Driver Version: 525.105.17    CUDA Version: 12.1   |
+| NVIDIA-SMI 535.54.03     Driver Version: 535.54.03     CUDA Version: 12.1   |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
@@ -311,30 +311,30 @@ sudo sysctl --system
 Download the Containerd for `x86-64` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.7.0/cri-containerd-cni-1.7.0-linux-amd64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.2/cri-containerd-cni-1.7.2-linux-amd64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.0-linux-amd64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.2-linux-amd64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.7.0-linux-amd64.tar.gz
+rm -rf cri-containerd-cni-1.7.2-linux-amd64.tar.gz
 ```
 
 
 Download the Containerd for `ARM` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.7.0/cri-containerd-cni-1.7.0-linux-arm64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.2/cri-containerd-cni-1.7.2-linux-arm64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.0-linux-arm64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.2-linux-arm64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.7.0-linux-arm64.tar.gz
+rm -rf cri-containerd-cni-1.7.2-linux-arm64.tar.gz
 ```
 
 Install the Containerd
@@ -429,7 +429,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
  sudo apt-get update
 ```
 ```
- sudo apt-get install -y -q kubelet=1.24.12-00 kubectl=1.24.12-00 kubeadm=1.24.12-00
+ sudo apt-get install -y -q kubelet=1.24.14-00 kubectl=1.24.14-00 kubeadm=1.24.14-00
 ```
 ```
  sudo apt-mark hold kubelet kubeadm kubectl
@@ -482,13 +482,13 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command for `Containerd` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.12"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.24.14"
 ```
 
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock--kubernetes-version="v1.24.12"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock--kubernetes-version="v1.24.14"
 ```
 
 Output:
@@ -527,7 +527,7 @@ Following the instructions in the output, execute the commands as shown below:
 With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
- kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.1/manifests/calico.yaml 
+ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml 
 ```
 
 Update the Calico Daemonset 
@@ -567,7 +567,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.24.12
+#yourhost        Ready    control-plane,master   10m   v1.24.14
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -581,16 +581,24 @@ for more information.
 
 ### Installing Helm 
 
-Execute the following command to download and install Helm 3.10.2: 
+Execute the following command to download and install Helm 3.12.1 for `x86-64` system:
 
 ```
- wget https://get.helm.sh/helm-v3.11.2-linux-amd64.tar.gz && \
- tar -zxvf helm-v3.11.2-linux-amd64.tar.gz && \
+ wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz && \
+ tar -zxvf helm-v3.12.1-linux-amd64.tar.gz && \
  sudo mv linux-amd64/helm /usr/local/bin/helm && \ 
- rm -rf helm-v3.11.2-linux-amd64.tar.gz linux-amd64/
+ rm -rf helm-v3.12.1-linux-amd64.tar.gz linux-amd64/
+```
+Execute the following command to download and install Helm 3.12.1 for `ARM` system:
+
+```
+ wget https://get.helm.sh/helm-v3.12.1-linux-arm64.tar.gz && \
+ tar -zxvf helm-v3.12.1-linux-arm64.tar.gz && \
+ sudo mv linux-arm64/helm /usr/local/bin/helm && \ 
+ rm -rf helm-v3.12.1-linux-arm64.tar.gz linux-amd64/
 ```
 
-Refer to the Helm 3.10.2 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
+Refer to the Helm 3.12.1 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
 
 
 ### Adding an Additional Node to NVIDIA Cloud Native Stack
@@ -628,8 +636,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.24.12
-#yourhost-worker Ready                           10m   v1.24.12
+#yourhost        Ready    control-plane,master   10m   v1.24.14
+#yourhost-worker Ready                           10m   v1.24.14
 ```
 
 ### Installing GPU Operator
@@ -651,7 +659,7 @@ Install GPU Operator:
 `NOTE:` As we are preinstalled with NVIDIA Driver and NVIDIA Container Toolkit, we need to set as `false` when installing the GPU Operator
 
 ```
- helm install --version 23.3.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+ helm install --version 23.3.2 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 ```
 
 #### Validating the State of the GPU Operator:
@@ -727,7 +735,7 @@ Output:
 ``` 
 Wed Apr 14 12:47:29 2023
 +-----------------------------------------------------------------------------+
-|  NVIDIA-SMI 525.105.17  Driver Version: 525.105.17    CUDA Version: 12.1    |
+|  NVIDIA-SMI 535.54.03    Driver Version: 535.54.03    CUDA Version: 12.1    |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
@@ -807,7 +815,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 Go through the below steps to install the demo application:
 ```
-1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz --untar
+1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz --untar
 
 2. cd into the folder video-analytics-demo and update the file values.yaml
 
@@ -829,9 +837,9 @@ Once the Helm chart is deployed, access the application with the VLC player. See
 If you dont have a camera input, please execute the below commands to use the default video already integrated into the application:
 
 ```
-$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz
+$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz
 
-$ helm install video-analytics-demo-0.1.8.tgz --name-template iva
+$ helm install video-analytics-demo-0.1.9.tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the application with the VLC player as per the below instructions. 
@@ -868,7 +876,7 @@ Execute the below commands to uninstall the GPU Operator:
 ```
 $ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 nvidia-gpu-operator         1               2023-04-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-23.3.1      v23.3.1
+gpu-operator-1606173805 nvidia-gpu-operator         1               2023-06-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-23.3.2      v23.3.2
 
 $ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 ```

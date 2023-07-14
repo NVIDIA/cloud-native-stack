@@ -9,7 +9,7 @@ NVIDIA Cloud Native Stack v10.0 includes:
 - Containerd 1.7.0
 - Kubernetes version 1.27.0
 - Helm 3.11.2
-- NVIDIA GPU Operator 23.3.2
+- NVIDIA GPU Operator 23.3.1
   - NVIDIA GPU Driver: 525.105.17
   - NVIDIA Container Toolkit: 1.13.0
   - NVIDIA K8S Device Plugin: 0.14.0
@@ -204,7 +204,7 @@ Setup the Apt repositry for CRI-O
 
 ```
 OS=xUbuntu_22.04
-VERSION=1.26
+VERSION=1.27
 ```
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 
@@ -278,6 +278,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 ```
 
 Create a kubelet default with your container runtime:
+
 `NOTE:`  The container runtime endpoint will be `unix:/run/containerd/containerd.sock` or `unix:/run/crio/crio.sock` depending on which container runtime you chose in the previous steps.
 
 For `Containerd` system:
@@ -392,7 +393,7 @@ NAME             STATUS   ROLES                  AGE   VERSION
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
 
 ```
-kubectl taint nodes --all node-role.kubernetes.io/master-
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
 
 For additional information, refer to [kubeadm installation guide](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)

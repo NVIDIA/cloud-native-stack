@@ -1,4 +1,4 @@
-<h1> NVIDIA Cloud Native Stack - v8.1 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit or Jetson Orin</h1>
+<h1> NVIDIA Cloud Native Stack - v10.1 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit or Jetson Orin</h1>
 
 <h2>Introduction</h2>
 
@@ -6,10 +6,10 @@ This document describes how to setup the NVIDIA Cloud Native Stack collection on
 
 The final environment will include:
 
-- JetPack 5.0
-- Kubernetes version 1.26.1
-- Helm 3.11.0
-- Containerd 1.6.10
+- JetPack 5.1
+- Kubernetes version 1.27.2
+- Helm 3.12.1
+- Containerd 1.7.2
 
 
 <h2>Table of Contents</h2>
@@ -33,7 +33,7 @@ These instructions assume you have a Jetson Xavier or Xavier NX Developer Kit or
 - You will perform a clean install.
 - The server has internet connectivity.
 
-### Installing JetPack 5.0
+### Installing JetPack 5.1
 
 JetPack (the Jetson SDK) is an on-demand all-in-one package that bundles developer software for the NVIDIA® Jetson platform. There are two ways to install the JetPack 
 
@@ -74,52 +74,70 @@ distribution=$(. /etc/os-release;echo $ID$VERSION_ID) &&  curl -s -L https://nvi
 Now execute the commands below:
 
 ```
-sudo apt-get update && sudo apt install nvidia-container-runtime=3.11.0
+sudo apt-get update && sudo apt install nvidia-container-toolkit=1.13.2-1
 ```
 
+## Installing Container Runtime
 
-### Installing Containerd
+You need to install a container runtime into each node in the cluster so that Pods can run there. Currently Cloud Native Stack provides below container runtimes
+
+- [Installing Containerd](#Installing-Containerd)
+- [Installing CRI-O](#Installing-CRI-O)
+
+`NOTE:` Only install one of either `Containerd` or `CRI-O`, not both!
+
+These steps apply to both runtimes.
 
 Set up the repository and update the apt package index:
 
 ```
- sudo apt-get update
+sudo apt-get update
 ```
 
-Configure the prerequisites for Containerd:
+Install packages to allow apt to use a repository over HTTPS:
 
 ```
-cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
+```
+
+Configure the `overlay` and `br_netfilter` kernel modules required by Kubernetes:
+
+```
+cat <<EOF | sudo tee /etc/modules-load.d/kubernetes.conf
 overlay
 br_netfilter
 EOF
 ```
 
 ```
- sudo modprobe overlay
- sudo modprobe br_netfilter
+sudo modprobe overlay
+```
+```
+sudo modprobe br_netfilter
 ```
 
-Setup required sysctl params; these persist across reboots:
+Setup required sysctl params; these persist across reboots.
 ```
- cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.ipv4.ip_forward                 = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 EOF
 ```
 
-Apply sysctl params without reboot:
+Apply sysctl params without reboot
 ```
- sudo sysctl --system
+sudo sysctl --system
 ```
+
+### Installing Containerd(Option 1)
 
 Download the Containerd tarball:
 
 ```
- wget https://github.com/containerd/containerd/releases/download/v1.6.10/cri-containerd-cni-1.6.10-linux-arm64.tar.gz
- sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.10-linux-arm64.tar.gz
- rm -rf cri-containerd-cni-1.6.10-linux-arm64.tar.gz
+ wget https://github.com/containerd/containerd/releases/download/v1.7.2/cri-containerd-cni-1.7.2-linux-arm64.tar.gz
+ sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.2-linux-arm64.tar.gz
+ rm -rf cri-containerd-cni-1.7.2-linux-arm64.tar.gz
 ```
 
 Install Containerd:
@@ -133,9 +151,47 @@ Install Containerd:
 
 For additional information on installing Containerd, please reference [Install Containerd with Release Tarball](https://github.com/containerd/containerd/blob/master/docs/cri/installation.md). 
 
+### Installing CRI-O(Option 2)
+
+Setup the Apt repositry for CRI-O
+
+```
+OS=xUbuntu_22.04
+VERSION=1.27
+```
+`NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
+
+```
+echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+```
+
+```
+curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | sudo apt-key add -
+```
+
+```
+echo "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
+```
+
+```
+curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/Release.key | sudo apt-key add -
+```
+
+Install the CRI-O and dependencies 
+
+```
+sudo apt update && sudo apt install cri-o cri-o-runc cri-tools -y
+```
+
+Enable and Start the CRI-O service 
+
+```
+sudo systemctl enable crio.service && sudo systemctl start crio.service
+```
+
 ### Installing Kubernetes 
 
-Make sure Containerd has been started and enabled before beginning installation:
+Make sure container runtime has been started and enabled before beginning installation:
 
 ```
  sudo systemctl start containerd && sudo systemctl enable containerd
@@ -161,14 +217,27 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 
 ```
  sudo apt-get update
- sudo apt-get install -y -q kubelet=1.26.1-00 kubectl=1.26.1-00 kubeadm=1.26.1-00
+ sudo apt-get install -y -q kubelet=1.27.2-00 kubectl=1.27.2-00 kubeadm=1.27.2-00
  sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
-Create a kubelet default with Containerd:
+Create a kubelet default with your container runtime:
+
+`NOTE:`  The container runtime endpoint will be `unix:/run/containerd/containerd.sock` or `unix:/run/crio/crio.sock` depending on which container runtime you chose in the previous steps.
+
+For `Containerd` system:
+
 ```
  cat <<EOF | sudo tee /etc/default/kubelet
 KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
+EOF
+```
+
+For `CRI-O` system:
+
+```
+cat <<EOF | sudo tee /etc/default/kubelet
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/crio/crio.sock"
 EOF
 ```
 
@@ -193,10 +262,16 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 
 #### Initializing the Kubernetes cluster to run as a control-plane node
 
-Execute the following command:
+Execute the following command  for `Containerd` systems:
 
 ```
- sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.23.5"
+ sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.27.2"
+```
+
+Execute the following command for `CRI-O` systems::
+
+```
+ sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.27.2"
 ```
 
 Output:
@@ -235,7 +310,7 @@ Following the instructions in the output, execute the commands as shown below:
 With the following command, you install a pod-network add-on to the control plane node. We are using antrea as the pod-network add-on here:
 
 ```
- kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.20.0/Documentation/kube-flannel.yml
+ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.22.0/Documentation/kube-flannel.yml
 ```
 
 You can execute the below commands to ensure that all pods are up and running:
@@ -268,7 +343,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane          10m   v1.26.1
+#yourhost        Ready    control-plane          10m   v1.27.2
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -282,16 +357,16 @@ for more information.
 
 ### Installing Helm 
 
-Execute the following command to download and install Helm 3.11.0: 
+Execute the following command to download and install Helm 3.12.1: 
 
 ```
- wget https://get.helm.sh/helm-v3.11.0-linux-arm64.tar.gz
- tar -zxvf helm-v3.11.0-linux-arm64.tar.gz
+ wget https://get.helm.sh/helm-v3.12.1-linux-arm64.tar.gz
+ tar -zxvf helm-v3.12.1-linux-arm64.tar.gz
  sudo mv linux-arm64/helm /usr/local/bin/helm
- rm -rf helm-v3.11.0-linux-arm64.tar.gz linux-arm64/
+ rm -rf helm-v3.12.1-linux-arm64.tar.gz linux-arm64/
 ```
 
-Refer to the Helm 3.11.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
+Refer to the Helm 3.12.1 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
 
 
 ### Adding an Additional Node to NVIDIA Cloud Native Stack
@@ -327,8 +402,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.26.1
-#yourhost-worker Ready                           10m   v1.26.1
+#yourhost        Ready    control-plane,master   10m   v1.27.2
+#yourhost-worker Ready                           10m   v1.27.2
 ```
 
 ### Validating the Installation
@@ -445,7 +520,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 Go through the below steps to install the demo application:
 ```
-1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-l4t-0.1.2.tgz --untar
+1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-l4t-0.1.3.tgz --untar
 
 2. cd into the folder video-analytics-demo-l4t and update the file values.yaml
 
@@ -467,9 +542,9 @@ Once the Helm chart is deployed, access the application with the VLC player. See
 If you dont have a camera input, please execute the below commands to use the default video already integrated into the application:
 
 ```
-helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-l4t-0.1.2.tgz
+helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-l4t-0.1.3.tgz
 
-helm install video-analytics-demo-l4t-0.1.2.tgz --name-template iva
+helm install video-analytics-demo-l4t-0.1.3.tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the application with the VLC player as per the below instructions. 

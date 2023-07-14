@@ -452,6 +452,20 @@
               "stages": ["prestart"]
           }
 
+    - name: Starting and enabling the required services
+      become: true
+      when: "'running' not in k8sup.stdout"
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      failed_when: false
+      with_items:
+        - docker
+        - kubelet
+        - containerd
+        - crio
+
     - name: "Install Helm on NVIDIA Cloud Native Stack"
       become: true
       command: "{{ item }}"
@@ -672,7 +686,7 @@
 
         - name: Remove old nvidia container tooklit
           apt:
-            name: ['nvidia-container-toolkit', 'nvidia-container-runtime']
+            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
             state: absent
             autoremove: yes
 
@@ -683,6 +697,34 @@
             update_cache: yes
             force: yes
       when: "cnc_version == 7.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 8.3 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 9.1 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 10.0 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
+
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 7.5 or 8.4 or 9.2 or 10.1
+      become: true
+      block:
+        - name: Add NVIDIA Docker apt signing key for Ubuntu
+          apt_key:
+            url: https://nvidia.github.io/libnvidia-container/gpgkey
+            state: present
+
+        - name: Get NVIDIA Docker Apt list
+          get_url:
+            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
+            dest: /etc/apt/sources.list.d/libnvidia-container.list
+            mode: 0644
+
+        - name: Remove old nvidia container tooklit
+          apt:
+            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
+            state: absent
+            autoremove: yes
+
+        - name: Install NVIDIA Container Runtime
+          apt:
+            name: ['nvidia-docker2=2.13.0-1', 'nvidia-container-toolkit=1.13.2-1', 'nvidia-container-toolkit-base=1.13.2-1', 'libnvidia-container-tools=1.13.2-1', 'libnvidia-container1=1.13.2-1']
+            state: present
+            update_cache: yes
+            force: yes
+      when: "cnc_version == 7.5 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 8.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 9.2 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cnc_version == 10.1 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
 
     - name: Starting and enabling the required services
       become: true

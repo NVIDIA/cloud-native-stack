@@ -278,12 +278,13 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 ```
 
 Create a kubelet default with your container runtime:
+
 `NOTE:`  The container runtime endpoint will be `unix:/run/containerd/containerd.sock` or `unix:/run/crio/crio.sock` depending on which container runtime you chose in the previous steps.
 
 For `Containerd` system:
 
 ```
- cat <<EOF | sudo tee /etc/default/kubelet
+cat <<EOF | sudo tee /etc/default/kubelet
 KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
 EOF
 ```
@@ -392,7 +393,7 @@ NAME             STATUS   ROLES                  AGE   VERSION
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
 
 ```
-kubectl taint nodes --all node-role.kubernetes.io/master-
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
 
 For additional information, refer to [kubeadm installation guide](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
@@ -482,7 +483,7 @@ helm repo update
 To install GPU Operator for AWS G4 instance with Tesla T4:
 
 ```
-helm install --version 23.3.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --wait --generate-name
+helm install --version 23.3.2 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.version=525.105.17 --wait --generate-name
 ```
 
 ### Validate the state of GPU Operator:
@@ -629,7 +630,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 Go through the below steps to install the demo application. 
 ```
-1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz --untar
+1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz --untar
 
 2. cd into the folder video-analytics-demo and update the file values.yaml
 
@@ -651,9 +652,9 @@ Once the helm chart is deployed, access the application with the VLC player. See
 If you do not have a camera input, please execute the below commands to use the default video integrated with the application. 
 
 ```
-helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz
+helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz
 
-helm install video-analytics-demo-0.1.9.tgz --name-template iva
+helm install video-analytics-demo-0.1.8.tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the Application with VLC player with the instructions below. 

@@ -162,7 +162,7 @@
     - name: add NVIDIA Dokcer repo on RHEL
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
       get_url:
-        url:  https://nvidia.github.io/nvidia-docker/rhel{{ ansible_distribution_version }}/nvidia-docker.repo
+        url:  https://nvidia.github.io/nvidia-docker/centos8/nvidia-docker.repo
         dest: /etc/yum.repos.d/nvidia-docker.repo
         mode: 0644
         owner: root
@@ -171,7 +171,7 @@
     - name: add NVIDIA Container Toolkit repo on RHEL
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
       get_url:
-        url:  https://nvidia.github.io/libnvidia-container/rhel{{ ansible_distribution_version }}/libnvidia-container.repo
+        url:  https://nvidia.github.io/libnvidia-container/centos8/libnvidia-container.repo
         dest: /etc/yum.repos.d/nvidia-container-toolkit.repo
         mode: 0644
         owner: root
@@ -202,14 +202,21 @@
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
       when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 7.4 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 9.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 10.0 and ansible_distribution == 'Ubuntu'
       apt:
-        name: [ "nvidia-docker2", 'nvidia-container-toolkit=1.13.1-1', 'nvidia-container-toolkit-base=1.13.1-1', 'libnvidia-container-tools=1.13.1-1', 'libnvidia-container1=1.13.1-1']
+        name: [ "nvidia-docker2", "nvidia-container-runtime=3.13.0-1", 'nvidia-container-toolkit=1.13.0-1', 'nvidia-container-toolkit-base=1.13.0-1']
+        state: present
+        update_cache: true
+
+    - name: Install NVIDIA Docker and NVIDIA Container Runtime
+      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.4 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 7.5 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 9.2 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 10.1 and ansible_distribution == 'Ubuntu'
+      apt:
+        name: [ 'nvidia-docker2', 'nvidia-container-toolkit=1.13.2-1', 'nvidia-container-toolkit-base=1.13.2-1', 'libnvidia-container-tools=1.13.2-1', 'libnvidia-container1=1.13.2-1']
         state: present
         update_cache: true
 
     - name: install NVIDIA container runtime and NVIDIA Docker on RHEL
-      when: nvidia_docker_exists.rc >= 1 and cnc_version == 10.0 and ansible_distribution == 'RedHat'
+      when: nvidia_docker_exists.rc >= 1 and cnc_version >= 10.0 and ansible_distribution == 'RedHat'
       yum:
-        name: ['nvidia-container-runtime', 'nvidia-docker2']
+        name: ['nvidia-container-toolkit', 'nvidia-docker2']
         state: present
         update_cache: yes
 

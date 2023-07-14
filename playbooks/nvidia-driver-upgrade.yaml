@@ -21,7 +21,7 @@
             name: containerd
             state: restarted
             daemon_reload: yes
-      when: "cnc_docker == true and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '20'"
+      when: "cnc_docker == true"
 
     - name: Check NVIDIA Driver Modules are loaded
       shell: "lsmod | grep -i nvidia"
@@ -36,7 +36,7 @@
       failed_when: false
 
     - name: NVIDIA Driver Clean Up
-      when:  cnc_version >= 6.1 and nvidia_mod.rc == 0 and nvidia_smi.rc == 0
+      when:  cnc_version >= 6.1 and nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and ansible_distribution == 'Ubuntu'
       block:
         - name: Remove Ubuntu unattended upgrades to prevent apt lock
           ansible.builtin.apt:
@@ -133,7 +133,7 @@
 
     - name: Install NVIDIA TRD Driver
       become: true
-      when:  "nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 6.3 or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 7.1 or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 8.0"
+      when:  "nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 6.3 and ansible_distribution == 'Ubuntu' or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 7.1 and ansible_distribution == 'Ubuntu' or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 8.0 and ansible_distribution == 'Ubuntu'"
       ignore_errors: true
       block:
         - name: Force an apt update
@@ -168,7 +168,7 @@
 
     - name: Install NVIDIA TRD Driver
       become: true
-      when:  "nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 6.4 or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 7.2 or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 7.3 or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 8.1 or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 8.2 or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 9.0"
+      when:  "nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 6.4 and ansible_distribution == 'Ubuntu' or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 7.2 and ansible_distribution == 'Ubuntu' or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 7.3 and ansible_distribution == 'Ubuntu' or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 8.1 and ansible_distribution == 'Ubuntu' or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 8.2 and ansible_distribution == 'Ubuntu' or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 9.0 and ansible_distribution == 'Ubuntu'"
       ignore_errors: true
       block:
         - name: Force an apt update
@@ -203,7 +203,7 @@
         
     - name: Install NVIDIA TRD Driver
       become: true
-      when:  "nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 7.4 or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 8.3 or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 9.1"
+      when:  "nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 7.4 and ansible_distribution == 'Ubuntu' or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 8.3 and ansible_distribution == 'Ubuntu' or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 9.1 and ansible_distribution == 'Ubuntu'"
       ignore_errors: true
       block:
         - name: Force an apt update
@@ -235,3 +235,50 @@
 
         - name: Setup root account password policy
           shell: chage -d 0 root
+
+    - name: Install NVIDIA TRD Driver
+      become: true
+      when:  "nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 7.5 and ansible_distribution == 'Ubuntu' or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 8.4 and ansible_distribution == 'Ubuntu' or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 9.2 and ansible_distribution == 'Ubuntu' or nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 10.1 and ansible_distribution == 'Ubuntu'"
+      ignore_errors: true
+      block:
+        - name: Force an apt update
+          apt:
+            update_cache: true
+          changed_when: false
+          register: update
+          retries: 10
+          until: update is success
+
+        - name: Ensure kmod is installed
+          apt:
+            name: "kmod"
+            state: "present"
+          register: kmod_check
+          retries: 10
+          until: kmod_check is success
+
+        - name: Temporarily adjust account password policy
+          shell: chage -d 1 root
+
+        - name: Install driver packages
+          apt:
+            name: cuda=12.2.0-1
+            state: present
+          register: cuda_install
+          retries: 10
+          until: cuda_install is success
+
+        - name: Setup root account password policy
+          shell: chage -d 0 root
+
+    - name: Remove  driver packages RHEL/CentOS 8 and newer
+      when:  "nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and ansible_distribution == 'RedHat'"
+      dnf:
+        name: "@nvidia-driver:525-dkms"
+        state: "absent"
+
+    - name: install driver packages RHEL/CentOS 8 and newer
+      when:  "nvidia_mod.rc == 0 and nvidia_smi.rc == 0 and cnc_version == 10.1 and ansible_distribution == 'RedHat'"
+      dnf:
+        name: "@nvidia-driver:535-dkms"
+        state: "present"

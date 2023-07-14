@@ -6,7 +6,7 @@
   environment:
     PATH: "{{ ansible_env.PATH }}:{{lookup('pipe', 'pwd')}}/google-cloud-sdk/bin/"
   tasks:
-
+ 
     - name: Get Helm on Linux
       shell: "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
       when: ansible_system == 'Linux'

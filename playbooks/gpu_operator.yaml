@@ -1,3 +1,16 @@
+release_23_3_2:
+  gpu_operator_version: v23.3.2
+  gpu_driver_version: 535.54.03
+  driver_manager_version: 0.6.1
+  container_toolkit: v1.13.0
+  device_plugin: v0.14.0
+  dcgm_exporter_version: 3.1.7-3.1.4
+  nfd_version: v0.12.1
+  gfd_version: v0.8.0
+  mig_manager_version: v0.5.2
+  dcgm_version: 3.1.7-1
+  validator_version: v23.3.2
+  gds_driver: 2.15.1
 release_23_3_1:
   gpu_operator_version: v23.3.1
   gpu_driver_version: 525.105.17
@@ -10,7 +23,7 @@ release_23_3_1:
   mig_manager_version: v0.5.2
   dcgm_version: 3.1.7-1
   validator_version: v23.3.1
-  gds_driver: 2.15.11
+  gds_driver: 2.15.1
 release_22_9_2:
   gpu_operator_version: v22.9.1
   gpu_driver_version: 525.85.12

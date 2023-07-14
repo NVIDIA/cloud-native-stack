@@ -10,8 +10,8 @@
 
    - set_fact:
        release: "{{ release.stdout }}"
-       
-   - name: Uninstall the GPU Operator with MIG
+
+    - name: Uninstall the GPU Operator with MIG
      ignore_errors: true
      shell: |
        kubectl label nodes --all nvidia.com/mig.config=all-disabled --overwrite

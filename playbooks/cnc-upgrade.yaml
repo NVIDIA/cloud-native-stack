@@ -60,6 +60,13 @@
          cnc_version: 7.4
 
    - name: Create Cloud Native Stack cnc_version.yaml
+     when: "k8sversion.stdout == 'v1.24.12'"
+     copy:
+       dest: "/tmp/cnc_version.yaml"
+       content: |
+         cnc_version: 7.5
+
+   - name: Create Cloud Native Stack cnc_version.yaml
      when: "k8sversion.stdout == 'v1.25.2'"
      copy:
        dest: "/tmp/cnc_version.yaml"
@@ -80,6 +87,12 @@
        content: |
          cnc_version: 8.3
 
+   - name: Create Cloud Native Stack cnc_version.yaml
+     when: "k8sversion.stdout == 'v1.25.8'"
+     copy:
+       dest: "/tmp/cnc_version.yaml"
+       content: |
+         cnc_version: 8.4
 
    - name: Create Cloud Native Stack cnc_version.yaml
      when: "k8sversion.stdout == 'v1.26.1'"
@@ -87,6 +100,20 @@
        dest: "/tmp/cnc_version.yaml"
        content: |
          cnc_version: 9.1
+
+   - name: Create Cloud Native Stack cnc_version.yaml
+     when: "k8sversion.stdout == 'v1.26.3'"
+     copy:
+       dest: "/tmp/cnc_version.yaml"
+       content: |
+         cnc_version: 9.2
+
+   - name: Create Cloud Native Stack cnc_version.yaml
+     when: "k8sversion.stdout == 'v1.27.0'"
+     copy:
+       dest: "/tmp/cnc_version.yaml"
+       content: |
+         cnc_version: 10.1
 
    - name: Fetch cnc_version.yaml
      ansible.builtin.fetch:
@@ -132,9 +159,24 @@
      shell: kubectl version --short=true --client=false | grep -i server | awk '{print $NF}'
      register: k8sversion
 
+   - name: Upgrade the Cloud Native Stack from 10.0 to 10.1
+     shell: kubeadm upgrade apply v1.27.2 --force
+     when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.27.0'"
+     become: true
+
+   - name: Upgrade the Cloud Native Stack from 9.1 to 9.2
+     shell: kubeadm upgrade apply v1.26.5 --force
+     when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.26.3'"
+     become: true
+
    - name: Upgrade the Cloud Native Stack from 9.0 to 9.1
      shell: kubeadm upgrade apply v1.26.3 --force
      when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.26.1'"
+     become: true
+
+   - name: Upgrade the Cloud Native Stack from 8.3 to 8.4
+     shell: kubeadm upgrade apply v1.25.10 --force
+     when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.25.8'"
      become: true
 
    - name: Upgrade the Cloud Native Stack from 8.2 to 8.3
@@ -150,6 +192,11 @@
    - name: Upgrade the Cloud Native Stack from 8.0 to 8.1
      shell: kubeadm upgrade apply v1.25.4 --force
      when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.25.2'"
+     become: true
+
+   - name: Upgrade the Cloud Native Stack from 7.4 to 7.5
+     shell: kubeadm upgrade apply v1.24.14 --force
+     when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.24.12'"
      become: true
 
    - name: Upgrade the Cloud Native Stack from 7.3 to 7.4
@@ -171,6 +218,10 @@
      shell: kubeadm upgrade apply v1.24.6 --force
      when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.24.2'"
      become: true
+
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 7.5 or 8.4 or 9.2 or 10.1
+     when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.24.12' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.25.8' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.26.3' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.27.0' and release != 'tegra'"
+     command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 7.4 or 8.3 or 9.1
      when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.24.10' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.25.6' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.26.1' and release != 'tegra'"
@@ -215,6 +266,10 @@
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
      when: "k8sversion.stdout == 'v1.24.10' and release == 'tegra' or k8sversion.stdout == 'v1.25.6' and release == 'tegra' or k8sversion.stdout == 'v1.26.1' and release == 'tegra'"
      command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.21.4/Documentation/kube-flannel.yml
+
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
+     when: "k8sversion.stdout == 'v1.24.12' and release == 'tegra' or k8sversion.stdout == 'v1.25.8' and release == 'tegra' or k8sversion.stdout == 'v1.26.3' and release == 'tegra' or k8sversion.stdout == 'v1.27.0' and release == 'tegra'"
+     command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.22.0/Documentation/kube-flannel.yml
 
    - name: Get Node name
      shell: "kubectl get nodes  | awk '{print $1}' | grep -v NAME"

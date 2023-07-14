@@ -174,7 +174,7 @@ Setup the Apt repositry for CRI-O
 
 ```
 OS=xUbuntu_22.04
-VERSION=1.26
+VERSION=1.25
 ```
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 
@@ -255,6 +255,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 ```
 
 Create a kubelet default with your container runtime:
+
 `NOTE:`  The container runtime endpoint will be `unix:/run/containerd/containerd.sock` or `unix:/run/crio/crio.sock` depending on which container runtime you chose in the previous steps.
 
 For `Containerd` system:

@@ -169,7 +169,7 @@
      command: kubectl taint nodes --all node-role.kubernetes.io/master-
 
    - name: Taint the Kubernetes Control Plane node
-     when: "'running' not in k8sup.stdout and cnc_version == 7.0 or 'running' not in k8sup.stdout and cnc_version == 7.1 or 'running' not in k8sup.stdout and cnc_version == 7.2 or 'running' not in k8sup.stdout and cnc_version == 7.3 or 'running' not in k8sup.stdout and cnc_version == 7.4"
+     when: "'running' not in k8sup.stdout and cnc_version == 7.0 or 'running' not in k8sup.stdout and cnc_version == 7.1 or 'running' not in k8sup.stdout and cnc_version == 7.2 or 'running' not in k8sup.stdout and cnc_version == 7.3 or 'running' not in k8sup.stdout and cnc_version == 7.4 or 'running' not in k8sup.stdout and cnc_version == 7.5"
      command: kubectl taint nodes --all node-role.kubernetes.io/master- node-role.kubernetes.io/control-plane-
 
    - name: Taint the Kubernetes Control Plane node

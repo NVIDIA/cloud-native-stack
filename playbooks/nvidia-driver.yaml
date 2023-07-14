@@ -302,8 +302,43 @@
         - name: Setup root account password policy
           shell: chage -d 0 root
 
+    - name: Install NVIDIA TRD Driver
+      become: true
+      when:  "cnc_version == 7.5 and ansible_distribution == 'Ubuntu' or cnc_version == 8.4 and ansible_distribution == 'Ubuntu' or cnc_version == 9.2 and ansible_distribution == 'Ubuntu' or cnc_version == 10.1 and ansible_distribution == 'Ubuntu'"
+      ignore_errors: true
+      block:
+        - name: Force an apt update
+          apt:
+            update_cache: true
+          changed_when: false
+          register: update
+          retries: 10
+          until: update is success
+
+        - name: Ensure kmod is installed
+          apt:
+            name: "kmod"
+            state: "present"
+          register: kmod_check
+          retries: 10
+          until: kmod_check is success
+
+        - name: Temporarily adjust account password policy to allow for successful NVIDIA driver install
+          shell: chage -d 1 root
+
+        - name: Install driver packages
+          apt:
+            name: cuda=12.2.0-1
+            state: present
+          register: cuda_install
+          retries: 10
+          until: cuda_install is success
+
+        - name: Setup root account password policy
+          shell: chage -d 0 root
+
     - name:  ensure we have kernel-headers installed for the current kernel on RHEL 
-      when:  "cnc_version == 10.0 and ansible_distribution == 'RedHat'"
+      when:  "cnc_version >= 10.0 and ansible_distribution == 'RedHat'"
       block:
         - name: attempt to install kernel support packages for current version
           yum:
@@ -326,26 +361,26 @@
             state: latest
 
     - name: add epel repo gpg key on RHEL 8.7
-      when:  "cnc_version == 10.0 and ansible_distribution == 'RedHat'"
+      when:  "cnc_version >= 10.0 and ansible_distribution == 'RedHat'"
       rpm_key:
         key: "https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-{{ ansible_distribution_major_version }}"
         state: present
 
     - name: add epel repo on RHEL 8.7
-      when:  "cnc_version == 10.0 and ansible_distribution == 'RedHat'"
+      when:  "cnc_version >= 10.0 and ansible_distribution == 'RedHat'"
       yum:
         name:
           - "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
         state: latest
 
     - name: install dependencies on RHEL 8.7
-      when:  "cnc_version == 10.0 and ansible_distribution == 'RedHat'"
+      when:  "cnc_version >= 10.0 and ansible_distribution == 'RedHat'"
       yum:
         name: dkms
         state: present
 
     - name: add repo
-      when:  "cnc_version == 10.0 and ansible_distribution == 'RedHat'"
+      when:  "cnc_version >= 10.0 and ansible_distribution == 'RedHat'"
       yum_repository:
         name: cuda
         description: NVIDIA CUDA YUM Repo
@@ -356,6 +391,12 @@
       when:  "cnc_version == 10.0 and ansible_distribution == 'RedHat'"
       dnf:
         name: "@nvidia-driver:525-dkms"
+        state: "present"
+
+    - name: install driver packages RHEL/CentOS 8 and newer
+      when:  "cnc_version == 10.1 and ansible_distribution == 'RedHat'"
+      dnf:
+        name: "@nvidia-driver:535-dkms"
         state: "present"
 
     - name: Reboot the system

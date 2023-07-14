@@ -10,7 +10,7 @@ NVIDIA Cloud Native Stack v10.0 includes:
 - Helm 3.11.2
 - NVIDIA GPU Driver: 525.105.17
 - NVIDIA Container Toolkit: 1.13.0
-- NVIDIA GPU Operator 23.3.2
+- NVIDIA GPU Operator 23.3.1
   - NVIDIA K8S Device Plugin: 0.14.0
   - NVIDIA DCGM-Exporter: 3.1.7-3.1.4
   - NVIDIA DCGM: 3.1.7-1
@@ -311,30 +311,30 @@ sudo sysctl --system
 Download the Containerd for `x86-64` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.7.0/cri-containerd-cni-1.6.16-linux-amd64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.0/cri-containerd-cni-1.7.0-linux-amd64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.16-linux-amd64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.0-linux-amd64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.6.16-linux-amd64.tar.gz
+rm -rf cri-containerd-cni-1.7.0-linux-amd64.tar.gz
 ```
 
 
 Download the Containerd for `ARM` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.7.0/cri-containerd-cni-1.6.16-linux-arm64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.0/cri-containerd-cni-1.7.0-linux-arm64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.6.16-linux-arm64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.0-linux-arm64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.6.16-linux-arm64.tar.gz
+rm -rf cri-containerd-cni-1.7.0-linux-arm64.tar.gz
 ```
 
 Install the Containerd
@@ -362,7 +362,7 @@ Setup the Apt repositry for CRI-O
 
 ```
 OS=xUbuntu_22.04
-VERSION=1.26
+VERSION=1.27
 ```
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 
@@ -436,6 +436,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 ```
 
 Create a kubelet default with your container runtime:
+
 `NOTE:`  The container runtime endpoint will be `unix:/run/containerd/containerd.sock` or `unix:/run/crio/crio.sock` depending on which container runtime you chose in the previous steps.
 
 For `Containerd` system:
@@ -572,7 +573,7 @@ NAME             STATUS   ROLES                  AGE   VERSION
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
 
 ```
- kubectl taint nodes --all node-role.kubernetes.io/master-
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
 
 Refer to [Installing Kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
@@ -806,7 +807,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 Go through the below steps to install the demo application:
 ```
-1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz --untar
+1. helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz --untar
 
 2. cd into the folder video-analytics-demo and update the file values.yaml
 
@@ -828,9 +829,9 @@ Once the Helm chart is deployed, access the application with the VLC player. See
 If you dont have a camera input, please execute the below commands to use the default video already integrated into the application:
 
 ```
-$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz
+$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.8.tgz
 
-$ helm install video-analytics-demo-0.1.9.tgz --name-template iva
+$ helm install video-analytics-demo-0.1.8.tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the application with the VLC player as per the below instructions. 

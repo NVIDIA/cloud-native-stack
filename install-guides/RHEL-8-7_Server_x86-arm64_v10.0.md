@@ -8,7 +8,7 @@ NVIDIA Cloud Native Stack v10.0 includes:
 - Containerd 1.7.0
 - Kubernetes version 1.27.0
 - Helm 3.11.2
-- NVIDIA GPU Operator 23.3.2
+- NVIDIA GPU Operator 23.3.1
   - NVIDIA GPU Driver: 525.105.17
   - NVIDIA Container Toolkit: 1.13.0
   - NVIDIA K8S Device Plugin: 0.14.0
@@ -20,7 +20,7 @@ NVIDIA Cloud Native Stack v10.0 includes:
   - Node Feature Discovery: 0.12.1
   - NVIDIA KubeVirt GPU Device Plugin: 1.2.1
   - NVIDIA GDS Driver: 2.15.1
-- NVIDIA Network Operator 23.4.0
+- NVIDIA Network Operator 23.1.0
   - Mellanox MOFED Driver 5.9-0.5.6.0
   - Mellanox NV Peer Memory Driver 1.1-0
   - RDMA Shared Device Plugin 1.3.2
@@ -74,14 +74,14 @@ Open the `/etc/selinux/config` file in a text editor of your choice, for example
 sudo vi /etc/selinux/config
 ```
 
-Configure the `SELINUX=permissive` option:
+Configure the `SELINUX=enforcing` option:
 ```
 # This file controls the state of SELinux on the system.
 # SELINUX= can take one of these three values:
 #       enforcing - SELinux security policy is enforced.
 #       permissive - SELinux prints warnings instead of enforcing.
 #       disabled - No SELinux policy is loaded.
-SELINUX=permissive
+SELINUX=enforcing
 # SELINUXTYPE= can take one of these two values:
 #       targeted - Targeted processes are protected,
 #       mls - Multi Level Security protection.
@@ -107,8 +107,8 @@ SELinux status:                 enabled
 SELinuxfs mount:                /sys/fs/selinux
 SELinux root directory:         /etc/selinux
 Loaded policy name:             targeted
-Current mode:                   permissive
-Mode from config file:          permissive
+Current mode:                   enforcing
+Mode from config file:          enforcing
 Policy MLS status:              enabled
 Policy deny_unknown status:     allowed
 Memory protection checking:     actual (secure)
@@ -270,7 +270,6 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 ```
  sudo dnf install -y kubelet-1.27.0 kubeadm-1.27.0 kubectl-1.27.0
 ```
-
 Create a kubelet default with your container runtime:
 `NOTE:`  The container runtime endpoint will be `unix:/run/containerd/containerd.sock` or `unix:/run/crio/crio.sock` depending on which container runtime you chose in the previous steps.
 

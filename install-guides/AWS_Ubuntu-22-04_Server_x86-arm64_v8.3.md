@@ -9,7 +9,7 @@ NVIDIA Cloud Native Stack v8.3 includes:
 - Containerd 1.7.0
 - Kubernetes version 1.25.8
 - Helm 3.11.2
-- NVIDIA GPU Operator 23.3.2
+- NVIDIA GPU Operator 23.3.1
   - NVIDIA GPU Driver: 525.105.17
   - NVIDIA Container Toolkit: 1.13.0
   - NVIDIA K8S Device Plugin: 0.14.0

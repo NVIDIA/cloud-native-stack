@@ -15,6 +15,7 @@ This page describes the steps required to use Ansible to install the NVIDIA Clou
 ## Prerequisites
 
 - system has direct internet access
+- system should have an Operating system either Ubuntu 20.04 and above or RHEL 8.7
 - system has adequate internet bandWidth
 - DNS server is working fine on the System
 - system can access Google repo(for k8s installation)

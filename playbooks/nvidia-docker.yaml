@@ -135,29 +135,25 @@
         url: https://nvidia.github.io/nvidia-docker/gpgkey
         state: present
 
-    - name: Add NVIDIA Docker repository into sources list
-      when: ansible_architecture == 'aarch64' and nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
-      apt_repository:
-        repo: "{{ item }}"
+    - name: Add NVIDIA Docker apt signing key for Ubuntu
+      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      apt_key:
+        url: https://nvidia.github.io/libnvidia-container/gpgkey
         state: present
-        filename: 'nvidia-docker'
-        update_cache: yes
-      with_items:
-        - "deb https://nvidia.github.io/libnvidia-container/ubuntu18.04/arm64 /"
-        - "deb https://nvidia.github.io/nvidia-container-runtime/ubuntu18.04/arm64 /"
-        - "deb https://nvidia.github.io/nvidia-docker/ubuntu18.04/arm64 /"
 
-    - name: Add NVIDIA Docker repository into sources list
-      when: ansible_architecture == 'x86_64' and nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
-      apt_repository:
-        repo: "{{ item }}"
-        state: present
-        filename: 'nvidia-docker'
-        update_cache: yes
-      with_items:
-        - "deb https://nvidia.github.io/libnvidia-container/ubuntu18.04/amd64 /"
-        - "deb https://nvidia.github.io/nvidia-container-runtime/ubuntu18.04/amd64 /"
-        - "deb https://nvidia.github.io/nvidia-docker/ubuntu18.04/amd64 /"
+    - name: Get NVIDIA Docker Apt list
+      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      get_url:
+        url: https://nvidia.github.io/nvidia-docker/ubuntu22.04/nvidia-docker.list
+        dest: /etc/apt/sources.list.d/nvidia-container-toolkit.list
+        mode: 0644
+
+    - name: Get NVIDIA Container Toolkit Apt list
+      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      get_url:
+        url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
+        dest: /etc/apt/sources.list.d/libnvidia-container.list
+        mode: 0644
 
     - name: add NVIDIA Dokcer repo on RHEL
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'

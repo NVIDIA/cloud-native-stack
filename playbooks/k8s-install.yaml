@@ -193,6 +193,7 @@
 
    - name: Taint the Kubernetes Control Plane node
      when: "'running' not in k8sup.stdout and cns_version < 7.0"
+     failed_when: false
      command: kubectl taint nodes --all node-role.kubernetes.io/master-
 
    - name: Taint the Kubernetes Control Plane node
@@ -200,7 +201,8 @@
      command: kubectl taint nodes --all node-role.kubernetes.io/master- node-role.kubernetes.io/control-plane-
 
    - name: Taint the Kubernetes Control Plane node
-     when: "'running' not in k8sup.stdout and cns_version >= 8.0"
+     when: "'running' not in k8sup.stdout and cns_version >= 8.0 or 'running' not in k8sup.stdout and cns_version == 6.4"
+     failed_when: false
      command: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 
    - name: Generate join token

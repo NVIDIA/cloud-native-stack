@@ -277,7 +277,7 @@ For `Containerd` system:
 
 ```
  cat <<EOF | sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
 EOF
 ```
 
@@ -285,7 +285,7 @@ For `CRI-O` system:
 
 ```
 cat <<EOF | sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/crio/crio.sock"
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/crio/crio.sock"
 EOF
 ```
 
@@ -322,7 +322,7 @@ sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/container
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock--kubernetes-version="v1.27.0"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.27.0"
 ```
 
 Output:

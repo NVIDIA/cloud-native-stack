@@ -4,13 +4,13 @@ This page describes the steps required to use Ansible to install the NVIDIA Clou
 
 ### The following Ansible Playbooks are available
 
-- [Install NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cnc-installation.yaml)
+- [Install NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cns-installation.yaml)
 
-- [Upgrade NVIDIA Cloud Native Stack ](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cnc-upgrade.yaml)
+- [Upgrade NVIDIA Cloud Native Stack ](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cns-upgrade.yaml)
 
-- [Validate NVIDIA Cloud Native Stack ](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cnc-validation.yaml)
+- [Validate NVIDIA Cloud Native Stack ](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cns-validation.yaml)
 
-- [Uninstall NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cnc-uninstall.yaml)
+- [Uninstall NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cns-uninstall.yaml)
 
 ## Prerequisites
 
@@ -80,48 +80,52 @@ Cloud Native Stack Supports below versions.
 
 Available versions are:
 
+- 10.2
+- 10.1
 - 10.0
-- 9.0
+- 9.3
+- 9.2
 - 9.1
+- 9.0
+- 8.5
+- 8.4
 - 8.3
 - 8.2
 - 8.1
-- 7.4
-- 7.3
-- 7.2
-- 7.1
-- 7.0
-- 6.4
+- 8.0
 
-Edit the `cnc_version.yaml` and update the version you want to install
+Edit the `cns_version.yaml` and update the version you want to install
 
 ```
-nano cnc_version.yaml
+nano cns_version.yaml
 ```
 
 If you want to cusomize any predefined components versions or any other custom paramenters, modify the respective CNS version values file like below and trigger the installation. 
 
 Example:
 ```
-$ nano cnc_values_8.0.yaml
+$ nano cns_values_9.3.yaml
 
-cnc_version: 8.0
+cns_version: 9.3
 
 ## Components Versions
-# Container Runtime options are containerd, cri-o
+# Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "1.6.8"
-crio_version: "1.25.3"
-k8s_version: "1.25.2"
-calico_version: "3.24.1"
-flannel_version: "0.19.2"
-helm_version: "3.10.0"
-gpu_operator_version: "22.9.0"
-network_operator_version: "1.3.0"
+containerd_version: "1.7.3"
+crio_version: "1.26.4"
+cri_dockerd_version: "0.3.4"
+k8s_version: "1.26.7"
+calico_version: "3.26.1"
+flannel_version: "0.22.0"
+helm_version: "3.12.2"
+gpu_operator_version: "23.6.0"
+network_operator_version: "23.5.0"
+local_path_provisioner: "0.0.24"
 
 # GPU Operator Values
 enable_gpu_operator: yes
-gpu_driver_version: "520.61.07"
+confidential_computing: no
+gpu_driver_version: "535.86.10"
 enable_mig: no
 mig_profile: all-disabled
 mig_strategy: single
@@ -154,9 +158,9 @@ https_proxy: ""
 
 # Cloud Native Stack for Developers Values
 ## Enable for Cloud Native Stack Developers
-cnc_docker: no
+cns_docker: no
 ## Enable For Cloud Native Stack Developers with TRD Driver
-cnc_nvidia_driver: no
+cns_nvidia_driver: no
 
 ## Kubernetes resources
 k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
@@ -164,9 +168,36 @@ k8s_apt_repository: " https://apt.kubernetes.io/ kubernetes-xenial main"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-archive-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
-## Cloud Native Stack Validation
-cnc_validation: no
+# Local Path Provisioner as Storage option
+storage: no
 
+## Cloud Native Stack Validation
+cns_validation: no
+
+# BMC Details for Confidential Computing 
+bmc_ip:
+bmc_username:
+bmc_password:
+
+# CSP values
+## AWS EKS values
+aws_region: us-east-2
+aws_cluster_name: cns-cluster-1
+aws_gpu_instance_type: g4dn.2xlarge
+
+## Google Cloud GKE Values
+#https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
+gke_project_id: 
+#https://cloud.google.com/compute/docs/regions-zones#available
+gke_region: us-west1
+gke_node_zones: ["us-west1-b"]
+gke_cluster_name: cns-cluster-1
+
+## Azure AKS Values
+aks_cluster_name: cns-cluster-1
+aks_cluster_location: "West US 2"
+#https://learn.microsoft.com/en-us/partner-center/marketplace/find-tenant-object-id
+azure_object_id: [""]
 ```
 
 Install the NVIDIA Cloud Native Stack stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
@@ -174,7 +205,7 @@ Install the NVIDIA Cloud Native Stack stack by running the below command. "Skipp
 bash setup.sh install
 ```
 #### Custom Configuration
-By default Cloud Native Stack uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` in `cnc_values_<version>.yaml`.
+By default Cloud Native Stack uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` in `cns_values_<version>.yaml`.
 
 Example:
 ```
@@ -184,6 +215,98 @@ k8s_apt_key: "https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg"
 k8s_apt_repository: "deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main"
 k8s_registry: "registry.aliyuncs.com/google_containers"
 ```
+##### Installation on CSP's
+
+Cloud Native Stack can also support to install on CSP providers like AWS, Azure and Google Cloud. 
+
+###### AWS
+  Run below command to create AWS EKS cluster and install GPU Operator on EKS
+
+  `NOTE:` Update the aws credentials in `files/aws_credentials` file before trigger the installation
+  
+  Update the AWS EKS values in the `cns_values_xx.yaml` before trigger the installation if needed.
+
+  ```
+  ## AWS EKS values
+  aws_region: us-east-2
+  aws_cluster_name: cns-cluster-1
+  aws_gpu_instance_type: g4dn.2xlarge
+  ```
+
+  ```
+  bash setup.sh install eks
+  ```
+###### Azure
+Run below command to create Azure AKS cluster and install GPU Operator on AKS
+
+Update Azure Object ID's on `cns_values_xx.yaml` before trigger the installation
+
+  ```
+  ## Azure AKS Values
+  aks_cluster_name: cns-cluster-1
+  aks_cluster_location: "West US 2"
+  #https://learn.microsoft.com/en-us/partner-center/marketplace/find-tenant-object-id
+  azure_object_id: [""]
+  ```
+
+  ```
+  bash setup.sh install aks
+  ```
+###### Google cloud
+Run below command to create Google Cloud GKE cluster and install GPU Operator on GKE 
+
+Update the GKE Project ID `cns_values_xx.yaml` before trigger the installation
+  ```
+  ## Google Cloud GKE Values
+  #https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
+  gke_project_id: 
+  #https://cloud.google.com/compute/docs/regions-zones#available
+  gke_region: us-west1
+  gke_node_zones: ["us-west1-b"]
+  gke_cluster_name: cns-cluster-1
+  ```
+
+  ```
+  bash setup.sh install gke
+  ```
+  `NOTE:` 
+   - After GKE cluster created run the below command to use kubectl library
+      ```
+      source $HOME/cloud-native-stack/playbooks/google-cloud-sdk/path.bash.inc
+      ```
+   - If you encounter any destroy issue while uninstall you can try to run below commands which might help
+      ```
+      NS=`kubectl get ns |grep Terminating | awk 'NR==1 {print $1}'` && kubectl get namespace "$NS" -o json   | tr -d "\n" | sed "s/\"finalizers\": \[[^]]\+\]/\"finalizers\": []/"   | kubectl replace --raw /api/v1/namespaces/$NS/finalize -f -
+      ```
+
+      ```
+      cd nvidia-terraform-modules/aks
+      terraform destroy --auto-approve
+      ```
+#####  Confidential Computing on CNS stack 
+
+You can install Cloud Native Stack with Confidentail Computing, run the below command to trigger the installation
+
+You need add the `cns_values_xx.yaml` with BMC details like below 
+```
+# BMC Details for Confidential Computing 
+bmc_ip:
+bmc_username:
+bmc_password:
+```
+Run the below command to change the BIOS configuration and Install SNP Kernel for Confidential computing and system will eventually reboot
+
+```
+bash setup.sh install cc
+```
+Once it's rebooted then run the below command to install the Cloud Native Stack with Confidentail Computing.
+
+```
+bash setup.sh install
+```
+`NOTE:` 
+  - If you want to re use the system It's recommended to re install the Operating system after used for Confidential Computing installation.
+  - Currently playbooks supports only local system for confidential computing not supported for remote system installation. 
 
 ### Validation
 

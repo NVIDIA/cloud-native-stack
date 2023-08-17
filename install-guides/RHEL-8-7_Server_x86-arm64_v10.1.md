@@ -278,7 +278,7 @@ For `Containerd` system:
 
 ```
  cat <<EOF | sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
 EOF
 ```
 
@@ -286,7 +286,7 @@ For `CRI-O` system:
 
 ```
 cat <<EOF | sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/crio/crio.sock"
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/crio/crio.sock"
 EOF
 ```
 
@@ -323,7 +323,7 @@ sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/container
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock--kubernetes-version="v1.27.2"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.27.2"
 ```
 
 Output:
@@ -422,7 +422,7 @@ for more information.
 
 ### Installing Helm 
 
-Execute the following command to download and install Helm 3.11.0 for `x86-64` system: 
+Execute the following command to download and install Helm 3.12.1 for `x86-64` system: 
 
 ```
 wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz

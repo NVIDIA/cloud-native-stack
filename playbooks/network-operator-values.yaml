@@ -6,4 +6,4 @@ rdmaSharedDevicePlugin:
   resources:
     - name: rdma_shared_device_a
       vendors: [15b3]
-      devices: [ ens160f0,ens160f1]
+      ifNames: [ ens160f0,ens160f1]

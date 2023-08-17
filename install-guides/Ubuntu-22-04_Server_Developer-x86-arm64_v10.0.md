@@ -343,7 +343,7 @@ sudo mkdir -p /etc/containerd
 ```
 
 ```
- wget  https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/config.toml
+ wget  https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/files/config.toml
 ```
 
 ```
@@ -371,7 +371,7 @@ echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers
 ```
 
 ```
-curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | sudo apt-key add -
+curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | sudo gpg --dearmor -o /usr/share/keyrings/libcontainers-archive-keyring.gpg
 ```
 
 ```
@@ -379,7 +379,7 @@ echo "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:
 ```
 
 ```
-curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/Release.key | sudo apt-key add -
+curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/Release.key | sudo gpg --dearmor -o /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
 ```
 
 Install the CRI-O and dependencies 
@@ -443,7 +443,7 @@ For `Containerd` system:
 
 ```
  cat <<EOF | sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
 EOF
 ```
 
@@ -451,7 +451,7 @@ For `CRI-O` system:
 
 ```
 cat <<EOF | sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/crio/crio.sock"
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/crio/crio.sock"
 EOF
 ```
 
@@ -488,7 +488,7 @@ sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/container
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock--kubernetes-version="v1.27.0"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.27.0"
 ```
 
 Output:

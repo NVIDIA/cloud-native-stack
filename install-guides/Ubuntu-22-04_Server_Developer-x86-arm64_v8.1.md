@@ -311,7 +311,7 @@ Install Containerd:
  sudo mkdir -p /etc/containerd
 ```
 ```
- wget  https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/config.toml
+ wget  https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/files/config.toml
 ```
 ```
 sudo mv config.toml /etc/containerd/ && sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml

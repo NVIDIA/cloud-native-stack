@@ -1,0 +1,65 @@
+cnc_version: 7.5
+
+## Components Versions
+# Container Runtime options are containerd, cri-o
+container_runtime: "containerd"
+containerd_version: "1.7.2"
+crio_version: "1.24.6"
+k8s_version: "1.24.14"
+calico_version: "3.26.1"
+flannel_version: "0.22.0"
+helm_version: "3.12.1"
+gpu_operator_version: "23.3.2"
+network_operator_version: "23.5.0"
+local_path_provisioner: "0.0.24"
+
+# GPU Operator Values
+enable_gpu_operator: yes
+gpu_driver_version: "535.54.03"
+enable_mig: no
+mig_profile: all-disabled
+mig_strategy: single
+enable_gds: no
+enable_secure_boot: no
+enable_vgpu: no
+vgpu_license_server: ""
+# URL of Helm repo to be added. If using NGC get this from the fetch command in the console
+helm_repository: https://helm.ngc.nvidia.com/nvidia
+# Name of the helm chart to be deployed
+gpu_operator_helm_chart: nvidia/gpu-operator
+## If using a private/protected registry. NGC API Key. Leave blank for public registries
+gpu_operator_registry_password: ""
+## This is most likely an NGC email
+gpu_operator_registry_email: ""
+## This is most likely GPU Operator Driver Registry
+gpu_operator_driver_registry: "nvcr.io/nvidia"
+gpu_operator_registry_username: "$oauthtoken"
+
+# Network Operator Values
+## If the Network Operator is yes then make sure enable_rdma as well yes
+enable_network_operator: no
+## Enable RDMA yes for NVIDIA Certification
+enable_rdma: no
+
+# Prxoy Configuration
+proxy: no
+http_proxy: ""
+https_proxy: ""
+
+# Cloud Native Stack for Developers Values
+## Enable for Cloud Native Stack Developers
+cnc_docker: no
+## Enable For Cloud Native Stack Developers with TRD Driver
+cnc_nvidia_driver: no
+
+## Kubernetes resources
+k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+k8s_apt_repository: " https://apt.kubernetes.io/ kubernetes-xenial main"
+k8s_apt_ring: "/etc/apt/keyrings/kubernetes-archive-keyring.gpg"
+k8s_registry: "registry.k8s.io"
+
+# Local Path Provisioner as Storage option
+storage: no
+
+## Cloud Native Stack Validation
+cnc_validation: no

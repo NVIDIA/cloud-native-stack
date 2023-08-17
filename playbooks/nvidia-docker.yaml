@@ -2,7 +2,7 @@
   become: true
   become_method: sudo
   vars_files:
-    - cnc_values.yaml
+    - cns_values.yaml
   vars:
     daemon_json:
       default-runtime: nvidia
@@ -173,15 +173,23 @@
         owner: root
         group: root
 
+    - name: Remove old nvidia container tooklit
+      when: nvidia_docker_exists.rc >= 1
+      failed_when: false
+      apt:
+        name: ['nvidia-container-toolkit*', 'nvidia-container-runtime*', 'libnvidia-container*']
+        state: absent
+        autoremove: yes
+
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
-      when: nvidia_docker_exists.rc >= 1 and cnc_version == 7.0 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 6.2 and ansible_distribution == 'Ubuntu'
+      when: nvidia_docker_exists.rc >= 1 and cns_version == 7.0 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 6.2 and ansible_distribution == 'Ubuntu'
       apt:
         name: [ "nvidia-docker2", "nvidia-container-runtime=3.10.0-1" ]
         state: present
         update_cache: true
 
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
-      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.0 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 8.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 7.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 7.2 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 6.4 and ansible_distribution == 'Ubuntu'
+      when: nvidia_docker_exists.rc >= 1 and cns_version == 8.0 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 8.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 7.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 7.2 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 6.4 and ansible_distribution == 'Ubuntu'
       apt:
         name: [ "nvidia-docker2", "nvidia-container-runtime=3.11.0-1" ]
         state: present
@@ -189,35 +197,42 @@
 
 
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
-      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.2 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 7.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 9.0 and ansible_distribution == 'Ubuntu'
+      when: nvidia_docker_exists.rc >= 1 and cns_version == 8.2 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 7.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 9.0 and ansible_distribution == 'Ubuntu'
       apt:
         name: [ "nvidia-docker2", "nvidia-container-runtime=3.12.0-1", 'nvidia-container-toolkit=1.12.0-1', 'nvidia-container-toolkit-base=1.12.0-1' ]
         state: present
         update_cache: true
 
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
-      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 7.4 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 9.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 10.0 and ansible_distribution == 'Ubuntu'
+      when: nvidia_docker_exists.rc >= 1 and cns_version == 8.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 7.4 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 9.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 10.0 and ansible_distribution == 'Ubuntu'
       apt:
         name: [ "nvidia-docker2", "nvidia-container-runtime=3.13.0-1", 'nvidia-container-toolkit=1.13.0-1', 'nvidia-container-toolkit-base=1.13.0-1']
         state: present
         update_cache: true
 
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
-      when: nvidia_docker_exists.rc >= 1 and cnc_version == 8.4 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 7.5 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 9.2 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cnc_version == 10.1 and ansible_distribution == 'Ubuntu'
+      when: nvidia_docker_exists.rc >= 1 and cns_version == 8.4 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 7.5 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 9.2 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 10.1 and ansible_distribution == 'Ubuntu'
       apt:
         name: [ 'nvidia-docker2', 'nvidia-container-toolkit=1.13.2-1', 'nvidia-container-toolkit-base=1.13.2-1', 'libnvidia-container-tools=1.13.2-1', 'libnvidia-container1=1.13.2-1']
         state: present
         update_cache: true
 
+    - name: Install NVIDIA Docker and NVIDIA Container Runtime
+      when: nvidia_docker_exists.rc >= 1 and cns_version == 8.5 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 9.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 10.2 and ansible_distribution == 'Ubuntu'
+      apt:
+        name: [ 'nvidia-docker2',  'nvidia-container-toolkit=1.13.5-1', 'nvidia-container-toolkit-base=1.13.5-1', 'libnvidia-container-tools=1.13.5-1', 'libnvidia-container1=1.13.5-1']
+        state: present
+        update_cache: true
+
     - name: install NVIDIA container runtime and NVIDIA Docker on RHEL
-      when: nvidia_docker_exists.rc >= 1 and cnc_version >= 10.0 and ansible_distribution == 'RedHat'
+      when: nvidia_docker_exists.rc >= 1 and cns_version >= 10.0 and ansible_distribution == 'RedHat'
       yum:
         name: ['nvidia-container-toolkit', 'nvidia-docker2']
         state: present
         update_cache: yes
 
     - name: Update docker default runtime
-      when: docker_exists.rc >= 1 and nvidia_docker_exists.rc >= 1 
+      when: nvidia_docker_exists.rc >= 1 
       copy:
         content: "{{ daemon_json | to_nice_json }}"
         dest: /etc/docker/daemon.json
@@ -237,9 +252,9 @@
             state: directory
 
         - name: Write defaults to config.toml
-          get_url:
+          copy:
+            src: "{{lookup('pipe', 'pwd')}}/files/config.toml"
             dest: /etc/containerd/config.toml
-            url: https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/config.toml
             mode: 0664
 
         - name: Enable systemd cgroups

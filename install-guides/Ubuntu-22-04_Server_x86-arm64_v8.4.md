@@ -307,7 +307,7 @@ sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/container
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock--kubernetes-version="v1.25.10"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.25.10"
 ```
 
 Output:

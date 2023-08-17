@@ -1,6 +1,6 @@
 - hosts: master
   vars_files:
-    - cnc_values.yaml
+    - cns_values.yaml
   environment:
     http_proxy: "{{ http_proxy }}"
     https_proxy: "{{ https_proxy }}"
@@ -81,25 +81,25 @@
      when: gateway.rc | default ('') == 1 and proxy == true
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
-     when: "'running' not in k8sup.stdout and proxy == false and container_runtime != 'cri-o' and release != 'tegra'"
+     when: "'running' not in k8sup.stdout and proxy == false and container_runtime == 'containerd' and release != 'tegra'"
      command: 'kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v{{ k8s_version }}" --image-repository={{ k8s_registry }}'
      become: true
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
-     when: "'running' not in k8sup.stdout and proxy == true and container_runtime != 'cri-o' and release != 'tegra'"
+     when: "'running' not in k8sup.stdout and proxy == true and container_runtime == 'containerd' and release != 'tegra'"
      command: 'kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v{{ k8s_version }}" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}'
      become: true
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
-     when: "'running' not in k8sup.stdout and proxy == false and container_runtime != 'cri-o' and release == 'tegra'"
+     when: "'running' not in k8sup.stdout and proxy == false and container_runtime == 'containerd' and release == 'tegra'"
      command: 'kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v{{ k8s_version }}" --image-repository={{ k8s_registry }}'
      become: true
      register: kubeadm
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
-     when: "'running' not in k8sup.stdout and proxy == true and container_runtime != 'cri-o' and release == 'tegra'"
+     when: "'running' not in k8sup.stdout and proxy == true and container_runtime == 'containerd' and release == 'tegra'"
      command: 'kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v{{ k8s_version }}" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}'
      become: true
      register: kubeadm
@@ -128,6 +128,30 @@
      become: true
      register: kubeadm
 
+   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-Dockerd for Cloud Native Stack
+     when: "'running' not in k8sup.stdout and proxy == false and container_runtime == 'cri-dockerd' and release != 'tegra'"
+     command: 'kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:///run/cri-dockerd.sock --kubernetes-version="v{{ k8s_version }}" --image-repository={{ k8s_registry }}'
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-Dockerd for Cloud Native Stack
+     when: "'running' not in k8sup.stdout and proxy == true and container_runtime == 'cri-dockerd' and release != 'tegra'"
+     command: 'kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:///run/cri-dockerd.sock --kubernetes-version="v{{ k8s_version }}" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}'
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-Dockerd for Cloud Native Stack
+     when: "'running' not in k8sup.stdout and proxy == false and container_runtime == 'cri-dockerd' and release == 'tegra'"
+     command: 'kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///run/cri-dockerd.sock --kubernetes-version="v{{ k8s_version }}" --image-repository={{ k8s_registry }}'
+     become: true
+     register: kubeadm
+
+   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-Dockerd for Cloud Native Stack
+     when: "'running' not in k8sup.stdout and proxy == true and container_runtime == 'cri-dockerd' and release == 'tegra'"
+     command: 'kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///run/cri-dockerd.sock --kubernetes-version="v{{ k8s_version }}" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}'
+     become: true
+     register: kubeadm
+
    - name: Create kube directory
      when: "'running' not in k8sup.stdout"
      file:
@@ -152,15 +176,15 @@
        seconds: 30
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
-     when: "'running' not in k8sup.stdout and cnc_version >= 7.1 and release != 'tegra' or cnc_version == 6.4 and release != 'tegra'"
+     when: "'running' not in k8sup.stdout and cns_version >= 7.1 and release != 'tegra' or cns_version == 6.4 and release != 'tegra'"
      command: "kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/calico.yaml"
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
-     when: "cnc_version <= 6.3 and ansible_distribution_major_version == '20' and release != 'tegra' or cnc_version == 7.0 and release != 'tegra' and ansible_distribution_major_version == '22'"
+     when: "cns_version <= 6.3 and ansible_distribution_major_version == '20' and release != 'tegra' or cns_version == 7.0 and release != 'tegra' and ansible_distribution_major_version == '22'"
      command: "kubectl apply -f https://projectcalico.docs.tigera.io/archive/v{{ calico_version }}/manifests/calico.yaml"
 
    - name: Update Network plugin for Calico on NVIDIA Cloud Native Stack
-     when: "'running' not in k8sup.stdout and cnc_version >= 3.1 and release != 'tegra'"
+     when: "'running' not in k8sup.stdout and cns_version >= 3.1 and release != 'tegra'"
      shell: "sleep 5; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*"
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
@@ -168,15 +192,15 @@
      command: "kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v{{ flannel_version }}/Documentation/kube-flannel.yml"
 
    - name: Taint the Kubernetes Control Plane node
-     when: "'running' not in k8sup.stdout and cnc_version < 7.0"
+     when: "'running' not in k8sup.stdout and cns_version < 7.0"
      command: kubectl taint nodes --all node-role.kubernetes.io/master-
 
    - name: Taint the Kubernetes Control Plane node
-     when: "'running' not in k8sup.stdout and cnc_version == 7.0 or 'running' not in k8sup.stdout and cnc_version == 7.1 or 'running' not in k8sup.stdout and cnc_version == 7.2 or 'running' not in k8sup.stdout and cnc_version == 7.3 or 'running' not in k8sup.stdout and cnc_version == 7.4 or 'running' not in k8sup.stdout and cnc_version == 7.5"
+     when: "'running' not in k8sup.stdout and cns_version == 7.0 or 'running' not in k8sup.stdout and cns_version == 7.1 or 'running' not in k8sup.stdout and cns_version == 7.2 or 'running' not in k8sup.stdout and cns_version == 7.3 or 'running' not in k8sup.stdout and cns_version == 7.4 or 'running' not in k8sup.stdout and cns_version == 7.5"
      command: kubectl taint nodes --all node-role.kubernetes.io/master- node-role.kubernetes.io/control-plane-
 
    - name: Taint the Kubernetes Control Plane node
-     when: "'running' not in k8sup.stdout and cnc_version >= 8.0"
+     when: "'running' not in k8sup.stdout and cns_version >= 8.0"
      command: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 
    - name: Generate join token
@@ -216,7 +240,7 @@
 
 - hosts: nodes
   vars_files:
-    - cnc_values.yaml
+    - cns_values.yaml
   tasks:
    - name: Copy kubernetes cluster status
      become: true
@@ -249,19 +273,18 @@
        dest: "/tmp/kubeadm-join.command"
 
    - name: Get the Active Mellanox NIC on nodes
-     when: "enable_network_operator == true and cnc_version >= 4.1"
+     when: "enable_network_operator == true and cns_version >= 4.1"
      become: true
      shell: "for device in `sudo lshw -class network -short | grep -i ConnectX | awk '{print $2}' | egrep -v 'Device|path' | sed '/^$/d'`;do echo -n $device; sudo ethtool $device | grep -i 'Link detected'; done | grep yes | awk '{print $1}' > /tmp/$(hostname)-nic"
      register: node_nic
 
    - name: Copy Mellanox NIC Active File to master
-     when: "enable_network_operator == true and cnc_version >= 4.1"
+     when: "enable_network_operator == true and cns_version >= 4.1"
      become: true
      fetch:
        src: "/tmp/{{ ansible_nodename }}-nic"
        dest: "/tmp/"
        flat: yes
-
 
 - hosts: nodes
   vars:
@@ -280,17 +303,3 @@
 
    - pause:
        seconds: 30
-
-- hosts: master
-  tasks:
-   - name: Get Node name
-     shell: "kubectl get nodes  | egrep -v 'master|control-plane' | awk '{print $1}' | grep -v NAME"
-     register: node_name
-     no_log: True
-     failed_when: false
-
-   - name: Lable the node
-     shell: "kubectl label node {{ item }} node-role.kubernetes.io/node= node-role.kubernetes.io/worker="
-     with_items: "{{ node_name.stdout_lines }}"
-     no_log: True
-     failed_when: false

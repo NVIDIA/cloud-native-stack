@@ -1,9 +1,32 @@
 - hosts: all
   become: true
   vars_files:
-    - cnc_values.yaml
+    - cns_values.yaml
   become_method: sudo
   tasks:
+    - name: Update Containerd Runtime for NVIDIA Cloud Native Stack
+      become: true
+      block:
+        - name: Create /etc/containerd
+          file:
+            path: /etc/containerd
+            state: directory
+
+        - name: Write defaults to config.toml
+          copy:
+            src: "{{lookup('pipe', 'pwd')}}/files/config.toml"
+            dest: /etc/containerd/config.toml
+            mode: 0664
+
+        - name: Enable systemd cgroups
+          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+        - name: restart containerd
+          service:
+            name: containerd
+            state: restarted
+            daemon_reload: yes
+      when: "cns_docker == true and cns_nvidia_driver == true"
 
     - name: Check NVIDIA Driver Modules are loaded
       shell: "lsmod | grep -i nvidia"
@@ -11,8 +34,21 @@
       no_log: True
       failed_when: false
 
+    - name: Check NVIDIA SMI loaded
+      shell: "nvidia-smi"
+      register: nvidia_smi
+      no_log: True
+      failed_when: false
+
+    - name: Trim the GPU Driver Version
+      shell: "echo {{ gpu_driver_version }} | awk -F'.' '{print $1}'"
+      register: dversion
+
+    - set_fact:
+        driver_version: "{{ dversion.stdout }}"
+
     - name: NVIDIA Driver Clean Up
-      when:  cnc_version >= 6.1 and nvidia_mod.rc >= 1 and ansible_distribution == 'Ubuntu'
+      when:  nvidia_mod.rc >= 1 and ansible_distribution == 'Ubuntu' or nvidia_smi.rc == 0 and ansible_distribution == 'Ubuntu'
       block:
         - name: Remove Ubuntu unattended upgrades to prevent apt lock
           ansible.builtin.apt:
@@ -67,9 +103,15 @@
           shell:
             cmd: "apt-key del 7fa2af80"
 
+    - name: Remove  driver packages RHEL/CentOS 8 and newer
+      when:  "nvidia_mod.rc == 0 and ansible_distribution == 'RedHat' and cns_version == 10.0 or nvidia_smi.rc == 0 and ansible_distribution == 'RedHat' and cns_version == 10.0"
+      dnf:
+        name: "@nvidia-driver:525-dkms"
+        state: "absent"
+
     - name: Install NVIDIA TRD Driver on NVIDIA Cloud Native Stack 6.1
       become: true
-      when:  nvidia_mod.rc >= 1 and cnc_version <= 6.1 and ansible_architecture == 'x86_64' and ansible_distribution == 'Ubuntu'
+      when:  nvidia_mod.rc >= 1 and cns_version <= 6.1 and ansible_architecture == 'x86_64' and ansible_distribution == 'Ubuntu'
       block:
         - name: Get Apt Key
           get_url:
@@ -104,7 +146,7 @@
 
     - name: Install NVIDIA TRD Driver
       become: true
-      when:  ansible_distribution == 'Ubuntu' and cnc_version == 6.2 and nvidia_mod.rc >= 1 and ansible_architecture == 'x86_64' or ansible_distribution == 'Ubuntu' and cnc_version == 7.0 and nvidia_mod.rc >= 1 and ansible_architecture == 'x86_64'
+      when:  ansible_distribution == 'Ubuntu' and cns_version == 6.2 and nvidia_mod.rc >= 1 and ansible_architecture == 'x86_64' or ansible_distribution == 'Ubuntu' and cns_version == 7.0 and nvidia_mod.rc >= 1 and ansible_architecture == 'x86_64'
       block:
         - name: Install NVIDIA TRD Drivers
           ignore_errors: true
@@ -115,7 +157,7 @@
 
     - name: Install NVIDIA TRD Driver
       become: true
-      when:  "cnc_version == 6.1 and nvidia_mod.rc >= 1 and ansible_architecture == 'aarch64' and ansible_distribution == 'Ubuntu' or cnc_version == 6.2 and nvidia_mod.rc >= 1 and ansible_architecture == 'aarch64' and ansible_distribution == 'Ubuntu'"
+      when:  "cns_version == 6.1 and nvidia_mod.rc >= 1 and ansible_architecture == 'aarch64' and ansible_distribution == 'Ubuntu' or cns_version == 6.2 and nvidia_mod.rc >= 1 and ansible_architecture == 'aarch64' and ansible_distribution == 'Ubuntu'"
       block:
         - name: Get NVIDIA Driver Apt Key
           get_url:
@@ -137,7 +179,7 @@
 
     - name: Install NVIDIA TRD Keys
       become: true
-      when:  nvidia_mod.rc >= 1 and cnc_version == 7.0 and ansible_architecture == 'aarch64' and ansible_distribution == 'Ubuntu'
+      when:  nvidia_mod.rc >= 1 and cns_version == 7.0 and ansible_architecture == 'aarch64' and ansible_distribution == 'Ubuntu'
       block:
         - name: Get NVIDIA Driver Apt Key
           get_url:
@@ -161,7 +203,7 @@
       become: true
       when:  "ansible_architecture == 'x86_64' and ansible_distribution_major_version == '20' and ansible_distribution == 'Ubuntu'"
       apt:
-        deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
+        deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.1-1_all.deb
         state: "present"
       register: cuda_ring
       retries: 10
@@ -171,7 +213,7 @@
       become: true
       when:  "ansible_architecture == 'x86_64' and ansible_distribution_major_version == '22' and ansible_distribution == 'Ubuntu'"
       apt:
-        deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+        deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
         state: "present"
       register: cuda_ring
       retries: 10
@@ -181,7 +223,7 @@
       become: true
       when:  "ansible_architecture == 'aarch64' and ansible_distribution_major_version == '22' and ansible_distribution == 'Ubuntu'"
       apt:
-        deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/sbsa/cuda-keyring_1.0-1_all.deb
+        deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/sbsa/cuda-keyring_1.1-1_all.deb
         state: "present"
       register: cuda_ring
       retries: 10
@@ -191,7 +233,7 @@
       become: true
       when:  "ansible_architecture == 'aarch64' and ansible_distribution_major_version == '20' and ansible_distribution == 'Ubuntu'"
       apt:
-        deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/sbsa/cuda-keyring_1.0-1_all.deb
+        deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/sbsa/cuda-keyring_1.1-1_all.deb
         state: "present"
       register: cuda_ring
       retries: 10
@@ -199,7 +241,7 @@
 
     - name: Install NVIDIA TRD Driver
       become: true
-      when:  "cnc_version == 6.3 and ansible_distribution == 'Ubuntu' or cnc_version == 7.1 and ansible_distribution == 'Ubuntu' or cnc_version == 8.0 and ansible_distribution == 'Ubuntu'"
+      when:  "cns_version >= 6.3 and ansible_distribution == 'Ubuntu'"
       ignore_errors: true
       block:
         - name: Force an apt update
@@ -223,7 +265,7 @@
 
         - name: Install driver packages
           apt:
-            name: cuda=11.8.0-1
+            name: ["nvidia-driver-{{ driver_version }}"," nvidia-dkms-{{ driver_version }}", "nvidia-utils-{{ driver_version }}"]
             state: present
           register: cuda_install
           retries: 10
@@ -232,113 +274,8 @@
         - name: Setup root account password policy
           shell: chage -d 0 root
 
-    - name: Install NVIDIA TRD Driver
-      become: true
-      when:  "cnc_version == 6.4 and ansible_distribution == 'Ubuntu'  or cnc_version == 7.2 and ansible_distribution == 'Ubuntu'  or cnc_version == 7.3 and ansible_distribution == 'Ubuntu'  or cnc_version == 8.1 and ansible_distribution == 'Ubuntu'  or cnc_version == 8.2 and ansible_distribution == 'Ubuntu' or cnc_version == 9.0 and ansible_distribution == 'Ubuntu' "
-      ignore_errors: true
-      block:
-        - name: Force an apt update
-          apt:
-            update_cache: true
-          changed_when: false
-          register: update
-          retries: 10
-          until: update is success
-
-        - name: Ensure kmod is installed
-          apt:
-            name: "kmod"
-            state: "present"
-          register: kmod_check
-          retries: 10
-          until: kmod_check is success
-
-        - name: Temporarily adjust account password policy to allow for successful NVIDIA driver install
-          shell: chage -d 1 root
-
-        - name: Install driver packages
-          apt:
-            name: cuda=12.0.1-1
-            state: present
-          register: cuda_install
-          retries: 10
-          until: cuda_install is success
-
-        - name: Setup root account password policy
-          shell: chage -d 0 root
-
-    - name: Install NVIDIA TRD Driver
-      become: true
-      when:  "cnc_version == 7.4 and ansible_distribution == 'Ubuntu' or cnc_version == 8.3 and ansible_distribution == 'Ubuntu' or cnc_version == 9.1 and ansible_distribution == 'Ubuntu' or cnc_version == 10.0 and ansible_distribution == 'Ubuntu'"
-      ignore_errors: true
-      block:
-        - name: Force an apt update
-          apt:
-            update_cache: true
-          changed_when: false
-          register: update
-          retries: 10
-          until: update is success
-
-        - name: Ensure kmod is installed
-          apt:
-            name: "kmod"
-            state: "present"
-          register: kmod_check
-          retries: 10
-          until: kmod_check is success
-
-        - name: Temporarily adjust account password policy to allow for successful NVIDIA driver install
-          shell: chage -d 1 root
-
-        - name: Install driver packages
-          apt:
-            name: cuda=12.1.0-1
-            state: present
-          register: cuda_install
-          retries: 10
-          until: cuda_install is success
-
-        - name: Setup root account password policy
-          shell: chage -d 0 root
-
-    - name: Install NVIDIA TRD Driver
-      become: true
-      when:  "cnc_version == 7.5 and ansible_distribution == 'Ubuntu' or cnc_version == 8.4 and ansible_distribution == 'Ubuntu' or cnc_version == 9.2 and ansible_distribution == 'Ubuntu' or cnc_version == 10.1 and ansible_distribution == 'Ubuntu'"
-      ignore_errors: true
-      block:
-        - name: Force an apt update
-          apt:
-            update_cache: true
-          changed_when: false
-          register: update
-          retries: 10
-          until: update is success
-
-        - name: Ensure kmod is installed
-          apt:
-            name: "kmod"
-            state: "present"
-          register: kmod_check
-          retries: 10
-          until: kmod_check is success
-
-        - name: Temporarily adjust account password policy to allow for successful NVIDIA driver install
-          shell: chage -d 1 root
-
-        - name: Install driver packages
-          apt:
-            name: cuda=12.2.0-1
-            state: present
-          register: cuda_install
-          retries: 10
-          until: cuda_install is success
-
-        - name: Setup root account password policy
-          shell: chage -d 0 root
-
-    - name:  ensure we have kernel-headers installed for the current kernel on RHEL 
-      when:  "cnc_version >= 10.0 and ansible_distribution == 'RedHat'"
+    - name:  ensure we have kernel-headers installed for the current kernel on RHEL
+      when:  "cns_version >= 10.0 and ansible_distribution == 'RedHat'"
       block:
         - name: attempt to install kernel support packages for current version
           yum:
@@ -361,26 +298,26 @@
             state: latest
 
     - name: add epel repo gpg key on RHEL 8.7
-      when:  "cnc_version >= 10.0 and ansible_distribution == 'RedHat'"
+      when:  "cns_version >= 10.0 and ansible_distribution == 'RedHat'"
       rpm_key:
         key: "https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-{{ ansible_distribution_major_version }}"
         state: present
 
     - name: add epel repo on RHEL 8.7
-      when:  "cnc_version >= 10.0 and ansible_distribution == 'RedHat'"
+      when:  "cns_version >= 10.0 and ansible_distribution == 'RedHat'"
       yum:
         name:
           - "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
         state: latest
 
     - name: install dependencies on RHEL 8.7
-      when:  "cnc_version >= 10.0 and ansible_distribution == 'RedHat'"
+      when:  "cns_version >= 10.0 and ansible_distribution == 'RedHat'"
       yum:
         name: dkms
         state: present
 
     - name: add repo
-      when:  "cnc_version >= 10.0 and ansible_distribution == 'RedHat'"
+      when:  "cns_version >= 10.0 and ansible_distribution == 'RedHat'"
       yum_repository:
         name: cuda
         description: NVIDIA CUDA YUM Repo
@@ -388,18 +325,13 @@
         gpgkey: "https://developer.download.nvidia.com/compute/cuda/repos/rhel{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/D42D0685.pub"
 
     - name: install driver packages RHEL/CentOS 8 and newer
-      when:  "cnc_version == 10.0 and ansible_distribution == 'RedHat'"
+      when:  "cns_version == 10.0 and ansible_distribution == 'RedHat'"
       dnf:
         name: "@nvidia-driver:525-dkms"
         state: "present"
 
     - name: install driver packages RHEL/CentOS 8 and newer
-      when:  "cnc_version == 10.1 and ansible_distribution == 'RedHat'"
+      when:  "cns_version == 10.1 and ansible_distribution == 'RedHat' or cns_version == 10.2 and ansible_distribution == 'RedHat'"
       dnf:
         name: "@nvidia-driver:535-dkms"
         state: "present"
-
-    - name: Reboot the system
-      when:  nvidia_mod.rc >= 1
-      reboot:
-        reboot_timeout: 900

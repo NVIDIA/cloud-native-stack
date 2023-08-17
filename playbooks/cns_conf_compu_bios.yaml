@@ -1,0 +1,123 @@
+- hosts: localhost
+  connection: local
+  name: Set BIOS attributes
+  gather_facts: False
+  vars_files:
+    - cns_values.yaml
+  vars:
+    supermicro_bios_attributes:
+#      SEV-ESASIDSpaceLimit#700C: 100
+      SMEE#003E: "Enabled"
+      IOMMU#0196: "Enabled"
+      SEV-SNPSupport#01A7: "Enabled"
+      SNPMemory(RMPTable)Coverage#003C: "Enabled"
+    asrock_bios_attributes:
+      CbsCmnCpuSevAsidCount: "CbsCmnCpuSevAsidCount509ASIDs"
+      CbsCmnCpuSevAsidSpaceCtrl: "CbsCmnCpuSevAsidSpaceCtrlManual"
+      CbsCmnCpuSevAsidSpaceLimit: 100
+      CbsDbgCpuSnpMemCover: "CbsDbgCpuSnpMemCoverEnabled"
+      CbsCmnCpuSmee: "CbsCmnCpuSmeeEnabled"
+      CbsSevSnpSupport: "CbsSevSnpSupportEnable"
+  tasks:
+  - name: Get OEM
+    ignore_errors: true
+    redfish_info:
+      category: Systems
+      command: GetSystemInventory
+      baseuri: "{{ bmc_ip }}"
+      username: "{{ bmc_username }}"
+      password: "{{ bmc_password }}"
+    register: system_inv
+
+  - name: System Manufacturer
+    debug:
+      msg: "{{ bmc_ip }} Manufacturer is {{ system_inv.redfish_facts.system.entries[0][1][\"Manufacturer\"] }}"
+
+  - name: Set the Manufacturer ID
+    set_fact:
+      manufacturer: "{{ system_inv.redfish_facts.system.entries[0][1][\"Manufacturer\"] }}"
+
+  - name: Get BIOS attributes
+    redfish_info:
+      category: Systems
+      command: GetBiosAttributes
+      baseuri: "{{ bmc_ip }}"
+      username: "{{ bmc_username }}"
+      password: "{{ bmc_password }}"
+    register: get_bios
+
+  - name: Set the Bios Values for AsRockRack System
+    set_fact:
+      sev_asidcount: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"CbsCmnCpuSevAsidCount\"] }}"
+      sev_asidspace_ctrl: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"CbsCmnCpuSevAsidSpaceCtrl\"] }}"
+      sev_asidspace_limit: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"CbsCmnCpuSevAsidSpaceLimit\"] }}"
+      snp_memory_coverage: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"CbsDbgCpuSnpMemCover\"] }}"
+      smee: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"CbsCmnCpuSmee\"] }}"
+      snp_support: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"CbsSevSnpSupport\"] }}"
+    when: manufacturer == "ASRockRack"
+
+  - name: AsRockRack System Current BIOS Configuration
+    debug:
+      msg:
+        - SEV SNP Support is {{ snp_support }}
+        - SEV ASID Count is {{ sev_asidcount }}
+        - SEV ASID Space Limit Control is {{ sev_asidspace_ctrl }}
+        - SEV-ES ASID Space Limit is {{ sev_asidspace_limit }}
+        - SNP Memory Coverage is {{ snp_memory_coverage }}
+        - SMEE Status is {{ smee }}
+    when: manufacturer == "ASRockRack"
+
+  - name: Set BIOS attributes for AsRockRack System
+    community.general.redfish_config:
+      category: Systems
+      command: SetBiosAttributes
+      bios_attributes: "{{ asrock_bios_attributes}}"
+      baseuri: "{{ bmc_ip }}"
+      username: "{{ bmc_username }}"
+      password: "{{ bmc_password }}"
+    register: bios_attribute
+    when: manufacturer == "ASRockRack"
+
+  - name: Set the BIOS values for SuperMicro System
+    set_fact:
+      sev_asidspacelimit: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"SEV-ESASIDSpaceLimit#700C\"] }}"
+      sev_snpsupport: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"SEV-SNPSupport#01A7\"] }}"
+      smee: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"SMEE#003E\"] }}"
+      iommu: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"IOMMU#0196\"] }}"
+      snpmemory: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"SNPMemory(RMPTable)Coverage#003C\"] }}"
+    when: manufacturer == "Supermicro"
+
+  - name: SuperMicro System current BIOS Configuration
+    debug:
+      msg:
+        - SEV-ESASIDSpaceLimit is {{ sev_asidspacelimit }}
+        - SEV-SNPSupport is {{ sev_snpsupport }}
+        - SMEE is {{ smee }}
+        - IOMMU is {{ iommu }}
+        - SNPMemoryCoverage is {{ snpmemory }}
+    when: manufacturer == "Supermicro"
+
+  - name: Set BIOS attributes for SuperMicro System
+    community.general.redfish_config:
+      category: Systems
+      command: SetBiosAttributes
+      bios_attributes: "{{ supermicro_bios_attributes}}"
+      baseuri: "{{ bmc_ip }}"
+      username: "{{ bmc_username }}"
+      password: "{{ bmc_password }}"
+    register: bios_attribute
+    when: manufacturer == "Supermicro"
+
+  - name: BIOS update output
+    debug:
+      msg: "{{ bios_attribute.msg }}"
+
+## Need to test this conndition 
+#  - name: Restart system power gracefully
+#    when: "{{ bios_attribute.msg }} == \"BIOS attributes already set\""
+#    redfish_command:
+#      category: Systems
+#      command: PowerGracefulRestart
+#      baseuri: "{{ bmc_ip }}"
+#      username: "{{ bmc_username }}"
+#      password: "{{ bmc_password }}"

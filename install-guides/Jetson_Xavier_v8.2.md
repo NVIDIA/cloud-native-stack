@@ -126,7 +126,7 @@ Install Containerd:
 ```
  sudo mkdir -p /etc/containerd
 
- sudo wget -q https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/config.toml -P /etc/containerd/
+ sudo wget -q https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/files/config.toml -P /etc/containerd/
 
  sudo systemctl enable containerd && sudo systemctl restart containerd
 ```

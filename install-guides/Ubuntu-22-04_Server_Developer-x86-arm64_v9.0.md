@@ -323,7 +323,7 @@ sudo mkdir -p /etc/containerd
 ```
 
 ```
- wget  https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/config.toml
+ wget  https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/files/config.toml
 ```
 
 ```
@@ -459,7 +459,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 Create a kubelet default with Containerd:
 ```
 cat <<EOF | sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
 EOF
 ```
 

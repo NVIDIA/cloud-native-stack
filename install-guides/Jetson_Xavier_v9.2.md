@@ -144,7 +144,7 @@ Install Containerd:
 ```
  sudo mkdir -p /etc/containerd
 
- sudo wget -q https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/config.toml -P /etc/containerd/
+ sudo wget -q https://raw.githubusercontent.com/NVIDIA/cloud-native-stack/master/playbooks/files/config.toml -P /etc/containerd/
 
  sudo systemctl enable containerd && sudo systemctl restart containerd
 ```
@@ -229,7 +229,7 @@ For `Containerd` system:
 
 ```
  cat <<EOF | sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
 EOF
 ```
 
@@ -237,7 +237,7 @@ For `CRI-O` system:
 
 ```
 cat <<EOF | sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/crio/crio.sock"
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --runtime-request-timeout=15m --container-runtime-endpoint="unix:/run/crio/crio.sock"
 EOF
 ```
 

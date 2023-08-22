@@ -19,6 +19,7 @@
      failed_when: false
 
    - name: Reset Kubernetes component
+     when: "'running' not in k8sup.stdout"
      become: true
      shell: "kubeadm reset --force"
      no_log: True
@@ -159,6 +160,7 @@
       state: directory
 
    - name: admin permissions
+     when: "'running' not in k8sup.stdout"
      become: true
      file:
        path: /etc/kubernetes/admin.conf
@@ -174,6 +176,7 @@
 
    - pause:
        seconds: 30
+     when: "'running' not in k8sup.stdout"
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
      when: "'running' not in k8sup.stdout and cns_version >= 7.1 and release != 'tegra' or cns_version == 6.4 and release != 'tegra'"
@@ -223,18 +226,21 @@
        dest: "/tmp/kubeadm-join.command"
 
    - name: Copy Join Command
+     when: "'running' not in k8sup.stdout"
      fetch:
        src: "/tmp/kubeadm-join.command"
        dest: "/tmp/kubeadm-join.command"
        flat: true
 
    - name: Store Kubernetes cluster status
+     when: "'running' not in k8sup.stdout"
      become: true
      copy:
        content: "{{ k8sup.stdout }}"
        dest: "/tmp/k8sup.status"
 
    - name: Copy k8s status
+     when: "'running' not in k8sup.stdout"
      fetch:
        src: "/tmp/k8sup.status"
        dest: "/tmp/k8sup.status"
@@ -305,3 +311,4 @@
 
    - pause:
        seconds: 30
+     when: "'running' not in k8sup.stdout"

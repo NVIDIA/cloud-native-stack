@@ -586,7 +586,28 @@
             force: yes
             autoremove: yes
             update_cache: yes
-      when: "release == 'tegra' and jversion.stdout < '4.1'"
+      when: "release == 'tegra' and cns_version == 10.2 or release == 'tegra' and cns_version == 9.3 or release == 'tegra' and cns_version == 8.5"
+
+    - name: Installing Latest Nvidia Jetson JetPack
+      become: true
+      block:
+        - name: get Current Tegra release
+          shell: "cat /etc/apt/sources.list.d/nvidia-l4t-apt-source.list | awk '{print $3}' | tail -1f"
+          register: tver
+
+        - name: update Tegra Release to r35.3
+          shell: sed -i "s/{{ tver.stdout }}/r35.3/g" /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
+          become: true
+
+        - name: Install New Jetapck 5.1.1
+          ignore_errors: yes
+          apt:
+            name: nvidia-jetpack
+            state: present
+            force: yes
+            autoremove: yes
+            update_cache: yes
+      when: "release == 'tegra' and cns_version <= 10.1 and jversion.stdout < '3.1' or release == 'tegra' and cns_version <= 9.2 and jversion.stdout < '3.1' or release == 'tegra' and cns_version <= 8.4 and jversion.stdout < '3.1'"
 
     - name: Configure Containerd for NVIDIA Cloud Native Stack
       become: true

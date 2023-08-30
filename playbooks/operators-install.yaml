@@ -220,48 +220,6 @@
      when: "enable_mig == true and enable_vgpu == false and gpu_operator.rc >= 1 and cns_version >= 4.1"
      shell: "kubectl label nodes --all nvidia.com/mig.config={{ mig_profile }} --overwrite"
 
-
-## RC bits
-   - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
-     when: "confidential_computing == false and cns_docker == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and gpu_operator_registry_password != ''"
-     shell: helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
-
-   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Stack
-     when: "confidential_computing == false and cns_docker == true and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc >= 1 and gpu_operator_registry_password != ''"
-     shell: helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
-
-   - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
-     when: "confidential_computing == false and cns_docker == false and enable_gpu_operator == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name"
-
-   - name: Installing the Signed GPU Operator on NVIDIA Cloud Native Stack
-     when: "confidential_computing == false and cns_docker == false and enable_gpu_operator == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == true and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version=515-signed,driver.imagePullSecrets[0]=ngc-secret --wait --generate-name"
-
-   - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Stack
-     when: "confidential_computing == false and cns_docker == false and enable_gpu_operator == true and enable_mig == true and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
-     shell: helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name
-
-   - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Stack
-     when: "confidential_computing == false and cns_docker == false and enable_gpu_operator == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
-     shell: helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name
-
-   - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Stack
-     when: "confidential_computing == false and cns_docker == false and enable_gpu_operator == true and enable_mig == true and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
-     shell: helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name
-
-   - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Stack
-     when: "confidential_computing == false and cns_docker == false and enable_gpu_operator == true and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name"
-
-   - name: Installing the GPU Operator with GDS and RDMA and Host MOFED on NVIDIA Cloud Native Stack
-     when: "confidential_computing == false and cns_docker == false and enable_gpu_operator == true and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == true and gpu_operator.rc == 1 and enable_secure_boot == false and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name"
-
-   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Stack
-     when: "confidential_computing == false and cns_docker == false and enable_gpu_operator == true and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name"
-
    - name: Enable MIG profile with GPU Operator on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and cns_docker == false and enable_gpu_operator == true and enable_mig == true and enable_vgpu == false and gpu_operator.rc == 1 and cns_version >= 4.1"
      shell: "kubectl label nodes --all nvidia.com/mig.config={{ mig_profile }} --overwrite"

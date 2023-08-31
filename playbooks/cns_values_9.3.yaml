@@ -17,7 +17,7 @@ local_path_provisioner: "0.0.24"
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "535.86.10"
+gpu_driver_version: "535.104.05"
 enable_mig: no
 mig_profile: all-disabled
 mig_strategy: single

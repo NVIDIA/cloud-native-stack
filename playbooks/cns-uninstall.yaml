@@ -237,7 +237,7 @@
      shell: rmmod nvidia_fs
 
    - name: Cleanup Directories for Cloud Native Stack Developers
-     when: " cns_docker == true and cns_nvidia_driver == true or cns_version <= 3.1 "
+     when: " cns_docker == true and cns_nvidia_driver == true or cns_version <= 3.1 or container_runtime == 'cri-dockerd'"
      ignore_errors: yes
      file:
        path: "{{ item }}"
@@ -268,6 +268,7 @@
         - /usr/local/bin/containerd
         - /usr/local/bin/containerd-s*
         - /var/lib/etcd
+        - /var/lib/containerd
         - /etc/kubernetes
         - /etc/apt/sources.list.d/kubernetes.list
         - /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list

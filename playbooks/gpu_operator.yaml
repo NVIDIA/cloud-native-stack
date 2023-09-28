@@ -1,5 +1,5 @@
 release_23_6_0:
-  gpu_operator_version: v23.6.0
+  gpu_operator_version: v23.6.1
   gpu_driver_version: 535.104.05
   driver_manager_version: 0.6.1
   container_toolkit: v1.13.4

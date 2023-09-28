@@ -171,6 +171,9 @@ k8s_registry: "registry.k8s.io"
 # Local Path Provisioner as Storage option
 storage: no
 
+# Monitoring Stack Prometheus/Grafana with GPU Metrics
+monitoring: no
+
 ## Cloud Native Stack Validation
 cns_validation: no
 
@@ -204,6 +207,7 @@ Install the NVIDIA Cloud Native Stack stack by running the below command. "Skipp
 ```
 bash setup.sh install
 ```
+`NOTE:` When you trigger the installation on DGX System you need to click `Enter/Return` command when you see `Restarting Services`
 #### Custom Configuration
 By default Cloud Native Stack uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` in `cns_values_<version>.yaml`.
 
@@ -308,6 +312,16 @@ bash setup.sh install
   - If you want to re use the system It's recommended to re install the Operating system after used for Confidential Computing installation.
   - Currently playbooks supports only local system for confidential computing not supported for remote system installation. 
 
+### Monitoring on CNS
+
+Deploy Prometheus/Grafan on Cloud Native Stack
+
+You need to enable `monitoring` in the `cns_values_xx.yaml` like below
+```
+# Monitoring Stack Prometheus/Grafana with GPU Metrics
+monitoring: no
+```
+Once stack is install access the Grafana with url `http://<node-ip>:32222` with credentials as `admin/cns-stack`
 ### Validation
 
 Run the below command to check if the installed versions are match with predefined versions of the NVIDIA Cloud Native Stack. Here' "Ignored" tasks refer to failed and "Changed/Ok" tasks refer to success.

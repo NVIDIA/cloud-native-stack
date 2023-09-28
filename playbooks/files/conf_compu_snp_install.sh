@@ -3,6 +3,7 @@
   echo "========================================================================================================================"
 
   sudo apt update >/dev/null 2>&1
+  sudo apt upgrade -y >/dev/null 2>&1
   sudo apt install -y ninja-build iasl nasm  flex bison openssl dkms autoconf zlib1g-dev python3-pip libncurses-dev libssl-dev libelf-dev libudev-dev libpci-dev libiberty-dev libtool libsdl-console libsdl-console-dev libpango1.0-dev libjpeg8-dev libpixman-1-dev libcairo2-dev  libgif-dev libglib2.0-dev >/dev/null 2>&1
   sudo pip3 install numpy flex bison >/dev/null 2>&1
   echo

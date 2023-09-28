@@ -11,7 +11,7 @@ calico_version: "3.26.1"
 flannel_version: "0.22.0"
 helm_version: "3.12.2"
 gpu_operator_version: "23.6.1"
-network_operator_version: "23.5.0"
+network_operator_version: "23.7.0"
 local_path_provisioner: "0.0.24"
 
 # GPU Operator Values
@@ -62,6 +62,9 @@ k8s_registry: "registry.k8s.io"
 
 # Local Path Provisioner as Storage option
 storage: no
+
+# Monitoring Stack Prometheus/Grafana with GPU Metrics
+monitoring: no
 
 ## Cloud Native Stack Validation
 cns_validation: no

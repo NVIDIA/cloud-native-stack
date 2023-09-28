@@ -69,7 +69,7 @@
       become: true
       when: "ansible_distribution == 'RedHat'"
       yum:
-        name: ['net-tools', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}-0', 'kubeadm-{{ k8s_version }}-0', 'kubectl-{{ k8s_version }}-0']
+        name: ['net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}-0', 'kubeadm-{{ k8s_version }}-0', 'kubectl-{{ k8s_version }}-0']
         state: present
         update_cache: true
 
@@ -225,14 +225,9 @@
             state: directory
 
         - name: Get defaults from containerd
-          command: /usr/local/bin/containerd config default
+          shell: /usr/local/bin/containerd config default > /etc/containerd/config.toml
           changed_when: false
           register: containerd_config_default
-
-        - name: Write defaults to config.toml
-          copy:
-            dest: /etc/containerd/config.toml
-            content: "{{ containerd_config_default.stdout }}"
 
         - name: Enable systemd cgroups
           shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml

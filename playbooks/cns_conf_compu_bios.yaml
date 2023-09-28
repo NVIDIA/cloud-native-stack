@@ -6,11 +6,11 @@
     - cns_values.yaml
   vars:
     supermicro_bios_attributes:
-#      SEV-ESASIDSpaceLimit#700C: 100
-      SMEE#003E: "Enabled"
-      IOMMU#0196: "Enabled"
-      SEV-SNPSupport#01A7: "Enabled"
-      SNPMemory(RMPTable)Coverage#003C: "Enabled"
+      SEV-ESASIDSpaceLimit: 100
+      SMEE: "Enabled"
+      IOMMU: "Enabled"
+      SEV-SNPSupport: "Enabled"
+      SNPMemory(RMPTable)Coverage: "Enabled"
     asrock_bios_attributes:
       CbsCmnCpuSevAsidCount: "CbsCmnCpuSevAsidCount509ASIDs"
       CbsCmnCpuSevAsidSpaceCtrl: "CbsCmnCpuSevAsidSpaceCtrlManual"

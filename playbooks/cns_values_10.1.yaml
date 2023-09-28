@@ -64,6 +64,9 @@ k8s_registry: "registry.k8s.io"
 # Local Path Provisioner as Storage option
 storage: no
 
+# Monitoring Stack Prometheus/Grafana with GPU Metrics
+monitoring: no
+
 ## Cloud Native Stack Validation
 cns_validation: no
 

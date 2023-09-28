@@ -44,12 +44,12 @@
      when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cns_version >= 4.1"
      become: true
      failed_when: false
-     shell: "touch /tmp/$(hostname)-nic; for device in `lshw -class network -short | grep -i ConnectX | awk '{print $2}' | egrep -v 'Device|path' | sed '/^$/d'`;do echo -n $device; ethtool $device | grep -i 'Link detected'; done | awk '{print $1}' > /tmp/$(hostname)-nic"
+     shell: "touch {{ ansible_user_dir }}/$(hostname)-nic; for device in `lshw -class network -short | grep -i ConnectX | awk '{print $2}' | egrep -v 'Device|path' | sed '/^$/d'`;do echo -n $device; ethtool $device | grep -i 'Link detected'; done | awk '{print $1}' > {{ ansible_user_dir }}/$(hostname)-nic"
 
    - name: List Mellanox Active NICs
      when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cns_version >= 4.1"
      failed_when: false
-     shell: "for list in `ls -lrt /tmp/*nic | awk '{print $NF}'`; do cat $list | tr '\n' ','; done | sed 's/.$//'"
+     shell: "for list in `ls -lrt {{ ansible_user_dir }}/*nic | awk '{print $NF}'`; do cat $list | tr '\n' ','; done | sed 's/.$//'"
      register: active_nic
 
    - name: Copy files to master
@@ -57,14 +57,16 @@
      no_log: true
      copy:
        src: "{{ item }}"
-       dest: /tmp/
+       dest: "{{ ansible_user_dir }}/"
      with_fileglob:
-       - "{{lookup('pipe', 'pwd')}}/*.yaml"
+       - "{{lookup('pipe', 'pwd')}}/files/network-operator-values.yaml"
+       - "{{lookup('pipe', 'pwd')}}/files/networkdefinition.yaml"
+       - "{{lookup('pipe', 'pwd')}}/files/mellanox-test.yaml"
 
    - name: Update Active mellanox NIC in network-operator-values.yaml
      when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cns_version >= 4.1"
      failed_when: false
-     shell: 'sed -ie "s/devices: \[.*\]/devices: \\[ {{ active_nic.stdout }}\]/g" /tmp/network-operator-values.yaml'
+     shell: 'sed -ie "s/devices: \[.*\]/devices: \\[ {{ active_nic.stdout }}\]/g" {{ ansible_user_dir }}/network-operator-values.yaml'
 
    - name: Installing the Network Operator on NVIDIA Cloud Native Stack
      when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cns_version >= 4.1"
@@ -77,7 +79,7 @@
 
    - name: Installing the Network Operator on NVIDIA Cloud Native Stack
      when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and ansible_architecture == 'x86_64'"
-     shell: "helm install --version {{ network_operator_version }} -f /tmp/network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator"
+     shell: "helm install --version {{ network_operator_version }} -f {{ ansible_user_dir }}/network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator"
 
    - name: Checking if GPU Operator is installed
      shell: helm ls -A | grep gpu-operator
@@ -106,13 +108,13 @@
      when: 'gpu_operator_registry_password != ""'
 
    - name: Get the GPU Operator Values.yaml
-     shell: helm show --version=v{{ gpu_operator_version }} values '{{ gpu_operator_helm_chart }}' > /tmp/values.yaml
+     shell: helm show --version=v{{ gpu_operator_version }} values '{{ gpu_operator_helm_chart }}' > {{ ansible_user_dir }}/values.yaml
      when: "enable_gpu_operator == true"
 
    - name: create GPU Custom Values for proxy
      when: proxy == true
      replace:
-       dest: "/tmp/values.yaml"
+       dest: "{{ ansible_user_dir }}/values.yaml"
        regexp: '  env: \[\]'
        replace: "  env:\n    - name: HTTPS_PROXY\n      value: {{ https_proxy }}\n    - name: HTTP_PROXY\n      value: {{ http_proxy }}\n    - name: https_proxy\n      value: {{ https_proxy }}\n    - name: http_proxy\n      value: {{ http_proxy }}\n    - name: NO_PROXY\n      value: {{ network.stdout }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24\n    - name: no_proxy\n      value: {{ network.stdout }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24"
 
@@ -137,32 +139,35 @@
          shell: kubectl label nodes --all nvidia.com/gpu.workload.config=vm-passthrough
 
        - name: Install Confidential Containers
-         shell: export VERSION=v0.7.0; kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=${VERSION}"; kubectl apply --dry-run=client -o yaml -k "github.com/confidential-containers/operator/config/samples/ccruntime/default?ref=${VERSION}" > {{lookup('pipe', 'pwd')}}/files/ccruntime.yaml
+         shell: "export VERSION=v0.7.0; kubectl apply -k \"github.com/confidential-containers/operator/config/release?ref=${VERSION}\"; kubectl apply --dry-run=client -o yaml -k \"github.com/confidential-containers/operator/config/samples/ccruntime/default?ref=${VERSION}\" > {{ ansible_user_dir }}/ccruntime.yaml"
 
        - name: Replace node selector with nvidia.com for CC Runtime
          replace:
-           path: "{{lookup('pipe', 'pwd')}}/files/ccruntime.yaml"
+           path: "{{ ansible_user_dir }}/ccruntime.yaml"
            regexp: 'node.kubernetes.io/worker: ""'
            replace: 'nvidia.com/gpu.workload.config: "vm-passthrough"'
            backup: yes
 
        - name: Install CC Runtime
-         shell: kubectl apply -f {{lookup('pipe', 'pwd')}}/files/ccruntime.yaml
+         shell: "kubectl apply -f {{ ansible_user_dir }}/ccruntime.yaml"
 
        - name: Install NVIDIA GPU Operator for Confidential Computing 
-         shell: helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --wait --generate-name -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set sandboxWorkloads.enabled=true --set kataManager.enabled=true --set ccManager.enabled=true --set nfd.nodefeaturerules=true
+         shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --wait --generate-name -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set sandboxWorkloads.enabled=true --set kataManager.enabled=true --set ccManager.enabled=true --set nfd.nodefeaturerules=true
+
+       - name: Setting the Node Level Mode
+         shell: kubectl label nodes --all nvidia.com/cc.mode=on --overwrite
 
    - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and gpu_operator_registry_password == ''"
-     shell: helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 
    - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == true and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc >= 1 and gpu_operator_registry_password == ''"
-     shell: helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
 
    - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and cns_docker == false and gpu_operator_registry_password == ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
 
    - name: Create namespace and registry secret
      when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == false and gpu_operator_registry_password != ''"
@@ -173,11 +178,11 @@
 
    - name: Installing the Signed GPU Operator on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and cns_version < 7.2 and enable_gpu_operator == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == true and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and cns_docker == false and gpu_operator_registry_password == ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ driver_version }}'-signed,driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ driver_version }}'-signed,driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
 
    - name: Installing the Signed GPU Operator on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and cns_version >= 7.2 and enable_gpu_operator == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == true and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and cns_docker == false and gpu_operator_registry_password == ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ driver_version }}',driver.usePrecompiled=true,driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ driver_version }}',driver.usePrecompiled=true,driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
 
    - name: Install GPU Operator with vGPU on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and enable_vgpu == true and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and cns_docker == false and gpu_operator_registry_password != ''"
@@ -186,35 +191,35 @@
         - kubectl create namespace nvidia-gpu-operator
         - kubectl create configmap licensing-config -n nvidia-gpu-operator --from-file={{lookup('pipe', 'pwd')}}/files/gridd.conf --from-file={{lookup('pipe', 'pwd')}}/files/client_configuration_token.tok
         - kubectl create secret docker-registry registry-secret --docker-server='https://nvcr.io' --docker-username='{{ gpu_operator_registry_username }}' --docker-password='{{ gpu_operator_registry_password }}' --docker-email='{{ gpu_operator_registry_email }}' -n nvidia-gpu-operator
-        - helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+        - helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and enable_mig == true and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and cns_docker == false and gpu_operator_registry_password == ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and cns_docker == false and gpu_operator_registry_password == ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
 
    - name: Installing the GPU Operator with Network Operator and RDMA and GDS on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and gpu_operator_registry_password == ''"
-     shell: helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,gds.enabled=true --wait --generate-name
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,gds.enabled=true --wait --generate-name
 
    - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and enable_mig == true and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and cns_docker == false and gpu_operator_registry_password == ''"
-     shell:  helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name
+     shell:  helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name
 
    - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and cns_docker == false and gpu_operator_registry_password == ''"
-     shell:  helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name
+     shell:  helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name
 
    - name: Installing the GPU Operator with GDS and RDMA and Host MOFED on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == true and gpu_operator.rc == 1 and enable_secure_boot == false and network_operator_valid.rc == 1 and cns_docker == false and gpu_operator_registry_password == ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
 
    - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and cns_docker == false and gpu_operator_registry_password == ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values /tmp/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
 
    - name: Enable MIG profile with GPU Operator on NVIDIA Cloud Native Stack
      when: "enable_mig == true and enable_vgpu == false and gpu_operator.rc >= 1 and cns_version >= 4.1"
@@ -232,10 +237,6 @@
      shell: sleep 60; kubectl patch ds/nvidia-driver-daemonset -n nvidia-gpu-operator -p '{"spec":{"template":{"spec":{"containers":[{"name":"nvidia-driver-ctr","image":"nvcr.io/nvidia/driver:515.65.01-ubuntu22.04"}]}}}}'
      when: "enable_gpu_operator == true and cns_version == 7.0 and ansible_architecture == 'aarch64' or enable_gpu_operator == true and cns_version == 7.1 and ansible_architecture == 'aarch64' or enable_gpu_operator == true and cns_version == 8.0 and ansible_architecture == 'aarch64' "
 
-   - name: Install Local Path Provisoner on NVIDIA Cloud Native Stack
-     shell: kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v{{ local_path_provisioner }}/deploy/local-path-storage.yaml
-     when: storage == true
-
    - name: GPU Operator Changes with CRI Docker Runtime
      shell: 'sleep 60; kubectl get clusterpolicy cluster-policy -o yaml | sed "/validator:/a\    driver:\n      env:\n      - name: DISABLE_DEV_CHAR_SYMLINK_CREATION\n        value: \"true\"" | kubectl apply -f -'
      when: "enable_gpu_operator == true and container_runtime == 'cri-dockerd'"
@@ -243,3 +244,28 @@
    - name: Container Networking Plugin changes
      when: "enable_gpu_operator == true and 'running' in k8sup.stdout"
      shell: "sleep 20; timeout 15 kubectl delete pods $(kubectl get pods -n kube-system | grep core | awk '{print $1}') -n kube-system; for ns in `kubectl get pods -A  | grep node-feature | grep -v master | awk '{print $1}'`; do kubectl get pods -n $ns  | grep node-feature | grep -v master | awk '{print $1}' | xargs kubectl delete pod -n $ns; done"
+     
+   - name: Install Local Path Provisoner on NVIDIA Cloud Native Stack
+     shell: kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v{{ local_path_provisioner }}/deploy/local-path-storage.yaml
+     when: storage == true
+
+   - name: Copy files
+     when: monitoring == true
+     copy:
+       src: "{{ item }}"
+       dest: "{{ ansible_user_dir }}/"
+     with_fileglob:
+       - "{{lookup('pipe', 'pwd')}}/files/grafana-dashboard.yaml"
+       - "{{lookup('pipe', 'pwd')}}/files/kube-prometheus-stack.values"
+       - "{{lookup('pipe', 'pwd')}}/files/grafana-patch.json"
+
+   - name: Install Prometheus Stack on NVIDIA Cloud Native Stack
+     shell: "{{ item }}"
+     when: monitoring == true
+     with_items:
+       - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+       - helm repo update
+       - helm install prometheus-community/kube-prometheus-stack --create-namespace --namespace monitoring --generate-name --values  {{ ansible_user_dir }}/kube-prometheus-stack.values
+       - kubectl patch svc $(kubectl get svc -n monitoring | grep grafana | awk '{print $1}') --type='json' -p '[{"op":"replace","path":"/spec/type","value":"NodePort"},{"op":"replace","path":"/spec/ports/0/nodePort","value":32222}]' -n monitoring
+       - kubectl apply -f  {{ ansible_user_dir }}/grafana-dashboard.yaml -n monitoring
+       - kubectl patch deployment $(kubectl get deployments -n monitoring | grep grafana | awk '{print $1}')  -n monitoring  --patch "$(cat {{ ansible_user_dir }}/grafana-patch.json)"

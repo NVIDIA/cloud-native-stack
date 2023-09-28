@@ -1,0 +1,35 @@
+{
+    "spec": {
+        "template": {
+            "spec": {
+		"containers": [{
+		    "name": "grafana-sc-dashboard",
+		    "volumeMounts": [
+                       {
+                          "mountPath": "/tmp/dashboards/dcgm.json",
+			              "subPath": "dcgm.json",
+                          "name": "nv-dashboard-volume"
+                        }
+                      ]
+		},
+		{
+		    "name": "grafana",
+                    "volumeMounts": [
+                       {
+                          "mountPath": "/tmp/dashboards/dcgm.json",
+                          "subPath": "dcgm.json",
+                          "name": "nv-dashboard-volume"
+                        }
+                     ]
+                 }
+		],
+                "volumes": [{
+		    "configMap": {
+		        "name": "nvidia-dcgm"
+		     },
+		     "name": "nv-dashboard-volume"
+                }]
+            }
+        }
+    }
+}

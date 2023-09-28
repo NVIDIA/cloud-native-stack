@@ -43,7 +43,6 @@ Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA L
 | 8.5    | 17 Aug 2023   | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS            | 1.7.3 | 1.25.3 | 1.25.12 |  3.12.2 |23.6.1       | 23.7.0((x86 only)            | 535.104.05 |
 | 8.5     | 17 Aug 2023   | Jetson Devices(AGX, NX, Orin)  | JetPack 5.1 and JetPack 5.0   | 1.7.3 | 1.25.3 | 1.25.12 | 3.12.2 | N/A         | N/A              | N/A         |
 | 8.5     | 28 Sep 2023  | DGX Server  | DGX OS 6.0             | 1.7.3 | 1.25.3 | 1.25.12 |  3.12.2 |23.6.1       | N/A            | 535.104.05 | 
-
 | 8.4    | 14 July 2023   | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS            | 1.7.2 | 1.25.3 | 1.25.10 |  3.12.1 |23.3.2       | 23.5.0((x86 only)            | 535.54.03  |
 | 8.4     | 14 July 2023   | Jetson Devices(AGX, NX, Orin)  | JetPack 5.1 and JetPack 5.0   | 1.7.2 | 1.25.3 | 1.25.10 | 3.12.1 | N/A         | N/A              | N/A         |
 | 8.3    | 1 May 2023   | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS            | 1.7.0 | 1.25.3 | 1.25.8 |  3.11.2 |23.3.1       | 23.1.0((x86 only)            | 525.105.17  |
@@ -78,15 +77,6 @@ Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA L
 #### Getting help or Providing feedback
 
 Please open an [issue](https://github.com/NVIDIA/cloud-native-stack/issues) on the GitHub project for any questions. Your feedback is appreciated.
-
-#### Useful Links
-- [NVIDIA LaunchPad](https://www.nvidia.com/en-us/data-center/launchpad/)
-- [NVIDIA LaunchPad Labs](https://docs.nvidia.com/launchpad/index.html)
-- [Cloud Native Stack on LaunchPad](https://docs.nvidia.com/LaunchPad/developer-labs/overview.html)
-- [NVIDIA GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/overview.html)
-- [NVIDIA Network Operator](https://docs.nvidia.com/networking/display/COKAN10/Network+Operator)
-- [NVIDIA Certified Systems](https://www.nvidia.com/en-us/data-center/products/certified-systems/)
-- [NVIDIA GPU Cloud (NGC)](https://catalog.ngc.nvidia.com/)
 
 #### Cloud Native Stack Prerequisites
 

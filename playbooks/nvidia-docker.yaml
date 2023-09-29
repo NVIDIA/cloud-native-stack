@@ -184,14 +184,14 @@
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
       when: nvidia_docker_exists.rc >= 1 and cns_version == 7.0 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 6.2 and ansible_distribution == 'Ubuntu'
       apt:
-        name: [ "nvidia-docker2", "nvidia-container-runtime=3.10.0-1" ]
+        name: [ "nvidia-docker2=2.10.0-1", "nvidia-container-runtime=3.10.0-1" ]
         state: present
         update_cache: true
 
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
       when: nvidia_docker_exists.rc >= 1 and cns_version == 8.0 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 8.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 7.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 7.2 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 6.4 and ansible_distribution == 'Ubuntu'
       apt:
-        name: [ "nvidia-docker2", "nvidia-container-runtime=3.11.0-1" ]
+        name: [ "nvidia-docker2=2.11.0-1", "nvidia-container-runtime=3.11.0-1" ]
         state: present
         update_cache: true
 
@@ -199,28 +199,28 @@
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
       when: nvidia_docker_exists.rc >= 1 and cns_version == 8.2 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 7.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 9.0 and ansible_distribution == 'Ubuntu'
       apt:
-        name: [ "nvidia-docker2", "nvidia-container-runtime=3.12.0-1", 'nvidia-container-toolkit=1.12.0-1', 'nvidia-container-toolkit-base=1.12.0-1' ]
+        name: [ "nvidia-docker2=2.12.0-1", "nvidia-container-runtime=3.12.0-1", 'nvidia-container-toolkit=1.12.0-1', 'nvidia-container-toolkit-base=1.12.0-1' ]
         state: present
         update_cache: true
 
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
       when: nvidia_docker_exists.rc >= 1 and cns_version == 8.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 7.4 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 9.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 10.0 and ansible_distribution == 'Ubuntu'
       apt:
-        name: [ "nvidia-docker2", "nvidia-container-runtime=3.13.0-1", 'nvidia-container-toolkit=1.13.0-1', 'nvidia-container-toolkit-base=1.13.0-1']
+        name: [ "nvidia-docker2=2.13.0-1", "nvidia-container-runtime=3.13.0-1", 'nvidia-container-toolkit=1.13.0-1', 'nvidia-container-toolkit-base=1.13.0-1']
         state: present
         update_cache: true
 
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
       when: nvidia_docker_exists.rc >= 1 and cns_version == 8.4 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 7.5 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 9.2 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 10.1 and ansible_distribution == 'Ubuntu'
       apt:
-        name: [ 'nvidia-docker2', 'nvidia-container-toolkit=1.13.2-1', 'nvidia-container-toolkit-base=1.13.2-1', 'libnvidia-container-tools=1.13.2-1', 'libnvidia-container1=1.13.2-1']
+        name: [ 'nvidia-docker2=2.13.0-1', 'nvidia-container-toolkit=1.13.2-1', 'nvidia-container-toolkit-base=1.13.2-1', 'libnvidia-container-tools=1.13.2-1', 'libnvidia-container1=1.13.2-1']
         state: present
         update_cache: true
 
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
       when: nvidia_docker_exists.rc >= 1 and cns_version == 8.5 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 9.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 10.2 and ansible_distribution == 'Ubuntu'
       apt:
-        name: [ 'nvidia-docker2',  'nvidia-container-toolkit=1.13.5-1', 'nvidia-container-toolkit-base=1.13.5-1', 'libnvidia-container-tools=1.13.5-1', 'libnvidia-container1=1.13.5-1']
+        name: [ 'nvidia-docker2=2.13.0-1',  'nvidia-container-toolkit=1.13.5-1', 'nvidia-container-toolkit-base=1.13.5-1', 'libnvidia-container-tools=1.13.5-1', 'libnvidia-container1=1.13.5-1']
         state: present
         update_cache: true
 

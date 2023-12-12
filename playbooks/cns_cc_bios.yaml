@@ -5,6 +5,11 @@
   vars_files:
     - cns_values.yaml
   vars:
+    dell_bios_attributes:
+      Sme: "Enabled"
+      Snp: "Enabled"
+      TransparentSme: "Enabled"
+      CpuMinSevAsid: 509
     supermicro_bios_attributes:
       SEV-ESASIDSpaceLimit: 100
       SMEE: "Enabled"
@@ -67,6 +72,25 @@
         - SMEE Status is {{ smee }}
     when: manufacturer == "ASRockRack"
 
+  - name: Set the Bios Values for Dell System
+    set_fact:
+      sev_asidcount: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"CpuMinSevAsid\"] }}"
+      snp: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"Snp\"] }}"
+      smee: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"Sme\"] }}"
+      transparent_sme: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"TransparentSme\"] }}"
+      iommu: "{{ get_bios.redfish_facts.bios_attribute.entries[0][1][\"IommuSupport\"] }}"
+    when: manufacturer == "Dell Inc."
+
+  - name: Dell System Current BIOS Configuration
+    debug:
+      msg:
+        - SNP Support is {{ snp }}
+        - SEV ASID Count is {{ sev_asidcount }}
+        - SMEE Status is {{ smee }}
+        - Transparent SMEE is {{ transparent_sme }}
+        - IOMMU Support is {{ iommu }}
+    when: manufacturer == "Dell Inc."
+
   - name: Set BIOS attributes for AsRockRack System
     community.general.redfish_config:
       category: Systems
@@ -107,6 +131,26 @@
       password: "{{ bmc_password }}"
     register: bios_attribute
     when: manufacturer == "Supermicro"
+
+  - name: Set BIOS attributes for Dell System
+    community.general.redfish_config:
+      category: Systems
+      command: SetBiosAttributes
+      bios_attributes: "{{ dell_bios_attributes}}"
+      baseuri: "{{ bmc_ip }}"
+      username: "{{ bmc_username }}"
+      password: "{{ bmc_password }}"
+    register: bios_attribute
+    when: manufacturer == "Dell Inc."
+
+  - name: Create BIOS configuration job (schedule BIOS setting update)
+    community.general.idrac_redfish_command:
+      category: Systems
+      command: CreateBiosConfigJob
+      baseuri: "{{ bmc_ip }}"
+      username: "{{ bmc_username }}"
+      password: "{{ bmc_password }}"
+    when: bios_attribute.changed and manufacturer == "Dell Inc."
 
   - name: BIOS update output
     debug:

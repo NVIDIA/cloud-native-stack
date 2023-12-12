@@ -241,7 +241,7 @@
 
     - name: Install NVIDIA TRD Driver
       become: true
-      when:  "cns_version >= 6.3 and ansible_distribution == 'Ubuntu'"
+      when:  "cns_version >= 6.3 and ansible_distribution == 'Ubuntu' and use_open_kernel_module == false"
       ignore_errors: true
       block:
         - name: Force an apt update
@@ -274,6 +274,33 @@
         - name: Setup root account password policy
           shell: chage -d 0 root
 
+    - name: Install NVIDIA TRD Driver
+      become: true
+      when:  "cns_version >= 6.3 and ansible_distribution == 'Ubuntu' and use_open_kernel_module == true"
+      ignore_errors: true
+      block:
+        - name: Force an apt update
+          apt:
+            update_cache: true
+          changed_when: false
+          register: update
+          retries: 10
+          until: update is success
+
+        - name: Ensure kmod is installed
+          apt:
+            name: "kmod"
+            state: "present"
+          register: kmod_check
+          retries: 10
+          until: kmod_check is success
+
+        - name: Temporarily adjust account password policy to allow for successful NVIDIA driver install
+          shell: chage -d 1 root
+
+        - name: Install driver packages
+          shell: "BASE_URL=https://us.download.nvidia.com/tesla; curl -fSsl -O $BASE_URL/{{ gpu_driver_version }}/NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; chmod +x ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; sh ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run -m=kernel-open --silent"
+          
     - name:  ensure we have kernel-headers installed for the current kernel on RHEL
       when:  "cns_version >= 10.0 and ansible_distribution == 'RedHat'"
       block:
@@ -331,7 +358,7 @@
         state: "present"
 
     - name: install driver packages RHEL/CentOS 8 and newer
-      when:  "cns_version == 10.1 and ansible_distribution == 'RedHat' or cns_version == 10.2 and ansible_distribution == 'RedHat'"
+      when:  "cns_version == 10.1 and ansible_distribution == 'RedHat' or cns_version == 10.2 and ansible_distribution == 'RedHat' or cns_version == 10.3 and ansible_distribution == 'RedHat' or cns_version == 11.0 and ansible_distribution == 'RedHat'"
       dnf:
         name: "@nvidia-driver:535-dkms"
         state: "present"

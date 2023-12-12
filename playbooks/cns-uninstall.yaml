@@ -201,6 +201,12 @@
        - 'nvidia-container*'
        - 'nvidia-docker*'
 
+   - name: Uninstall NVIDIA TRD Driver 
+     when: cns_nvidia_driver == true
+     shell: "sh ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run --uninstall --silent; rm -rf ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run"
+     become: true
+     ignore_errors: true
+
    - name: Remove dependencies that are no longer required
      when: "ansible_distribution == 'Ubuntu'"
      apt:
@@ -262,6 +268,7 @@
 #        - /run/containerd
 #        - /opt/containerd
         - /etc/containerd
+        - /var/run/docker.pid
         - /usr/local/sbin/runc
         - /usr/local/bin/crictl
         - /etc/crictl.yaml

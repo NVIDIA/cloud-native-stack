@@ -175,7 +175,7 @@
        mode: '0600'
 
    - pause:
-       seconds: 30
+       seconds: 15
      when: "'running' not in k8sup.stdout"
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack

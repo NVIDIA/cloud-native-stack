@@ -41,7 +41,7 @@ ansible_install() {
 				sudo ln -sf /usr/lib/python3/dist-packages/apt_inst.cpython-* /usr/lib/python3/dist-packages/apt_inst.so
 			fi
         elif [ $os == '"rhel"' ]; then
-            sudo yum update 2>&1 >/dev/null && sudo yum install python39 python3-pip sshpass -y 2>&1 >/dev/null
+            sudo yum install python39 python3-pip sshpass -y 2>&1 >/dev/null
             sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
             sudo ln -sf /usr/bin/python3.9 /usr/bin/python
         fi
@@ -51,7 +51,7 @@ ansible_install() {
 if [[ $os == "ubuntu" ]]; then
     sudo apt update 2>&1 >/dev/null && sudo apt install python3-pip sshpass -y 2>&1 >/dev/null
 elif [ $os == '"rhel"' ]; then
-    sudo yum update 2>&1 >/dev/null && sudo yum install python39-pip sshpass -y 2>&1 >/dev/null
+    sudo yum install python39-pip sshpass -y 2>&1 >/dev/null
 fi
 
   uname=$(uname -r | awk -F'-' '{print $NF}')
@@ -79,7 +79,8 @@ os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
       if [[ $os == "ubuntu" ]]; then
     	sudo apt update 2>&1 >/dev/null && sudo apt install curl -y 2>&1 >/dev/null
       elif [ $os == '"rhel"' ]; then
-    	sudo yum update -y 2>&1 >/dev/null && sudo yum install curl -y 2>&1 >/dev/null
+        sudo subscription-manager release --set 8.8
+    	sudo yum install curl -y 2>&1 >/dev/null
       fi
 elif [[ $os == 'Darwin' ]]; then
 	ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
@@ -264,11 +265,13 @@ if [ $1 == "install" ]; then
                 cluster_name=$(cat cns_values_$version.yaml | grep aks_cluster_name | awk -F': ' '{print $2}')
                 location=$(cat cns_values_$version.yaml | grep aks_cluster_location | awk -F': ' '{print $2}')
                 azure_object_id=$(cat cns_values_$version.yaml | grep azure_object_id | awk -F': ' '{print $2}')
+		rm -rf nvidia-terraform-modules
                 git clone https://github.com/NVIDIA/nvidia-terraform-modules.git
                 cd nvidia-terraform-modules/aks
-                sed -i "s/# cluster_name           = .*/cluster_name           = \"$cluster_name\"/g" terraform.tfvars
-                sed -i "s/# location = .*/location  = $location/g" terraform.tfvars
-                sed -i "s/# admin_group_object_ids = \[\]/admin_group_object_ids = $azure_object_id/g" terraform.tfvars
+		git reset --hard 223e39fcf55f39ad714895e0a86481275fdd6623
+		echo "cluster_name           = \"$cluster_name\"" >> terraform.tfvars
+		echo "location  = $location" >> terraform.tfvars
+		echo "admin_group_object_ids = $azure_object_id" >> terraform.tfvars
                 terraform init
                 terraform apply --auto-approve
                 #az aks get-credentials --resource-group $cluster_name-rg --name $cluster_name
@@ -279,12 +282,14 @@ if [ $1 == "install" ]; then
                 node_zone=$(cat cns_values_$version.yaml | grep gke_node_zones | awk -F': ' '{print $2}')
                 cluster_name=$(cat cns_values_$version.yaml | grep gke_cluster_name | awk -F': ' '{print $2}')
                 gke_project_id=$(cat cns_values_$version.yaml | grep gke_project_id | awk -F': ' '{print $2}')
+		rm -rf nvidia-terraform-modules
                 git clone https://github.com/NVIDIA/nvidia-terraform-modules.git
                 cd nvidia-terraform-modules/gke
-                sed -i "s/\# cluster_name = .*/cluster_name = \"$cluster_name\"/g" terraform.tfvars
-                sed -i "s/\# project_id = .*/project_id = \"$gke_project_id\"/g" terraform.tfvars
-                sed -i "s/\# region     = .*/region     = \"$region\"/g" terraform.tfvars
-                sed -i "s/\# node_zones = .*/node_zones =  $node_zone/g" terraform.tfvars
+		git reset --hard 223e39fcf55f39ad714895e0a86481275fdd6623
+		echo "cluster_name = \"$cluster_name\"" >> terraform.tfvars
+		echo "project_id = \"$gke_project_id\"" >> terraform.tfvars
+		echo "region     = \"$region\"" >> terraform.tfvars
+		echo "node_zones =  $node_zone" >> terraform.tfvars
                 sed -i '$a num_gpu_nodes = "1"' terraform.tfvars
 		sed -i '$a gpu_min_node_count = "1"' terraform.tfvars
                 gcloud config set project $gke_project_id
@@ -298,11 +303,13 @@ if [ $1 == "install" ]; then
                 region=$(cat cns_values_$version.yaml | grep aws_region | awk -F': ' '{print $2}')
                 cluster_name=$(cat cns_values_$version.yaml | grep aws_cluster_name | awk -F': ' '{print $2}')
                 instance_type=$(cat cns_values_$version.yaml | grep aws_gpu | awk -F': ' '{print $2}')
+		rm -rf nvidia-terraform-modules
                 git clone https://github.com/NVIDIA/nvidia-terraform-modules.git
                 cd nvidia-terraform-modules/eks
+		git reset --hard 223e39fcf55f39ad714895e0a86481275fdd6623
                 aws configure set default.region $region
-                sed -i "s/\# cluster_name = .*/cluster_name = \"$cluster_name\"/g" terraform.tfvars
-                sed -i "s/\# region  = .*/region  = \"$region\"/g" terraform.tfvars
+		echo "cluster_name = \"$cluster_name\"" >> terraform.tfvars
+		echo "region  = \"$region\"" >> terraform.tfvars
                 echo "gpu_instance_type = \"$instance_type\"" >> terraform.tfvars
                 sed -i '$a min_gpu_nodes = "1"' terraform.tfvars
                 sed -i '$a desired_count_gpu_nodes = "1"' terraform.tfvars
@@ -311,9 +318,10 @@ if [ $1 == "install" ]; then
                 aws eks update-kubeconfig --name tf-$cluster_name --region $region
         elif [[ $2 == 'cc' ]]; then
                 ansible -c local -i localhost, all -m lineinfile -a "path={{lookup('pipe', 'pwd')}}/cns_values.yaml regexp='confidential_computing: no' line='confidential_computing: yes'"
-                ansible-playbook -c local -i localhost, cns_conf_compu_bios.yaml
+                ansible -c local -i localhost, all -m lineinfile -a "path={{lookup('pipe', 'pwd')}}/cns_values_"$version".yaml regexp='confidential_computing: no' line='confidential_computing: yes'"
+                ansible-playbook -c local -i localhost, cns_cc_bios.yaml
                 ansible-playbook -i hosts cns-installation.yaml
- 	elif [ -z $2 ]; then
+      	elif [ -z $2 ]; then
 		echo "Installing NVIDIA Cloud Native Stack Version $version"
 		id=$(sudo dmidecode --string system-uuid | awk -F'-' '{print $1}' | cut -c -3)
 		manufacturer=$(sudo dmidecode -s system-manufacturer | egrep -i "microsoft corporation|Google")
@@ -344,17 +352,17 @@ elif [ $1 == "uninstall" ]; then
 		cd nvidia-terraform-modules/eks
                 terraform destroy --auto-approve
                 cd ../../
-                rm -rf nvidia-terraform-modules  terraform_1.5.3_linux_* jq-linux64 kubectl aws awscli-exe-linux-*                
+                rm -rf terraform_1.5.3_linux_* jq-linux64 kubectl aws awscli-exe-linux-*                
         elif [[ $2 == 'aks' ]]; then
                 cd nvidia-terraform-modules/aks
                 terraform destroy --auto-approve
                 cd ../../
-                rm -rf nvidia-terraform-modules terraform_1.5.3_linux_amd64.zip jq-linux64 kubectl kubelogin-linux-*
+                rm -rf terraform_1.5.3_linux_amd64.zip jq-linux64 kubectl kubelogin-linux-*
         elif [[ $2 == 'gke' ]]; then
                 cd nvidia-terraform-modules/gke
                 terraform destroy --auto-approve
                 cd ../../
-                rm -rf nvidia-terraform-modules terraform_1.5.3_linux_* jq-linux64 kubectl
+                rm -rf terraform_1.5.3_linux_* jq-linux64 kubectl
 	elif [ -z $2 ]; then
 		echo
 		echo "Unstalling NVIDIA Cloud Native Stack"

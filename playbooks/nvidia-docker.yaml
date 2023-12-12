@@ -224,6 +224,13 @@
         state: present
         update_cache: true
 
+    - name: Install NVIDIA Docker and NVIDIA Container Runtime
+      when: nvidia_docker_exists.rc >= 1 and cns_version == 9.4 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 10.3 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 11.0 and ansible_distribution == 'Ubuntu'
+      apt:
+        name: [ 'nvidia-docker2=2.14.0-1',  'nvidia-container-toolkit=1.14.3-1', 'nvidia-container-toolkit-base=1.14.3-1', 'libnvidia-container-tools=1.14.3-1', 'libnvidia-container1=1.14.3-1']
+        state: present
+        update_cache: true
+
     - name: install NVIDIA container runtime and NVIDIA Docker on RHEL
       when: nvidia_docker_exists.rc >= 1 and cns_version >= 10.0 and ansible_distribution == 'RedHat'
       yum:

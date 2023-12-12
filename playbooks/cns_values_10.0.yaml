@@ -4,6 +4,7 @@ cns_version: 10.0
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
 containerd_version: "1.7.0"
+containerd_max_concurrent_downloads: "5"
 crio_version: "1.27.0"
 cri_dockerd_version: "0.3.4"
 k8s_version: "1.27.0"
@@ -18,6 +19,7 @@ local_path_provisioner: "0.0.24"
 enable_gpu_operator: yes
 confidential_computing: no
 gpu_driver_version: "525.105.17"
+use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
 mig_strategy: single

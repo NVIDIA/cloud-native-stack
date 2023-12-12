@@ -8,9 +8,9 @@ NVIDIA Cloud Native Stack v9.4 includes:
 - Containerd 1.7.7
 - Kubernetes version 1.26.9
 - Helm 3.13.1
-- NVIDIA GPU Driver: 535.104.12
+- NVIDIA GPU Driver: 535.129.03
 - NVIDIA Container Toolkit: 1.14.3
-- NVIDIA GPU Operator 23.9.0
+- NVIDIA GPU Operator 23.9.1
   - NVIDIA K8S Device Plugin: 0.14.2
   - NVIDIA DCGM-Exporter: 3.2.6-3.1.9
   - NVIDIA DCGM: 3.2.6-1
@@ -653,7 +653,7 @@ Install GPU Operator:
 `NOTE:` As we are preinstalled with NVIDIA Driver and NVIDIA Container Toolkit, we need to set as `false` when installing the GPU Operator
 
 ```
- helm install --version 23.9.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+ helm install --version 23.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 ```
 
 #### Validating the State of the GPU Operator:
@@ -870,7 +870,7 @@ Execute the below commands to uninstall the GPU Operator:
 ```
 $ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 nvidia-gpu-operator         1               2023-04-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-23.9.0      v23.3.2
+gpu-operator-1606173805 nvidia-gpu-operator         1               2023-04-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-23.9.1      v23.3.2
 
 $ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 ```

@@ -71,8 +71,6 @@
       yum:
         name: ['net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}-0', 'kubeadm-{{ k8s_version }}-0', 'kubectl-{{ k8s_version }}-0']
         state: present
-        update_cache: true
-
 
     - name: Hold the installed Packages
       become: true
@@ -170,6 +168,14 @@
         create: yes
       when: "cns_version < 10.0 and container_runtime == 'containerd'"
 
+    - name: Setup Kubelet Parameters
+      become: true
+      lineinfile:
+        line: KUBELET_EXTRA_ARGS=--serialize-image-pulls=true"
+        path: /etc/default/kubelet
+        create: yes
+      when: "cns_version >= 10.0"
+
     - name: Install Containerd for NVIDIA Cloud Native Stack
       become: true
       block:
@@ -230,7 +236,7 @@
           register: containerd_config_default
 
         - name: Enable systemd cgroups
-          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml; sed -i 's/    max_concurrent_downloads = 3/    max_concurrent_downloads = {{ containerd_max_concurrent_downloads}}/g' /etc/containerd/config.toml
 
         - name: restart containerd
           service:
@@ -423,7 +429,6 @@
           yum:
             name: ['cri-o', 'cri-tools']
             state: present
-            update_cache: true
 
     - name: Enable OCI hook for CRI-O
       when: cns_docker == true and container_runtime == 'cri-o'
@@ -477,7 +482,6 @@
           - lvm2
           - unzip
         state: latest
-        update_cache: true
 
     - name: Add Docker APT signing key
       become: true
@@ -554,7 +558,12 @@
         name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
         state: latest
         allowerasing: true
-        update_cache: true
+
+    - name: Update docker service 
+      when: container_runtime == 'cri-dockerd'
+      shell: sed -i 's/\/usr\/bin\/dockerd/\/usr\/bin\/dockerd -H unix:\/\/\/var\/run\/docker.sock/g' /lib/systemd/system/docker.service; systemctl daemon-reload; systemctl restart docker
+      become: true
+      ignore_errors: true
 
 ## For Jetson Only
     - name: get current JetPack version
@@ -843,6 +852,34 @@
             update_cache: yes
             force: yes
       when: "cns_version == 8.5 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 9.3 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 10.2 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
+
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 9.4 or 10.3 or 11.0
+      become: true
+      block:
+        - name: Add NVIDIA Docker apt signing key for Ubuntu
+          apt_key:
+            url: https://nvidia.github.io/libnvidia-container/gpgkey
+            state: present
+
+        - name: Get NVIDIA Docker Apt list
+          get_url:
+            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
+            dest: /etc/apt/sources.list.d/libnvidia-container.list
+            mode: 0644
+
+        - name: Remove old nvidia container tooklit
+          apt:
+            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
+            state: absent
+            autoremove: yes
+
+        - name: Install NVIDIA Container Runtime
+          apt:
+            name: ['nvidia-docker2=2.14.0-1', 'nvidia-container-toolkit=1.14.3-1', 'nvidia-container-toolkit-base=1.14.3-1', 'libnvidia-container-tools=1.14.3-1', 'libnvidia-container1=1.14.3-1']
+            state: present
+            update_cache: yes
+            force: yes
+      when: "cns_version == 9.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 10.3 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 11.0 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
 
     - name: Starting and enabling the required services
       become: true

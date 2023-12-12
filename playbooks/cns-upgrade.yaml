@@ -123,6 +123,13 @@
          cns_version: 9.3
 
    - name: Create Cloud Native Stack cns_version.yaml
+     when: "k8sversion.stdout == 'v1.26.7'"
+     copy:
+       dest: "/tmp/cns_version.yaml"
+       content: |
+         cns_version: 9.4
+
+   - name: Create Cloud Native Stack cns_version.yaml
      when: "k8sversion.stdout == 'v1.27.0'"
      copy:
        dest: "/tmp/cns_version.yaml"
@@ -135,6 +142,13 @@
        dest: "/tmp/cns_version.yaml"
        content: |
          cns_version: 10.2
+
+   - name: Create Cloud Native Stack cns_version.yaml
+     when: "k8sversion.stdout == 'v1.27.4'"
+     copy:
+       dest: "/tmp/cns_version.yaml"
+       content: |
+         cns_version: 10.3
 
    - name: Fetch cns_version.yaml
      ansible.builtin.fetch:
@@ -180,6 +194,11 @@
      shell: kubectl version --short=true --client=false | grep -i server | awk '{print $NF}'
      register: k8sversion
 
+   - name: Upgrade the Cloud Native Stack from 10.2 to 10.3
+     shell: kubeadm upgrade apply v1.27.6 --force
+     when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.27.4'"
+     become: true
+
    - name: Upgrade the Cloud Native Stack from 10.1 to 10.2
      shell: kubeadm upgrade apply v1.27.4 --force
      when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.27.2'"
@@ -188,6 +207,11 @@
    - name: Upgrade the Cloud Native Stack from 10.0 to 10.1
      shell: kubeadm upgrade apply v1.27.2 --force
      when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.27.0'"
+     become: true
+
+   - name: Upgrade the Cloud Native Stack from 9.3 to 9.4
+     shell: kubeadm upgrade apply v1.26.9 --force
+     when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.26.7'"
      become: true
 
    - name: Upgrade the Cloud Native Stack from 9.2 to 9.3
@@ -255,6 +279,10 @@
      when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.24.2'"
      become: true
 
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 9.3 or 10.1 or 10.2
+     when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.26.7' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.27.4' and release != 'tegra'"
+     command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.3/manifests/calico.yaml
+
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 7.5 or 8.4 or 8.5 or 9.2 or 9.3 or 10.1 or 10.2
      when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.24.12' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.25.8' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.25.10' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.26.3' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.26.5' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.27.0' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.27.2' and release != 'tegra'"
      command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
@@ -306,6 +334,10 @@
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
      when: "k8sversion.stdout == 'v1.24.12' and release == 'tegra' or k8sversion.stdout == 'v1.25.8' and release == 'tegra' or k8sversion.stdout == 'v1.25.10' and release == 'tegra' or k8sversion.stdout == 'v1.25.10' and release == 'tegra' or k8sversion.stdout == 'v1.26.3' and release == 'tegra' or k8sversion.stdout == 'v1.26.5' and release == 'tegra' or k8sversion.stdout == 'v1.27.0' and release == 'tegra' or k8sversion.stdout == 'v1.27.2' and release == 'tegra'"
      command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.22.0/Documentation/kube-flannel.yml
+
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
+     when: "k8sversion.stdout == 'v1.26.7' and release == 'tegra' or k8sversion.stdout == 'v1.27.4' and release == 'tegra'"
+     command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.22.3/Documentation/kube-flannel.yml
 
    - pause:
        seconds: 15

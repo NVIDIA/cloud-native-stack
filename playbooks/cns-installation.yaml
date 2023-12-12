@@ -210,7 +210,7 @@
   import_playbook: nvidia-docker.yaml
 
 - import_playbook: nvidia-driver.yaml
-  when: "cns_docker == true and cns_nvidia_driver == true and release != 'tegra'"
+  when: "cns_nvidia_driver == true and release != 'tegra'"
 
 - when: "cns_version > 4.1"
   import_playbook: k8s-install.yaml
@@ -232,7 +232,7 @@
 
     - name: Reboot the system
       become: true
-      when: cns_docker == true and cns_nvidia_driver == true
+      when: cns_nvidia_driver == true and use_open_kernel_module == false
       reboot:
         reboot_timeout: 900
 

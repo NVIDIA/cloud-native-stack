@@ -80,19 +80,16 @@ Cloud Native Stack Supports below versions.
 
 Available versions are:
 
+- 11.0
+- 10.3
 - 10.2
 - 10.1
 - 10.0
+- 9.4
 - 9.3
 - 9.2
 - 9.1
 - 9.0
-- 8.5
-- 8.4
-- 8.3
-- 8.2
-- 8.1
-- 8.0
 
 Edit the `cns_version.yaml` and update the version you want to install
 
@@ -104,28 +101,29 @@ If you want to cusomize any predefined components versions or any other custom p
 
 Example:
 ```
-$ nano cns_values_9.3.yaml
+$ nano cns_values_9.4.yaml
 
-cns_version: 9.3
+cns_version: 9.4
 
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "1.7.3"
+containerd_version: "1.7.7"
 crio_version: "1.26.4"
-cri_dockerd_version: "0.3.4"
-k8s_version: "1.26.7"
-calico_version: "3.26.1"
-flannel_version: "0.22.0"
-helm_version: "3.12.2"
-gpu_operator_version: "23.6.0"
-network_operator_version: "23.5.0"
+cri_dockerd_version: "0.3.6"
+k8s_version: "1.26.10"
+calico_version: "3.26.3"
+flannel_version: "0.22.3"
+helm_version: "3.13.1"
+gpu_operator_version: "23.9.0"
+network_operator_version: "23.7.0"
 local_path_provisioner: "0.0.24"
 
 # GPU Operator Values
 enable_gpu_operator: yes
+enable_kube_virt: no
 confidential_computing: no
-gpu_driver_version: "535.86.10"
+gpu_driver_version: "535.104.12"
 enable_mig: no
 mig_profile: all-disabled
 mig_strategy: single
@@ -194,10 +192,11 @@ gke_project_id:
 #https://cloud.google.com/compute/docs/regions-zones#available
 gke_region: us-west1
 gke_node_zones: ["us-west1-b"]
-gke_cluster_name: cns-cluster-1
+gke_cluster_name: gke-cluster-1
 
 ## Azure AKS Values
-aks_cluster_name: cns-cluster-1
+aks_cluster_name: aks-cluster-1
+#https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/#geographies
 aks_cluster_location: "West US 2"
 #https://learn.microsoft.com/en-us/partner-center/marketplace/find-tenant-object-id
 azure_object_id: [""]

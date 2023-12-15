@@ -1,4 +1,4 @@
-cns_version: 9.4
+cns_version: 6.4
 
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd

@@ -82,26 +82,8 @@
       reboot:
         reboot_timeout: 900
 
-    - name: Get URL
-      shell: "echo {{ k8s_apt_key }} | awk -F '//' '{print $2}' | awk -F'/' '{print $1}'"
-      register: url
-
-    - name: Test Internet Connection
-      register: connection
-      no_log: true
-      failed_when: false
-      ignore_errors: true
-      uri:
-        url: https://{{ url.stdout }}
-        timeout: 5
-
-    - name: Report Internet Connection status
-      failed_when: "connection.status == -1"
-      debug:
-        msg: "Internet Connection status {{ connection.status }}"
-
     - name: Install PreRequisistes dependencies
-      when: connection.status != '-1' and ansible_distribution == 'Ubuntu'
+      when: ansible_distribution == 'Ubuntu'
       become: true
       apt:
         name: ['mokutil']
@@ -109,7 +91,7 @@
         update_cache: yes
 
     - name: Install PreRequisistes dependencies
-      when: connection.status != '-1' and ansible_distribution == 'RedHat'
+      when: ansible_distribution == 'RedHat'
       become: true
       yum:
         name: ['mokutil']
@@ -134,18 +116,6 @@
       register: speedtest
       ignore_errors: true
       failed_when: "'Kbit/s' in speedtest.stdout"
-
-    - name: Check DNS Configuration
-      shell: "dig {{ url.stdout }} +cmd +noall +answer"
-      register: dns
-      failed_when: "dns.stdout | length < 0"
-
-    - name: Check K8s Repo access
-      register: k8s_repo
-      failed_when: "k8s_repo.status != 200"
-      uri:
-        url: https://{{ url.stdout }}
-        timeout: 5
 
     - name: check secure boot
       shell: mokutil --sb-state | awk '{print $2}'

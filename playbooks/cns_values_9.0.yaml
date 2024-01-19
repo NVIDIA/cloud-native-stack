@@ -57,9 +57,9 @@ cns_docker: no
 cns_nvidia_driver: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
-k8s_apt_repository: " https://apt.kubernetes.io/ kubernetes-xenial main"
-k8s_apt_ring: "/etc/apt/keyrings/kubernetes-archive-keyring.gpg"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.26/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.26/rpm/repodata/repomd.xml.key"
+k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
 # Local Path Provisioner as Storage option

@@ -4,19 +4,22 @@ cns_version: 9.4
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
 containerd_version: "1.7.7"
+containerd_max_concurrent_downloads: "5"
 crio_version: "1.26.4"
 cri_dockerd_version: "0.3.6"
-k8s_version: "1.26.10"
+k8s_version: "1.26.9"
 calico_version: "3.26.3"
 flannel_version: "0.22.3"
 helm_version: "3.13.1"
-gpu_operator_version: "23.9.0"
-network_operator_version: "23.7.0"
+gpu_operator_version: "23.9.1"
+network_operator_version: "23.10.0"
 local_path_provisioner: "0.0.24"
 
 # GPU Operator Values
 enable_gpu_operator: yes
-gpu_driver_version: "535.104.12"
+confidential_computing: no
+gpu_driver_version: "535.129.03"
+use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
 mig_strategy: single
@@ -54,9 +57,9 @@ cns_docker: no
 cns_nvidia_driver: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
-k8s_apt_repository: " https://apt.kubernetes.io/ kubernetes-xenial main"
-k8s_apt_ring: "/etc/apt/keyrings/kubernetes-archive-keyring.gpg"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.26/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.26/rpm/repodata/repomd.xml.key"
+k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
 # Local Path Provisioner as Storage option

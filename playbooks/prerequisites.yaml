@@ -35,11 +35,19 @@
         keyring: "{{ k8s_apt_ring }}"
         state: present
 
+    - name: change apt repo
+      shell: "echo {{ k8s_apt_key }} | rev  | cut -c12- | rev"
+      register: k8s_apt_repository
+
+    - name: change gpg repo
+      shell: "echo {{ k8s_gpg_key }} | rev  | cut -c24- | rev"
+      register: k8s_gpg_repository
+
     - name: Adding Kubernetes apt repository for Ubuntu
       become: true
       when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
       apt_repository:
-        repo: "deb [signed-by={{ k8s_apt_ring }}] {{ k8s_apt_repository }}"
+        repo: "deb [signed-by={{ k8s_apt_ring }}] {{ k8s_apt_repository.stdout }} /"
         state: present
         filename: kubernetes
 
@@ -49,8 +57,8 @@
       yum_repository:
         name: kubernetes
         description: Kubernetes repo
-        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-$basearch
-        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+        baseurl: "{{ k8s_gpg_repository.stdout }}"
+        gpgkey: "{{ k8s_gpg_key }}"
         gpgcheck: yes
         enabled: yes
         repo_gpgcheck: yes        
@@ -59,7 +67,7 @@
       become: true
       when: "ansible_distribution == 'Ubuntu'"
       apt:
-        name: ['net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet={{ k8s_version }}-00', 'kubeadm={{ k8s_version }}-00', 'kubectl={{ k8s_version }}-00']
+        name: ['net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet={{ k8s_version }}-1.1', 'kubeadm={{ k8s_version }}-1.1', 'kubectl={{ k8s_version }}-1.1']
         state: present
         update_cache: true
         allow_change_held_packages: yes
@@ -69,7 +77,7 @@
       become: true
       when: "ansible_distribution == 'RedHat'"
       yum:
-        name: ['net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}-0', 'kubeadm-{{ k8s_version }}-0', 'kubectl-{{ k8s_version }}-0']
+        name: ['net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}', 'kubeadm-{{ k8s_version }}', 'kubectl-{{ k8s_version }}']
         state: present
 
     - name: Hold the installed Packages

@@ -87,15 +87,15 @@ elif [[ $os == 'Darwin' ]]; then
 	brew install curl
 fi
 url=$(cat cns_values.yaml | grep k8s_apt_key | awk -F '//' '{print $2}' | awk -F'/' '{print $1}')
-code=$(curl --connect-timeout 3 -s -o /dev/null -w "%{http_code}" http://$url)
+code=$(curl --connect-timeout 3 -s -o /dev/null -w "%{http_code}" https://$url)
 echo "Checking this system has valid prerequisites"
 echo
-if [[ $code == 200 ]]; then
+if [[ $code == 200 ]] || [[ $code == 302 ]]; then
 	echo "This system has an internet access"
 	echo
-elif [[ $code != 200 ]]; then
-    echo "This system does not have a internet access"
-	echo
+else
+   echo "This system does not have a internet access"
+    echo
     exit 1
 fi
 }

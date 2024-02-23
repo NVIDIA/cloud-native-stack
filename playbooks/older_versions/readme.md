@@ -1,4 +1,4 @@
-### Older Versions 
+### Older Versions
 
 Below are older versions of NVIDIA Cloud Native Core (formerly known as EGX Stack).
 

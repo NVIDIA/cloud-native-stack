@@ -1,5 +1,6 @@
 cns_version: 9.3
 
+microk8s: no
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"

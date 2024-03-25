@@ -1,25 +1,25 @@
-<h1>NVIDIA Cloud Native Stack v10.3 - Install Guide for Developers</h1>
+<h1>NVIDIA Cloud Native Stack v10.4 - Install Guide for Developers</h1>
 <h2>Introduction</h2>
 
 NVIDIA Cloud Native Stack for Developers is focused to provide the Docker based experince. This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
-NVIDIA Cloud Native Stack v10.3 includes:
+NVIDIA Cloud Native Stack v10.4 includes:
 - Ubuntu 22.04 LTS
-- Containerd 1.7.7
-- Kubernetes version 1.27.7
-- Helm 3.13.1
+- Containerd 1.7.13
+- Kubernetes version 1.27.10
+- Helm 3.14.2
 - NVIDIA GPU Driver: 535.104.12
 - NVIDIA Container Toolkit: 1.14.3
-- NVIDIA GPU Operator 23.9.0
-  - NVIDIA K8S Device Plugin: 0.14.2
-  - NVIDIA DCGM-Exporter: 3.2.6-3.1.9
-  - NVIDIA DCGM: 3.2.6-1
+- NVIDIA GPU Operator 23.9.2
+  - NVIDIA K8S Device Plugin: 0.14.5
+  - NVIDIA DCGM-Exporter: 3.3.0-3.2.0
+  - NVIDIA DCGM: 3.3.0-1
   - NVIDIA GPU Feature Discovery: 0.8.2
-  - NVIDIA K8s MIG Manager: 0.5.5
-  - NVIDIA Driver Manager: 0.6.4
+  - NVIDIA K8s MIG Manager: 0.6.0
+  - NVIDIA Driver Manager: 0.6.5
   - Node Feature Discovery: 0.14.2
-  - NVIDIA KubeVirt GPU Device Plugin: 1.2.3
-  - NVIDIA GDS Driver: 2.16.1
+  - NVIDIA KubeVirt GPU Device Plugin: 1.2.4
+  - NVIDIA GDS Driver: 2.17.5
   - NVIDIA Kata Manager for Kubernetes: 0.1.2
   - NVIDIA Confidential Computing Manager for Kubernetes: 0.1.1
 
@@ -67,10 +67,10 @@ Install NVIDIA TRD Driver
 sudo apt update 
 ```
 ```
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
 ```
 ```
-sudo dpkg -i cuda-keyring_1.0-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
 ```
 
 Update package index:
@@ -313,30 +313,30 @@ sudo sysctl --system
 Download the Containerd for `x86-64` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.7.7/cri-containerd-cni-1.7.7-linux-amd64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.13/cri-containerd-cni-1.7.13-linux-amd64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.7-linux-amd64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.13-linux-amd64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.7.7-linux-amd64.tar.gz
+rm -rf cri-containerd-cni-1.7.13-linux-amd64.tar.gz
 ```
 
 
 Download the Containerd for `ARM` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.7.7/cri-containerd-cni-1.7.7-linux-arm64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.13/cri-containerd-cni-1.7.13-linux-arm64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.7-linux-arm64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.13-linux-arm64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.7.7-linux-arm64.tar.gz
+rm -rf cri-containerd-cni-1.7.13-linux-arm64.tar.gz
 ```
 
 Install the Containerd
@@ -367,6 +367,10 @@ OS=xUbuntu_22.04
 VERSION=1.27
 ```
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
+
+```
+sudo mkdir -p /usr/share/keyrings
+```
 
 ```
 echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
@@ -461,7 +465,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
  sudo apt-get update
 ```
 ```
- sudo apt-get install -y -q kubelet=1.27.7-00 kubectl=1.27.7-00 kubeadm=1.27.7-00
+ sudo apt-get install -y -q kubelet=1.27.10-00 kubectl=1.27.10-00 kubeadm=1.27.10-00
 ```
 ```
  sudo apt-mark hold kubelet kubeadm kubectl
@@ -514,13 +518,13 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command for `Containerd` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.27.7"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.27.10"
 ```
 
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.27.7"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.27.10"
 ```
 
 Output:
@@ -599,7 +603,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.27.7
+#yourhost        Ready    control-plane,master   10m   v1.27.10
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -616,10 +620,10 @@ for more information.
 Execute the following command to download and install Helm 3.10.2: 
 
 ```
- wget https://get.helm.sh/helm-v3.13.1-linux-amd64.tar.gz && \
- tar -zxvf helm-v3.13.1-linux-amd64.tar.gz && \
+ wget https://get.helm.sh/helm-v3.14.2-linux-amd64.tar.gz && \
+ tar -zxvf helm-v3.14.2-linux-amd64.tar.gz && \
  sudo mv linux-amd64/helm /usr/local/bin/helm && \ 
- rm -rf helm-v3.13.1-linux-amd64.tar.gz linux-amd64/
+ rm -rf helm-v3.14.2-linux-amd64.tar.gz linux-amd64/
 ```
 
 Refer to the Helm 3.10.2 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
@@ -660,8 +664,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.27.7
-#yourhost-worker Ready                           10m   v1.27.7
+#yourhost        Ready    control-plane,master   10m   v1.27.10
+#yourhost-worker Ready                           10m   v1.27.10
 ```
 
 ### Installing GPU Operator
@@ -683,7 +687,7 @@ Install GPU Operator:
 `NOTE:` As we are preinstalled with NVIDIA Driver and NVIDIA Container Toolkit, we need to set as `false` when installing the GPU Operator
 
 ```
- helm install --version 23.9.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+ helm install --version 23.9.2 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 ```
 
 #### Validating the State of the GPU Operator:

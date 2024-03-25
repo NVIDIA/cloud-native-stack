@@ -6,11 +6,11 @@ NVIDIA Cloud Native Stack for Developers is focused to provide the Docker based 
 NVIDIA Cloud Native Stack v11.0 includes:
 - Ubuntu 22.04 LTS
 - Containerd 1.7.7
-- Kubernetes version 1.28.2
+- Kubernetes version 1.28.3
 - Helm 3.13.1
-- NVIDIA GPU Driver: 535.129.03
+- NVIDIA GPU Driver: 535.104.12
 - NVIDIA Container Toolkit: 1.14.3
-- NVIDIA GPU Operator 23.9.1
+- NVIDIA GPU Operator 23.9.0
   - NVIDIA K8S Device Plugin: 0.14.2
   - NVIDIA DCGM-Exporter: 3.2.6-3.1.9
   - NVIDIA DCGM: 3.2.6-1
@@ -68,10 +68,10 @@ Install NVIDIA TRD Driver
 sudo apt update 
 ```
 ```
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
 ```
 ```
-sudo dpkg -i cuda-keyring_1.0-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
 ```
 
 Update package index:
@@ -370,6 +370,10 @@ VERSION=1.27
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 
 ```
+sudo mkdir -p /usr/share/keyrings
+```
+
+```
 echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
 ```
 
@@ -389,6 +393,36 @@ Install the CRI-O and dependencies
 
 ```
 sudo apt update && sudo apt install cri-o cri-o-runc cri-tools -y
+```
+
+Create OCI hook for NVIDIA Container Runtime
+```
+nano /usr/share/containers/oci/hooks.d/oci-nvidia-hook.json
+```
+
+```
+{
+  "version": "1.0.0",
+  "hook": {
+    "path": "/usr/bin/nvidia-container-runtime-hook",
+    "args": [
+      "nvidia-container-runtime-hook",
+      "prestart"
+    ],
+    "env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ]
+  },
+  "when": {
+    "always": true,
+    "commands": [
+      ".*"
+    ]
+  },
+  "stages": [
+    "prestart"
+  ]
+}
 ```
 
 Enable and Start the CRI-O service 
@@ -432,7 +466,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
  sudo apt-get update
 ```
 ```
- sudo apt-get install -y -q kubelet=1.28.2-00 kubectl=1.28.2-00 kubeadm=1.28.2-00
+ sudo apt-get install -y -q kubelet=1.28.3-00 kubectl=1.28.3-00 kubeadm=1.28.3-00
 ```
 ```
  sudo apt-mark hold kubelet kubeadm kubectl
@@ -485,13 +519,13 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command for `Containerd` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.28.2"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.28.3"
 ```
 
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.28.2"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.28.3"
 ```
 
 Output:
@@ -570,7 +604,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.28.2
+#yourhost        Ready    control-plane,master   10m   v1.28.3
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -631,8 +665,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.28.2
-#yourhost-worker Ready                           10m   v1.28.2
+#yourhost        Ready    control-plane,master   10m   v1.28.3
+#yourhost-worker Ready                           10m   v1.28.3
 ```
 
 ### Installing GPU Operator
@@ -654,7 +688,7 @@ Install GPU Operator:
 `NOTE:` As we are preinstalled with NVIDIA Driver and NVIDIA Container Toolkit, we need to set as `false` when installing the GPU Operator
 
 ```
- helm install --version 23.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+ helm install --version 23.9.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 ```
 
 #### Validating the State of the GPU Operator:

@@ -27,6 +27,7 @@ use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
 mig_strategy: single
+# To use GDS, use_open_kernel_module needs to be enabled
 enable_gds: no
 #Secure Boot for only Ubuntu
 enable_secure_boot: no

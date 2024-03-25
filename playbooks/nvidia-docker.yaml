@@ -36,7 +36,7 @@
           - unzip
         state: latest
         update_cache: true
- 
+
     - name: Install Docker Dependencies on RHEL
       when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat' or nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
       yum:
@@ -68,7 +68,39 @@
         dest: /etc/yum.repos.d/docer-ce.repo
 
     - name: Create docker systemd file
-      when: docker_exists.rc >= 1
+      when: docker_exists.rc >= 1 and microk8s == true
+      become: true
+      copy:
+        dest: /lib/systemd/system/docker.service
+        content: |
+          [Unit]
+          Description=Docker Application Container Engine
+          Documentation=https://docs.docker.com
+          After=network-online.target docker.socket firewalld.service snap.microk8s.daemon-containerd.service
+          Wants=network-online.target
+          Requires=docker.socket snap.microk8s.daemon-containerd.service
+
+          [Service]
+          Type=notify
+          ExecStart=/usr/bin/dockerd -H unix:// --containerd=/var/snap/microk8s/common/run/containerd.sock
+          ExecReload=/bin/kill -s HUP $MAINPID
+          TimeoutSec=0
+          RestartSec=2
+          Restart=always
+          StartLimitBurst=3
+          StartLimitInterval=60s
+          LimitNOFILE=infinity
+          LimitNPROC=infinity
+          LimitCORE=infinity
+          TasksMax=infinity
+          Delegate=yes
+          KillMode=process
+          OOMScoreAdjust=-500
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Create docker systemd file
+      when: docker_exists.rc >= 1 and microk8s == false
       become: true
       copy:
         dest: /etc/systemd/system/docker.service
@@ -100,9 +132,15 @@
           WantedBy=multi-user.target
 
     - name: Install Docker on Ubuntu
-      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and microk8s == false
       package:
         name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+        state: latest
+
+    - name: Install Docker on Ubuntu
+      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and microk8s == true
+      package:
+        name: ['docker-ce', 'docker-ce-cli']
         state: latest
 
     - name: Install Docker on RHEL
@@ -129,40 +167,22 @@
         state: absent
         purge: yes
 
-    - name: Add NVIDIA Docker APT signing key
-      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
-      apt_key:
-        url: https://nvidia.github.io/nvidia-docker/gpgkey
-        state: present
-
     - name: Add NVIDIA Docker apt signing key for Ubuntu
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       apt_key:
         url: https://nvidia.github.io/libnvidia-container/gpgkey
+        keyring: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
         state: present
-
-    - name: Get NVIDIA Docker Apt list
-      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
-      get_url:
-        url: https://nvidia.github.io/nvidia-docker/ubuntu22.04/nvidia-docker.list
-        dest: /etc/apt/sources.list.d/nvidia-container-toolkit.list
-        mode: 0644
 
     - name: Get NVIDIA Container Toolkit Apt list
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
-      get_url:
-        url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
-        dest: /etc/apt/sources.list.d/libnvidia-container.list
-        mode: 0644
-
-    - name: add NVIDIA Dokcer repo on RHEL
-      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
-      get_url:
-        url:  https://nvidia.github.io/nvidia-docker/centos8/nvidia-docker.repo
-        dest: /etc/yum.repos.d/nvidia-docker.repo
-        mode: 0644
-        owner: root
-        group: root
+      apt_repository:
+        repo: "{{ item }}"
+        state: present
+        filename: libnvidia-container.list
+      with_items:
+        - deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/ubuntu18.04/$(ARCH) /
+        - deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH) /
 
     - name: add NVIDIA Container Toolkit repo on RHEL
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
@@ -231,6 +251,13 @@
         state: present
         update_cache: true
 
+    - name: Install NVIDIA Docker and NVIDIA Container Runtime
+      when: nvidia_docker_exists.rc >= 1 and cns_version == 10.4 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 11.1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and cns_version == 12.0 and ansible_distribution == 'Ubuntu'
+      apt:
+        name: [ 'nvidia-docker2=2.14.0-1',  'nvidia-container-toolkit=1.14.6-1', 'nvidia-container-toolkit-base=1.14.6-1', 'libnvidia-container-tools=1.14.6-1', 'libnvidia-container1=1.14.6-1']
+        state: present
+        update_cache: true
+
     - name: install NVIDIA container runtime and NVIDIA Docker on RHEL
       when: nvidia_docker_exists.rc >= 1 and cns_version >= 10.0 and ansible_distribution == 'RedHat'
       yum:
@@ -239,16 +266,13 @@
         update_cache: yes
 
     - name: Update docker default runtime
-      when: nvidia_docker_exists.rc >= 1 
+      when: nvidia_docker_exists.rc >= 1
       copy:
         content: "{{ daemon_json | to_nice_json }}"
         dest: /etc/docker/daemon.json
         owner: root
         group: root
         mode: 0644
-
-    - name: Restart Docker Service
-      service: name=docker state=restarted enabled=yes
 
     - name: Update Containerd Runtime for NVIDIA Cloud Native Stack
       become: true
@@ -268,11 +292,11 @@
           shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
         - name: restart containerd
-          service:
+          systemd_service:
             name: containerd
             state: restarted
             daemon_reload: yes
-      when: "container_runtime == 'containerd'"
+      when: "container_runtime == 'containerd' and microk8s == false"
 
     - name: NGC CLI Setup
       become: true
@@ -288,19 +312,3 @@
             src: /tmp/ngccli_linux.zip
             dest: /usr/local/bin/
             remote_src: yes
-
-    - name: Reload the CRI-O configuration
-      when: container_runtime == 'cri-o'
-      become: true
-      block:
-       - name: reload
-         systemd:
-           daemon_reload: true
-
-       - name: restart
-         service:
-           name: "{{ item }}"
-           state: restarted
-         with_items:
-           - crio
-           - cri-o

@@ -1,0 +1,210 @@
+- hosts: master
+  gather_facts: true
+  vars_files:
+    - cns_values.yaml
+  environment:
+    http_proxy: "{{ http_proxy }}"
+    https_proxy: "{{ https_proxy }}"
+  tasks:
+  - name: Check if snap exists
+    shell: snap
+    register: snap_exists
+    no_log: true
+    failed_when: false
+
+  - name: Get Nvidia Tegra Release
+    shell: uname -r | awk -F'-' '{print $2}'
+    register: release
+
+  - set_fact:
+     release: "{{ release.stdout }}"
+
+  - name: Check Sestatus on Jetson
+    shell: sestatus | grep -i 'Current mode' | awk '{print $3}'
+    when: release == 'tegra'
+    register: se_status
+
+  - name: SELinux Config For MicroK8s on jetson
+    when: release == 'tegra' and se_status.stdout == 'enforcing' or release == 'tegra' and se_status.stdout == 'permissive'
+    become: true
+    block:
+      - name: Install Selinux
+        apt:
+          name: selinux-policy-default
+          state: present
+          update_cache: true
+
+      - name: Create a SELinux Config
+        file:
+          path: /etc/selinux/config
+          state: touch
+
+      - name: Selinux conetnt
+        copy:
+          dest: "/etc/selinux/config"
+          content: |
+            # This file controls the state of SELinux on the system.
+            # SELINUX= can take one of these three values:
+            # enforcing - SELinux security policy is enforced.
+            # permissive - SELinux prints warnings instead of enforcing.
+            # disabled - No SELinux policy is loaded.
+            SELINUX=disabled
+
+      - name: Reboot the Jetson system to load Selinux
+        reboot:
+          reboot_timeout: 900
+
+  - name: Install snapd
+    when: ansible_distribution == 'Ubuntu' and snap_exists.rc != 0
+    ignore_errors: true
+    apt:
+      name: snapd
+      state: latest
+      purge: true
+      autoremove: yes
+    become: true
+    when: microk8s == true
+
+  - name: Install snap
+    when: ansible_distribution == 'RedHat' and snap_exists.rc != 0
+    shell: "{{ item }}"
+    become: true
+    with_items:
+      - dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm -y
+      - subscription-manager repos --enable "rhel-*-optional-rpms" --enable "rhel-*-extras-rpms"
+      - subscription-manager release --set 8.9
+      - yum update -y
+      - yum install snapd -y
+      - systemctl enable --now snapd.socket
+      - systemctl stop firewalld.service
+      - ln -s /var/lib/snapd/snap /snap
+
+  - name: K8s version
+    shell: echo {{ k8s_version }} | awk -F'.' '{print $1"."$2}'
+    register: k8s_ver
+
+  - name: Install MicroK8s
+    become: true
+    snap:
+      name: microk8s
+      state: present
+      classic: yes
+      channel: "{{ k8s_ver.stdout }}/stable"
+
+  - name: Add MicroK8s groups to user
+    become: true
+    user:
+      name: '{{ lookup("env", "USER") }}'
+      state: present
+      groups:
+        - microk8s
+      append: true
+
+  - name: Reset ssh connection to allow user changes to affect microk8s
+    ansible.builtin.meta:
+      reset_connection
+
+  - name: Wait for Microk8s to start
+    shell: microk8s.status --wait-ready
+    async: 240
+    failed_when: false
+    register: mk8s_status
+
+  - name: Restart Docker Service
+    when: cns_docker == true
+    become: true
+    systemd_service:
+      name: docker
+      state: restarted
+      enabled: yes
+      daemon_reload: yes
+
+  - name: add kubectl alias
+    become: false
+    lineinfile:
+      path: '{{ lookup("env", "HOME") }}/.bashrc'
+      regexp: '^alias kubectl='
+      line: 'alias kubectl="microk8s kubectl"'
+      state: present
+
+  - name: add helm alias
+    become: false
+    lineinfile:
+      path: '{{ lookup("env", "HOME") }}/.bashrc'
+      regexp: '^alias helm='
+      line: 'alias helm="microk8s helm"'
+      state: present
+
+  - name: Update Container Runtime for Jetson or Developer
+    when: release == 'tegra' or cns_docker == true
+    become: true
+    shell: "{{ item }}"
+    with_items:
+      - sed -i 's/\${RUNTIME}/nvidia/g;s/runtimes.nvidia-container-runtime/runtimes.nvidia/g' /var/snap/microk8s/current/args/containerd-template.toml
+      - systemctl daemon-reload
+      - systemctl restart snap.microk8s.daemon-containerd.service
+
+  - name: Update Container Runtime for Jetson
+    when: release == 'tegra'
+    become: true
+    shell: microk8s disable ha-cluster --force
+
+  - name: Add nvidia Helm repo
+    shell: " {{ item }}"
+    with_items:
+       - microk8s.helm repo add nvidia '{{ helm_repository }}' --force-update
+       - microk8s.helm repo update
+    when: 'release != "tegra" and gpu_operator_registry_password == ""'
+
+  - name: Add custom Helm repo
+    shell: " {{ item }}"
+    with_items:
+       - microk8s.helm repo add nvidia {{ helm_repository }} --force-update --username=\$oauthtoken --password={{ gpu_operator_registry_password }}
+       - microk8s.helm repo update
+    when: 'release != "tegra" and gpu_operator_registry_password != ""'
+
+  - name: Create namespace and registry secret
+    when: "release != 'tegra' and confidential_computing == false and enable_gpu_operator == true and cns_nvidia_driver == false and gpu_operator_registry_password != ''"
+    shell: "{{ item }}"
+    with_items:
+      - microk8s.kubectl create namespace nvidia-gpu-operator
+      - microk8s.kubectl create secret docker-registry ngc-secret --docker-server='https://nvcr.io' --docker-username='{{ gpu_operator_registry_username }}' --docker-password='{{ gpu_operator_registry_password }}' -n nvidia-gpu-operator
+
+  - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
+    when: "release != 'tegra' and confidential_computing == false and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == false and use_open_kernel_module == false and enable_mig == false and enable_rdma == false and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator_registry_password == ''"
+    shell: "microk8s.helm install --version {{ gpu_operator_version }} gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_CONFIG  --set toolkit.env[0].value=/var/snap/microk8s/current/args/containerd-template.toml  --set toolkit.env[1].name=CONTAINERD_SOCKET  --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia  --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[3].value=true --set driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}'"
+
+  - name: Installing the GPU Operator on NVIDIA Cloud Native Stack Developer
+    when: "release != 'tegra' and confidential_computing == false and enable_gpu_operator == true and cns_docker == true and cns_nvidia_driver == true  and use_open_kernel_module == false and enable_mig == false and enable_rdma == false and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator_registry_password == ''"
+    shell: "microk8s.helm install --version {{ gpu_operator_version }} gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false"
+
+  - name: Installing the GPU Operator with Secure Boot on NVIDIA Cloud Native Stack
+    when: "release != 'tegra' and confidential_computing == false and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == false and use_open_kernel_module == true and enable_mig == false and enable_rdma == false and enable_vgpu == false and enable_gds == false and enable_secure_boot == true and gpu_operator_registry_password == ''"
+    shell: "{{ item }}"
+    with_items:
+      - microk8s.helm install --version {{ gpu_operator_version }} gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_CONFIG  --set toolkit.env[0].value=/var/snap/microk8s/current/args/containerd-template.toml  --set toolkit.env[1].name=CONTAINERD_SOCKET  --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia  --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[3].value=true --set driver.usePrecompiled=true,driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}'
+      - driver_version=$(echo $gpu_driver_version | awk -F'.' '{print $1}'); microk8s.kubectl patch clusterpolicy/cluster-policy --type='json' -p='[{"op":"replace", "path":"/spec/driver/usePrecompiled", "value":true},{"op":"replace", "path":"/spec/driver/version", "value":"$driver_version"}]'
+
+  - name: Installing the GPU Operator with Open Kernel Modules on NVIDIA Cloud Native Stack
+    when: "release != 'tegra' and confidential_computing == false and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == false and use_open_kernel_module == true and enable_mig == false and enable_rdma == false and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator_registry_password == ''"
+    shell: "microk8s.helm install --version {{ gpu_operator_version }} gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_CONFIG  --set toolkit.env[0].value=/var/snap/microk8s/current/args/containerd-template.toml  --set toolkit.env[1].name=CONTAINERD_SOCKET  --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia  --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[3].value=true --set driver.useOpenKernelModules=true,driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}'"
+
+  - name: Installing the GPU Operator with RDMA on NVIDIA Cloud Native Stack
+    when: "release != 'tegra' and confidential_computing == false and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == false and use_open_kernel_module == false and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator_registry_password == ''"
+    shell: "microk8s.helm install --version {{ gpu_operator_version }} gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_CONFIG  --set toolkit.env[0].value=/var/snap/microk8s/current/args/containerd-template.toml  --set toolkit.env[1].name=CONTAINERD_SOCKET  --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia  --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[3].value=true --set driver.rdma.enabled=true,driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}'"
+
+  - name: Installing the GPU Operator with GDS on NVIDIA Cloud Native Stack
+    when: "release != 'tegra' and confidential_computing == false and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == false and use_open_kernel_module == false and enable_mig == false and enable_rdma == false and enable_vgpu == false and enable_gds == true and enable_secure_boot == false and gpu_operator_registry_password == ''"
+    shell: "microk8s.helm install --version {{ gpu_operator_version }} gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_CONFIG  --set toolkit.env[0].value=/var/snap/microk8s/current/args/containerd-template.toml  --set toolkit.env[1].name=CONTAINERD_SOCKET  --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia  --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[3].value=true --set driver.rdma.enabled=true,driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}'"
+
+  - name: Installing the GPU Operator with RDMA and GDS on NVIDIA Cloud Native Stack
+    when: "release != 'tegra' and confidential_computing == false and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == false and use_open_kernel_module == false and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false and gpu_operator_registry_password == ''"
+    shell: "microk8s.helm install --version {{ gpu_operator_version }} gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_CONFIG  --set toolkit.env[0].value=/var/snap/microk8s/current/args/containerd-template.toml  --set toolkit.env[1].name=CONTAINERD_SOCKET  --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia  --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[3].value=true --set driver.rdma.enabled=true,gds.enabled=true,driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}'"
+
+  - name: Installing the GPU Operator with Open Kernel Modules and RDMA and GDS on NVIDIA Cloud Native Stack
+    when: "release != 'tegra' and confidential_computing == false and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == false and use_open_kernel_module == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false and gpu_operator_registry_password == ''"
+    shell: "microk8s.helm install --version {{ gpu_operator_version }} gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_CONFIG  --set toolkit.env[0].value=/var/snap/microk8s/current/args/containerd-template.toml  --set toolkit.env[1].name=CONTAINERD_SOCKET  --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia  --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[3].value=true --set driver.useOpenKernelModules=true,driver.rdma.enabled=true,gds.enabled=true,driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}'"
+
+  - name: Installing the GPU Operator n NVIDIA Cloud Native Stack
+    when: "release != 'tegra' and confidential_computing == false and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == false and use_open_kernel_module == false and enable_mig == false and enable_rdma == false and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator_registry_password != ''"
+    shell: "microk8s.helm install --version {{ gpu_operator_version }} gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_CONFIG  --set toolkit.env[0].value=/var/snap/microk8s/current/args/containerd-template.toml  --set toolkit.env[1].name=CONTAINERD_SOCKET  --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia  --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[3].value=true --set driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}' --set driver.imagePullSecrets[0]=ngc-secret"

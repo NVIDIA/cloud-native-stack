@@ -1,93 +1,183 @@
 {
 	"name": "Cloud Native Stack",
 	"latest": {
-		"version": "11.0",
-		"release_date": "12 Dec 2023",
+		"version": "12.0",
+		"release_date": "25 Mar 2024",
 		"platforms": [{
 				"name": "NVIDIA Certified Server",
-				"CPU architecture": "x86, Arm64, DGX",
+				"CPU architecture": "x86, Arm64",
 				"os": "Ubuntu 22.04 LTS, RedHat Linux 8.8",
 				"components": {
-					"containerd": "1.7.7",
-					"cri-o": "1.28.1",
-					"k8s version": "1.28.2",
-					"Calico": "v3.26.3",
-					"helm version": "3.13.1",
-					"NVIDIA GPU Operator": "23.9.1",
-					"NVIDIA Network Operator": "23.10.0",
-					"NVIDIA DataCenter Driver": "535.129.03"
+					"containerd": "1.7.13",
+					"cri-o": "1.29.2",
+					"k8s version": "1.29.2",
+					"Calico": "v3.27.0",
+					"helm version": "3.14.2",
+					"NVIDIA GPU Operator": "23.9.2",
+					"NVIDIA Network Operator": "24.1.0",
+					"NVIDIA DataCenter Driver": "550.54.15"
 				}
 			},
 			{
 				"name": "Jetson Devices(AGX, NX, Orin)",
 				"os": "JetPack 5.1, JetPack 5.0",
 				"components": {
-					"containerd": "1.7.7",
-					"cri-o": "1.28.1",
-					"k8s version": "1.28.2",
-					"Flannel": "0.22.3",
-					"helm version": "3.13.1"
+					"containerd": "1.7.13",
+					"cri-o": "1.29.2",
+					"k8s version": "1.29.2",
+					"Flannel": "0.24.2",
+					"helm version": "3.14.2"
 				}
 			}
 		]
 	},
 	"versions": [{
-		"11.0": {
-			"release_date": "12 Dec 2023",
+		"12.0": {
+			"release_date": "25 Mar 2024",
 			"platforms": [{
 					"name": "NVIDIA Certified Server",
-					"CPU architecture": "x86, Arm64, DGX",
+					"CPU architecture": "x86, Arm64",
 					"os": "Ubuntu 22.04 LTS, RedHat Linux 8.8",
 					"components": {
-						"containerd": "1.7.7",
-						"cri-o": "1.28.1",
-						"k8s version": "1.28.2",
-						"Calico": "v3.26.3",
-						"helm version": "3.13.1",
-						"NVIDIA GPU Operator": "23.9.1",
-						"NVIDIA Network Operator": "23.10.0",
-						"NVIDIA DataCenter Driver": "535.129.03"
+						"containerd": "1.7.13",
+						"cri-o": "1.29.2",
+						"k8s version": "1.29.2",
+						"Calico": "v3.27.0",
+						"helm version": "3.14.2",
+						"NVIDIA GPU Operator": "23.9.2",
+						"NVIDIA Network Operator": "24.1.0",
+						"NVIDIA DataCenter Driver": "550.54.15"
 					}
 				},
 				{
 					"name": "Jetson Devices(AGX, NX, Orin)",
 					"os": "JetPack 5.1, JetPack 5.0",
 					"components": {
-						"containerd": "1.7.7",
-						"cri-o": "1.28.1",
-						"k8s version": "1.28.2",
-						"Flannel": "0.22.3",
-						"helm version": "3.13.1"
+						"containerd": "1.7.13",
+						"cri-o": "1.29.2",
+						"k8s version": "1.29.2",
+						"Flannel": "0.24.2",
+						"helm version": "3.14.2"
+					}
+				}
+			]
+		},
+		"11.1": {
+			"release_date": "25 Mar 2024",
+			"platforms": [{
+					"name": "NVIDIA Certified Server",
+					"CPU architecture": "x86, Arm64",
+					"os": "Ubuntu 22.04 LTS, RedHat Linux 8.8",
+					"components": {
+						"containerd": "1.7.13",
+						"cri-o": "1.28.2",
+						"k8s version": "1.28.6",
+						"Calico": "v3.27.0",
+						"helm version": "3.14.2",
+						"NVIDIA GPU Operator": "23.9.2",
+						"NVIDIA Network Operator": "24.1.0",
+						"NVIDIA DataCenter Driver": "550.54.15"
+					}
+				},
+				{
+					"name": "Jetson Devices(AGX, NX, Orin)",
+					"os": "JetPack 5.1, JetPack 5.0",
+					"components": {
+						"containerd": "1.7.13",
+						"cri-o": "1.28.2",
+						"k8s version": "1.28.6",
+						"Flannel": "0.24.2",
+						"helm version": "3.14.2"
+					}
+				}
+			]
+		},
+		"11.0": {
+			"release_date": "09 Nov 2023",
+			"platforms": [{
+					"name": "NVIDIA Certified Server",
+					"CPU architecture": "x86, Arm64",
+					"os": "Ubuntu 22.04 LTS, RedHat Linux 8.7",
+					"components": {
+						"containerd": "1.7.3",
+						"cri-o": "1.27.1",
+						"k8s version": "1.27.4",
+						"Calico": "v3.26.1",
+						"helm version": "3.12.2",
+						"NVIDIA GPU Operator": "23.6.0",
+						"NVIDIA Network Operator": "23.5.0",
+						"NVIDIA DataCenter Driver": "535.86.10"
+					}
+				},
+				{
+					"name": "Jetson Devices(AGX, NX, Orin)",
+					"os": "JetPack 5.1, JetPack 5.0",
+					"components": {
+						"containerd": "1.7.3",
+						"cri-o": "1.27.1",
+						"k8s version": "1.27.4",
+						"Flannel": "0.22.0",
+						"helm version": "3.12.2"
+					}
+				}
+			]
+		},
+		"10.4": {
+			"release_date": "25 Mar 2024",
+			"platforms": [{
+					"name": "NVIDIA Certified Server",
+					"CPU architecture": "x86, Arm64",
+					"os": "Ubuntu 22.04 LTS, RedHat Linux 8.8",
+					"components": {
+						"containerd": "1.7.13",
+						"cri-o": "1.27.4",
+						"k8s version": "1.27.10",
+						"Calico": "v3.27.0",
+						"helm version": "3.14.2",
+						"NVIDIA GPU Operator": "23.9.2",
+						"NVIDIA Network Operator": "24.1.0",
+						"NVIDIA DataCenter Driver": "550.54.15"
+					}
+				},
+				{
+					"name": "Jetson Devices(AGX, NX, Orin)",
+					"os": "JetPack 5.1, JetPack 5.0",
+					"components": {
+						"containerd": "1.7.13",
+						"cri-o": "1.27.4",
+						"k8s version": "1.27.10",
+						"Flannel": "0.24.2",
+						"helm version": "3.14.2"
 					}
 				}
 			]
 		},
 		"10.3": {
-			"release_date": "12 Dec 2023",
+			"release_date": "09 Nov 2023",
 			"platforms": [{
 					"name": "NVIDIA Certified Server",
-					"CPU architecture": "x86, Arm64, DGX",
-					"os": "Ubuntu 22.04 LTS, RedHat Linux 8.8",
+					"CPU architecture": "x86, Arm64",
+					"os": "Ubuntu 22.04 LTS, RedHat Linux 8.7",
 					"components": {
-						"containerd": "1.7.7",
+						"containerd": "1.7.3",
 						"cri-o": "1.27.1",
-						"k8s version": "1.27.6",
-						"Calico": "v3.26.3",
-						"helm version": "3.13.1",
-						"NVIDIA GPU Operator": "23.9.1",
-						"NVIDIA Network Operator": "23.10.0",
-						"NVIDIA DataCenter Driver": "535.129.03"
+						"k8s version": "1.27.4",
+						"Calico": "v3.26.1",
+						"helm version": "3.12.2",
+						"NVIDIA GPU Operator": "23.6.0",
+						"NVIDIA Network Operator": "23.5.0",
+						"NVIDIA DataCenter Driver": "535.86.10"
 					}
 				},
 				{
 					"name": "Jetson Devices(AGX, NX, Orin)",
 					"os": "JetPack 5.1, JetPack 5.0",
 					"components": {
-						"containerd": "1.7.7",
+						"containerd": "1.7.3",
 						"cri-o": "1.27.1",
-						"k8s version": "1.27.6",
-						"Flannel": "0.22.3",
-						"helm version": "3.13.1"
+						"k8s version": "1.27.4",
+						"Flannel": "0.22.0",
+						"helm version": "3.12.2"
 					}
 				}
 			]
@@ -183,10 +273,10 @@
 			]
 		},
 		"9.4": {
-			"release_date": "12 Dec 2023",
+			"release_date": "09 Nov 2023",
 			"platforms": [{
 					"name": "NVIDIA Certified Server",
-					"CPU architecture": "x86, Arm64, DGX",
+					"CPU architecture": "x86, Arm64",
 					"os": "Ubuntu 22.04 LTS",
 					"components": {
 						"containerd": "1.7.7",
@@ -195,7 +285,7 @@
 						"Calico": "v3.26.3",
 						"helm version": "3.13.1",
 						"NVIDIA GPU Operator": "23.9.0",
-						"NVIDIA Network Operator": "23.10.0",
+						"NVIDIA Network Operator": "23.7.0",
 						"NVIDIA DataCenter Driver": "535.129.03"
 					}
 				},

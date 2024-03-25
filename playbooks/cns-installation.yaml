@@ -12,6 +12,7 @@
         cns_version: "{{ cns_version }}"
         cns_validation: "{{ cns_validation }}"
         confidential_computing: "{{ confidential_computing }}"
+        microk8s: "{{ microk8s }}"
 
     - name: Checking Nouveau is disabled
       become: true
@@ -86,7 +87,7 @@
       when: ansible_distribution == 'Ubuntu'
       become: true
       apt:
-        name: ['mokutil']
+        name: ['mokutil', 'jq']
         state: present
         update_cache: yes
 
@@ -94,7 +95,7 @@
       when: ansible_distribution == 'RedHat'
       become: true
       yum:
-        name: ['mokutil']
+        name: ['mokutil', 'jq']
         state: present
         update_cache: yes
 
@@ -149,16 +150,6 @@
     - set_fact:
         release: "{{ release.stdout }}"
 
-    - name: Check OS Support x86/ARM systems
-      shell: "echo 'Not a Valid Installation please use Ubuntu to 20.04 and retry'"
-      when: cns_version <= 6.4
-      failed_when: "cns_version <= 6.4 and ansible_distribution_major_version >= '22' and release != 'tegra'"
-
-    - name: Check OS Support x86/ARM systems
-      shell: "echo 'Not a Valid Installation please use Ubuntu to 22.04 and retry'"
-      when: cns_version >= 7.0
-      failed_when: "cns_version >= 7.0 and ansible_distribution_major_version <= '20' and release != 'tegra'"
-
     - name: Check CNS Version support for RHEL
       shell: "echo 'Not a Valid Installation please use CNS Version 10.0 above and retry'"
       failed_when: "cns_version < 10.0 and ansible_distribution in ['RedHat', 'CentOS']"
@@ -173,7 +164,7 @@
  #     become: true 
  #     shell: netplan apply 
 
-- when: "cns_version > 4.1"
+- when: "cns_version > 4.1 and microk8s == false"
   import_playbook: prerequisites.yaml
 
 - when: "cns_docker == true and release != 'tegra'"
@@ -182,11 +173,14 @@
 - import_playbook: nvidia-driver.yaml
   when: "cns_nvidia_driver == true and release != 'tegra'"
 
-- when: "cns_version > 4.1"
+- when: "cns_version > 4.1 and microk8s == false"
   import_playbook: k8s-install.yaml
 
-- when: "cns_version > 4.1 and release != 'tegra'"
+- when: "cns_version > 4.1 and release != 'tegra' and microk8s == false"
   import_playbook: operators-install.yaml
+
+- when: "microk8s == true"
+  import_playbook: microk8s.yaml
 
 - hosts: all
   gather_facts: yes
@@ -199,12 +193,6 @@
 
     - set_fact:
         release: "{{ release.stdout }}"
-
-    - name: Reboot the system
-      become: true
-      when: cns_nvidia_driver == true and use_open_kernel_module == false
-      reboot:
-        reboot_timeout: 900
 
     - name: Waiting for Cluster to up and running
       args:

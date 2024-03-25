@@ -3,22 +3,22 @@ cns_version: 6.4
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "1.7.7"
+containerd_version: "1.7.3"
 containerd_max_concurrent_downloads: "5"
 crio_version: "1.26.4"
-cri_dockerd_version: "0.3.6"
-k8s_version: "1.26.9"
-calico_version: "3.26.3"
-flannel_version: "0.22.3"
-helm_version: "3.13.1"
-gpu_operator_version: "23.9.1"
-network_operator_version: "23.10.0"
+cri_dockerd_version: "0.3.4"
+k8s_version: "1.26.7"
+calico_version: "3.26.1"
+flannel_version: "0.22.0"
+helm_version: "3.12.2"
+gpu_operator_version: "23.6.0"
+network_operator_version: "23.5.0"
 local_path_provisioner: "0.0.24"
 
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "535.129.03"
+gpu_driver_version: "535.86.10"
 use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled

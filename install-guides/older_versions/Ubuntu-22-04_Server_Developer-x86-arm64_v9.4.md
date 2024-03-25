@@ -1,12 +1,12 @@
-<h1>NVIDIA Cloud Native Stack v10.3 - Install Guide for Developers</h1>
+<h1>NVIDIA Cloud Native Stack v9.4 - Install Guide for Developers</h1>
 <h2>Introduction</h2>
 
 NVIDIA Cloud Native Stack for Developers is focused to provide the Docker based experince. This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
-NVIDIA Cloud Native Stack v10.3 includes:
+NVIDIA Cloud Native Stack v9.4 includes:
 - Ubuntu 22.04 LTS
 - Containerd 1.7.7
-- Kubernetes version 1.27.7
+- Kubernetes version 1.26.9
 - Helm 3.13.1
 - NVIDIA GPU Driver: 535.104.12
 - NVIDIA Container Toolkit: 1.14.3
@@ -96,7 +96,7 @@ Expected Output:
 ```
 Wed Mar 24 12:47:29 2023
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 535.86.10     Driver Version: 535.86.10     CUDA Version: 12.1   |
+| NVIDIA-SMI 535.104.05     Driver Version: 535.104.05     CUDA Version: 12.1   |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
@@ -364,7 +364,7 @@ Setup the Apt repositry for CRI-O
 
 ```
 OS=xUbuntu_22.04
-VERSION=1.27
+VERSION=1.26
 ```
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 
@@ -388,36 +388,6 @@ Install the CRI-O and dependencies
 
 ```
 sudo apt update && sudo apt install cri-o cri-o-runc cri-tools -y
-```
-
-Create OCI hook for NVIDIA Container Runtime
-```
-nano /usr/share/containers/oci/hooks.d/oci-nvidia-hook.json
-```
-
-```
-{
-  "version": "1.0.0",
-  "hook": {
-    "path": "/usr/bin/nvidia-container-runtime-hook",
-    "args": [
-      "nvidia-container-runtime-hook",
-      "prestart"
-    ],
-    "env": [
-      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-    ]
-  },
-  "when": {
-    "always": true,
-    "commands": [
-      ".*"
-    ]
-  },
-  "stages": [
-    "prestart"
-  ]
-}
 ```
 
 Enable and Start the CRI-O service 
@@ -461,7 +431,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
  sudo apt-get update
 ```
 ```
- sudo apt-get install -y -q kubelet=1.27.7-00 kubectl=1.27.7-00 kubeadm=1.27.7-00
+ sudo apt-get install -y -q kubelet=1.26.9-00 kubectl=1.26.9-00 kubeadm=1.26.9-00
 ```
 ```
  sudo apt-mark hold kubelet kubeadm kubectl
@@ -514,13 +484,13 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command for `Containerd` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.27.7"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.26.9"
 ```
 
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.27.7"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.26.9"
 ```
 
 Output:
@@ -559,7 +529,7 @@ Following the instructions in the output, execute the commands as shown below:
 With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
- kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.1/manifests/calico.yaml 
+ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml 
 ```
 
 Update the Calico Daemonset 
@@ -599,7 +569,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.27.7
+#yourhost        Ready    control-plane,master   10m   v1.26.9
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -660,8 +630,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.27.7
-#yourhost-worker Ready                           10m   v1.27.7
+#yourhost        Ready    control-plane,master   10m   v1.26.9
+#yourhost-worker Ready                           10m   v1.26.9
 ```
 
 ### Installing GPU Operator
@@ -759,7 +729,7 @@ Output:
 ``` 
 Wed Apr 14 12:47:29 2023
 +-----------------------------------------------------------------------------+
-|  NVIDIA-SMI 535.86.10   Driver Version: 535.86.10     CUDA Version: 12.1    |
+|  NVIDIA-SMI 535.104.05   Driver Version: 535.104.05     CUDA Version: 12.1    |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
@@ -900,7 +870,7 @@ Execute the below commands to uninstall the GPU Operator:
 ```
 $ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 nvidia-gpu-operator         1               2023-04-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-23.6.0      v23.3.2
+gpu-operator-1606173805 nvidia-gpu-operator         1               2023-04-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-23.9.0      v23.3.2
 
 $ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 ```

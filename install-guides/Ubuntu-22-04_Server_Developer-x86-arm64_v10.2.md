@@ -391,6 +391,36 @@ Install the CRI-O and dependencies
 sudo apt update && sudo apt install cri-o cri-o-runc cri-tools -y
 ```
 
+Create OCI hook for NVIDIA Container Runtime
+```
+nano /usr/share/containers/oci/hooks.d/oci-nvidia-hook.json
+```
+
+```
+{
+  "version": "1.0.0",
+  "hook": {
+    "path": "/usr/bin/nvidia-container-runtime-hook",
+    "args": [
+      "nvidia-container-runtime-hook",
+      "prestart"
+    ],
+    "env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ]
+  },
+  "when": {
+    "always": true,
+    "commands": [
+      ".*"
+    ]
+  },
+  "stages": [
+    "prestart"
+  ]
+}
+```
+
 Enable and Start the CRI-O service 
 
 ```

@@ -1,4 +1,4 @@
-<h1> NVIDIA Cloud Native Stack - v11.0 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit or Jetson Orin</h1>
+<h1> NVIDIA Cloud Native Stack - v12.0 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit or Jetson Orin</h1>
 
 <h2>Introduction</h2>
 
@@ -7,9 +7,9 @@ This document describes how to setup the NVIDIA Cloud Native Stack collection on
 The final environment will include:
 
 - JetPack 5.1
-- Kubernetes version 1.28.2
-- Helm 3.13.1
-- Containerd 1.7.7
+- Kubernetes version 1.29.2
+- Helm 3.14.2
+- Containerd 1.7.13
 
 
 <h2>Table of Contents</h2>
@@ -135,9 +135,9 @@ sudo sysctl --system
 Download the Containerd tarball:
 
 ```
- wget https://github.com/containerd/containerd/releases/download/v1.7.7/cri-containerd-cni-1.7.7-linux-arm64.tar.gz
- sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.7-linux-arm64.tar.gz
- rm -rf cri-containerd-cni-1.7.7-linux-arm64.tar.gz
+ wget https://github.com/containerd/containerd/releases/download/v1.7.13/cri-containerd-cni-1.7.13-linux-arm64.tar.gz
+ sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.13-linux-arm64.tar.gz
+ rm -rf cri-containerd-cni-1.7.13-linux-arm64.tar.gz
 ```
 
 Install Containerd:
@@ -217,7 +217,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 
 ```
  sudo apt-get update
- sudo apt-get install -y -q kubelet=1.28.2-00 kubectl=1.28.2-00 kubeadm=1.28.2-00
+ sudo apt-get install -y -q kubelet=1.29.2-00 kubectl=1.29.2-00 kubeadm=1.29.2-00
  sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
@@ -357,16 +357,16 @@ for more information.
 
 ### Installing Helm 
 
-Execute the following command to download and install Helm 3.13.1: 
+Execute the following command to download and install Helm 3.14.2: 
 
 ```
- wget https://get.helm.sh/helm-v3.13.1-linux-arm64.tar.gz
- tar -zxvf helm-v3.13.1-linux-arm64.tar.gz
+ wget https://get.helm.sh/helm-v3.14.2-linux-arm64.tar.gz
+ tar -zxvf helm-v3.14.2-linux-arm64.tar.gz
  sudo mv linux-arm64/helm /usr/local/bin/helm
- rm -rf helm-v3.13.1-linux-arm64.tar.gz linux-arm64/
+ rm -rf helm-v3.14.2-linux-arm64.tar.gz linux-arm64/
 ```
 
-Refer to the Helm 3.13.1 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
+Refer to the Helm 3.14.2 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
 
 
 ### Adding an Additional Node to NVIDIA Cloud Native Stack

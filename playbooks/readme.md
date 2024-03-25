@@ -80,16 +80,14 @@ Cloud Native Stack Supports below versions.
 
 Available versions are:
 
+- 12.0
+- 11.1
 - 11.0
+- 10.4
 - 10.3
 - 10.2
 - 10.1
 - 10.0
-- 9.4
-- 9.3
-- 9.2
-- 9.1
-- 9.0
 
 Edit the `cns_version.yaml` and update the version you want to install
 
@@ -101,33 +99,39 @@ If you want to cusomize any predefined components versions or any other custom p
 
 Example:
 ```
-$ nano cns_values_9.4.yaml
+$ nano cns_values_11.1.yaml
 
-cns_version: 9.4
+cns_version: 11.1
+
+microk8s: no
 
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "1.7.7"
-crio_version: "1.26.4"
-cri_dockerd_version: "0.3.6"
-k8s_version: "1.26.10"
-calico_version: "3.26.3"
-flannel_version: "0.22.3"
-helm_version: "3.13.1"
-gpu_operator_version: "23.9.0"
-network_operator_version: "23.7.0"
-local_path_provisioner: "0.0.24"
+containerd_version: "1.7.13"
+runc_version: "1.1.12"
+cni_plugins_version: "1.4.0"
+containerd_max_concurrent_downloads: "5"
+crio_version: "1.28.2"
+cri_dockerd_version: "0.3.10"
+k8s_version: "1.28.6"
+calico_version: "3.27.0"
+flannel_version: "0.24.2"
+helm_version: "3.14.2"
+gpu_operator_version: "23.9.2"
+network_operator_version: "24.1.0"
+local_path_provisioner: "0.0.26"
 
 # GPU Operator Values
 enable_gpu_operator: yes
-enable_kube_virt: no
 confidential_computing: no
-gpu_driver_version: "535.104.12"
+gpu_driver_version: "550.54.14"
+use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
 mig_strategy: single
 enable_gds: no
+#Secure Boot for only Ubuntu
 enable_secure_boot: no
 enable_vgpu: no
 vgpu_license_server: ""
@@ -161,9 +165,9 @@ cns_docker: no
 cns_nvidia_driver: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
-k8s_apt_repository: " https://apt.kubernetes.io/ kubernetes-xenial main"
-k8s_apt_ring: "/etc/apt/keyrings/kubernetes-archive-keyring.gpg"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key"
+k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
 # Local Path Provisioner as Storage option
@@ -218,6 +222,20 @@ k8s_apt_key: "https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg"
 k8s_apt_repository: "deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main"
 k8s_registry: "registry.aliyuncs.com/google_containers"
 ```
+
+#### Enable MicroK8s 
+
+If you want to use microk8s you can enable the configuration in `cns_values_xx.yaml` and trigger the installation
+
+Example:
+```
+$ nano cns_values_11.1.yaml
+
+cns_version: 11.1
+
+microk8s: yes
+```
+
 ##### Installation on CSP's
 
 Cloud Native Stack can also support to install on CSP providers like AWS, Azure and Google Cloud. 
@@ -272,12 +290,17 @@ Update the GKE Project ID `cns_values_xx.yaml` before trigger the installation
   ```
   bash setup.sh install gke
   ```
-  `NOTE:` 
-   - After GKE cluster created run the below command to use kubectl library
+
+`NOTE:`
+
+- After GKE cluster created run the below command to use kubectl library
+
       ```
       source $HOME/cloud-native-stack/playbooks/google-cloud-sdk/path.bash.inc
       ```
-   - If you encounter any destroy issue while uninstall you can try to run below commands which might help
+
+- If you encounter any destroy issue while uninstall you can try to run below commands which might help
+
       ```
       NS=`kubectl get ns |grep Terminating | awk 'NR==1 {print $1}'` && kubectl get namespace "$NS" -o json   | tr -d "\n" | sed "s/\"finalizers\": \[[^]]\+\]/\"finalizers\": []/"   | kubectl replace --raw /api/v1/namespaces/$NS/finalize -f -
       ```

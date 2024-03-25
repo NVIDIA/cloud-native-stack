@@ -7,7 +7,7 @@ This document describes how to setup the NVIDIA Cloud Native Stack collection on
 The final environment will include:
 
 - JetPack 5.1
-- Kubernetes version 1.27.7
+- Kubernetes version 1.27.6
 - Helm 3.13.1
 - Containerd 1.7.7
 
@@ -217,7 +217,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 
 ```
  sudo apt-get update
- sudo apt-get install -y -q kubelet=1.27.7-00 kubectl=1.27.7-00 kubeadm=1.27.7-00
+ sudo apt-get install -y -q kubelet=1.27.6-00 kubectl=1.27.6-00 kubeadm=1.27.6-00
  sudo apt-mark hold kubelet kubeadm kubectl
 ```
 

@@ -22,7 +22,7 @@ NVIDIA Cloud Native Stack v10.3 includes:
   - NVIDIA GDS Driver: 2.16.1
   - NVIDIA Kata Manager for Kubernetes: 0.1.2
   - NVIDIA Confidential Computing Manager for Kubernetes: 0.1.1
-- NVIDIA Network Operator 23.10.0
+- NVIDIA Network Operator 23.7.0
   - Mellanox MOFED Driver 23.10-0.4.1.0
   - Mellanox NV Peer Memory Driver 1.1-0
   - RDMA Shared Device Plugin 1.3.2
@@ -546,7 +546,7 @@ kubectl label nodes --all node-role.kubernetes.io/master- --overwrite
 ```
 
 ```
-helm install -f --version 23.10.0 ./network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
+helm install -f --version 23.5.0 ./network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
 ```
 #### Validating the State of the Network Operator
 
@@ -1121,7 +1121,7 @@ Execute the below commands to uninstall the Network Operator:
 ```
 $ helm ls -n network-operator
 NAME            	NAMESPACE       	REVISION	UPDATED                                	STATUS  	CHART                 	APP VERSION
-network-operator	network-operator	1       	2023-04-03 17:09:04.665593336 +0000 UTC	deployed	network-operator-23.10.0	v23.10.0
+network-operator	network-operator	1       	2023-04-03 17:09:04.665593336 +0000 UTC	deployed	network-operator-23.5.0	v23.5.0
 
 $ helm del network-operator -n network-operator
 ```

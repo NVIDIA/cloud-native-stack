@@ -8,7 +8,7 @@ NVIDIA Cloud Native Stack v11.0 includes:
 - Containerd 1.7.7
 - Kubernetes version 1.28.2
 - Helm 3.13.1
-- NVIDIA GPU Driver: 535.129.03
+- NVIDIA GPU Driver: 535.104.12
 - NVIDIA Container Toolkit: 1.14.3
 - NVIDIA GPU Operator 23.9.1
   - NVIDIA K8S Device Plugin: 0.14.2
@@ -68,10 +68,10 @@ Install NVIDIA TRD Driver
 sudo apt update 
 ```
 ```
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
 ```
 ```
-sudo dpkg -i cuda-keyring_1.0-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
 ```
 
 Update package index:
@@ -370,6 +370,10 @@ VERSION=1.27
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 
 ```
+sudo mkdir -p /usr/share/keyrings
+```
+
+```
 echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
 ```
 
@@ -389,6 +393,36 @@ Install the CRI-O and dependencies
 
 ```
 sudo apt update && sudo apt install cri-o cri-o-runc cri-tools -y
+```
+
+Create OCI hook for NVIDIA Container Runtime
+```
+nano /usr/share/containers/oci/hooks.d/oci-nvidia-hook.json
+```
+
+```
+{
+  "version": "1.0.0",
+  "hook": {
+    "path": "/usr/bin/nvidia-container-runtime-hook",
+    "args": [
+      "nvidia-container-runtime-hook",
+      "prestart"
+    ],
+    "env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ]
+  },
+  "when": {
+    "always": true,
+    "commands": [
+      ".*"
+    ]
+  },
+  "stages": [
+    "prestart"
+  ]
+}
 ```
 
 Enable and Start the CRI-O service 

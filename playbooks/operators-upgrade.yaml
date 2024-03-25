@@ -21,8 +21,13 @@
        - crio
        - cri-o
 
+   - name: Remove Values file
+     file:
+       path: "{{ ansible_user_dir }}/values.yaml"
+       state: absent
+
    - name: Check Current Running Cloud Native Stack Version
-     shell: kubectl version --short=true --client=false | grep -i server | awk '{print $NF}'
+     shell: kubectl version -o json | jq .serverVersion.gitVersion | sed 's/\"//g'
      register: k8sversion
 
    - name: Uninstall the GPU Operator with MIG
@@ -122,6 +127,26 @@
        - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v23.9.0/deployments/gpu-operator/crds/nvidia.com_nvidiadrivers.yaml
        - helm show --version=v{{ gpu_operator_version }} values nvidia/gpu-operator > {{ ansible_user_dir }}/values.yaml
 
+   - name: Upgrade GPU Operator CRDs on Cloud Native Stack
+     when: "enable_gpu_operator == true and k8sversion.stdout == 'v1.26.9' or enable_gpu_operator == true and k8sversion.stdout == 'v1.27.6'"
+     shell: "{{ item }}"
+     with_items:
+       - kubectl delete crd clusterpolicies.nvidia.com nvidiadrivers.nvidia.com
+       - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v23.9.1/deployments/gpu-operator/crds/nvidia.com_clusterpolicies_crd.yaml
+       - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v23.9.1/deployments/gpu-operator/charts/node-feature-discovery/crds/nfd-api-crds.yaml
+       - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v23.9.1/deployments/gpu-operator/crds/nvidia.com_nvidiadrivers.yaml
+       - helm show --version=v{{ gpu_operator_version }} values nvidia/gpu-operator > {{ ansible_user_dir }}/values.yaml
+
+   - name: Upgrade GPU Operator CRDs on Cloud Native Stack
+     when: "enable_gpu_operator == true and k8sversion.stdout == 'v1.28.6' or enable_gpu_operator == true and k8sversion.stdout == 'v1.27.10'"
+     shell: "{{ item }}"
+     with_items:
+       - kubectl delete crd clusterpolicies.nvidia.com nvidiadrivers.nvidia.com
+       - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v23.9.1/deployments/gpu-operator/crds/nvidia.com_clusterpolicies_crd.yaml
+       - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v23.9.1/deployments/gpu-operator/charts/node-feature-discovery/crds/nfd-api-crds.yaml
+       - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v23.9.1/deployments/gpu-operator/crds/nvidia.com_nvidiadrivers.yaml
+       - helm show --version=v{{ gpu_operator_version }} values nvidia/gpu-operator > {{ ansible_user_dir }}/values.yaml
+
    - name: create GPU Custom Values for proxy
      when: proxy == true
      replace:
@@ -172,6 +197,43 @@
    - name: Upgrade the GPU Operator with Network Operator on NVIDIA Cloud Native Stack
      when: "enable_gpu_operator == true and 'running' in k8sup.stdout and cns_docker == false and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator_registry_password == ''"
      shell: helm upgrade $(helm ls -A | grep gpu-oper | awk '{print $1}') nvidia/gpu-operator  --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --namespace nvidia-gpu-operator  --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}'
+
+#RC Bits
+   - name: Upgrade GPU Operator on Cloud Native Stack
+     when: "enable_gpu_operator == true and 'running' in k8sup.stdout and cns_docker == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and gpu_operator_registry_password != ''"
+     shell: helm upgrade $(helm ls -A | grep gpu-oper | awk '{print $1}') nvidia/gpu-operator --version {{ gpu_operator_version }} --namespace nvidia-gpu-operator --values {{ ansible_user_dir }}/values.yaml --set driver.version='{{ gpu_driver_version }}',driver.imagePullSecrets[0]=ngc-secret,driver.repository='{{ gpu_operator_driver_registry }}'
+
+   - name: Upgrading the Signed GPU Operator on NVIDIA Cloud Native Stack
+     when: "enable_gpu_operator == true and 'running' in k8sup.stdout and cns_docker == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == true and gpu_operator_registry_password != ''"
+     shell: "{{ item }}"
+     with_items:
+       - helm upgrade $(helm ls -A | grep gpu-oper | awk '{print $1}') nvidia/gpu-operator --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --set driver.version={{ driver_version }},driver.usePrecompiled=true,driver.repository={{ gpu_operator_driver_registry }},driver.imagePullSecrets[0]=ngc-secret --wait --generate-name
+       - sleep 20
+       - kubectl patch clusterpolicy/cluster-policy --type='json' -p='[{"op":"replace", "path":"/spec/driver/usePrecompiled", "value":true},{"op":"replace", "path":"/spec/driver/version", "value":"{{ driver_version }}"}]'
+
+   - name: Upgrading the GPU Operator with vGPU on NVIDIA Cloud Native Stack
+     when: "enable_gpu_operator == true and 'running' in k8sup.stdout and cns_docker == false and enable_mig == false and enable_vgpu == true and enable_rdma == false and enable_gds == false and gpu_operator_registry_password != ''"
+     shell:  helm upgrade $(helm ls -A | grep gpu-oper | awk '{print $1}') nvidia/gpu-operator --version {{ gpu_operator_version }} --namespace nvidia-gpu-operator --values {{ ansible_user_dir }}/values.yaml --set driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config
+
+   - name: Upgrading the GPU Operator with MIG on NVIDIA Cloud Native Stack
+     when: "enable_gpu_operator == true and 'running' in k8sup.stdout and cns_docker == false and enable_mig == true and  enable_rdma == false and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator_registry_password != ''"
+     shell:  helm upgrade $(helm ls -A | grep gpu-oper | awk '{print $1}') nvidia/gpu-operator --version {{ gpu_operator_version }} --namespace nvidia-gpu-operator --values {{ ansible_user_dir }}/values.yaml --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.imagePullSecrets[0]=ngc-secret,driver.repository='{{ gpu_operator_driver_registry }}'
+
+   - name: Upgrading the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Stack
+     when: "enable_gpu_operator == true and 'running' in k8sup.stdout and cns_docker == false and enable_mig == true and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator_registry_password != ''"
+     shell:  helm upgrade $(helm ls -A | grep gpu-oper | awk '{print $1}') nvidia/gpu-operator --version {{ gpu_operator_version }} --namespace nvidia-gpu-operator --values {{ ansible_user_dir }}/values.yaml --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.imagePullSecrets[0]=ngc-secret,driver.repository='{{ gpu_operator_driver_registry }}'
+
+   - name: Upgrading the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Stack
+     when: "enable_gpu_operator == true and 'running' in k8sup.stdout and cns_docker == false and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator_registry_password != ''"
+     shell:  helm upgrade $(helm ls -A | grep gpu-oper | awk '{print $1}') nvidia/gpu-operator --version {{ gpu_operator_version }} --namespace nvidia-gpu-operator --values {{ ansible_user_dir }}/values.yaml --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}',driver.imagePullSecrets[0]=ngc-secret,driver.repository='{{ gpu_operator_driver_registry }}'
+
+   - name: Upgrading the GPU Operator with RDMA and GDS with Host MOFEDon NVIDIA Cloud Native Stack
+     when: "enable_gpu_operator == true and 'running' in k8sup.stdout and cns_docker == false and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false and gpu_operator_registry_password != ''"
+     shell:  helm upgrade $(helm ls -A | grep gpu-oper | awk '{print $1}') nvidia/gpu-operator --version {{ gpu_operator_version }} --namespace nvidia-gpu-operator --values {{ ansible_user_dir }}/values.yaml --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.imagePullSecrets[0]=ngc-secret,driver.repository='{{ gpu_operator_driver_registry }}'
+
+   - name: Upgrade the GPU Operator with Network Operator on NVIDIA Cloud Native Stack
+     when: "enable_gpu_operator == true and 'running' in k8sup.stdout and cns_docker == false and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator_registry_password != ''"
+     shell: helm upgrade $(helm ls -A | grep gpu-oper | awk '{print $1}') nvidia/gpu-operator  --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --namespace nvidia-gpu-operator  --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.imagePullSecrets[0]=ngc-secret,driver.repository='{{ gpu_operator_driver_registry }}'
 
    - name: Enable MIG profile with GPU Operator on NVIDIA Cloud Native Stack
      when: "enable_gpu_operator == true and enable_mig == true and enable_vgpu == false and cns_version >= 4.1"

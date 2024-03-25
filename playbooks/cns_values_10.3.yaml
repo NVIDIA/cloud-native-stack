@@ -1,9 +1,12 @@
 cns_version: 10.3
 
+microk8s: no
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
 containerd_version: "1.7.7"
+runc_version: "1.1.11"
+cni_plugins_version: "1.4.0"
 containerd_max_concurrent_downloads: "5"
 crio_version: "1.27.1"
 cri_dockerd_version: "0.3.6"
@@ -18,7 +21,7 @@ local_path_provisioner: "0.0.24"
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "535.129.03"
+gpu_driver_version: "535.161.08"
 use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled

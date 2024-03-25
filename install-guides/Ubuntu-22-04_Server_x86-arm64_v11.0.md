@@ -9,7 +9,7 @@ NVIDIA Cloud Native Stack v11.0 includes:
 - Kubernetes version 1.28.2
 - Helm 3.13.1
 - NVIDIA GPU Operator 23.9.1
-  - NVIDIA GPU Driver: 535.129.03
+  - NVIDIA GPU Driver: 535.104.12
   - NVIDIA Container Toolkit: 1.14.3
   - NVIDIA K8S Device Plugin: 0.14.2
   - NVIDIA DCGM-Exporter: 3.2.6-3.1.9
@@ -546,7 +546,7 @@ kubectl label nodes --all node-role.kubernetes.io/master- --overwrite
 ```
 
 ```
-helm install -f --version 23.10.0 ./network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
+helm install -f --version 23.10. ./network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
 ```
 #### Validating the State of the Network Operator
 
@@ -1121,7 +1121,7 @@ Execute the below commands to uninstall the Network Operator:
 ```
 $ helm ls -n network-operator
 NAME            	NAMESPACE       	REVISION	UPDATED                                	STATUS  	CHART                 	APP VERSION
-network-operator	network-operator	1       	2023-04-03 17:09:04.665593336 +0000 UTC	deployed	network-operator-23.10.0	v23.10.0
+network-operator	network-operator	1       	2023-04-03 17:09:04.665593336 +0000 UTC	deployed	network-operator-23.10.	v23.10.0
 
 $ helm del network-operator -n network-operator
 ```

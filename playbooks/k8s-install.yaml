@@ -1,3 +1,31 @@
+- hosts: all
+  vars_files:
+    - cns_values.yaml
+  environment:
+    http_proxy: "{{ http_proxy }}"
+    https_proxy: "{{ https_proxy }}"
+  tasks:
+   - name: Reload the configurations
+     become: true
+     block:
+      - name: reload daemon
+        systemd_service:
+          daemon_reload: true
+        failed_when: false
+
+      - name: restart services
+        failed_when: false
+        systemd_service:
+          name: "{{ item }}"
+          state: restarted
+        with_items:
+          - cri-docker
+          - docker
+          - kubelet
+          - containerd
+          - crio
+          - cri-o
+
 - hosts: master
   vars_files:
     - cns_values.yaml
@@ -19,10 +47,30 @@
      failed_when: false
 
    - name: Reset Kubernetes component
-     when: "'running' not in k8sup.stdout"
+     when: container_runtime == 'cri-o'
+     shell: "timeout 45 kubeadm reset --cri-socket=unix:///var/run/crio/crio.sock --force"
      become: true
-     shell: "kubeadm reset --force"
+     failed_when: false
      no_log: True
+
+   - name: Reset Kubernetes component
+     when: container_runtime == 'cri-dockerd'
+     shell: "timeout 45 kubeadm reset --cri-socket=unix:///run/cri-dockerd.sock --force"
+     become: true
+     failed_when: false
+     no_log: True
+
+   - name: Reset Kubernetes component
+     when: container_runtime == 'containerd'
+     shell: "timeout 45 kubeadm reset --cri-socket=unix:///run/containerd/containerd.sock --force"
+     become: true
+     failed_when: false
+     no_log: True
+
+   - name: reload daemon
+     become: true
+     systemd_service:
+       daemon_reload: true
      failed_when: false
 
    - name: remove etcd directory

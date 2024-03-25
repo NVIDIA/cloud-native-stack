@@ -291,13 +291,13 @@ Update the GKE Project ID `cns_values_xx.yaml` before trigger the installation
   bash setup.sh install gke
   ```
 
-> [!NOTE]
+`NOTE:`
 
->   - After GKE cluster created run the below command to use kubectl library
+- After GKE cluster created run the below command to use kubectl library
       ```
       source $HOME/cloud-native-stack/playbooks/google-cloud-sdk/path.bash.inc
       ```
->   - If you encounter any destroy issue while uninstall you can try to run below commands which might help
+- If you encounter any destroy issue while uninstall you can try to run below commands which might help
       ```
       NS=`kubectl get ns |grep Terminating | awk 'NR==1 {print $1}'` && kubectl get namespace "$NS" -o json   | tr -d "\n" | sed "s/\"finalizers\": \[[^]]\+\]/\"finalizers\": []/"   | kubectl replace --raw /api/v1/namespaces/$NS/finalize -f -
       ```

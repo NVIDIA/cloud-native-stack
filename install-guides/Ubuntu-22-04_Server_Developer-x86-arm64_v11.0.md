@@ -6,11 +6,11 @@ NVIDIA Cloud Native Stack for Developers is focused to provide the Docker based 
 NVIDIA Cloud Native Stack v11.0 includes:
 - Ubuntu 22.04 LTS
 - Containerd 1.7.7
-- Kubernetes version 1.28.3
+- Kubernetes version 1.28.2
 - Helm 3.13.1
 - NVIDIA GPU Driver: 535.104.12
 - NVIDIA Container Toolkit: 1.14.3
-- NVIDIA GPU Operator 23.9.0
+- NVIDIA GPU Operator 23.9.1
   - NVIDIA K8S Device Plugin: 0.14.2
   - NVIDIA DCGM-Exporter: 3.2.6-3.1.9
   - NVIDIA DCGM: 3.2.6-1
@@ -466,7 +466,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
  sudo apt-get update
 ```
 ```
- sudo apt-get install -y -q kubelet=1.28.3-00 kubectl=1.28.3-00 kubeadm=1.28.3-00
+ sudo apt-get install -y -q kubelet=1.28.2-00 kubectl=1.28.2-00 kubeadm=1.28.2-00
 ```
 ```
  sudo apt-mark hold kubelet kubeadm kubectl
@@ -519,13 +519,13 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command for `Containerd` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.28.3"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.28.2"
 ```
 
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.28.3"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.28.2"
 ```
 
 Output:
@@ -604,7 +604,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.28.3
+#yourhost        Ready    control-plane,master   10m   v1.28.2
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -665,8 +665,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.28.3
-#yourhost-worker Ready                           10m   v1.28.3
+#yourhost        Ready    control-plane,master   10m   v1.28.2
+#yourhost-worker Ready                           10m   v1.28.2
 ```
 
 ### Installing GPU Operator
@@ -688,7 +688,7 @@ Install GPU Operator:
 `NOTE:` As we are preinstalled with NVIDIA Driver and NVIDIA Container Toolkit, we need to set as `false` when installing the GPU Operator
 
 ```
- helm install --version 23.9.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+ helm install --version 23.9.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 ```
 
 #### Validating the State of the GPU Operator:

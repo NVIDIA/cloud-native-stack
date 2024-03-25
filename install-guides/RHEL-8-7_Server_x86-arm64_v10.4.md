@@ -1,9 +1,9 @@
-<h1>NVIDIA Cloud Native Stack v11.0 - Install Guide for RHEL Server</h1>
+<h1>NVIDIA Cloud Native Stack v10.4 - Install Guide for RHEL Server</h1>
 <h2>Introduction</h2>
 
 This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple NVIDIA Certified Systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
-NVIDIA Cloud Native Stack v11.0 includes:
+NVIDIA Cloud Native Stack v10.4 includes:
 - RHEL 8.7/RHEL 8.8
 - Containerd 1.7.13
 - Kubernetes version 1.27.10

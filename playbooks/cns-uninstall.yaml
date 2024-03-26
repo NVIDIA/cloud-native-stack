@@ -150,6 +150,7 @@
        - docker prune --all
 
    - name: Stopping and disable the required services
+     ignore_errors: yes
      become: true
      systemd_service:
        name: "{{ item }}"
@@ -248,6 +249,7 @@
      when: cns_nvidia_driver == true
      shell: /usr/bin/nvidia-uninstall --silent; kill -9 $(lsof /dev/nvidia* | awk '{print $2}' | grep -v PID | uniq); rmmod nvidia_uvm; rmmod nvidia_drm; rmmod nvidia_modeset; rmmod nvidia
      become: true
+     ignore_errors: yes
      failed_when: false
 
    - name: Remove dependencies that are no longer required

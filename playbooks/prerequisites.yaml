@@ -75,7 +75,7 @@
       become: true
       when: "ansible_distribution == 'Ubuntu'"
       apt:
-        name: ['net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet={{ k8s_version }}-1.1', 'kubeadm={{ k8s_version }}-1.1', 'kubectl={{ k8s_version }}-1.1']
+        name: ['build-essential', 'net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet={{ k8s_version }}-1.1', 'kubeadm={{ k8s_version }}-1.1', 'kubectl={{ k8s_version }}-1.1']
         state: present
         update_cache: true
         allow_change_held_packages: yes
@@ -85,7 +85,7 @@
       become: true
       when: "ansible_distribution == 'RedHat'"
       yum:
-        name: ['net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}', 'kubeadm-{{ k8s_version }}', 'kubectl-{{ k8s_version }}']
+        name: ['development-tools', 'net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}', 'kubeadm-{{ k8s_version }}', 'kubectl-{{ k8s_version }}']
         state: present
 
     - name: Hold the installed Packages

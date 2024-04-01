@@ -271,13 +271,13 @@
      become: true
      copy:
        content: "{{ kubeadm_join }}"
-       dest: "{{ ansible_user_dir }}/kubeadm-join.command"
+       dest: "/tmp/kubeadm-join.command"
 
    - name: Copy Join Command
      when: "'running' not in k8sup.stdout"
      fetch:
-       src: "{{ ansible_user_dir }}/kubeadm-join.command"
-       dest: "{{ ansible_user_dir }}/kubeadm-join.command"
+       src: "/tmp/kubeadm-join.command"
+       dest: "/tmp/kubeadm-join.command"
        flat: true
 
    - name: Store Kubernetes cluster status
@@ -285,13 +285,13 @@
      become: true
      copy:
        content: "{{ k8sup.stdout }}"
-       dest: "{{ ansible_user_dir }}/k8sup.status"
+       dest: "/tmp/k8sup.status"
 
    - name: Copy k8s status
      when: "'running' not in k8sup.stdout"
      fetch:
-       src: "{{ ansible_user_dir }}/k8sup.status"
-       dest: "{{ ansible_user_dir }}/k8sup.status"
+       src: "/tmp/k8sup.status"
+       dest: "/tmp/k8sup.status"
        flat: true
 
 - hosts: nodes
@@ -301,13 +301,13 @@
    - name: Copy kubernetes cluster status
      become: true
      copy:
-       src: "{{ ansible_user_dir }}/k8sup.status"
-       dest: "{{ ansible_user_dir }}/k8sup.status"
+       src: "/tmp/k8sup.status"
+       dest: "/tmp/k8sup.status"
 
    - name: Search for Kubernetes status
      become: true
      register: k8sup
-     shell: "cat {{ ansible_user_dir }}/k8sup.status"
+     shell: "cat /tmp/k8sup.status"
 
    - name: Reset Kubernetes component
      become: true
@@ -325,32 +325,32 @@
    - name: Copy kubeadm-join command to node
      become: true
      copy:
-       src: "{{ ansible_user_dir }}/kubeadm-join.command"
-       dest: "{{ ansible_user_dir }}/kubeadm-join.command"
+       src: "/tmp/kubeadm-join.command"
+       dest: "/tmp/kubeadm-join.command"
 
    - name: Get the Active Mellanox NIC on nodes
      when: "enable_network_operator == true and cns_version >= 4.1"
      become: true
-     shell: "for device in `sudo lshw -class network -short | grep -i ConnectX | awk '{print $2}' | egrep -v 'Device|path' | sed '/^$/d'`;do echo -n $device; sudo ethtool $device | grep -i 'Link detected'; done | grep yes | awk '{print $1}' > {{ ansible_user_dir }}/$(hostname)-nic"
+     shell: "for device in `sudo lshw -class network -short | grep -i ConnectX | awk '{print $2}' | egrep -v 'Device|path' | sed '/^$/d'`;do echo -n $device; sudo ethtool $device | grep -i 'Link detected'; done | grep yes | awk '{print $1}' > /tmp/$(hostname)-nic"
      register: node_nic
 
    - name: Copy Mellanox NIC Active File to master
      when: "enable_network_operator == true and cns_version >= 4.1"
      become: true
      fetch:
-       src: "{{ ansible_user_dir }}/{{ ansible_nodename }}-nic"
-       dest: "{{ ansible_user_dir }}/"
+       src: "/tmp/{{ ansible_nodename }}-nic"
+       dest: "/tmp/"
        flat: yes
 
 - hosts: nodes
   vars:
-     kubeadm_join: "{{ lookup('file', '{{ ansible_user_dir }}/kubeadm-join.command') }}"
+     kubeadm_join: "{{ lookup('file', '/tmp/kubeadm-join.command') }}"
   tasks:
 
    - name: Search for Kubernetes status
      become: true
      register: k8sup
-     shell: "cat {{ ansible_user_dir }}/k8sup.status"
+     shell: "cat /tmp/k8sup.status"
 
    - name: Run kubeadm join
      become: true

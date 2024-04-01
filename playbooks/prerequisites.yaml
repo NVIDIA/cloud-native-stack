@@ -85,7 +85,7 @@
       become: true
       when: "ansible_distribution == 'RedHat'"
       yum:
-        name: ['development-tools', 'net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}', 'kubeadm-{{ k8s_version }}', 'kubectl-{{ k8s_version }}']
+        name: ['net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}', 'kubeadm-{{ k8s_version }}', 'kubectl-{{ k8s_version }}']
         state: present
 
     - name: Hold the installed Packages

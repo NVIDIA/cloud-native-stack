@@ -996,6 +996,7 @@
         - curl -O https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz
         - tar -xvzf helm-v{{ helm_version }}-linux-amd64.tar.gz
         - cp linux-amd64/helm /usr/local/bin/
+        - chmod 777 /usr/local/bin/helm
         - rm -rf helm-v{{ helm_version }}-linux-amd64.tar.gz linux-amd64
       when: "ansible_architecture == 'x86_64'"
 
@@ -1006,5 +1007,6 @@
         - curl -O https://get.helm.sh/helm-v{{ helm_version }}-linux-arm64.tar.gz
         - tar -xvzf helm-v{{ helm_version }}-linux-arm64.tar.gz
         - cp linux-arm64/helm /usr/local/bin/
+        - chmod 777 /usr/local/bin/helm
         - rm -rf helm-v{{ helm_version }}-linux-arm64.tar.gz linux-arm64
       when: "ansible_architecture == 'aarch64'"

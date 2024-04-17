@@ -272,6 +272,7 @@
      copy:
        content: "{{ kubeadm_join }}"
        dest: "/tmp/kubeadm-join.command"
+       mode: '0666'
 
    - name: Copy Join Command
      when: "'running' not in k8sup.stdout"
@@ -286,6 +287,7 @@
      copy:
        content: "{{ k8sup.stdout }}"
        dest: "/tmp/k8sup.status"
+       mode: '0666'
 
    - name: Copy k8s status
      when: "'running' not in k8sup.stdout"
@@ -303,6 +305,7 @@
      copy:
        src: "/tmp/k8sup.status"
        dest: "/tmp/k8sup.status"
+       mode: '0666'
 
    - name: Search for Kubernetes status
      become: true
@@ -327,6 +330,7 @@
      copy:
        src: "/tmp/kubeadm-join.command"
        dest: "/tmp/kubeadm-join.command"
+       mode: '0666'
 
    - name: Get the Active Mellanox NIC on nodes
      when: "enable_network_operator == true and cns_version >= 4.1"

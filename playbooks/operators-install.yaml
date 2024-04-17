@@ -20,6 +20,12 @@
      debug:
        msg: "Please reboot the host and run the same command again"
 
+   - name: Check docker is installed
+     shell: docker
+     register: docker_exists
+     no_log: true
+     failed_when: false
+
    - name: GPU PCI ID
      shell: lspci | grep -i nvidia | awk '{print $1}' | head -n1
      failed_when: false
@@ -272,7 +278,7 @@
 
    - name: GPU Operator Changes with CRI Docker Runtime
      shell: 'sleep 60; kubectl get clusterpolicy cluster-policy -o yaml | sed "/validator:/a\    driver:\n      env:\n      - name: DISABLE_DEV_CHAR_SYMLINK_CREATION\n        value: \"true\"" | kubectl apply -f -'
-     when: "enable_gpu_operator == true and container_runtime == 'cri-dockerd'"
+     when: "enable_gpu_operator == true and container_runtime == 'cri-dockerd' or enable_gpu_operator == true and docker_exists.rc == 0"
 
    - name: Container Networking Plugin changes
      when: "enable_gpu_operator == true and 'running' in k8sup.stdout"

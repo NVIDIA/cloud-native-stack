@@ -1,5 +1,5 @@
-<h1>NVIDIA Cloud Native Stack v11.1 - Install Guide for DGX</h1>
-<h2>Introduction</h2>
+# NVIDIA Cloud Native Stack v11.1 - Install Guide for DGX
+## Introduction
 
 NVIDIA Cloud Native Stack for DGX is focused to provide the Docker based experince. This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
@@ -23,12 +23,10 @@ NVIDIA Cloud Native Stack v11.1 includes:
   - NVIDIA Kata Manager for Kubernetes: 0.1.2
   - NVIDIA Confidential Computing Manager for Kubernetes: 0.1.1
 
-<h2>Table of Contents</h2>
+## Table of Contents
 
 - [Prerequisites](#Prerequisites)
 - [Installing the DGX Operating System](#Installing-the-DGX-Operating-System)
-- [Installing NVIDIA Driver](#Installing-NVIDIA-Driver)
-- [Installing Docker and Nvidia Container Toolkit](#Installing-Docker-and-Nvidia-Container-Toolkit)
 - [Update the Docker Default Runtime](#Update-the-Docker-Default-Runtime)
 - [Installing Container Runtime](#Installing-Container-Runtime)
   - [Installing Containerd](#Installing-Containerd)

@@ -1,6 +1,6 @@
-<h1> NVIDIA Cloud Native Stack - v12.0 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit or Jetson Orin</h1>
+# NVIDIA Cloud Native Stack - v12.0 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit or Jetson Orin
 
-<h2>Introduction</h2>
+## Introduction
 
 This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple Jetson AGX Xavier or Jetson Xavier NX DevKits or Jetson Orin. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
@@ -12,7 +12,7 @@ The final environment will include:
 - Containerd 1.7.13
 
 
-<h2>Table of Contents</h2>
+## Table of Contents
 
 - [Prerequisites](#Prerequisites)
 - [Installing JetPack 5.0](#Installing-JetPack-5.0)
@@ -157,7 +157,7 @@ Setup the Apt repositry for CRI-O
 
 ```
 OS=xUbuntu_22.04
-VERSION=1.27
+VERSION=1.29
 ```
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 

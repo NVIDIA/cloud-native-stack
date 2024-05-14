@@ -1,5 +1,5 @@
-<h1>NVIDIA Cloud Native Stack v10.3 - Install Guide for Developers</h1>
-<h2>Introduction</h2>
+# NVIDIA Cloud Native Stack v10.3 - Install Guide for Developers
+## Introduction
 
 NVIDIA Cloud Native Stack for Developers is focused to provide the Docker based experince. This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
@@ -23,7 +23,7 @@ NVIDIA Cloud Native Stack v10.3 includes:
   - NVIDIA Kata Manager for Kubernetes: 0.1.2
   - NVIDIA Confidential Computing Manager for Kubernetes: 0.1.1
 
-<h2>Table of Contents</h2>
+## Table of Contents
 
 - [Prerequisites](#Prerequisites)
 - [Installing the Ubuntu Operating System](#Installing-the-Ubuntu-Operating-System)

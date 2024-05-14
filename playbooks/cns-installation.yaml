@@ -167,11 +167,11 @@
 - when: "cns_version > 4.1 and microk8s == false"
   import_playbook: prerequisites.yaml
 
-- when: "cns_docker == true and release != 'tegra'"
-  import_playbook: nvidia-docker.yaml
-
 - import_playbook: nvidia-driver.yaml
   when: "cns_nvidia_driver == true and release != 'tegra'"
+
+- when: "cns_docker == true and release != 'tegra'"
+  import_playbook: nvidia-docker.yaml
 
 - when: "cns_version > 4.1 and microk8s == false"
   import_playbook: k8s-install.yaml

@@ -80,9 +80,13 @@ Cloud Native Stack Supports below versions.
 
 Available versions are:
 
+- 13.0
+- 12.1
 - 12.0
+- 11.2
 - 11.1
 - 11.0
+- 10.5
 - 10.4
 - 10.3
 - 10.2
@@ -101,35 +105,37 @@ Example:
 ```
 $ nano cns_values_11.1.yaml
 
-cns_version: 11.1
+cns_version: 12.1
 
 microk8s: no
 
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "1.7.13"
+containerd_version: "1.7.16"
 runc_version: "1.1.12"
-cni_plugins_version: "1.4.0"
+cni_plugins_version: "1.4.1"
 containerd_max_concurrent_downloads: "5"
-crio_version: "1.28.2"
-cri_dockerd_version: "0.3.10"
-k8s_version: "1.28.6"
-calico_version: "3.27.0"
-flannel_version: "0.24.2"
-helm_version: "3.14.2"
-gpu_operator_version: "23.9.2"
-network_operator_version: "24.1.0"
+nvidia_container_toolkit_version: "1.15.0"
+crio_version: "1.29.4"
+cri_dockerd_version: "0.3.13"
+k8s_version: "1.29.4"
+calico_version: "3.27.3"
+flannel_version: "0.25.1"
+helm_version: "3.14.4"
+gpu_operator_version: "24.3.0"
+network_operator_version: "24.1.1"
 local_path_provisioner: "0.0.26"
 
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "550.54.14"
+gpu_driver_version: "550.54.15"
 use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
 mig_strategy: single
+# To use GDS, use_open_kernel_module needs to be enabled
 enable_gds: no
 #Secure Boot for only Ubuntu
 enable_secure_boot: no
@@ -165,8 +171,8 @@ cns_docker: no
 cns_nvidia_driver: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key"
-k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.29/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 

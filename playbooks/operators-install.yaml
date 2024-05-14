@@ -20,12 +20,6 @@
      debug:
        msg: "Please reboot the host and run the same command again"
 
-   - name: Check docker is installed
-     shell: docker
-     register: docker_exists
-     no_log: true
-     failed_when: false
-
    - name: GPU PCI ID
      shell: lspci | grep -i nvidia | awk '{print $1}' | head -n1
      failed_when: false
@@ -259,6 +253,70 @@
    - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and cns_nvidia_driver == false and gpu_operator_registry_password == ''"
      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+## RC bits
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_docker == true and cns_nvidia_driver == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and gpu_operator_registry_password != ''"
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == true and cns_docker == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and gpu_operator_registry_password != ''"
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == true and cns_docker == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and gpu_operator_registry_password != ''"
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == true and enable_mig == true and enable_rdma == false  and enable_vgpu == false and gpu_operator.rc >= 1 and gpu_operator_registry_password != ''"
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set mig.strategy=single,driver.enabled=false,toolkit.enabled=false --wait --generate-name
+
+   - name: Installing the GPU Operator with Open RM on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,driver.useOpenKernelModules=true --wait --generate-name"
+
+   - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name"
+
+   - name: Installing the Signed GPU Operator on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == true and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
+     shell: "{{ item }}"
+     with_items:
+       - helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel {{ gpu_operator_helm_chart }} --set driver.version={{ driver_version }},driver.usePrecompiled=true,driver.repository={{ gpu_operator_driver_registry }},driver.imagePullSecrets[0]=ngc-secret --wait --generate-name
+       - sleep 20
+       - kubectl patch clusterpolicy/cluster-policy --type='json' -p='[{"op":"replace", "path":"/spec/driver/usePrecompiled", "value":true},{"op":"replace", "path":"/spec/driver/version", "value":"{{ driver_version }}"}]'
+
+   - name: Installing the GPU Operator with MIG and Network Operator on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == true and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name
+
+   - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 0 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name
+
+   - name: Installing the Open RM GPU Operator with MIG and RDMA and Host MOFED on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == true and enable_mig == true and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,driver.useOpenKernelModules=true --wait --generate-name
+
+   - name: Installing the Open RM GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,driver.useOpenKernelModules=true --wait --generate-name
+
+   - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and gpu_operator.rc == 1 and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name"
+
+   - name: Installing the GPU Operator with GDS and RDMA and Host MOFED on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == true and gpu_operator.rc == 1 and enable_secure_boot == false and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name"
+
+   - name: Installing the Open RM GPU Operator with GDS and RDMA and Host MOFED on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == true and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == true and gpu_operator.rc == 1 and enable_secure_boot == false and network_operator_valid.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,driver.useOpenKernelModules=true --wait --generate-name"
+
+   - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Stack
+     when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and gpu_operator.rc == 1 and 'running' in k8sup.stdout and gpu_operator_registry_password != ''"
+     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret --wait --generate-name"
 
    - name: Enable MIG profile with GPU Operator on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == true and enable_vgpu == false and gpu_operator.rc == 1 and cns_version >= 4.1"
@@ -274,7 +332,7 @@
 
    - name: GPU Operator Changes with CRI Docker Runtime
      shell: 'sleep 60; kubectl get clusterpolicy cluster-policy -o yaml | sed "/validator:/a\    driver:\n      env:\n      - name: DISABLE_DEV_CHAR_SYMLINK_CREATION\n        value: \"true\"" | kubectl apply -f -'
-     when: "enable_gpu_operator == true and container_runtime == 'cri-dockerd' or enable_gpu_operator == true and docker_exists.rc == 0"
+     when: "enable_gpu_operator == true and container_runtime == 'cri-dockerd'"
 
    - name: Container Networking Plugin changes
      when: "enable_gpu_operator == true and 'running' in k8sup.stdout"

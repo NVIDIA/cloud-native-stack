@@ -63,7 +63,6 @@
       purge: true
       autoremove: yes
     become: true
-    when: microk8s == true
 
   - name: Install snap
     when: ansible_distribution == 'RedHat' and snap_exists.rc != 0
@@ -71,7 +70,6 @@
     become: true
     with_items:
       - dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm -y
-      - subscription-manager repos --enable "rhel-*-optional-rpms" --enable "rhel-*-extras-rpms"
       - subscription-manager release --set 8.9
       - yum update -y
       - yum install snapd -y
@@ -94,7 +92,7 @@
   - name: Add MicroK8s groups to user
     become: true
     user:
-      name: '{{ lookup("env", "USER") }}'
+      name: '{{ ansible_user_id }}'
       state: present
       groups:
         - microk8s
@@ -119,10 +117,18 @@
       enabled: yes
       daemon_reload: yes
 
+  - name: add snap to bashrc
+    become: false
+    lineinfile:
+      path: '{{ ansible_user_dir }}/.bashrc'
+      insertafter: '^PATH='
+      line: 'PATH=$PATH:/snap/bin'
+      state: present
+
   - name: add kubectl alias
     become: false
     lineinfile:
-      path: '{{ lookup("env", "HOME") }}/.bashrc'
+      path: '{{ ansible_user_dir }}/.bashrc'
       regexp: '^alias kubectl='
       line: 'alias kubectl="microk8s kubectl"'
       state: present
@@ -130,10 +136,15 @@
   - name: add helm alias
     become: false
     lineinfile:
-      path: '{{ lookup("env", "HOME") }}/.bashrc'
+      path: '{{ ansible_user_dir }}/.bashrc'
       regexp: '^alias helm='
       line: 'alias helm="microk8s helm"'
       state: present
+
+  - name: source profile
+    shell: source '{{ ansible_user_dir }}/.bashrc'
+    args:
+      executable: /bin/bash
 
   - name: Update Container Runtime for Jetson or Developer
     when: release == 'tegra' or cns_docker == true

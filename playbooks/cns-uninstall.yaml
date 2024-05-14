@@ -363,7 +363,7 @@
    - name: Cleanup Directories
      when: microk8s == true
      ignore_errors: yes
-     shell: rm -rf "{{ item }}"
+     shell: umount $(mount | grep snap | awk '{print $3}'); rm -rf "{{ item }}"
      with_items:
         - /var/snap
         - /var/lib/snapd/snap

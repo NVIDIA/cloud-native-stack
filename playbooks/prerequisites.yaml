@@ -670,18 +670,27 @@
           - unzip
         state: latest
 
+    - name: create docker.asc file
+      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      become: true
+      file: 
+        path: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+        state: touch
+
     - name: Add Docker APT signing key
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_key:
         url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+        keyring: /etc/apt/keyrings/docker.asc
         state: present
 
     - name: Add Docker repository into sources list
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_repository:
-        repo: "deb https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
 
@@ -751,6 +760,21 @@
       register: docker_status
       retries: 5
       until: docker_status is success
+
+    - name: Create "docker" group
+      when: container_runtime == 'cri-dockerd'
+      become: true
+      group:
+        name: docker
+        state: present
+
+    - name: Add remote "ubuntu" user to "docker" group
+      when: container_runtime == 'cri-dockerd'
+      become: true
+      user:
+        name: "{{ ansible_user_id }}"
+        group: docker
+        append: yes
 
     - name: Update docker service 
       when: container_runtime == 'cri-dockerd'

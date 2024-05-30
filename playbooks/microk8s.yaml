@@ -108,6 +108,28 @@
     failed_when: false
     register: mk8s_status
 
+  - name: Add snap alias
+    shell: sudo snap alias microk8s.kubectl kubectl; sudo snap alias microk8s.helm helm
+    become: true
+
+  - name: Create kube directory
+    file:
+     path: $HOME/.kube
+     state: directory
+
+  - name: admin permissions
+    become: true
+    file:
+      path: /var/snap/microk8s/current/credentials/client.config
+      mode: '0644'
+
+  - name: Copy kubeconfig to home
+    copy:
+      remote_src: yes
+      src:  /var/snap/microk8s/current/credentials/client.config
+      dest:  $HOME/.kube/config
+      mode: '0600'
+
   - name: Restart Docker Service
     when: cns_docker == true
     become: true

@@ -69,7 +69,6 @@
 
    - name: remove etcd directory
      become: true
-     when: "'running' not in k8sup.stdout"
      file:
        path: "/var/lib/etcd"
        state: absent
@@ -196,20 +195,17 @@
      register: kubeadm
 
    - name: Create kube directory
-     when: "'running' not in k8sup.stdout"
      file:
       path: $HOME/.kube
       state: directory
 
    - name: admin permissions
-     when: "'running' not in k8sup.stdout"
      become: true
      file:
        path: /etc/kubernetes/admin.conf
        mode: '0644'
 
    - name: Copy kubeconfig to home
-     when: "'running' not in k8sup.stdout"
      copy:
        remote_src: yes
        src:  /etc/kubernetes/admin.conf
@@ -218,7 +214,6 @@
 
    - pause:
        seconds: 15
-     when: "'running' not in k8sup.stdout"
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
      when: "cns_version >= 7.1 and release != 'tegra' or cns_version == 6.4 and release != 'tegra'"
@@ -270,32 +265,10 @@
        dest: "/tmp/kubeadm-join.command"
        flat: true
 
-   - name: Store Kubernetes cluster status
-     become: true
-     copy:
-       content: "{{ k8sup.stdout }}"
-       dest: "/tmp/k8sup.status"
-
-   - name: Copy k8s status
-     fetch:
-       src: "/tmp/k8sup.status"
-       dest: "/tmp/k8sup.status"
-       flat: true
-
 - hosts: nodes
   vars_files:
     - cns_values.yaml
   tasks:
-   - name: Copy kubernetes cluster status
-     become: true
-     copy:
-       src: "/tmp/k8sup.status"
-       dest: "/tmp/k8sup.status"
-
-   - name: Search for Kubernetes status
-     become: true
-     register: k8sup
-     shell: "cat /tmp/k8sup.status"
 
    - name: Reset Kubernetes component
      become: true
@@ -333,12 +306,6 @@
   vars:
      kubeadm_join: "{{ lookup('file', '/tmp/kubeadm-join.command') }}"
   tasks:
-
-   - name: Search for Kubernetes status
-     become: true
-     register: k8sup
-     shell: "cat /tmp/k8sup.status"
-
    - name: Run kubeadm join
      become: true
      shell: "{{ kubeadm_join }}"

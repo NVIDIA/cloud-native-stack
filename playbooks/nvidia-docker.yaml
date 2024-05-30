@@ -48,16 +48,25 @@
         state: latest
         update_cache: true
 
+    - name: create docker.asc file
+      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      become: true
+      file: 
+        path: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+        state: touch
+
     - name: Add Docker APT signing key
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_key:
         url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+        keyring: /etc/apt/keyrings/docker.asc
         state: present
 
     - name: Add Docker repository into sources list
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_repository:
-        repo: "deb https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
 
@@ -204,7 +213,7 @@
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       apt:
-        name: [ 'nvidia-container-toolkit={{ nvidia_container_toolkit_version }}-1']
+        name: ['nvidia-container-toolkit={{ nvidia_container_toolkit_version }}-1', 'nvidia-container-toolkit-base={{ nvidia_container_toolkit_version }}-1', 'libnvidia-container-tools={{ nvidia_container_toolkit_version }}-1', 'libnvidia-container1={{ nvidia_container_toolkit_version }}-1']
         state: present
         update_cache: true
 
@@ -248,10 +257,26 @@
             daemon_reload: yes
       when: "container_runtime == 'containerd' and microk8s == false"
 
+    - name: Create "docker" group
+      when: docker_exists.rc >= 1
+      become: true
+      group:
+        name: docker
+        state: present
+
+    - name: Add remote "ubuntu" user to "docker" group
+      when: docker_exists.rc >= 1
+      become: true
+      user:
+        name: "{{ ansible_user_id }}"
+        group: docker
+        append: yes
+
     - name: Configure CDI
       shell: nvidia-ctk runtime configure --cdi.enabled; nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
       become: true
       when: nvidia_docker_exists.rc >= 1
+      ignore_errors: true
 
     - name: NGC CLI Setup
       become: true

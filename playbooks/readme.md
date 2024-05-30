@@ -103,7 +103,7 @@ If you want to cusomize any predefined components versions or any other custom p
 
 Example:
 ```
-$ nano cns_values_11.1.yaml
+$ nano cns_values_12.1.yaml
 
 cns_version: 12.1
 
@@ -217,6 +217,7 @@ Install the NVIDIA Cloud Native Stack stack by running the below command. "Skipp
 bash setup.sh install
 ```
 `NOTE:` When you trigger the installation on DGX System you need to click `Enter/Return` command when you see `Restarting Services`
+
 #### Custom Configuration
 By default Cloud Native Stack uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` in `cns_values_<version>.yaml`.
 
@@ -235,9 +236,9 @@ If you want to use microk8s you can enable the configuration in `cns_values_xx.y
 
 Example:
 ```
-$ nano cns_values_11.1.yaml
+$ nano cns_values_12.1.yaml
 
-cns_version: 11.1
+cns_version: 12.1
 
 microk8s: yes
 ```
@@ -350,6 +351,17 @@ You need to enable `monitoring` in the `cns_values_xx.yaml` like below
 monitoring: no
 ```
 Once stack is install access the Grafana with url `http://<node-ip>:32222` with credentials as `admin/cns-stack`
+
+### Storage on CNS
+
+Deploy Storage Provisoner on Cloud Native Stack. It will deply [Local Path Provisoner](https://github.com/rancher/local-path-provisioner?tab=readme-ov-file#local-path-provisioner)
+
+You need to enable `storage` in the `cns_values_xx.yaml` like below
+```
+# Monitoring Stack Prometheus/Grafana with GPU Metrics
+storage: no
+```
+
 ### Validation
 
 Run the below command to check if the installed versions are match with predefined versions of the NVIDIA Cloud Native Stack. Here' "Ignored" tasks refer to failed and "Changed/Ok" tasks refer to success.

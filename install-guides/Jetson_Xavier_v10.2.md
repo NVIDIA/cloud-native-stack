@@ -1,6 +1,6 @@
-<h1> NVIDIA Cloud Native Stack - v10.2 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit or Jetson Orin</h1>
+# NVIDIA Cloud Native Stack - v10.2 Install Guide for Jetson AGX Xavier or Jetson Xavier NX DevKit or Jetson Orin
 
-<h2>Introduction</h2>
+## Introduction
 
 This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple Jetson AGX Xavier or Jetson Xavier NX DevKits or Jetson Orin. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
@@ -12,7 +12,7 @@ The final environment will include:
 - Containerd 1.7.3
 
 
-<h2>Table of Contents</h2>
+## Table of Contents
 
 - [Prerequisites](#Prerequisites)
 - [Installing JetPack 5.0](#Installing-JetPack-5.0)
@@ -74,7 +74,7 @@ distribution=$(. /etc/os-release;echo $ID$VERSION_ID) &&  curl -s -L https://nvi
 Now execute the commands below:
 
 ```
-sudo apt-get update && sudo apt install nvidia-container-toolkit=1.13.2-1
+sudo apt-get update && sudo apt install nvidia-container-toolkit=1.13.5-1
 ```
 
 ## Installing Container Runtime

@@ -13,6 +13,8 @@
         cns_validation: "{{ cns_validation }}"
         confidential_computing: "{{ confidential_computing }}"
         microk8s: "{{ microk8s }}"
+        storage: "{{ storage }}"
+        monitoring: "{{ monitoring }}"
 
     - name: Checking Nouveau is disabled
       become: true
@@ -167,11 +169,11 @@
 - when: "cns_version > 4.1 and microk8s == false"
   import_playbook: prerequisites.yaml
 
-- when: "cns_docker == true and release != 'tegra'"
-  import_playbook: nvidia-docker.yaml
-
 - import_playbook: nvidia-driver.yaml
   when: "cns_nvidia_driver == true and release != 'tegra'"
+
+- when: "cns_docker == true and release != 'tegra'"
+  import_playbook: nvidia-docker.yaml
 
 - when: "cns_version > 4.1 and microk8s == false"
   import_playbook: k8s-install.yaml
@@ -181,6 +183,9 @@
 
 - when: "microk8s == true"
   import_playbook: microk8s.yaml
+
+- when: "storage == true or monitoring == true"
+  import_playbook: add-ons.yaml
 
 - hosts: all
   gather_facts: yes

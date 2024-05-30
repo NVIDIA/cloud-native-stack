@@ -75,7 +75,7 @@
       become: true
       when: "ansible_distribution == 'Ubuntu'"
       apt:
-        name: ['build-essential', 'net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet={{ k8s_version }}-1.1', 'kubeadm={{ k8s_version }}-1.1', 'kubectl={{ k8s_version }}-1.1']
+        name: ['build-essential', 'net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet={{ k8s_version }}*', 'kubeadm={{ k8s_version }}*', 'kubectl={{ k8s_version }}*']
         state: present
         update_cache: true
         allow_change_held_packages: yes
@@ -670,18 +670,27 @@
           - unzip
         state: latest
 
+    - name: create docker.asc file
+      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      become: true
+      file: 
+        path: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+        state: touch
+
     - name: Add Docker APT signing key
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_key:
         url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+        keyring: /etc/apt/keyrings/docker.asc
         state: present
 
     - name: Add Docker repository into sources list
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_repository:
-        repo: "deb https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
 
@@ -751,6 +760,21 @@
       register: docker_status
       retries: 5
       until: docker_status is success
+
+    - name: Create "docker" group
+      when: container_runtime == 'cri-dockerd'
+      become: true
+      group:
+        name: docker
+        state: present
+
+    - name: Add remote "ubuntu" user to "docker" group
+      when: container_runtime == 'cri-dockerd'
+      become: true
+      user:
+        name: "{{ ansible_user_id }}"
+        group: docker
+        append: yes
 
     - name: Update docker service 
       when: container_runtime == 'cri-dockerd'
@@ -830,119 +854,7 @@
             daemon_reload: yes
       when: "cns_version >= 5.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18' and 'running' not in k8sup.stdout and release == 'tegra' and container_runtime == 'containerd'"
 
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 7.4 or 8.3 or 9.1 or 10.0
-      become: true
-      block:
-        - name: Add NVIDIA Docker apt signing key for Ubuntu
-          apt_key:
-            url: https://nvidia.github.io/libnvidia-container/gpgkey
-            state: present
-
-        - name: Get NVIDIA Docker Apt list
-          get_url:
-            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
-            dest: /etc/apt/sources.list.d/libnvidia-container.list
-            mode: 0644
-
-        - name: Remove old nvidia container tooklit
-          apt:
-            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
-            state: absent
-            autoremove: yes
-
-        - name: Install NVIDIA Container Runtime
-          apt:
-            name: ['nvidia-docker2=2.13.0-1', 'nvidia-container-toolkit=1.13.1-1', 'nvidia-container-toolkit-base=1.13.1-1', 'libnvidia-container-tools=1.13.1-1', 'libnvidia-container1=1.13.1-1']
-            state: present
-            update_cache: yes
-            force: yes
-      when: "cns_version == 7.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 8.3 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 9.1 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 10.0 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
-
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 7.5 or 8.4 or 9.2 or 10.1
-      become: true
-      block:
-        - name: Add NVIDIA Docker apt signing key for Ubuntu
-          apt_key:
-            url: https://nvidia.github.io/libnvidia-container/gpgkey
-            state: present
-
-        - name: Get NVIDIA Docker Apt list
-          get_url:
-            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
-            dest: /etc/apt/sources.list.d/libnvidia-container.list
-            mode: 0644
-
-        - name: Remove old nvidia container tooklit
-          apt:
-            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
-            state: absent
-            autoremove: yes
-
-        - name: Install NVIDIA Container Runtime
-          apt:
-            name: ['nvidia-docker2=2.13.0-1', 'nvidia-container-toolkit=1.13.2-1', 'nvidia-container-toolkit-base=1.13.2-1', 'libnvidia-container-tools=1.13.2-1', 'libnvidia-container1=1.13.2-1']
-            state: present
-            update_cache: yes
-            force: yes
-      when: "cns_version == 7.5 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 8.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 9.2 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 10.1 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
-
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 8.5 or 9.3 or 10.2
-      become: true
-      block:
-        - name: Add NVIDIA Docker apt signing key for Ubuntu
-          apt_key:
-            url: https://nvidia.github.io/libnvidia-container/gpgkey
-            state: present
-
-        - name: Get NVIDIA Docker Apt list
-          get_url:
-            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
-            dest: /etc/apt/sources.list.d/libnvidia-container.list
-            mode: 0644
-
-        - name: Remove old nvidia container tooklit
-          apt:
-            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
-            state: absent
-            autoremove: yes
-
-        - name: Install NVIDIA Container Runtime
-          apt:
-            name: ['nvidia-docker2=2.13.0-1', 'nvidia-container-toolkit=1.13.5-1', 'nvidia-container-toolkit-base=1.13.5-1', 'libnvidia-container-tools=1.13.5-1', 'libnvidia-container1=1.13.5-1']
-            state: present
-            update_cache: yes
-            force: yes
-      when: "cns_version == 8.5 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 9.3 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 10.2 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
-
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 9.4 or 10.3 or 11.0
-      become: true
-      block:
-        - name: Add NVIDIA Docker apt signing key for Ubuntu
-          apt_key:
-            url: https://nvidia.github.io/libnvidia-container/gpgkey
-            state: present
-
-        - name: Get NVIDIA Docker Apt list
-          get_url:
-            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
-            dest: /etc/apt/sources.list.d/libnvidia-container.list
-            mode: 0644
-
-        - name: Remove old nvidia container tooklit
-          apt:
-            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
-            state: absent
-            autoremove: yes
-
-        - name: Install NVIDIA Container Runtime
-          apt:
-            name: ['nvidia-docker2=2.14.0-1', 'nvidia-container-toolkit=1.14.3-1', 'nvidia-container-toolkit-base=1.14.3-1', 'libnvidia-container-tools=1.14.3-1', 'libnvidia-container1=1.14.3-1']
-            state: present
-            update_cache: yes
-            force: yes
-      when: "cns_version == 9.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 10.3 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 11.0 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
-
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 10.4 or 11.1 or 12.0
+    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 
       become: true
       block:
         - name: Add NVIDIA Docker apt signing key for Ubuntu
@@ -962,17 +874,17 @@
 
         - name: Remove old nvidia container tooklit
           apt:
-            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
+            name: ['nvidia-container-toolkit*', 'nvidia-container-runtime*', 'libnvidia-container*']
             state: absent
             autoremove: yes
 
         - name: Install NVIDIA Container Runtime
           apt:
-            name: ['nvidia-docker2=2.14.0-1', 'nvidia-container-toolkit=1.14.6-1', 'nvidia-container-toolkit-base=1.14.6-1', 'libnvidia-container-tools=1.14.6-1', 'libnvidia-container1=1.14.6-1']
+            name: ['nvidia-container-toolkit={{ nvidia_container_toolkit_version }}-1', 'nvidia-container-toolkit-base={{ nvidia_container_toolkit_version }}-1', 'libnvidia-container-tools={{ nvidia_container_toolkit_version }}-1', 'libnvidia-container1={{ nvidia_container_toolkit_version }}-1']
             state: present
             update_cache: yes
             force: yes
-      when: "cns_version == 10.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 11.1 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 12.0 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
+      when: "ansible_distribution == 'Ubuntu' and release == 'tegra'"
 
     - name: Starting and enabling the required services
       become: true

@@ -176,7 +176,7 @@ Setup the Apt repositry for CRI-O
 
 ```
 OS=xUbuntu_22.04
-VERSION=1.27
+VERSION=1.28
 ```
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 

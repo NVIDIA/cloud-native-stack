@@ -260,6 +260,7 @@
        dest: "/tmp/kubeadm-join.command"
 
    - name: Copy Join Command
+     when: "'running' not in k8sup.stdout"
      fetch:
        src: "/tmp/kubeadm-join.command"
        dest: "/tmp/kubeadm-join.command"

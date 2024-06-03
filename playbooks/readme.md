@@ -60,7 +60,7 @@ This section describes how to use the ansible playbooks.
 Run the below commands to clone the NVIDIA Cloud Native Stack ansible playbooks.
 
 ```
-git clone https://github.com/NVIDIA/cloud-native-stack.git
+git clone -b kserve https://github.com/NVIDIA/cloud-native-stack.git
 cd cloud-native-stack/playbooks
 ```
 
@@ -245,6 +245,106 @@ cns_version: 12.1
 
 microk8s: yes
 ```
+
+#### Enable Kserve on CNS
+
+If you want to use Kserve on CNS, you can enable the configuration in `cns_values_xx.yaml` and trigger the installation
+
+`NOTE:` It's recommned to enable the storage and monitoring option as `yes` in `cns_values_xx.yaml` for Kserve 
+
+Example: 
+```
+nano cns_values_12.1.yaml
+
+cns_version: 12.1
+
+# Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
+kserve: no
+```
+
+For more information please refer [Kserve](https://github.com/kserve/kserve)
+
+##### Kserve Validation
+
+`NOTE:` This will create a Inference Resources on the cluster, please cleanup once you're done with Validation
+
+First, create a namespace to use for deploying KServe resources:
+
+```
+kubectl create namespace kserve-test
+```
+
+Create Inference Service
+
+```
+kubectl apply -n kserve-test -f - <<EOF
+apiVersion: "serving.kserve.io/v1beta1"
+kind: "InferenceService"
+metadata:
+  name: "sklearn-iris"
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: sklearn
+      storageUri: "gs://kfserving-examples/models/sklearn/1.0/model"
+EOF
+```
+Please wait a minute to create the Inference Service and check the status 
+
+```
+kubectl get inferenceservices sklearn-iris -n kserve-test
+```
+
+Expected OutPut:
+
+```
+NAME           URL                                                 READY   PREV   LATEST   PREVROLLEDOUTREVISION   LATESTREADYREVISION                    AGE
+sklearn-iris   http://sklearn-iris.kserve-test.example.com         True           100                              sklearn-iris-predictor-default-47q2g   23h
+```
+
+Determine the ingress IP and ports
+
+```
+kubectl get svc istio-ingressgateway -n istio-system
+```
+
+As Cloud Native Stack doesn't have any LoadBalancer, you can access the gateway using the service’s node port.
+```
+export INGRESS_HOST=$(kubectl get po -l istio=ingressgateway -n istio-system -o jsonpath='{.items[0].status.hostIP}')
+export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+```
+
+Create the Inference Input Request File
+
+```
+cat <<EOF > "./iris-input.json"
+{
+  "instances": [
+    [6.8,  2.8,  4.8,  1.4],
+    [6.0,  3.4,  4.5,  1.6]
+  ]
+}
+EOF
+```
+Run curl with the ingress gateway external IP using the HOST Header.
+
+```
+SERVICE_HOSTNAME=$(kubectl get inferenceservice sklearn-iris -n kserve-test -o jsonpath='{.status.url}' | cut -d "/" -f 3)
+curl -H "Host: ${SERVICE_HOSTNAME}" -H "Content-Type: application/json" "http://${INGRESS_HOST}:${INGRESS_PORT}/v1/models/sklearn-iris:predict" -d @./iris-input.json
+```
+
+Expected Output:
+```
+{"predictions": [1, 1]}
+```
+
+Cleanup:
+```
+kubectl delete inferenceservices sklearn-iris -n kserve-test
+```
+
+For more infomration about sample validation, Please refer [here](https://kserve.github.io/website/0.12/get_started/first_isvc/)
 
 ##### Installation on CSP's
 

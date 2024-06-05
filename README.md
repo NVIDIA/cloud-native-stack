@@ -6,9 +6,11 @@ Interested in deploying NVIDIA Cloud Native Stack? This repository has [install 
 
 Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA LaunchPad](https://www.nvidia.com/en-us/data-center/launchpad/) provides pre-provisioned environments so that you can quickly get started.
 
-## Getting Started
+# Getting Started
 
 #### Prerequisites
+
+Please make sure to meet the following prerequisites to Install the Cloud Native Stack
 
 - system has direct internet access
 - system should have an Operating system either Ubuntu 20.04 and above or RHEL 8.7
@@ -76,7 +78,7 @@ To Find other CNS Release Information, please refer to [Cloud Native Stack Compo
 
 `NOTE:` Above CNS versions are available on master branch as well but it's recommend to use specific branch with respective release 
 
-### Cloud Native Stack Limitations
+# Cloud Native Stack Topologies
 
 - Cloud Native Stack allows to deploy:
     - 1 node with both control plane and worker functionalities
@@ -84,7 +86,7 @@ To Find other CNS Release Information, please refer to [Cloud Native Stack Compo
 
 `NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
 
-### Cloud Native Stack Features
+# Cloud Native Stack Features
 
 - Kubernetes with GPU Operator, Network Operator 
 - [MicroK8s on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-microk8s)
@@ -93,11 +95,11 @@ To Find other CNS Release Information, please refer to [Cloud Native Stack Compo
 - [Monitoring on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#monitoring-on-cns)
 - [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
 
-### Getting help or Providing feedback
+# Getting help or Providing feedback
 
 Please open an [issue](https://github.com/NVIDIA/cloud-native-stack/issues) on the GitHub project for any questions. Your feedback is appreciated.
 
-### Useful Links
+# Useful Links
 - [NVIDIA LaunchPad](https://www.nvidia.com/en-us/data-center/launchpad/)
 - [NVIDIA LaunchPad Labs](https://docs.nvidia.com/launchpad/index.html)
 - [Cloud Native Stack on LaunchPad](https://docs.nvidia.com/LaunchPad/developer-labs/overview.html)

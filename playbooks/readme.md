@@ -346,6 +346,27 @@ kubectl delete inferenceservices sklearn-iris -n kserve-test
 
 For more infomration about sample validation, Please refer [here](https://kserve.github.io/website/0.12/get_started/first_isvc/)
 
+### Monitoring on CNS
+
+Deploy Prometheus/Grafan on Cloud Native Stack
+
+You need to enable `monitoring` in the `cns_values_xx.yaml` like below
+```
+# Monitoring Stack Prometheus/Grafana with GPU Metrics
+monitoring: no
+```
+Once stack is install access the Grafana with url `http://<node-ip>:32222` with credentials as `admin/cns-stack`
+
+### Storage on CNS
+
+Deploy Storage Provisoner on Cloud Native Stack. It will deply [Local Path Provisoner](https://github.com/rancher/local-path-provisioner?tab=readme-ov-file#local-path-provisioner)
+
+You need to enable `storage` in the `cns_values_xx.yaml` like below
+```
+# Monitoring Stack Prometheus/Grafana with GPU Metrics
+storage: no
+```
+
 ##### Installation on CSP's
 
 Cloud Native Stack can also support to install on CSP providers like AWS, Azure and Google Cloud. 
@@ -443,27 +464,6 @@ bash setup.sh install
 `NOTE:` 
   - If you want to re use the system It's recommended to re install the Operating system after used for Confidential Computing installation.
   - Currently playbooks supports only local system for confidential computing not supported for remote system installation. 
-
-### Monitoring on CNS
-
-Deploy Prometheus/Grafan on Cloud Native Stack
-
-You need to enable `monitoring` in the `cns_values_xx.yaml` like below
-```
-# Monitoring Stack Prometheus/Grafana with GPU Metrics
-monitoring: no
-```
-Once stack is install access the Grafana with url `http://<node-ip>:32222` with credentials as `admin/cns-stack`
-
-### Storage on CNS
-
-Deploy Storage Provisoner on Cloud Native Stack. It will deply [Local Path Provisoner](https://github.com/rancher/local-path-provisioner?tab=readme-ov-file#local-path-provisioner)
-
-You need to enable `storage` in the `cns_values_xx.yaml` like below
-```
-# Monitoring Stack Prometheus/Grafana with GPU Metrics
-storage: no
-```
 
 ### Validation
 

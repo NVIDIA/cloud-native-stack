@@ -6,14 +6,47 @@ Interested in deploying NVIDIA Cloud Native Stack? This repository has [install 
 
 Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA LaunchPad](https://www.nvidia.com/en-us/data-center/launchpad/) provides pre-provisioned environments so that you can quickly get started.
 
-#### NVIDIA Cloud Native Stack Component Matrix
-# NVIDIA Cloud Native Stack 
+## Getting Started
 
-NVIDIA Cloud Native Stack (formerly known as Cloud Native Core) is a collection of software to run cloud native workloads on NVIDIA GPUs. NVIDIA Cloud Native Stack is based on Ubuntu, Kubernetes, Helm and the NVIDIA GPU and Network Operator.
+#### Prerequisites
 
-Interested in deploying NVIDIA Cloud Native Stack? This repository has [install guides](https://github.com/NVIDIA/cloud-native-stack/tree/master/install-guides) for manual installations and [ansible playbooks](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks) for automated installations.
+- system has direct internet access
+- system should have an Operating system either Ubuntu 20.04 and above or RHEL 8.7
+- system has adequate internet bandWidth
+- DNS server is working fine on the System
+- system can access Google repo(for k8s installation)
+- system has only 1 network interface configured with internet access. The IP is static and doesn't change
+- UEFI secure boot is disabled
+- Root file system should has at least 40GB capacity
+- system has 2CPU and 4GB Memory
+- At least one NVIDIA GPU attached to the system
 
-Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA LaunchPad](https://www.nvidia.com/en-us/data-center/launchpad/) provides pre-provisioned environments so that you can quickly get started.
+#### Installation 
+
+Run the below commands to clone the NVIDIA Cloud Native Stack.
+
+```
+git clone https://github.com/NVIDIA/cloud-native-stack.git
+cd cloud-native-stack/playbooks
+```
+
+Update the hosts file in playbooks directory with master and worker nodes(if you have) IP's with username and password like below
+
+```
+nano hosts
+
+[master]
+<master-IP> ansible_ssh_user=nvidia ansible_ssh_pass=nvidipass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+[node]
+<worker-IP> ansible_ssh_user=nvidia ansible_ssh_pass=nvidiapass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+```
+
+Install the NVIDIA Cloud Native Stack stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
+
+```
+bash setup.sh install
+```
+For more Information about customize the values, please refer [Installation](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation)
 
 #### NVIDIA Cloud Native Stack Component Matrix
 
@@ -71,18 +104,6 @@ Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA L
 
 `NOTE:` Above CNS versions are available on master branch as well but it's recommend to use specific branch with respective release 
 
-#### Cloud Native Stack Prerequisites
-
-- system has direct internet access
-- system has adequate internet bandWidth
-- DNS server is working fine on the System
-- system can access Google repo(for k8s installation)
-- system has only 1 network interface configured with internet access. The IP is static and doesn't change
-- UEFI secure boot is disabled
-- Root file system should has at least 40GB capacity
-- system has 2CPU and 4GB Memory
-- At least one NVIDIA GPU attached to the system
-
 #### Cloud Native Stack Limitations
 
 - Cloud Native Stack allows to deploy:
@@ -91,29 +112,14 @@ Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA L
 
 `NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
 
-#### Getting help or Providing feedback
+#### Cloud Native Stack Features
 
-Please open an [issue](https://github.com/NVIDIA/cloud-native-stack/issues) on the GitHub project for any questions. Your feedback is appreciated.
-
-#### Cloud Native Stack Prerequisites
-
-- system has direct internet access
-- system has adequate internet bandWidth
-- DNS server is working fine on the System
-- system can access Google repo(for k8s installation)
-- system has only 1 network interface configured with internet access. The IP is static and doesn't change
-- UEFI secure boot is disabled
-- Root file system should has at least 40GB capacity
-- system has 4CPU and 8GB Memory
-- At least one NVIDIA GPU attached to the system
-
-#### Cloud Native Stack Limitations
-
-- Cloud Native Stack allows to deploy:
-    - 1 node with both control plane and worker functionalities
-    - 1 control plane node and any number of worker nodes
-
-`NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
+- Kubernetes with GPU Operator, Network Operator 
+- MicroK8s with GPU Operator, for more information refer [MicroK8s on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-microk8s)
+- Install on CSP's, for more information refer [Installation on CSP's](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation-on-csps)
+- Local Path Provisoner as a Storage Option, for more information please refer [Storage on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#storage-on-cns)
+- Prometheus as a Monitoring Option, for more information please refer [Monitoring on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#monitoring-on-cns)
+- Kserve Support, for more information please refer [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
 
 #### Getting help or Providing feedback
 

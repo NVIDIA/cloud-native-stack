@@ -48,7 +48,7 @@ bash setup.sh install
 ```
 For more Information about customize the values, please refer [Installation](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation)
 
-#### NVIDIA Cloud Native Stack Component Matrix
+## NVIDIA Cloud Native Stack Component Matrix
 
 | Branch/Release | Version | Initial Release Date   | Platform              | OS    | Containerd | CRI-O | K8s    | Helm  | NVIDIA GPU Operator | NVIDIA Network Operator | NVIDIA Data Center Driver |
 | :---:   |    :------:        | :---:                  | :---:                 | :---: | :---:      | :----: |  :---: | :---:        | :---:            | :---:      | :---: |
@@ -104,7 +104,7 @@ For more Information about customize the values, please refer [Installation](htt
 
 `NOTE:` Above CNS versions are available on master branch as well but it's recommend to use specific branch with respective release 
 
-#### Cloud Native Stack Limitations
+### Cloud Native Stack Limitations
 
 - Cloud Native Stack allows to deploy:
     - 1 node with both control plane and worker functionalities
@@ -112,7 +112,7 @@ For more Information about customize the values, please refer [Installation](htt
 
 `NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
 
-#### Cloud Native Stack Features
+### Cloud Native Stack Features
 
 - Kubernetes with GPU Operator, Network Operator 
 - MicroK8s with GPU Operator, for more information refer [MicroK8s on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-microk8s)
@@ -121,11 +121,11 @@ For more Information about customize the values, please refer [Installation](htt
 - Prometheus as a Monitoring Option, for more information please refer [Monitoring on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#monitoring-on-cns)
 - Kserve Support, for more information please refer [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
 
-#### Getting help or Providing feedback
+### Getting help or Providing feedback
 
 Please open an [issue](https://github.com/NVIDIA/cloud-native-stack/issues) on the GitHub project for any questions. Your feedback is appreciated.
 
-#### Useful Links
+### Useful Links
 - [NVIDIA LaunchPad](https://www.nvidia.com/en-us/data-center/launchpad/)
 - [NVIDIA LaunchPad Labs](https://docs.nvidia.com/launchpad/index.html)
 - [Cloud Native Stack on LaunchPad](https://docs.nvidia.com/LaunchPad/developer-labs/overview.html)

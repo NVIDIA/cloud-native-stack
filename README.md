@@ -6,16 +6,51 @@ Interested in deploying NVIDIA Cloud Native Stack? This repository has [install 
 
 Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA LaunchPad](https://www.nvidia.com/en-us/data-center/launchpad/) provides pre-provisioned environments so that you can quickly get started.
 
-#### NVIDIA Cloud Native Stack Component Matrix
-# NVIDIA Cloud Native Stack 
+# Getting Started
 
-NVIDIA Cloud Native Stack (formerly known as Cloud Native Core) is a collection of software to run cloud native workloads on NVIDIA GPUs. NVIDIA Cloud Native Stack is based on Ubuntu, Kubernetes, Helm and the NVIDIA GPU and Network Operator.
+#### Prerequisites
 
-Interested in deploying NVIDIA Cloud Native Stack? This repository has [install guides](https://github.com/NVIDIA/cloud-native-stack/tree/master/install-guides) for manual installations and [ansible playbooks](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks) for automated installations.
+Please make sure to meet the following prerequisites to Install the Cloud Native Stack
 
-Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA LaunchPad](https://www.nvidia.com/en-us/data-center/launchpad/) provides pre-provisioned environments so that you can quickly get started.
+- system has direct internet access
+- system should have an Operating system either Ubuntu 20.04 and above or RHEL 8.7
+- system has adequate internet bandWidth
+- DNS server is working fine on the System
+- system can access Google repo(for k8s installation)
+- system has only 1 network interface configured with internet access. The IP is static and doesn't change
+- UEFI secure boot is disabled
+- Root file system should has at least 40GB capacity
+- system has 2CPU and 4GB Memory
+- At least one NVIDIA GPU attached to the system
 
-#### NVIDIA Cloud Native Stack Component Matrix
+#### Installation 
+
+Run the below commands to clone the NVIDIA Cloud Native Stack.
+
+```
+git clone https://github.com/NVIDIA/cloud-native-stack.git
+cd cloud-native-stack/playbooks
+```
+
+Update the hosts file in playbooks directory with master and worker nodes(if you have) IP's with username and password like below
+
+```
+nano hosts
+
+[master]
+<master-IP> ansible_ssh_user=nvidia ansible_ssh_pass=nvidipass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+[node]
+<worker-IP> ansible_ssh_user=nvidia ansible_ssh_pass=nvidiapass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+```
+
+Install the NVIDIA Cloud Native Stack stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
+
+```
+bash setup.sh install
+```
+For more Information about customize the values, please refer [Installation](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation)
+
+## NVIDIA Cloud Native Stack Component Matrix
 
 | Branch/Release | Version | Initial Release Date   | Platform              | OS    | Containerd | CRI-O | K8s    | Helm  | NVIDIA GPU Operator | NVIDIA Network Operator | NVIDIA Data Center Driver |
 | :---:   |    :------:        | :---:                  | :---:                 | :---: | :---:      | :----: |  :---: | :---:        | :---:            | :---:      | :---: |
@@ -28,62 +63,22 @@ Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA L
 | 24.5.0/master  | 12.1   | 14 May 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.9                     | 1.7.16 | 1.29.4 | 1.29.4 |  3.14.4 | 24.3.0   | N/A              | 550.54.15 |
 | 24.5.0/master  | 12.1   | 14 May 2024 | Jetson Devices(AGX, NX, Orin)          | JetPack 5.1 and JetPack 5.0  | 1.7.16 | 1.29.4 | 1.29.4 |  3.14.4 | N/A      | N/A              | N/A         |
 | 24.5.0/master  | 12.1   | 14 May 2024 | DGX Server                             | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.16 | 1.29.4 | 1.29.4 |  3.14.4 | 24.3.0   | N/A              | N/A |
-| 24.3.0         | 12.0   | 25 Mar 2024 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.13 | 1.29.2 | 1.29.2 |  3.14.2 | 23.9.2   | 24.1.0(x86 only) | 550.54.15  |
-| 24.3.0         | 12.0   | 25 Mar 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.9                     | 1.7.13 | 1.29.2 | 1.29.2 |  3.14.2 | 23.9.2   | N/A              | 550.54.15 |
-| 24.3.0         | 12.0   | 25 Mar 2024 | Jetson Devices(AGX, NX, Orin)          | JetPack 5.1 and JetPack 5.0  | 1.7.13 | 1.29.2 | 1.29.2 |  3.14.2  | N/A     | N/A              | N/A         |
-| 24.3.0         | 12.0   | 25 Mar 2024  | DGX Server                            | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.13 | 1.29.2 | 1.29.2 |  3.14.2 | 23.9.2   | N/A              | N/A |
 |                |        |               |                               |                             |            |       |       |                  |       |                  |
 | 24.5.0/masrer  | 11.2   | 14 May 2024 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.16 | 1.28.6 | 1.28.8 |  3.14.4 | 24.3.0   | 24.1.1(x86 only) | 550.54.15  |
 | 24.5.0/master  | 11.2   | 14 May 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.9                     | 1.7.16 | 1.28.6 | 1.28.8 |  3.14.4 | 24.3.0   | N/A              | 550.54.15 |
 | 24.5.0/master  | 11.2   | 14 May 2024 | Jetson Devices(AGX, NX, Orin)          | JetPack 5.1 and JetPack 5.0  | 1.7.16 | 1.28.6 | 1.28.8 |  3.14.4 | N/A      | N/A              | N/A         |
 | 24.5.0/master  | 11.2   | 14 May 2024 | DGX Server                             | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.16 | 1.28.6 | 1.28.8 |  3.14.4 | 24.3.0   | N/A              | N/A |
-| 24.3.0         | 11.1   | 25 Mar 2024 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.13 | 1.28.2 | 1.28.6 |  3.14.2 | 23.9.2   | 24.1.0(x86 only) | 550.54.15  |
-| 24.3.0         | 11.1   | 25 Mar 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.9                     | 1.7.13 | 1.28.2 | 1.28.6 |  3.14.2 | 23.9.2   | N/A              | 550.54.15 |
-| 24.3.0         | 11.1   | 25 Mar 2024 | Jetson Devices(AGX, NX, Orin)          | JetPack 5.1 and JetPack 5.0  | 1.7.13 | 1.28.2 | 1.28.6 |  3.14.2 | N/A      | N/A              | N/A         |
-| 24.3.0         | 11.1   | 25 Mar 2024  | DGX Server                            | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.13 | 1.28.2 | 1.28.6 |  3.14.2 | 23.9.2   | N/A              | N/A |
-| 23.12.0        | 11.0   | 12 Dec 2023 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.7  | 1.28.1 | 1.28.2 |  3.13.1 | 23.9.1   | 23.10.0(x86 only)| 550.54.15  |
-| 23.12.0        | 11.0   | 12 Dec 2023 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.8                     | 1.7.7  | 1.28.1 | 1.28.2 |  3.13.1 | 23.9.1   | N/A              | 535.129.03 |
-| 23.12.0        | 11.0   | 12 Dec 2023 | Jetson Devices(AGX, NX, Orin)          | JetPack 5.1 and JetPack 5.0  | 1.7.7  | 1.28.1 | 1.28.2 |  3.13.1 | N/A      | N/A              | N/A         |
-| 23.12.0        | 11.0   | 12 Dec 2023 | DGX Server                             | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.7  | 1.28.1 | 1.28.2 |  3.13.1 | 23.9.1   | N/A              | N/A |
 |                |        |               |                               |                             |            |       |       |                  |            |                  |
 | 24.5.0/master  | 10.5   | 14 May 2024  | NVIDIA Certified Server (x86 & arm64) | Ubuntu 22.04 LTS             | 1.7.16 | 1.27.6 | 1.27.12 |  3.14.4 | 24.3.0  | 24.1.1(x86 only) | 550.54.15  |
 | 24.5.0/master  | 10.5   | 14 May 2024  | NVIDIA Certified Server (x86 & arm64) | RHEL 8.9                     | 1.7.16 | 1.27.6 | 1.27.12 |  3.14.4 | 24.3.0  | N/A              | 550.54.15 |
 | 24.5.0/master  | 10.5   | 14 May 2024  | Jetson Devices(AGX, NX, Orin)         | JetPack 5.1 and JetPack 5.0  | 1.7.16 | 1.27.6 | 1.27.12 |  3.14.4 | N/A     | N/A              | N/A         |
 | 24.5.0/master  | 10.5   | 14 May 2024  | DGX Server                            | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.16 | 1.27.6 | 1.27.12 |  3.14.4 | 24.3.0  | N/A              | N/A |
-| 24.3.0         | 10.4   | 25 Mar 2024  | NVIDIA Certified Server (x86 & arm64) | Ubuntu 22.04 LTS             | 1.7.13 | 1.27.4 | 1.27.10 |  3.14.2 | 23.9.2  | 24.1.0(x86 only) | 550.54.15  |
-| 24.3.0         | 10.4   | 25 Mar 2024  | NVIDIA Certified Server (x86 & arm64) | RHEL 8.9                     | 1.7.13 | 1.27.4 | 1.27.10 |  3.14.2 | 23.9.2  | N/A              | 550.54.15 |
-| 24.3.0         | 10.4   | 25 Mar 2024  | Jetson Devices(AGX, NX, Orin)         | JetPack 5.1 and JetPack 5.0  | 1.7.13 | 1.27.4 | 1.27.10 |  3.14.2  | N/A    | N/A              | N/A         |
-| 24.3.0         | 10.4   | 25 Mar 2024  | DGX Server                            | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.13 | 1.27.4 | 1.27.10 |  3.14.2 | 23.9.2  | N/A              | N/A |
-| 23.12.0        | 10.3   | 12 Dec 2023  | NVIDIA Certified Server (x86 & arm64) | Ubuntu 22.04 LTS             | 1.7.7 | 1.27.1 | 1.27.6 |  3.13.1 | 23.9.1    | 23.10.0(x86 only)| 535.129.03  |
-| 23.12.0        | 10.3   | 12 Dec 2023  | NVIDIA Certified Server (x86 & arm64) | RHEL 8.8                     | 1.7.7 | 1.27.1 | 1.27.6 |  3.13.1 | 23.9.1    | N/A              | 535.129.03 |
-| 23.12.0        | 10.3   | 12 Dec 2023  | Jetson Devices(AGX, NX, Orin)         | JetPack 5.1 and JetPack 5.0  | 1.7.7 | 1.27.1 | 1.27.6 |  3.13.1  | N/A      | N/A              | N/A         |
-| 23.12.0        | 10.3   | 12 Dec 2023  | DGX Server                            | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.7 | 1.27.1 | 1.27.6 |  3.13.1 | 23.9.1    | N/A              | N/A |
-| 23.8.0         | 10.2   | 17 Aug 2023  | NVIDIA Certified Server (x86 & arm64) | Ubuntu 22.04 LTS             | 1.7.3 | 1.27.1 | 1.27.4 |  3.12.2 | 23.6.1    | 23.7.0(x86 only) | 535.104.05  |
-| 23.8.0         | 10.2   | 17 Aug 2023  | NVIDIA Certified Server (x86 & arm64) | RHEL 8.7/RHEL 8.8            | 1.7.3 | 1.27.1 | 1.27.4 |  3.12.2 | 23.6.1    | N/A              | 535.104.05 |
-| 23.8.0         | 10.2   | 17 Aug 2023  | Jetson Devices(AGX, NX, Orin)         | JetPack 5.1 and JetPack 5.0  | 1.7.3 | 1.27.1 | 1.27.4 |  3.12.2  | N/A      | N/A              | N/A         |
-| 23.8.0         | 10.2   | 28 Sep 2023  | DGX Server                            | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.3 | 1.27.1 | 1.27.4 |  3.12.2 | 23.6.1    | N/A              | N/A |
-| 23.8.0         | 10.1   | 14 July 2023 | NVIDIA Certified Server (x86 & arm64) | Ubuntu 22.04 LTS             | 1.7.2 | 1.27.0 | 1.27.2 |  3.12.1 | 23.3.2    | 23.5.0(x86 only) | 535.54.03  |
-| 23.8.0         | 10.1   | 14 July 2023 | NVIDIA Certified Server (x86 & arm64) | RHEL 8.7                     | 1.7.2 | 1.27.0 | 1.27.2 |  3.12.1 | 23.3.2    | N/A              | 525.105.17  |
-| 23.8.0         | 10.0   | 1 May 2023   | Jetson Devices(AGX, NX, Orin)         | JetPack 5.1 and JetPack 5.0  | 1.7.2 | 1.27.2 | 1.27.0 |  3.12.1  | N/A      | N/A              | N/A         |
-| 23.8.0         | 10.0   | 1 May 2023   | NVIDIA Certified Server (x86 & arm64) | Ubuntu 22.04 LTS             | 1.7.0 | 1.27.0 | 1.27.0 |  3.11.2 | 23.3.1    | 23.1.0(x86 only) | 525.105.17  |
-| 23.8.0         | 10.0   | 1 May 2023   | NVIDIA Certified Server (x86 & arm64) | RHEL 8.7                     | 1.7.0 | 1.27.0 | 1.27.0 |  3.11.2 | 23.3.1    | N/A              | 525.105.17  |
-| 23.8.0         | 10.0   | 1 May 2023   | Jetson Devices(AGX, NX, Orin)         | JetPack 5.1 and JetPack 5.0  | 1.7.0 | 1.27.0 | 1.27.0 |  3.11.2  | N/A      | N/A              | N/A         |
+
+To Find other CNS Release Information, please refer to [Cloud Native Stack Component Matrix](https://github.com/NVIDIA/cloud-native-stack/tree/24.3.0?tab=readme-ov-file#nvidia-cloud-native-stack-component-matrix-1)
 
 `NOTE:` Above CNS versions are available on master branch as well but it's recommend to use specific branch with respective release 
 
-#### Cloud Native Stack Prerequisites
-
-- system has direct internet access
-- system has adequate internet bandWidth
-- DNS server is working fine on the System
-- system can access Google repo(for k8s installation)
-- system has only 1 network interface configured with internet access. The IP is static and doesn't change
-- UEFI secure boot is disabled
-- Root file system should has at least 40GB capacity
-- system has 2CPU and 4GB Memory
-- At least one NVIDIA GPU attached to the system
-
-#### Cloud Native Stack Limitations
+# Cloud Native Stack Topologies
 
 - Cloud Native Stack allows to deploy:
     - 1 node with both control plane and worker functionalities
@@ -91,35 +86,20 @@ Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA L
 
 `NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
 
-#### Getting help or Providing feedback
+# Cloud Native Stack Features
+
+- Kubernetes with GPU Operator, Network Operator 
+- [MicroK8s on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-microk8s)
+- [Installation on CSP's](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation-on-csps)
+- [Storage on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#storage-on-cns)
+- [Monitoring on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#monitoring-on-cns)
+- [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
+
+# Getting help or Providing feedback
 
 Please open an [issue](https://github.com/NVIDIA/cloud-native-stack/issues) on the GitHub project for any questions. Your feedback is appreciated.
 
-#### Cloud Native Stack Prerequisites
-
-- system has direct internet access
-- system has adequate internet bandWidth
-- DNS server is working fine on the System
-- system can access Google repo(for k8s installation)
-- system has only 1 network interface configured with internet access. The IP is static and doesn't change
-- UEFI secure boot is disabled
-- Root file system should has at least 40GB capacity
-- system has 4CPU and 8GB Memory
-- At least one NVIDIA GPU attached to the system
-
-#### Cloud Native Stack Limitations
-
-- Cloud Native Stack allows to deploy:
-    - 1 node with both control plane and worker functionalities
-    - 1 control plane node and any number of worker nodes
-
-`NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
-
-#### Getting help or Providing feedback
-
-Please open an [issue](https://github.com/NVIDIA/cloud-native-stack/issues) on the GitHub project for any questions. Your feedback is appreciated.
-
-#### Useful Links
+# Useful Links
 - [NVIDIA LaunchPad](https://www.nvidia.com/en-us/data-center/launchpad/)
 - [NVIDIA LaunchPad Labs](https://docs.nvidia.com/launchpad/index.html)
 - [Cloud Native Stack on LaunchPad](https://docs.nvidia.com/LaunchPad/developer-labs/overview.html)

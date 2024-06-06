@@ -15,7 +15,23 @@
        - "{{lookup('pipe', 'pwd')}}/files/grafana-dashboard.yaml"
        - "{{lookup('pipe', 'pwd')}}/files/kube-prometheus-stack.values"
        - "{{lookup('pipe', 'pwd')}}/files/grafana-patch.json"
-       
+
+   - name: Install Kserve on Kubernetes
+     when: kserve == true
+     shell: curl -s "https://raw.githubusercontent.com/kserve/kserve/release-0.13/hack/quick_install.sh" | bash > /tmp/kserve-install.log
+     failed_when: false
+     ignore_errors: true
+
+   - name: Kserve Status check
+     shell: cat /tmp/kserve-install.log | tail -1f | cut -d " " -f2-
+     register: kserve_check
+
+   - name: Install Kserve on Kubernetes
+     when: kserve == true and kserve_check.stdout != 'Successfully installed KServe'
+     shell: curl -s "https://raw.githubusercontent.com/kserve/kserve/release-0.13/hack/quick_install.sh" | bash > /tmp/kserve-install.log
+     failed_when: false
+     ignore_errors: true
+
    - name: Install Prometheus Stack on NVIDIA Cloud Native Stack
      ignore_errors: true
      failed_when: false

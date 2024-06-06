@@ -82,13 +82,13 @@ These steps apply to both runtimes.
 Set up the repository and update the apt package index:
 
 ```
-sudo apt-get update
+sudo apt update
 ```
 
 Install packages to allow apt to use a repository over HTTPS:
 
 ```
-sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
+sudo apt install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
 ```
 
 Configure the `overlay` and `br_netfilter` kernel modules required by Kubernetes:
@@ -223,11 +223,12 @@ Make sure your container runtime has been started and enabled before beginning i
 Execute the following to add apt keys:
 
 ```
- sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+ sudo apt update && sudo apt install -y apt-transport-https ca-certificates curl gpg
 ```
 
 ```
- curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 ```
 
 ```
@@ -237,15 +238,15 @@ Execute the following to add apt keys:
 Create kubernetes.list:
 
 ```
-cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
-deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main
-EOF
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list 
 ```
+
 
 Now execute the below to install kubelet, kubeadm, and kubectl:
 
 ```
- sudo apt-get update
+ sudo apt update
 ```
 
 ```

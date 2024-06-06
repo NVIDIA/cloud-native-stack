@@ -126,13 +126,13 @@ Wed Mar 24 12:47:29 2023
 Set up the repository and update the apt package index:
 
 ```
-$ sudo apt-get update
+$ sudo apt update
 ```
 
 Install packages to allow apt to use a repository over HTTPS:
 
 ```
-$ sudo apt-get install -y \
+$ sudo apt install -y \
     apt-transport-https \
     ca-certificates \
     curl \
@@ -169,13 +169,13 @@ Install Docker Engine - Community
 Update the apt package index:
 
 ```
-$ sudo apt-get update
+$ sudo apt update
 ```
 
 Install Docker Engine:
 
 ```
-$ sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+$ sudo apt install -y docker-ce docker-ce-cli containerd.io
 ```
 
 Verify that Docker Engine - Community is installed correctly by running the hello-world image:
@@ -207,7 +207,7 @@ sudo apt update
 Install NVIDIA Conatiner Toolkit
 
 ```
-sudo apt-get install -y nvidia-container-toolkit=1.15.0-1
+sudo apt install -y nvidia-container-toolkit=1.15.0-1
 ```
 
 
@@ -270,13 +270,13 @@ These steps apply to both runtimes.
 Set up the repository and update the apt package index:
 
 ```
-sudo apt-get update
+sudo apt update
 ```
 
 Install packages to allow apt to use a repository over HTTPS:
 
 ```
-sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
+sudo apt install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
 ```
 
 Configure the `overlay` and `br_netfilter` kernel modules required by Kubernetes:
@@ -443,12 +443,14 @@ Make sure your container runtime has been started and enabled before beginning i
 Execute the following to add apt keys:
 
 ```
- sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+ sudo apt update && sudo apt install -y apt-transport-https ca-certificates curl gpg
 ```
-```
-curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg
 
 ```
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+```
+
 ```
  sudo mkdir -p  /etc/apt/sources.list.d/
 ```
@@ -456,18 +458,17 @@ curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --de
 Create kubernetes.list:
 
 ```
-cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
-deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main
-EOF
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list 
 ```
 
 Now execute the below to install kubelet, kubeadm, and kubectl:
 
 ```
- sudo apt-get update
+ sudo apt update
 ```
 ```
- sudo apt-get install -y -q kubelet=1.30.0-00 kubectl=1.30.0-00 kubeadm=1.30.0-00
+ sudo apt install -y -q kubelet=1.30.0-00 kubectl=1.30.0-00 kubeadm=1.30.0-00
 ```
 ```
  sudo apt-mark hold kubelet kubeadm kubectl

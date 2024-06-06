@@ -56,7 +56,7 @@ Execute the following commands to upgrade nvidia container runtime
 Install packages to allow apt to use a repository over HTTPS:
 
 ```
- sudo apt-get install -y curl apt-transport-https gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
+ sudo apt install -y curl apt-transport-https gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
 ```
 
 Execute the following to add apt keys:
@@ -74,7 +74,7 @@ distribution=$(. /etc/os-release;echo $ID$VERSION_ID) &&  curl -s -L https://nvi
 Now execute the commands below:
 
 ```
-sudo apt-get update && sudo apt install nvidia-container-runtime=3.13.0
+sudo apt update && sudo apt install nvidia-container-runtime=3.13.0
 ```
 
 ## Installing Container Runtime
@@ -91,13 +91,13 @@ These steps apply to both runtimes.
 Set up the repository and update the apt package index:
 
 ```
-sudo apt-get update
+sudo apt update
 ```
 
 Install packages to allow apt to use a repository over HTTPS:
 
 ```
-sudo apt-get install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
+sudo apt install -y apt-transport-https ca-certificates gnupg-agent libseccomp2 autotools-dev debhelper software-properties-common
 ```
 
 Configure the `overlay` and `br_netfilter` kernel modules required by Kubernetes:
@@ -193,31 +193,31 @@ sudo systemctl enable crio.service && sudo systemctl start crio.service
 
 Make sure container runtime has been started and enabled before beginning installation:
 
-```
- sudo systemctl start containerd && sudo systemctl enable containerd
-```
-
-Execute the following to add apt keys:
 
 ```
- sudo apt-get update && sudo apt-get install -y apt-transport-https curl
- curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+ sudo apt update && sudo apt install -y apt-transport-https ca-certificates curl gpg
+```
+```
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.27/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+```
+
+```
  sudo mkdir -p  /etc/apt/sources.list.d/
 ```
 
 Create kubernetes.list:
 
 ```
- cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
-deb https://apt.kubernetes.io/ kubernetes-xenial main
-EOF
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.27/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list 
 ```
 
 Now execute the below to install kubelet, kubeadm, and kubectl:
 
 ```
- sudo apt-get update
- sudo apt-get install -y -q kubelet=1.27.0-00 kubectl=1.27.0-00 kubeadm=1.27.0-00
+ sudo apt update
+ sudo apt install -y -q kubelet=1.27.0-00 kubectl=1.27.0-00 kubeadm=1.27.0-00
  sudo apt-mark hold kubelet kubeadm kubectl
 ```
 

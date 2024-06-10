@@ -183,7 +183,7 @@ storage: no
 monitoring: no
 
 # Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
-kserve: yes
+kserve: no
 
 ## Cloud Native Stack Validation
 cns_validation: no
@@ -259,7 +259,7 @@ nano cns_values_12.1.yaml
 cns_version: 12.1
 
 # Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
-kserve: no
+kserve: yes
 ```
 
 For more information please refer [Kserve](https://github.com/kserve/kserve)

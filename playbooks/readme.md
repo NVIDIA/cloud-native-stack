@@ -183,7 +183,7 @@ storage: no
 monitoring: no
 
 # Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
-kserve: no
+kserve: yes
 
 ## Cloud Native Stack Validation
 cns_validation: no

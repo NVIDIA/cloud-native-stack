@@ -93,7 +93,13 @@ To Find other CNS Release Information, please refer to [Cloud Native Stack Compo
 - [Installation on CSP's](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation-on-csps)
 - [Storage on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#storage-on-cns)
 - [Monitoring on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#monitoring-on-cns)
+- [LoadBalancer on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#load-balancer-on-cns)
 - [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
+
+| Branch/Release | CNS Version  | Release Date   | Kserve | LoadBalancer | Storage  | Monitoring    |
+| :---:          | :------:     | :---:                  | :---:  | :---:        | :---:    | :---:         | 
+| 24.5.0/master  | 13.0 <br /> 12.1 <br /> 11.2 <br /> 10.5   | 9 July 2024 | <br />  **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul>  | MetalLB: 0.14.5 |  NFS: 4.0.18 <br /> Local Path: 0.0.26 | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 |
+
 
 # Getting help or Providing feedback
 

@@ -60,7 +60,7 @@ This section describes how to use the ansible playbooks.
 Run the below commands to clone the NVIDIA Cloud Native Stack ansible playbooks.
 
 ```
-git clone -b kserve https://github.com/NVIDIA/cloud-native-stack.git
+git clone https://github.com/NVIDIA/cloud-native-stack.git
 cd cloud-native-stack/playbooks
 ```
 
@@ -75,7 +75,7 @@ nano hosts
 10.110.16.179 ansible_ssh_user=nvidia ansible_ssh_pass=nvidiapass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
-### Installation
+## Installation
 Cloud Native Stack Supports below versions.
 
 Available versions are:
@@ -176,14 +176,19 @@ k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.29/rpm/repodata/repomd.xml.ke
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
-# Local Path Provisioner as Storage option
+# Local Path Provisioner and NFS Provisoner as Storage option
 storage: no
 
-# Monitoring Stack Prometheus/Grafana with GPU Metrics
+# Monitoring Stack Prometheus/Grafana with GPU Metrics and Elastic Logging stack
 monitoring: no
 
 # Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
 kserve: no
+
+# Install MetalLB with NodeIP
+loadbalancer: no
+# Example input loadbalancer_ip: "10.117.20.50/32"
+loadbalancer_ip: ""
 
 ## Cloud Native Stack Validation
 cns_validation: no
@@ -221,7 +226,7 @@ bash setup.sh install
 ```
 `NOTE:` When you trigger the installation on DGX System you need to click `Enter/Return` command when you see `Restarting Services`
 
-#### Custom Configuration
+### Custom Configuration
 By default Cloud Native Stack uses Google kubernetes apt repository, if you want to use any other kubernetes apt repository, please adjust the `k8s_apt_key` and `k8s_apt_repository` in `cns_values_<version>.yaml`.
 
 Example:
@@ -233,7 +238,7 @@ k8s_apt_repository: "deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-x
 k8s_registry: "registry.aliyuncs.com/google_containers"
 ```
 
-#### Enable MicroK8s 
+### Enable MicroK8s 
 
 If you want to use microk8s you can enable the configuration in `cns_values_xx.yaml` and trigger the installation
 
@@ -246,27 +251,38 @@ cns_version: 12.1
 microk8s: yes
 ```
 
-#### Enable Kserve on CNS
+### Enable Kserve on CNS
 
 If you want to use Kserve on CNS, you can enable the configuration in `cns_values_xx.yaml` and trigger the installation
 
-`NOTE:` It's recommned to enable the storage and monitoring option as `yes` in `cns_values_xx.yaml` for Kserve 
+`NOTE:` It's recommned to enable the [loadbalancer](#load-balancer-on-cns), [storage](#storage-on-cns) and [monitoring](#monitoring-on-cns) option as `yes` in `cns_values_xx.yaml` for Kserve 
 
 Example: 
 ```
 nano cns_values_12.1.yaml
 
-cns_version: 12.1
+# Local Path Provisioner and NFS Provisoner as Storage option
+storage: yes
+
+# Monitoring Stack Prometheus/Grafana with GPU Metrics and Elastic Logging stack
+monitoring: yes
 
 # Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
 kserve: yes
+
+# Install MetalLB
+loadbalancer: yes
+# Example input loadbalancer_ip: "10.117.20.50/32", , it could be system IP
+loadbalancer_ip: "10.110.10.2/32"
 ```
 
 For more information please refer [Kserve](https://github.com/kserve/kserve)
 
-##### Kserve Validation
+#### Kserve Validation
 
 `NOTE:` This will create a Inference Resources on the cluster, please cleanup once you're done with Validation
+
+##### Example: Deploying Sample Application  
 
 First, create a namespace to use for deploying KServe resources:
 
@@ -309,7 +325,14 @@ Determine the ingress IP and ports
 kubectl get svc istio-ingressgateway -n istio-system
 ```
 
-As Cloud Native Stack doesn't have any LoadBalancer, you can access the gateway using the service’s node port.
+If the EXTERNAL-IP value is set, your environment has an external load balancer that you can use for the ingress gateway.
+
+```
+export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
+```
+
+If Load Balancer is not enabled on Cloud Native Stack, you can access the gateway using the service’s node port.
 ```
 export INGRESS_HOST=$(kubectl get po -l istio=ingressgateway -n istio-system -o jsonpath='{.items[0].status.hostIP}')
 export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
@@ -346,28 +369,235 @@ kubectl delete inferenceservices sklearn-iris -n kserve-test
 
 For more infomration about sample validation, Please refer [here](https://kserve.github.io/website/0.12/get_started/first_isvc/)
 
+##### Example: Deploying NIM on top of KServe
+
+1. Execute the below command to create `kserve-nim.yaml` 
+
+  ```
+  cat <<EOF | tee kserve-nim.yaml
+  apiVersion: v1
+  kind: Secret
+  metadata:
+    name: nvidia-nim-secrets
+  data:
+    HF_TOKEN: \${HF_TOKEN}
+    NGC_API_KEY: \${NGC_API_KEY}
+  type: Opaque
+  ---
+  apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: nvidia-nim-pvc
+  spec:
+    accessModes:
+      - ReadWriteMany
+    storageClassName: nfs-client
+    resources:
+      requests:
+        storage: 200G
+  ---
+  apiVersion: serving.kserve.io/v1alpha1
+  kind: ClusterServingRuntime
+  metadata:
+    name: nvidia-nim-llama3-8b-instruct-24.05
+  spec:
+    annotations:
+      prometheus.kserve.io/path: /metrics
+      prometheus.kserve.io/port: "8000"
+      serving.kserve.io/enable-metric-aggregation: "true"
+      serving.kserve.io/enable-prometheus-scraping: "true"
+    containers:
+    - env:
+      - name: NIM_CACHE_PATH
+        value: /opt/nim/.cache
+      - name: HF_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: nvidia-nim-secrets
+            key: HF_TOKEN
+      - name: NGC_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: nvidia-nim-secrets
+            key: NGC_API_KEY
+      image: nvcr.io/nim/meta/llama3-8b-instruct:1.0.0
+      name: kserve-container
+      ports:
+      - containerPort: 8000
+        protocol: TCP
+      volumeMounts:
+      - mountPath: /dev/shm
+        name: dshm
+    imagePullSecrets:
+    - name: ngc-secret
+    protocolVersions:
+    - v2
+    - grpc-v2
+    supportedModelFormats:
+    - autoSelect: true
+      name: nvidia-nim-llama3-8b-instruct
+      priority: 1
+      version: "24.05"
+    volumes:
+    - emptyDir:
+        medium: Memory
+        sizeLimit: 16Gi
+      name: dshm
+  ---
+  apiVersion: serving.kserve.io/v1beta1
+  kind: InferenceService
+  metadata:
+    annotations:
+      autoscaling.knative.dev/target: "10"
+    name: llama3-8b-instruct-1xgpu
+  spec:
+    predictor:
+      minReplicas: 1
+      model:
+        modelFormat:
+          name: nvidia-nim-llama3-8b-instruct
+        resources:
+          limits:
+            nvidia.com/gpu: "1"
+          requests:
+            nvidia.com/gpu: "1"
+        runtime: nvidia-nim-llama3-8b-instruct-24.05
+        storageUri: pvc://nvidia-nim-pvc/
+  EOF
+  ```
+
+2. Run the below command to update the Knative configuration. 
+
+  ```
+  kubectl patch configmap config-features -n knative-serving --type merge -p '{"data":{"kubernetes.podspec-nodeselector":"enabled"}}'
+  ```
+
+3. Export the `NGC_API_KEY` and `HF_TOKEN` values. 
+  
+  Follow the steps to get 
+
+  - [NGC API KEY](https://docs.nvidia.com/ngc/gpu-cloud/ngc-private-registry-user-guide/index.html#generating-api-key)
+  - [HF TOKEN](https://huggingface.co/docs/hub/en/security-tokens#user-access-tokens)
+  ```
+  export NGC_API_KEY=
+  export HF_TOKEN=
+  ```
+4. Run the below commands to create secrets and NIM with kserve. 
+
+  ```
+  kubectl create secret docker-registry ngc-secret \
+  --docker-server=nvcr.io \
+  --docker-username='$oauthtoken' \
+  --docker-password=${NGC_API_KEY}
+  ```
+
+  ```
+  HF_TOKEN_BASE64=$(echo -n "$HF_TOKEN" | base64 -w0)
+  NGC_API_KEY_BASE64=$(echo -n "$NGC_API_KEY" | base64 -w0)
+  ```
+
+  ```
+  sed -e "s|\${HF_TOKEN}|${HF_TOKEN_BASE64}|g" -e "s|\${NGC_API_KEY}|${NGC_API_KEY_BASE64}|g" kserve-nim.yaml | kubectl apply -f -
+  ```
+
+Please refer [NIM-Deploy](https://github.com/NVIDIA/nim-deploy/tree/main/kserve) to know more about NIM's on KServe. 
+
+###### Check NIM Deployment
+
+Exccute the below commands to check the status of the deployment 
+
+```
+kubectl get inferenceservice
+```
+Example Output:
+```
+NAME                      URL                                                  READY     PREV  LATEST  PREVROLLEDOUTREVISION  LATESTREADYREVISION            AGE
+llama3-8b-instruct-1xgpu  http://llama3-8b-instruct-1xgpu.default.example.com  True      100               llama3-8b-instruct-1xgpu-predictor-00001  5m2s
+```
+
+```
+kubectl get pod
+```
+Example Output:
+```
+NAME                                                             READY  STATUS  RESTARTS  AGE
+llama3-8b-instruct-1xgpu-predictor-00001-deployment-5574b67xmvw  2/2    Running  0        4m30s
+```
+
+###### NIM with Kserve Validation
+
+Execute the below commands to export Inference, Ingress host and port details
+
+  ```
+  SERVICE_HOSTNAME=$(kubectl get inferenceservice llama3-8b-instruct-1xgpu -o jsonpath='{.status.url}' | cut -d "/" -f 3)
+  export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
+  ```
+
+Run the below command to find the available models
+
+  ```
+  curl -X 'GET' \
+      -H "Host: ${SERVICE_HOSTNAME}" \
+      "http://${INGRESS_HOST}:${INGRESS_PORT}/v1/models" \
+      -H 'accept: application/json' \
+      -H 'Content-Type: application/json'
+  ```
+
+Run the below command to get the response from Inference. 
+
+  ```
+  curl -X 'POST' \
+      -H "Host: ${SERVICE_HOSTNAME}" \
+      "http://${INGRESS_HOST}:${INGRESS_PORT}/v1/completions" \
+      -H 'accept: application/json' \
+      -H 'Content-Type: application/json' \
+      -d '{
+  "model": "meta/llama3-8b-instruct",
+  "prompt": "Once upon a time",
+  "max_tokens": 64
+  }'
+  ```
+
+
 ### Monitoring on CNS
 
-Deploy Prometheus/Grafan on Cloud Native Stack
+Deploy Prometheus/Grafan and Elastic Logging stack on Cloud Native Stack
 
 You need to enable `monitoring` in the `cns_values_xx.yaml` like below
 ```
-# Monitoring Stack Prometheus/Grafana with GPU Metrics
+# Monitoring Stack Prometheus/Grafana with GPU Metrics and Elastic Logging stack
 monitoring: no
 ```
 Once stack is install access the Grafana with url `http://<node-ip>:32222` with credentials as `admin/cns-stack`
 
+Once stack is install access the Kibana with url `http://<node-ip>:32221` with credentials as `elastic/cns-stack`
+
 ### Storage on CNS
 
-Deploy Storage Provisoner on Cloud Native Stack. It will deply [Local Path Provisoner](https://github.com/rancher/local-path-provisioner?tab=readme-ov-file#local-path-provisioner)
+Deploy Storage Provisoner and NFS Provisioner on Cloud Native Stack. 
+- It will deply [Local Path Provisoner](https://github.com/rancher/local-path-provisioner?tab=readme-ov-file#local-path-provisioner)
+- It will deploy [NFS Provisioner](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner)
 
 You need to enable `storage` in the `cns_values_xx.yaml` like below
 ```
-# Monitoring Stack Prometheus/Grafana with GPU Metrics
+# Local Path Provisioner and NFS Provisoner as Storage option
 storage: no
 ```
 
-##### Installation on CSP's
+### Load Balancer on CNS
+
+Deploy Load Balancer using NodeIP on Cloud Native Stack, it will deploy [MetalLB](https://metallb.universe.tf/installation/#installation-by-manifest)
+
+You need to enable `loadbalancer` option in the `cns_values_xx.yaml` like below 
+```
+# Install MetalLB
+loadbalancer: no
+# Example input loadbalancer_ip: "10.117.20.50/32", it could be node/host IP
+loadbalancer_ip: ""
+```
+
+### Installation on CSP's
 
 Cloud Native Stack can also support to install on CSP providers like AWS, Azure and Google Cloud. 
 
@@ -440,7 +670,7 @@ Update the GKE Project ID `cns_values_xx.yaml` before trigger the installation
       cd nvidia-terraform-modules/aks
       terraform destroy --auto-approve
       ```
-#####  Confidential Computing on CNS stack 
+###  Confidential Computing on CNS stack 
 
 You can install Cloud Native Stack with Confidentail Computing, run the below command to trigger the installation
 
@@ -558,5 +788,3 @@ The Ansible NVIDIA Cloud Native Stack uninstall playbook will do the following:
 ### Getting Help
 
 Please [open an issue on the GitHub project](https://github.com/NVIDIA/cloud-native-stack/issues) for any questions. Your feedback is appreciated.
-
-

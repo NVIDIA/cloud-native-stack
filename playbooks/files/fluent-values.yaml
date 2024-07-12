@@ -1,0 +1,17 @@
+config:
+  ## https://docs.fluentbit.io/manual/pipeline/outputs
+  outputs: |
+    [OUTPUT]
+        Name               es
+        Match              *
+        tls                On
+        tls.verify         Off
+        Host               cns-es-http
+        Port               9200
+        HTTP_User          elastic
+        HTTP_Passwd        cns-stack
+        Replace_Dots       On
+        Logstash_Format    On
+        Logstash_Prefix    logs-fluent-bit
+        Retry_Limit        False
+        Suppress_Type_Name On

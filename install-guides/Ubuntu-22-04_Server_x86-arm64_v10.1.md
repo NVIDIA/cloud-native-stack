@@ -536,7 +536,7 @@ helm repo add mellanox https://mellanox.github.io/network-operator
 
 Update the Helm repo:
 ```
- elm repo update
+ helm repo update
 ```
 Install Network Operator:
 ```
@@ -580,7 +580,7 @@ helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
 Update the Helm repo:
 
 ```
-helm repo update
+hhelm repo update
 ```
 
 Install GPU Operator:

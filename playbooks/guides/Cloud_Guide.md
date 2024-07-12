@@ -4,7 +4,7 @@ This page describes the steps required to use Ansible Playbooks
 
 ## Following supported cloud environments
 
-- EKS(Elastci Kubernetes Service)
+- EKS(Elastic Kubernetes Service)
 - GKE(Google Kubernetes Engine)
 - AKS(Azure Kubernetes Service) - In Progress
 

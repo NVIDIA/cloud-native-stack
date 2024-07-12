@@ -6,6 +6,64 @@
      shell: kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v{{ local_path_provisioner }}/deploy/local-path-storage.yaml
      when: storage == true
 
+   - name: Install NFS Packages on RHEL
+     become: true
+     when: storage == true and ansible_distribution == 'RedHat'
+     yum:
+      name: ['nfs-utils']
+      state: present
+
+   - name: Install NFS Packages on Ubuntu
+     become: true
+     when: storage == true and ansible_distribution == 'Ubuntu'
+     apt:
+      name: ['nfs-kernel-server', 'nfs-common']
+      state: present
+      update_cache: true
+
+   - name: Setup NFS provisioner
+     become: true
+     when: storage == true
+     block:
+       - name: Setup Mounts for NFS
+         shell: |
+           mkdir -p /data/nfs
+           chown nobody:nogroup /data/nfs
+           chmod 2770 /data/nfs
+
+       - name: Update Exports for NFS
+         lineinfile:
+           path: /etc/exports
+           insertafter: EOF
+           line: "/data/nfs  *(rw,sync,no_subtree_check,no_root_squash,insecure)"
+
+       - name: Run exports
+         shell: exportfs -a
+
+   - name: NFS service restart service on Ubuntu
+     become: true
+     when: storage == true and ansible_distribution == 'Ubuntu'
+     systemd_service:
+       name: nfs-kernel-server
+       state: restarted
+       daemon_reload: yes
+
+   - name: NFS Service restart service on RHEL
+     become: true
+     when: storage == true and ansible_distribution == 'RedHat'
+     systemd_service:
+       name: nfs-server
+       state: restarted
+       daemon_reload: yes
+
+   - name: Install NFS External Provisioner
+     when: storage == true
+     shell: |
+       helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner --force-update
+       helm install --version {{ nfs_provisioner }} nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_default_ipv4.address }} --set nfs.path=/data/nfs --set storageClass.onDelete=true --create-namespace --namespace nfs-client
+       sleep 10
+       kubectl patch storageclass nfs-client -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
    - name: Copy files
      when: monitoring == true
      copy:
@@ -15,22 +73,113 @@
        - "{{lookup('pipe', 'pwd')}}/files/grafana-dashboard.yaml"
        - "{{lookup('pipe', 'pwd')}}/files/kube-prometheus-stack.values"
        - "{{lookup('pipe', 'pwd')}}/files/grafana-patch.json"
+       - "{{lookup('pipe', 'pwd')}}/files/fluent-values.yaml"
 
    - name: Install Kserve on Kubernetes
      when: kserve == true
-     shell: curl -s "https://raw.githubusercontent.com/kserve/kserve/release-0.13/hack/quick_install.sh" | bash > /tmp/kserve-install.log
-     failed_when: false
-     ignore_errors: true
-
-   - name: Kserve Status check
-     shell: cat /tmp/kserve-install.log | tail -1f | cut -d " " -f2-
+     retries: 3
+     until: kserve_check.stdout == 'Successfully installed KServe'
+     shell: curl -s "https://raw.githubusercontent.com/kserve/kserve/release-{{ kserve_version }}/hack/quick_install.sh" | bash > /tmp/kserve-install.log; cat /tmp/kserve-install.log | tail -1f | cut -d " " -f2-
      register: kserve_check
-
-   - name: Install Kserve on Kubernetes
-     when: kserve == true and kserve_check.stdout != 'Successfully installed KServe'
-     shell: curl -s "https://raw.githubusercontent.com/kserve/kserve/release-0.13/hack/quick_install.sh" | bash > /tmp/kserve-install.log
      failed_when: false
      ignore_errors: true
+
+   - name: Install MetalLB
+     shell: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v{{ metallb_version }}/config/manifests/metallb-native.yaml; sleep 35"
+     when: loadbalancer == true
+
+   - name: Apply Layer2 Config for MetalLB
+     when: loadbalancer == true
+     shell: |
+       kubectl apply -f - <<EOF
+       apiVersion: metallb.io/v1beta1
+       kind: IPAddressPool
+       metadata:
+         name: first-pool
+         namespace: metallb-system
+       spec:
+         addresses:
+         - {{  loadbalancer_ip }}
+       ---
+       apiVersion: metallb.io/v1beta1
+       kind: L2Advertisement
+       metadata:
+         name: example
+         namespace: metallb-system
+       spec:
+         ipAddressPools:
+         - first-pool
+       EOF
+
+   - name: Install Elastic Stack
+     ignore_errors: true
+     failed_when: false
+     shell: "{{ item }}"
+     when: monitoring == true
+     with_items:
+       - helm repo add elastic https://helm.elastic.co
+       - helm repo add fluent https://fluent.github.io/helm-charts/
+       - helm repo update
+       - helm install elastic-operator elastic/eck-operator -n elastic-system --create-namespace
+       - sleep 5
+       - kubectl create ns monitoring
+
+   - name: Apply Elastic Config
+     ignore_errors: true
+     when:  monitoring == true
+     shell: |
+       kubectl apply -f - <<EOF
+       apiVersion: elasticsearch.k8s.elastic.co/v1
+       kind: Elasticsearch
+       metadata:
+         name: cloud-native
+         namespace: monitoring
+       spec:
+         version: {{ elastic_stack }}
+         nodeSets:
+         - name: default
+           count: 1
+           volumeClaimTemplates:
+           - metadata:
+               name: elasticsearch-data # Do not change this name unless you set up a volume mount for the data path.
+             spec:
+               accessModes:
+               - ReadWriteOnce
+               resources:
+                 requests:
+                   storage: 5Gi
+               storageClassName: local-path
+           config:
+            node.store.allow_mmap: false
+       ---
+       apiVersion: kibana.k8s.elastic.co/v1
+       kind: Kibana
+       metadata:
+         name: cloud-native
+         namespace: monitoring
+       spec:
+         version: {{ elastic_stack }}
+         count: 1
+         http:
+          service:
+            spec:
+              type: NodePort
+         elasticsearchRef:
+           name: cloud-native
+       EOF
+
+   - name: Install Fluent Bit
+     shell: "{{ item }}"
+     when: monitoring == true
+     ignore_errors: true
+     failed_when: false
+     with_items:
+       - sleep 10
+       - "kubectl get secrets -n monitoring cloud-native-es-elastic-user -o yaml | sed \"s/  elastic: .*/  elastic: Y25zLXN0YWNr/g\"  | kubectl apply -f -"
+       - kubectl delete pod $(kubectl get pod -n monitoring | grep cloud-native | awk '{print $1}') -n monitoring --force
+       - "helm install -f {{ ansible_user_dir }}/fluent-values.yaml fluent/fluent-bit -n monitoring --generate-name"
+       - "curl -u 'elastic:cns-stack' -X POST -k \"https://$(kubectl get svc -n monitoring | grep cloud-native-kb-http | awk '{print $3}'):5601/api/data_views/data_view\" -H 'kbn-xsrf: true' -H 'Content-Type: application/json' -d' {  \"data_view\": { \"title\": \"logs*\", \"name\": \"My Logs\"}}'"
+       - kubectl patch svc $(kubectl get svc -n monitoring | grep cloud-native-kb-http | awk '{print $1}') --type='json' -p '[{"op":"replace","path":"/spec/type","value":"NodePort"},{"op":"replace","path":"/spec/ports/0/nodePort","value":32221}]' -n monitoring
 
    - name: Install Prometheus Stack on NVIDIA Cloud Native Stack
      ignore_errors: true
@@ -40,7 +189,7 @@
      with_items:
        - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
        - helm repo update
-       - helm install prometheus-community/kube-prometheus-stack --create-namespace --namespace monitoring --generate-name --values  {{ ansible_user_dir }}/kube-prometheus-stack.values
+       - helm install --version {{ prometheus_stack }} prometheus-community/kube-prometheus-stack --create-namespace --namespace monitoring --generate-name --values  {{ ansible_user_dir }}/kube-prometheus-stack.values
        - kubectl patch svc $(kubectl get svc -n monitoring | grep grafana | awk '{print $1}') --type='json' -p '[{"op":"replace","path":"/spec/type","value":"NodePort"},{"op":"replace","path":"/spec/ports/0/nodePort","value":32222}]' -n monitoring
        - kubectl apply -f  {{ ansible_user_dir }}/grafana-dashboard.yaml -n monitoring
        - kubectl patch deployment $(kubectl get deployments -n monitoring | grep grafana | awk '{print $1}')  -n monitoring  --patch "$(cat {{ ansible_user_dir }}/grafana-patch.json)"

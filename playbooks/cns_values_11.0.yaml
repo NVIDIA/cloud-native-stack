@@ -1,6 +1,10 @@
 cns_version: 11.0
 
+## MicroK8s cluster
 microk8s: no
+## Kubernetes Install with Kubeadm 
+install_k8s: yes 
+
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
@@ -18,6 +22,11 @@ helm_version: "3.13.1"
 gpu_operator_version: "23.9.1"
 network_operator_version: "23.10.0"
 local_path_provisioner: "0.0.24"
+nfs_provisioner: "4.0.18"
+metallb_version: "0.14.5"
+kserve_version: "0.13"
+prometheus_stack: "61.3.0"
+elastic_stack: "8.14.1"
 
 # GPU Operator Values
 enable_gpu_operator: yes
@@ -67,14 +76,19 @@ k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.ke
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
-# Local Path Provisioner as Storage option
+# Local Path Provisioner and NFS Provisoner as Storage option
 storage: no
 
-# Monitoring Stack Prometheus/Grafana with GPU Metrics
+# Monitoring Stack Prometheus/Grafana with GPU Metrics and Elastic Logging stack
 monitoring: no
 
 # Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
 kserve: no
+
+# Install MetalLB
+loadbalancer: no
+# Example input loadbalancer_ip: "10.117.20.50/32", it could be node/host IP
+loadbalancer_ip: ""
 
 ## Cloud Native Stack Validation
 cns_validation: no

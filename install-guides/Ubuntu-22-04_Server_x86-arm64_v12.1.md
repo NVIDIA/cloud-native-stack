@@ -539,7 +539,7 @@ helm repo add mellanox https://mellanox.github.io/network-operator
 
 Update the Helm repo:
 ```
- elm repo update
+ helm repo update
 ```
 Install Network Operator:
 ```

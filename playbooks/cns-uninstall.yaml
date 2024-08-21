@@ -30,7 +30,17 @@
        purge: true
        autoremove: yes
      become: true
-     when: microk8s == true
+     when: microk8s == true and ansible_distribution == 'Ubuntu'
+
+   - name: Install Snapd on RHEL
+     when: ansible_distribution == 'RedHat' and microk8s == true
+     shell: "{{ item }}"
+     become: true
+     ignore_errors: true
+     with_items:
+       - yum remove snapd -y
+       - yum autoremove -y
+       - rm -rf /var/lib/snapd/snap /snap
 
    - name: add kubectl alias for Microk8s
      when: microk8s == true

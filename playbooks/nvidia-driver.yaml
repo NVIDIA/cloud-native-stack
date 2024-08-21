@@ -94,6 +94,7 @@
             - "nvidia-prime"
             - "nvidia-settings"
             - "nvidia-utils-*"
+            - "nvidia-fabricmanager-*"
             - "screen-resolution-extra"
             - "xserver-xorg-video-nvidia-*"
             - "gdm*"
@@ -108,6 +109,11 @@
         - name: Remove old keyring
           shell:
             cmd: "apt-key del 7fa2af80"
+
+        - name: unload NVIDIA
+          shell: /usr/bin/nvidia-uninstall --silent; kill -9 $(lsof /dev/nvidia* | awk '{print $2}' | grep -v PID | uniq); rmmod -f nvidia_uvm; rmmod -f nvidia_drm; rmmod -f nvidia_modeset; rmmod -f nvidia
+          ignore_errors: yes
+          failed_when: false
 
     - name:  ensure we have kernel-headers installed for the current kernel on RHEL
       when:  "cns_version >= 10.0 and ansible_distribution == 'RedHat'"
@@ -173,4 +179,15 @@
           shell: chage -d 1 root
 
         - name: Install driver packages
-          shell: "BASE_URL=https://us.download.nvidia.com/tesla; curl -fSsl -O $BASE_URL/{{ gpu_driver_version }}/NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; chmod +x ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; sh ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run --silent"          
+          shell: "BASE_URL=https://us.download.nvidia.com/tesla; curl -fSsl -O $BASE_URL/{{ gpu_driver_version }}/NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; chmod +x ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; sh ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run --silent"
+
+    - name: check dgx
+      stat:
+        path: /etc/dgx-release
+      register: dgx
+
+    - name: Install NVIDIA Fabric Manager
+      become: true
+      when:  "dgx.stat.exists == True and ansible_distribution == 'Ubuntu'"
+      ignore_errors: true
+      shell: "sudo apt install nvidia-fabricmanager-550 -y; sudo systemctl --now enable nvidia-fabricmanager; sudo systemctl daemon-reload"

@@ -126,13 +126,13 @@ Wed Mar 24 12:47:29 2023
 Set up the repository and update the apt package index:
 
 ```
-$ sudo apt-get update
+sudo apt update
 ```
 
 Install packages to allow apt to use a repository over HTTPS:
 
 ```
-$ sudo apt-get install -y \
+sudo apt install -y \
     apt-transport-https \
     ca-certificates \
     curl \
@@ -140,51 +140,50 @@ $ sudo apt-get install -y \
     software-properties-common
 ```
 
+```
+sudo install -m 0755 -d /etc/apt/keyrings
+```
+
 Add Docker's official GPG key:
 
 ```
-$ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 ```
 
-Verify that you now have the key with the fingerprint 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88 by searching for the last 8 characters of the fingerprint:
 ```
-$ sudo apt-key fingerprint 0EBFCD88
-    
-pub   rsa4096 2017-02-22 [SCEA]
-      9DC8 5822 9FC7 DD38 854A  E2D8 8D81 803C 0EBF CD88
-uid           [ unknown] Docker Release (CE deb) <docker@docker.com>
-sub   rsa4096 2017-02-22 [S]
-``` 
-
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
 Use the following command to set up the stable repository:
 
 ```
-$ sudo add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable"
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 ```
 
 Install Docker Engine - Community
+
 Update the apt package index:
 
 ```
-$ sudo apt-get update
+sudo apt update
 ```
 
 Install Docker Engine:
 
 ```
-$ sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
 Verify that Docker Engine - Community is installed correctly by running the hello-world image:
 
 ```
-$ sudo docker run hello-world
+sudo docker run hello-world
 ```
 
 More information on how to install Docker can be found at https://docs.docker.com/install/linux/docker-ce/ubuntu/. 
+
 
 #### Installing NVIDIA Container Toolkit
 
@@ -222,7 +221,7 @@ Edit the docker daemon configuration to add the following line and save the file
 
 Example: 
 ```
-$ sudo nano /etc/docker/daemon.json
+sudo nano /etc/docker/daemon.json
  
 {
    "runtimes": {
@@ -245,7 +244,7 @@ sudo systemctl daemon-reload && sudo systemctl restart docker
 Execute the below command to validate docker default runtime as NVIDIA:
 
 ```
-$ sudo docker info | grep -i runtime
+sudo docker info | grep -i runtime
 ```
 
 Output:
@@ -786,7 +785,7 @@ Wed Apr 14 12:47:29 2023
 Create a pod YAML file:
 
 ```
-$ cat <<EOF | tee cuda-samples.yaml
+cat <<EOF | tee cuda-samples.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -802,13 +801,13 @@ EOF
 Execute the below command to create a sample GPU pod:
 
 ```
-$ kubectl apply -f cuda-samples.yaml
+kubectl apply -f cuda-samples.yaml
 ```
 
 Confirm the cuda-samples pod was created:
 
 ```
-$ kubectl get pods
+kubectl get pods
 ``` 
 
 NVIDIA Cloud Native Stack works as expected if the get pods command shows the pod status as completed.
@@ -863,9 +862,9 @@ Once the Helm chart is deployed, access the application with the VLC player. See
 If you dont have a camera input, please execute the below commands to use the default video already integrated into the application:
 
 ```
-$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz
+helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz
 
-$ helm install video-analytics-demo-0.1.9.tgz --name-template iva
+helm install video-analytics-demo-0.1.9.tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the application with the VLC player as per the below instructions. 
@@ -900,9 +899,9 @@ You should see the video output like below with the AI model detecting objects.
 Execute the below commands to uninstall the GPU Operator:
 
 ```
-$ helm ls
+helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
 gpu-operator-1606173805 nvidia-gpu-operator         1               2023-04-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-23.6.0      v23.3.2
 
-$ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
+helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 ```

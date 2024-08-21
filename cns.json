@@ -1,37 +1,45 @@
 {
 	"name": "Cloud Native Stack",
 	"latest": {
-		"version": "13.0",
-		"release_date": "14 May 2024",
+		"version": "13.1",
+		"release_date": "20 August 2024",
 		"platforms": [{
 				"name": "NVIDIA Certified Server",
 				"CPU architecture": "x86, Arm64",
-				"os": "Ubuntu 22.04 LTS, RedHat Linux 8.8, DGX OS 6.1",
+				"os": "Ubuntu 22.04 LTS, RedHat Linux 8.8, DGX OS 6.2",
 				"components": {
-					"containerd": "1.7.16",
-					"cri-o": "1.30.0",
-					"k8s version": "1.30.0",
-					"Calico": "v3.27.3",
-					"helm version": "3.14.4",
-					"NVIDIA GPU Operator": "24.3.0",
-					"NVIDIA Network Operator": "24.1.1",
-					"NVIDIA DataCenter Driver": "550.54.15"
-				}
-			},
-			{
-				"name": "Jetson Devices(AGX, NX, Orin)",
-				"os": "JetPack 5.1, JetPack 5.0",
-				"components": {
-					"containerd": "1.7.16",
-					"cri-o": "1.30.0",
-					"k8s version": "1.30.0",
-					"Flannel": "0.25.1",
-					"helm version": "3.14.4"
+					"containerd": "1.7.20",
+					"cri-o": "1.30.2",
+					"k8s version": "1.30.2",
+					"Calico": "v3.27.4",
+					"helm version": "3.15.3",
+					"NVIDIA GPU Operator": "24.6.1",
+					"NVIDIA Network Operator": "24.4.1",
+					"NVIDIA DataCenter Driver": "550.90.07"
 				}
 			}
 		]
 	},
 	"versions": [{
+		"13.1": {
+		"release_date": "20 August 2024",
+		"platforms": [{
+				"name": "NVIDIA Certified Server",
+				"CPU architecture": "x86, Arm64",
+				"os": "Ubuntu 22.04 LTS, RedHat Linux 8.8, DGX OS 6.2",
+				"components": {
+					"containerd": "1.7.20",
+					"cri-o": "1.30.2",
+					"k8s version": "1.30.2",
+					"Calico": "v3.27.4",
+					"helm version": "3.15.3",
+					"NVIDIA GPU Operator": "24.6.1",
+					"NVIDIA Network Operator": "24.4.1",
+					"NVIDIA DataCenter Driver": "550.90.07"
+				}
+			}
+		]
+		},
 		"13.0": {
 			"release_date": "14 May 2024",
 			"platforms": [{
@@ -58,6 +66,25 @@
 						"k8s version": "1.30.0",
 						"Flannel": "0.25.1",
 						"helm version": "3.14.4"
+					}
+				}
+			]
+		},
+		"12.2": {
+			"release_date": "20 August 2024",
+			"platforms": [{
+					"name": "NVIDIA Certified Server",
+					"CPU architecture": "x86, Arm64",
+					"os": "Ubuntu 22.04 LTS, RedHat Linux 8.8, DGX OS 6.2",
+					"components": {
+						"containerd": "1.7.20",
+						"cri-o": "1.29.6",
+						"k8s version": "1.29.6",
+						"Calico": "v3.27.4",
+						"helm version": "3.15.3",
+						"NVIDIA GPU Operator": "24.6.1",
+						"NVIDIA Network Operator": "24.4.1",
+						"NVIDIA DataCenter Driver": "550.90.07"
 					}
 				}
 			]
@@ -118,6 +145,25 @@
 						"k8s version": "1.29.2",
 						"Flannel": "0.24.2",
 						"helm version": "3.14.2"
+					}
+				}
+			]
+		},
+		"11.3": {
+			"release_date": "20 August 2024",
+			"platforms": [{
+					"name": "NVIDIA Certified Server",
+					"CPU architecture": "x86, Arm64",
+					"os": "Ubuntu 22.04 LTS, RedHat Linux 8.8, DGX OS 6.2",
+					"components": {
+						"containerd": "1.7.20",
+						"cri-o": "1.28.8",
+						"k8s version": "1.28.12",
+						"Calico": "v3.27.4",
+						"helm version": "3.15.3",
+						"NVIDIA GPU Operator": "24.6.1",
+						"NVIDIA Network Operator": "24.4.1",
+						"NVIDIA DataCenter Driver": "550.90.07"
 					}
 				}
 			]

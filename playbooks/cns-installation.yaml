@@ -158,7 +158,75 @@
     - name: Check CNS Version support for RHEL
       shell: "echo 'Not a Valid Installation please use CNS Version 10.0 above and retry'"
       failed_when: "cns_version < 10.0 and ansible_distribution in ['RedHat', 'CentOS']"
-      
+
+    - name: check dgx
+      stat:
+        path: /etc/dgx-release
+      register: dgx
+
+    - name: check l4t
+      stat:
+        path: /etc/l4t-release
+      register: l4t
+
+    - name: NVIDIA Driver Clean Up on DGX 
+      when:  dgx.stat.exists == True and ansible_distribution == 'Ubuntu' and enable_rdma == true or dgx.stat.exists == True and ansible_distribution == 'Ubuntu' and enable_gds == true or l4t.stat.exists == True and ansible_distribution == 'Ubuntu' and enable_rdma == true or l4t.stat.exists == True and ansible_distribution == 'Ubuntu' and enable_gds == true
+      become: true
+      block:
+        - name: Remove Ubuntu unattended upgrades to prevent apt lock
+          ansible.builtin.apt:
+            name: unattended-upgrades
+            state: absent
+            purge: yes
+          register: apt_cleanup
+          retries: 10
+          until: apt_cleanup is success
+
+        - name: Remove OLD Apt Repository
+          apt_repository:
+            repo: ppa:graphics-drivers/ppa
+            state: absent
+          register: ppa_clean
+          retries: 10
+          until: ppa_clean is success
+
+        - name: Remove NVIDIA packages
+          apt:
+            name:
+            - "*cuda*"
+            - "libnvidia-cfg1-*"
+            - "libnvidia-common-*"
+            - "libnvidia-compute-*"
+            - "libnvidia-decode-*"
+            - "libnvidia-encode-*"
+            - "libnvidia-extra-*"
+            - "libnvidia-fbc1-*"
+            - "libnvidia-gl-*"
+            - "nvidia-compute-utils-*"
+            - "nvidia-dkms-*"
+            - "nvidia-driver-*"
+            - "nvidia-kernel-common-*"
+            - "nvidia-kernel-source-*"
+            - "nvidia-modprobe"
+            - "nvidia-prime"
+            - "nvidia-settings"
+            - "nvidia-utils-*"
+            - "nvidia-fabricmanager-*"
+            - "screen-resolution-extra"
+            - "xserver-xorg-video-nvidia-*"
+            - "gdm*"
+            - "xserver-xorg-*"
+            autoremove: yes
+            purge: yes
+            state: absent
+          register: nvidia_cleanup
+          retries: 10
+          until: nvidia_cleanup is success
+
+        - name: unload NVIDIA
+          shell: /usr/bin/nvidia-uninstall --silent; kill -9 $(lsof /dev/nvidia* | awk '{print $2}' | grep -v PID | uniq); rmmod -f nvidia_uvm; rmmod -f nvidia_drm; rmmod -f nvidia_modeset; rmmod -f nvidia
+          ignore_errors: yes
+          failed_when: false     
 #    - name: Add DHCP Mac to netplan 
 #      become: true 
 #      args: 
@@ -216,5 +284,5 @@
       register: status
       when: "cns_version > 4.1 and cns_validation == true and release != 'tegra'"
 
-- when: "cns_version > 4.1 and cns_validation == true and release != 'tegra' and install_k8s == true"
+- when: "cns_version > 4.1 and cns_validation == true and release != 'tegra'"
   import_playbook: cns-validation.yaml

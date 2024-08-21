@@ -54,27 +54,19 @@ For more Information about customize the values, please refer [Installation](htt
 
 | Branch/Release | Version | Initial Release Date   | Platform              | OS    | Containerd | CRI-O | K8s    | Helm  | NVIDIA GPU Operator | NVIDIA Network Operator | NVIDIA Data Center Driver |
 | :---:   |    :------:        | :---:                  | :---:                 | :---: | :---:      | :----: |  :---: | :---:        | :---:            | :---:      | :---: |
-| 24.5.0/master  | 13.0   | 14 May 2024 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.16 | 1.30.0 | 1.30.0 |  3.14.4 | 24.3.0   | 24.1.1(x86 only) | 550.54.15  |
-| 24.5.0/master  | 13.0   | 14 May 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.9                     | 1.7.16 | 1.30.0 | 1.30.0 |  3.14.4 | 24.3.0   | N/A              | 550.54.15 |
-| 24.5.0/master  | 13.0   | 14 May 2024 | Jetson Devices(AGX, NX, Orin)          | JetPack 5.1 and JetPack 5.0  | 1.7.16 | 1.30.0 | 1.30.0 |  3.14.4 | N/A      | N/A              | N/A         |
-| 24.5.0/master  | 13.0   | 14 May 2024 | DGX Server                             | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.16 | 1.30.0 | 1.30.0 |  3.14.4 | 24.3.0   | N/A              | N/A |
+| 24.8.0/master  | 13.1   | 20 August 2024 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.20 | 1.30.2 | 1.30.2 |  3.15.3 | 24.6.1   | 24.4.1(x86 only) | 550.90.07  |
+| 24.8.0/master  | 13.1   | 20 August 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.8                     | 1.7.20 | 1.30.2 | 1.30.2 |  3.15.3 | 24.6.1   | 24.4.1(x86 only)    | 550.90.07 |
+| 24.8.0/master  | 13.1   | 20 August 2024 | DGX Server                             | DGX OS 6.2(Ubuntu 22.04 LTS) | 1.7.20 | 1.30.2 | 1.30.2 |  3.15.3 | 24.6.1   | N/A              | N/A |
 |                |        |               |                               |                             |            |       |       |                  |            |                  |
-| 24.5.0/master  | 12.1   | 14 May 2024 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.16 | 1.29.4 | 1.29.4 |  3.14.4 | 24.3.0   | 24.1.1(x86 only) | 550.54.15  |
-| 24.5.0/master  | 12.1   | 14 May 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.9                     | 1.7.16 | 1.29.4 | 1.29.4 |  3.14.4 | 24.3.0   | N/A              | 550.54.15 |
-| 24.5.0/master  | 12.1   | 14 May 2024 | Jetson Devices(AGX, NX, Orin)          | JetPack 5.1 and JetPack 5.0  | 1.7.16 | 1.29.4 | 1.29.4 |  3.14.4 | N/A      | N/A              | N/A         |
-| 24.5.0/master  | 12.1   | 14 May 2024 | DGX Server                             | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.16 | 1.29.4 | 1.29.4 |  3.14.4 | 24.3.0   | N/A              | N/A |
+| 24.8.0/master  | 12.2   | 20 August 2024 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.20 | 1.29.6 | 1.29.6 |  3.15.3 | 24.6.1   | 24.4.1(x86 only) | 550.90.07  |
+| 24.8.0/master  | 12.2   | 20 August 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.8                     | 1.7.20 | 1.29.6 | 1.29.6 |  3.15.3 | 24.6.1   | 24.4.1(x86 only)      | 550.90.07 |
+| 24.8.0/master  | 12.2   | 20 August 2024 | DGX Server                             | DGX OS 6.2(Ubuntu 22.04 LTS) | 1.7.20 | 1.29.6 | 1.29.6 |  3.15.3 | 24.6.1   | N/A              | N/A |
 |                |        |               |                               |                             |            |       |       |                  |       |                  |
-| 24.5.0/masrer  | 11.2   | 14 May 2024 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.16 | 1.28.6 | 1.28.8 |  3.14.4 | 24.3.0   | 24.1.1(x86 only) | 550.54.15  |
-| 24.5.0/master  | 11.2   | 14 May 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.9                     | 1.7.16 | 1.28.6 | 1.28.8 |  3.14.4 | 24.3.0   | N/A              | 550.54.15 |
-| 24.5.0/master  | 11.2   | 14 May 2024 | Jetson Devices(AGX, NX, Orin)          | JetPack 5.1 and JetPack 5.0  | 1.7.16 | 1.28.6 | 1.28.8 |  3.14.4 | N/A      | N/A              | N/A         |
-| 24.5.0/master  | 11.2   | 14 May 2024 | DGX Server                             | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.16 | 1.28.6 | 1.28.8 |  3.14.4 | 24.3.0   | N/A              | N/A |
-|                |        |               |                               |                             |            |       |       |                  |            |                  |
-| 24.5.0/master  | 10.5   | 14 May 2024  | NVIDIA Certified Server (x86 & arm64) | Ubuntu 22.04 LTS             | 1.7.16 | 1.27.6 | 1.27.12 |  3.14.4 | 24.3.0  | 24.1.1(x86 only) | 550.54.15  |
-| 24.5.0/master  | 10.5   | 14 May 2024  | NVIDIA Certified Server (x86 & arm64) | RHEL 8.9                     | 1.7.16 | 1.27.6 | 1.27.12 |  3.14.4 | 24.3.0  | N/A              | 550.54.15 |
-| 24.5.0/master  | 10.5   | 14 May 2024  | Jetson Devices(AGX, NX, Orin)         | JetPack 5.1 and JetPack 5.0  | 1.7.16 | 1.27.6 | 1.27.12 |  3.14.4 | N/A     | N/A              | N/A         |
-| 24.5.0/master  | 10.5   | 14 May 2024  | DGX Server                            | DGX OS 6.0(Ubuntu 22.04 LTS) | 1.7.16 | 1.27.6 | 1.27.12 |  3.14.4 | 24.3.0  | N/A              | N/A |
+| 24.8.0/masrer  | 11.3   | 20 August 2024 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.20 | 1.28.8 | 1.28.12 |  3.15.3 | 24.6.1   | 24.4.1(x86 only) | 550.90.07  |
+| 24.8.0/master  | 11.3   | 20 August 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.8                     | 1.7.20 | 1.28.8 | 1.28.12 |  3.15.3 | 24.6.1   | 24.4.1(x86 only)    | 550.90.07 |
+| 24.8.0/master  | 11.3   | 20 August 2024 | DGX Server                             | DGX OS 6.2(Ubuntu 22.04 LTS) | 1.7.20 | 1.28.8 | 1.28.12 |  3.15.3 | 24.6.1   | N/A              | N/A |
 
-To Find other CNS Release Information, please refer to [Cloud Native Stack Component Matrix](https://github.com/NVIDIA/cloud-native-stack/tree/24.3.0?tab=readme-ov-file#nvidia-cloud-native-stack-component-matrix-1)
+To Find other CNS Release Information, please refer to [Cloud Native Stack Component Matrix](https://github.com/NVIDIA/cloud-native-stack/tree/24.5.0?tab=readme-ov-file#nvidia-cloud-native-stack-component-matrix-1)
 
 `NOTE:` Above CNS versions are available on master branch as well but it's recommend to use specific branch with respective release 
 
@@ -98,7 +90,7 @@ To Find other CNS Release Information, please refer to [Cloud Native Stack Compo
 
 | Branch/Release | CNS Version  | Release Date   | Kserve | LoadBalancer | Storage  | Monitoring    |
 | :---:          | :------:     | :---:                  | :---:  | :---:        | :---:    | :---:         | 
-| 24.5.0/master  | 13.0 <br /> 12.1 <br /> 11.2 <br /> 10.5   | 9 July 2024 | <br />  **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul>  | MetalLB: 0.14.5 |  NFS: 4.0.18 <br /> Local Path: 0.0.26 | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 |
+| 24.8.0/master  | 13.1 <br /> 12.2 <br /> 11.3   | 20 August 2024 | <br />  **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul>  | MetalLB: 0.14.5 |  NFS: 4.0.18 <br /> Local Path: 0.0.26 | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 |
 
 
 # Getting help or Providing feedback

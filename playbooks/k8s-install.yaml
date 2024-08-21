@@ -251,7 +251,16 @@
      register: kubeadm_join_cmd
 
    - set_fact:
-       kubeadm_join: "{{ kubeadm_join_cmd.stdout }}"
+       kubeadm_join: "{{ kubeadm_join_cmd.stdout }} --cri-socket=unix:///var/run/cri-dockerd.sock"
+     when: container_runtime == 'cri-dockerd'
+
+   - set_fact:
+       kubeadm_join: "{{ kubeadm_join_cmd.stdout }} --cri-socket=unix:///var/run/crio/crio.sock "
+     when: container_runtime == 'cri-o'
+
+   - set_fact:
+       kubeadm_join: "{{ kubeadm_join_cmd.stdout }} --cri-socket=unix:///run/containerd/containerd.sock"
+     when: container_runtime == 'containerd'
 
    - name: Store join command
      become: true

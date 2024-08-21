@@ -275,7 +275,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
  sudo apt update
 ```
 ```
- sudo apt install -y -q kubelet=1.30.0-00 kubectl=1.30.0-00 kubeadm=1.30.0-00
+ sudo apt install -y -q kubelet=1.30.0-1.1  kubectl=1.30.0-1.1  kubeadm=1.30.0-1.1 
 ```
 ```
  sudo apt-mark hold kubelet kubeadm kubectl

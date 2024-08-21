@@ -1,35 +1,32 @@
-# NVIDIA Cloud Native Stack v12.0 - Install Guide for Developers<
+# NVIDIA Cloud Native Stack v13.1 - Install Guide for DGX
 ## Introduction
 
-NVIDIA Cloud Native Stack for Developers is focused to provide the Docker based experince. This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
+NVIDIA Cloud Native Stack for DGX is focused to provide the Docker based experince. This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
-NVIDIA Cloud Native Stack v12.0 includes:
+NVIDIA Cloud Native Stack v13.1 includes:
 - Ubuntu 22.04 LTS
-- Containerd 1.7.13
-- Kubernetes version 1.29.2
-- Helm 3.14.2
-- NVIDIA GPU Driver: 550.54.15
-- NVIDIA Container Toolkit: 1.14.6
-- NVIDIA GPU Operator 23.9.2
-  - NVIDIA K8S Device Plugin: 0.14.5
-  - NVIDIA DCGM-Exporter: 3.3.0-3.2.0
-  - NVIDIA DCGM: 3.3.0-1
-  - NVIDIA GPU Feature Discovery: 0.8.2
-  - NVIDIA K8s MIG Manager: 0.6.0
-  - NVIDIA Driver Manager: 0.6.5
-  - Node Feature Discovery: 0.14.2
-  - NVIDIA KubeVirt GPU Device Plugin: 1.2.4
+- Containerd 1.7.20
+- Kubernetes version 1.30.2
+- Helm 3.15.3
+- NVIDIA GPU Driver: 550.90.07
+- NVIDIA Container Toolkit: 1.16.1
+- NVIDIA GPU Operator 24.6.0
+  - NVIDIA K8S Device Plugin: 0.16.1
+  - NVIDIA DCGM-Exporter: 3.3.7-3.5.0
+  - NVIDIA DCGM: 3.3.7-1
+  - NVIDIA GPU Feature Discovery: 0.16.1
+  - NVIDIA K8s MIG Manager: 0.8.0
+  - NVIDIA Driver Manager: 0.6.10
+  - Node Feature Discovery: 0.16.3
+  - NVIDIA KubeVirt GPU Device Plugin: 1.2.9
   - NVIDIA GDS Driver: 2.17.5
-  - NVIDIA Kata Manager for Kubernetes: 0.1.2
+  - NVIDIA Kata Manager for Kubernetes: 0.2.1
   - NVIDIA Confidential Computing Manager for Kubernetes: 0.1.1
-
 
 ## Table of Contents
 
 - [Prerequisites](#Prerequisites)
-- [Installing the Ubuntu Operating System](#Installing-the-Ubuntu-Operating-System)
-- [Installing NVIDIA Driver](#Installing-NVIDIA-Driver)
-- [Installing Docker and Nvidia Container Toolkit](#Installing-Docker-and-Nvidia-Container-Toolkit)
+- [Installing the DGX Operating System](#Installing-the-DGX-Operating-System)
 - [Update the Docker Default Runtime](#Update-the-Docker-Default-Runtime)
 - [Installing Container Runtime](#Installing-Container-Runtime)
   - [Installing Containerd](#Installing-Containerd)
@@ -47,167 +44,14 @@ NVIDIA Cloud Native Stack v12.0 includes:
  
 The following instructions assume the following:
 
-- You have [NVIDIA-Certified Systems](https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html) with Mellanox CX NICs for x86-64 servers 
-- You have [NVIDIA Qualified Systems](https://www.nvidia.com/en-us/data-center/data-center-gpus/qualified-system-catalog/?start=0&count=50&pageNumber=1&filters=eyJmaWx0ZXJzIjpbXSwic3ViRmlsdGVycyI6eyJwcm9jZXNzb3JUeXBlIjpbIkFSTS1UaHVuZGVyWDIiLCJBUk0tQWx0cmEiXX0sImNlcnRpZmllZEZpbHRlcnMiOnt9LCJwYXlsb2FkIjpbXX0=) for arm64 servers 
-  `NOTE:` For ARM systems, NVIDIA Network Operator is not supported yet. 
+- You have NVIDIA DGX System
 - You will perform a clean install.
-
-To determine if your system qualifies as an NVIDIA Certified System, review the list of NVIDIA Certified Systems [here](https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html). 
 
 Please note that NVIDIA Cloud Native Stack is validated only on systems with the default kernel (not HWE).
 
-### Installing the Ubuntu Operating System
-These instructions require having Ubuntu Server LTS 22.04 on your system. The Ubuntu Server can be downloaded from http://cdimage.ubuntu.com/releases/22.04/release/.
+### Installing the DGX Operating System
 
-For more information on installing Ubuntu server please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
-
-### Installing NVIDIA Driver 
-Install NVIDIA TRD Driver
-
-```
-sudo apt update 
-```
-```
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
-```
-```
-sudo dpkg -i cuda-keyring_1.1-1_all.deb
-```
-
-Update package index:
-
-```
-sudo apt update
-```
-
-Install Cuda Drivers
-
-```
-sudo apt install cuda -y
-```
-
-Once the NVIDIA Drivers installed, please reboot the system and run the below command to validate NVIDIA drivers are loaded 
-
-```
-nvidia-smi
-```
-
-Expected Output:
-
-```
-Wed Mar 24 12:47:29 2023
-+-----------------------------------------------------------------------------+
-| NVIDIA-SMI 535.86.10     Driver Version: 535.86.10     CUDA Version: 12.1   |
-|-------------------------------+----------------------+----------------------+
-| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
-| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
-|                               |                      |               MIG M. |
-|===============================+======================+======================|
-|   0  Quadro RTX 6000     Off  | 00000000:65:00.0  On |                  Off |
-| 33%   32C    P8    30W / 260W |    154MiB / 24576MiB |      0%      Default |
-|                               |                      |                  N/A |
-+-------------------------------+----------------------+----------------------+
-
-+-----------------------------------------------------------------------------+
-| Processes:                                                                  |
-|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
-|        ID   ID                                                   Usage      |
-|=============================================================================|
-|    0   N/A  N/A      1236      G   /usr/lib/xorg/Xorg                 39MiB |
-|    0   N/A  N/A      2278      G   /usr/lib/xorg/Xorg                 58MiB |
-|    0   N/A  N/A      2405      G   /usr/bin/gnome-shell               46MiB |
-+-----------------------------------------------------------------------------+
-```
-
-### Installing Docker and NVIDIA Container Runtime
-
-#### Installing Docker-CE
-
-Set up the repository and update the apt package index:
-
-```
-sudo apt update
-```
-
-Install packages to allow apt to use a repository over HTTPS:
-
-```
-sudo apt install -y \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg-agent \
-    software-properties-common
-```
-
-```
-sudo install -m 0755 -d /etc/apt/keyrings
-```
-
-Add Docker's official GPG key:
-
-```
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-```
-
-```
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-```
-Use the following command to set up the stable repository:
-
-```
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-```
-
-Install Docker Engine - Community
-
-Update the apt package index:
-
-```
-sudo apt update
-```
-
-Install Docker Engine:
-
-```
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-```
-
-Verify that Docker Engine - Community is installed correctly by running the hello-world image:
-
-```
-sudo docker run hello-world
-```
-
-More information on how to install Docker can be found at https://docs.docker.com/install/linux/docker-ce/ubuntu/. 
-
-#### Installing NVIDIA Container Toolkit
-
-Setup the pacakge repository 
-
-```
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
-      && curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
-      && curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
-            sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-            sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-```
-
-Update the package index
-
-```
-sudo apt update
-```
-
-Install NVIDIA Conatiner Toolkit
-
-```
-sudo apt install -y nvidia-container-toolkit=1.14.6-1
-```
-
+Installing DGX server please reference the [DGX Server Installation Guide](https://docs.nvidia.com/dgx/dgx-os-6-user-guide/).
 
 ### Update the Docker Default Runtime
 
@@ -220,7 +64,7 @@ Edit the docker daemon configuration to add the following line and save the file
 
 Example: 
 ```
-sudo nano /etc/docker/daemon.json
+$ sudo nano /etc/docker/daemon.json
  
 {
    "runtimes": {
@@ -243,7 +87,7 @@ sudo systemctl daemon-reload && sudo systemctl restart docker
 Execute the below command to validate docker default runtime as NVIDIA:
 
 ```
-sudo docker info | grep -i runtime
+$ sudo docker info | grep -i runtime
 ```
 
 Output:
@@ -312,30 +156,30 @@ sudo sysctl --system
 Download the Containerd for `x86-64` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.7.13/cri-containerd-cni-1.7.13-linux-amd64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.20/cri-containerd-cni-1.7.20-linux-amd64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.13-linux-amd64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.20-linux-amd64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.7.13-linux-amd64.tar.gz
+rm -rf cri-containerd-cni-1.7.20-linux-amd64.tar.gz
 ```
 
 
 Download the Containerd for `ARM` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.7.13/cri-containerd-cni-1.7.13-linux-arm64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.20/cri-containerd-cni-1.7.20-linux-arm64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.13-linux-arm64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.20-linux-arm64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.7.13-linux-arm64.tar.gz
+rm -rf cri-containerd-cni-1.7.20-linux-arm64.tar.gz
 ```
 
 Install the Containerd
@@ -368,10 +212,6 @@ VERSION=1.29
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 
 ```
-sudo mkdir -p /usr/share/keyrings
-```
-
-```
 echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
 ```
 
@@ -392,37 +232,6 @@ Install the CRI-O and dependencies
 ```
 sudo apt update && sudo apt install cri-o cri-o-runc cri-tools -y
 ```
-
-Create OCI hook for NVIDIA Container Runtime
-```
-nano /usr/share/containers/oci/hooks.d/oci-nvidia-hook.json
-```
-
-```
-{
-  "version": "1.0.0",
-  "hook": {
-    "path": "/usr/bin/nvidia-container-runtime-hook",
-    "args": [
-      "nvidia-container-runtime-hook",
-      "prestart"
-    ],
-    "env": [
-      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-    ]
-  },
-  "when": {
-    "always": true,
-    "commands": [
-      ".*"
-    ]
-  },
-  "stages": [
-    "prestart"
-  ]
-}
-```
-
 
 Enable and Start the CRI-O service 
 
@@ -445,7 +254,7 @@ Execute the following to add apt keys:
 ```
 
 ```
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 ```
 
@@ -456,10 +265,9 @@ sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 Create kubernetes.list:
 
 ```
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list 
 ```
-
 
 Now execute the below to install kubelet, kubeadm, and kubectl:
 
@@ -467,7 +275,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
  sudo apt update
 ```
 ```
- sudo apt install -y -q kubelet=1.29.2-00 kubectl=1.29.2-00 kubeadm=1.29.2-00
+ sudo apt install -y -q kubelet=1.30.2-1.1  kubectl=1.30.2-1.1  kubeadm=1.30.2-1.1 
 ```
 ```
  sudo apt-mark hold kubelet kubeadm kubectl
@@ -520,13 +328,13 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command for `Containerd` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.29.2"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.30.2"
 ```
 
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.29.2"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.30.2"
 ```
 
 Output:
@@ -565,7 +373,7 @@ Following the instructions in the output, execute the commands as shown below:
 With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
- kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.1/manifests/calico.yaml 
+ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml 
 ```
 
 Update the Calico Daemonset 
@@ -605,7 +413,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.29.2
+#yourhost        Ready    control-plane,master   10m   v1.30.2
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -619,16 +427,16 @@ for more information.
 
 ### Installing Helm 
 
-Execute the following command to download and install Helm 3.10.2: 
+Execute the following command to download and install Helm 3.15.3: 
 
 ```
- wget https://get.helm.sh/helm-v3.14.2-linux-amd64.tar.gz && \
- tar -zxvf helm-v3.14.2-linux-amd64.tar.gz && \
+ wget https://get.helm.sh/helm-v3.15.3-linux-amd64.tar.gz && \
+ tar -zxvf helm-v3.15.3-linux-amd64.tar.gz && \
  sudo mv linux-amd64/helm /usr/local/bin/helm && \ 
- rm -rf helm-v3.14.2-linux-amd64.tar.gz linux-amd64/
+ rm -rf helm-v3.15.3-linux-amd64.tar.gz linux-amd64/
 ```
 
-Refer to the Helm 3.10.2 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
+Refer to the Helm 3.15.3 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
 
 
 ### Adding an Additional Node to NVIDIA Cloud Native Stack
@@ -666,8 +474,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.29.2
-#yourhost-worker Ready                           10m   v1.29.2
+#yourhost        Ready    control-plane,master   10m   v1.30.2
+#yourhost-worker Ready                           10m   v1.30.2
 ```
 
 ### Installing GPU Operator
@@ -689,7 +497,7 @@ Install GPU Operator:
 `NOTE:` As we are preinstalled with NVIDIA Driver and NVIDIA Container Toolkit, we need to set as `false` when installing the GPU Operator
 
 ```
- helm install --version 23.9.2 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+ helm install --version 24.3.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 ```
 
 #### Validating the State of the GPU Operator:
@@ -748,7 +556,7 @@ spec:
   restartPolicy: OnFailure
   containers:
     - name: nvidia-smi
-      image: "nvidia/cuda:12.1.0-base-ubuntu22.04"
+      image: "nvidia/cuda:12.4.0-base-ubuntu22.04"
       args: ["nvidia-smi"]
 EOF
 ```
@@ -763,26 +571,27 @@ kubectl logs nvidia-smi
 
 Output:
 ``` 
-Wed Apr 14 12:47:29 2023
-+-----------------------------------------------------------------------------+
-|  NVIDIA-SMI 535.86.10   Driver Version: 535.86.10     CUDA Version: 12.1    |
-|-------------------------------+----------------------+----------------------+
-| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
-| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
-|                               |                      |               MIG M. |
-|===============================+======================+======================|
-|   0  Tesla T4            On   | 00000000:14:00.0 Off |                  Off |
-| N/A   47C    P8    16W /  70W |      0MiB / 16127MiB |      0%      Default |
-|                               |                      |                  N/A |
-+-------------------------------+----------------------+----------------------+
+Mon Aug  5 16:26:04 2024
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.90.07              Driver Version: 550.90.07      CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100 80GB PCIe          On  |   00000000:41:00.0 Off |                    0 |
+| N/A   34C    P0             43W /  300W |       1MiB /  81920MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
 
-+-----------------------------------------------------------------------------+
-| Processes:                                                                  |
-|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
-|        ID   ID                                                   Usage      |
-|=============================================================================|
-|  No running processes found                                                 |
-+-----------------------------------------------------------------------------+
 ```
 
 #### Example 2: CUDA-Vector-Add
@@ -790,7 +599,7 @@ Wed Apr 14 12:47:29 2023
 Create a pod YAML file:
 
 ```
-cat <<EOF | tee cuda-samples.yaml
+$ cat <<EOF | tee cuda-samples.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -806,13 +615,13 @@ EOF
 Execute the below command to create a sample GPU pod:
 
 ```
-kubectl apply -f cuda-samples.yaml
+$ kubectl apply -f cuda-samples.yaml
 ```
 
 Confirm the cuda-samples pod was created:
 
 ```
-kubectl get pods
+$ kubectl get pods
 ``` 
 
 NVIDIA Cloud Native Stack works as expected if the get pods command shows the pod status as completed.
@@ -867,9 +676,9 @@ Once the Helm chart is deployed, access the application with the VLC player. See
 If you dont have a camera input, please execute the below commands to use the default video already integrated into the application:
 
 ```
-helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz
+$ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.9.tgz
 
-helm install video-analytics-demo-0.1.9.tgz --name-template iva
+$ helm install video-analytics-demo-0.1.9.tgz --name-template iva
 ```
 
 Once the helm chart is deployed, access the application with the VLC player as per the below instructions. 
@@ -904,9 +713,9 @@ You should see the video output like below with the AI model detecting objects.
 Execute the below commands to uninstall the GPU Operator:
 
 ```
-helm ls
+$ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 nvidia-gpu-operator         1               2023-04-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-23.6.0      v23.3.2
+gpu-operator-1606173805 nvidia-gpu-operator            1               2024-03-20 20:23:28.063421701 +0000 UTC deployed        gpu-operator-24.3.0      v24.3.0
 
-helm del gpu-operator-1606173805 -n nvidia-gpu-operator
+$ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 ```

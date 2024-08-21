@@ -64,13 +64,29 @@
       autoremove: yes
     become: true
 
-  - name: Install snap
-    when: ansible_distribution == 'RedHat' and snap_exists.rc != 0
+
+  - name: Update Snap Repo
+    when: ansible_distribution == 'RedHat' and snap_exists.rc != 0 and ansible_distribution_major_version == '8'
     shell: "{{ item }}"
     become: true
     with_items:
       - dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm -y
-      - subscription-manager release --set 8.9
+      - subscription-manager release --set 8.8
+
+  - name: Update Snap Repo
+    when: ansible_distribution == 'RedHat' and snap_exists.rc != 0 and ansible_distribution_major_version == '9'
+    shell: "{{ item }}"
+    become: true
+    with_items:
+      - dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm -y
+      - subscription-manager release --set 9.4
+
+  - name: Install Snapd on RHEL
+    when: ansible_distribution == 'RedHat' and snap_exists.rc != 0
+    shell: "{{ item }}"
+    become: true
+    ignore_errors: true
+    with_items:
       - yum update -y
       - yum install snapd -y
       - systemctl enable --now snapd.socket
@@ -110,6 +126,11 @@
 
   - name: Add snap alias
     shell: sudo snap alias microk8s.kubectl kubectl; sudo snap alias microk8s.helm helm
+    become: true
+
+  - name: Add Home Dir to Snap
+    shell: "home=$(echo {{ ansible_user_dir }} | awk -F'/' '{print $2}'); sudo snap set system homedirs=/$home"
+    async: 30
     become: true
 
   - name: Create kube directory

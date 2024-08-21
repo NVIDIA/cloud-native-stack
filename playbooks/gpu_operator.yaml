@@ -1,3 +1,16 @@
+release_24_6_0:
+  gpu_operator_version: v24.6.0
+  gpu_driver_version: 550.90.07
+  driver_manager_version: 0.6.8
+  container_toolkit: v1.16.1
+  device_plugin: v0.16.1
+  dcgm_exporter_version: 3.3.7-3.5.0
+  nfd_version: v0.16.3
+  gfd_version: v0.16.1
+  mig_manager_version: v0.8.0
+  dcgm_version: 3.3.7-1
+  validator_version: v24.6.0
+  gds_driver: 2.17.5
 release_24_3_0:
   gpu_operator_version: v24.3.0
   gpu_driver_version: 550.54.14

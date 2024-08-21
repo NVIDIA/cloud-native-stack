@@ -1,35 +1,34 @@
-# NVIDIA Cloud Native Stack v13.0 - Install Guide for Ubuntu Server
+# NVIDIA Cloud Native Stack v13.1 - Install Guide for Ubuntu Server
 ## Introduction
 
 This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple NVIDIA Certified Systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
-NVIDIA Cloud Native Stack v13.0 includes:
+NVIDIA Cloud Native Stack v13.1 includes:
 - Ubuntu 22.04 LTS
-- Containerd 1.7.16
-- Kubernetes version 1.30.0
-- Helm 3.14.4
-- NVIDIA GPU Operator 24.3.0
-  - NVIDIA GPU Driver: 550.54.15
-  - NVIDIA Container Toolkit: 1.15.0
-  - NVIDIA K8S Device Plugin: 0.15.0
-  - NVIDIA DCGM-Exporter: 3.3.5-3.4.1
-  - NVIDIA DCGM: 3.3.5-1
-  - NVIDIA GPU Feature Discovery: 0.15.0
-  - NVIDIA K8s MIG Manager: 0.7.0
-  - NVIDIA Driver Manager: 0.6.8
-  - Node Feature Discovery: 0.15.4
-  - NVIDIA KubeVirt GPU Device Plugin: 1.2.7
+- Containerd 1.7.20
+- Kubernetes version 1.30.2
+- Helm 3.15.3
+- NVIDIA GPU Operator 24.6.0
+  - NVIDIA GPU Driver: 550.90.07
+  - NVIDIA Container Toolkit: 1.16.1
+  - NVIDIA K8S Device Plugin: 0.16.1
+  - NVIDIA DCGM-Exporter: 3.3.7-3.5.0
+  - NVIDIA DCGM: 3.3.7-1
+  - NVIDIA GPU Feature Discovery: 0.16.1
+  - NVIDIA K8s MIG Manager: 0.8.0
+  - NVIDIA Driver Manager: 0.6.10
+  - Node Feature Discovery: 0.16.3
+  - NVIDIA KubeVirt GPU Device Plugin: 1.2.9
   - NVIDIA GDS Driver: 2.17.5
-  - NVIDIA Kata Manager for Kubernetes: 0.2.0
+  - NVIDIA Kata Manager for Kubernetes: 0.2.1
   - NVIDIA Confidential Computing Manager for Kubernetes: 0.1.1
-- NVIDIA Network Operator 24.1.1
-  - Mellanox MOFED Driver 24.01-0.3.3.1-10:
-  - Mellanox NV Peer Memory Driver 1.1-0
+- NVIDIA Network Operator 24.4.1
+  - Mellanox MOFED Driver 24.04-0.6.6.0-0
   - RDMA Shared Device Plugin 1.4.0
   - SRIOV Device Plugin 3.6.2
   - Container Networking Plugins 1.3.0
   - Multus 3.9.3
-  - Whereabouts 0.6.2
+  - Whereabouts 0.7.0
 
 ## Table of Contents
 
@@ -125,30 +124,30 @@ sudo sysctl --system
 Download the Containerd for `x86-64` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.7.16/cri-containerd-cni-1.7.16-linux-amd64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.20/cri-containerd-cni-1.7.20-linux-amd64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.16-linux-amd64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.20-linux-amd64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.7.16-linux-amd64.tar.gz
+rm -rf cri-containerd-cni-1.7.20-linux-amd64.tar.gz
 ```
 
 
 Download the Containerd for `ARM` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.7.16/cri-containerd-cni-1.7.16-linux-arm64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.20/cri-containerd-cni-1.7.20-linux-arm64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.16-linux-arm64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.20-linux-arm64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.7.16-linux-arm64.tar.gz
+rm -rf cri-containerd-cni-1.7.20-linux-arm64.tar.gz
 ```
 
 Install the Containerd
@@ -250,7 +249,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 ```
 
 ```
- sudo apt install -y -q kubelet=1.30.0-1.1  kubectl=1.30.0-1.1  kubeadm=1.30.0-1.1 
+ sudo apt install -y -q kubelet=1.30.2-1.1  kubectl=1.30.2-1.1  kubeadm=1.30.2-1.1 
 ```
 
 ```
@@ -409,14 +408,14 @@ for more information.
 
 ### Installing Helm 
 
-Execute the following command to download and install Helm 3.14.4 for `x86-64` system: 
+Execute the following command to download and install Helm 3.15.3 for `x86-64` system: 
 
 ```
-wget https://get.helm.sh/helm-v3.14.4-linux-amd64.tar.gz
+wget https://get.helm.sh/helm-v3.15.3-linux-amd64.tar.gz
 ```
 
 ```
-tar -zxvf helm-v3.14.4-linux-amd64.tar.gz
+tar -zxvf helm-v3.15.3-linux-amd64.tar.gz
  ```
  
  ```
@@ -424,17 +423,17 @@ sudo mv linux-amd64/helm /usr/local/bin/helm
  ```
 
  ```
-rm -rf helm-v3.14.4-linux-amd64.tar.gz linux-amd64/
+rm -rf helm-v3.15.3-linux-amd64.tar.gz linux-amd64/
 ```
 
-Download and install Helm 3.14.4 for `ARM` system: 
+Download and install Helm 3.15.3 for `ARM` system: 
 
 ```
-wget https://get.helm.sh/helm-v3.14.4-linux-arm64.tar.gz
+wget https://get.helm.sh/helm-v3.15.3-linux-arm64.tar.gz
 ```
 
 ```
-tar -zxvf helm-v3.14.4-linux-arm64.tar.gz
+tar -zxvf helm-v3.15.3-linux-arm64.tar.gz
  ```
  
 ```
@@ -442,10 +441,10 @@ sudo mv linux-arm64/helm /usr/local/bin/helm
 ```
 
 ```
-rm -rf helm-v3.14.4-linux-arm64.tar.gz linux-arm64/
+rm -rf helm-v3.15.3-linux-arm64.tar.gz linux-arm64/
 ```
 
-Refer to the Helm 3.14.4 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
+Refer to the Helm 3.15.3 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
 
 
 ### Adding an Additional Node to NVIDIA Cloud Native Stack
@@ -955,7 +954,7 @@ spec:
   restartPolicy: OnFailure
   containers:
     - name: nvidia-smi
-      image: "nvidia/cuda:12.1.0-base-ubuntu22.04"
+      image: "nvidia/cuda:12.4.0-base-ubuntu22.04"
       args: ["nvidia-smi"]
 EOF
 ```
@@ -971,26 +970,26 @@ kubectl logs nvidia-smi
 Output:
 
 ``` 
-Wed Mar 20 12:47:29 2024
-+-----------------------------------------------------------------------------+
-| NVIDIA-SMI 550.54.15    Driver Version: 550.54.15    CUDA Version: 12.4     |
-|-------------------------------+----------------------+----------------------+
-| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
-| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
-|                               |                      |               MIG M. |
-|===============================+======================+======================|
-|   0  Tesla T4            On   | 00000000:14:00.0 Off |                  Off |
-| N/A   47C    P8    16W /  70W |      0MiB / 16127MiB |      0%      Default |
-|                               |                      |                  N/A |
-+-------------------------------+----------------------+----------------------+
-
-+-----------------------------------------------------------------------------+
-| Processes:                                                                  |
-|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
-|        ID   ID                                                   Usage      |
-|=============================================================================|
-|  No running processes found                                                 |
-+-----------------------------------------------------------------------------+
+Mon Aug  5 16:26:04 2024
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.90.07              Driver Version: 550.90.07      CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100 80GB PCIe          On  |   00000000:41:00.0 Off |                    0 |
+| N/A   34C    P0             43W /  300W |       1MiB /  81920MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
 ```
 
 #### Example 2: CUDA-Vector-Add

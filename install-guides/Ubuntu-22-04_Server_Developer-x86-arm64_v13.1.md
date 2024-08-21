@@ -10,7 +10,7 @@ NVIDIA Cloud Native Stack v13.1 includes:
 - Helm 3.14.4
 - NVIDIA GPU Driver: 550.90.07
 - NVIDIA Container Toolkit: 1.16.1
-- NVIDIA GPU Operator 24.6.0
+- NVIDIA GPU Operator 24.6.1
   - NVIDIA K8S Device Plugin: 0.16.1
   - NVIDIA DCGM-Exporter: 3.3.7-3.5.0
   - NVIDIA DCGM: 3.3.7-1
@@ -518,13 +518,13 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command for `Containerd` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.30.0"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.30.2"
 ```
 
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.30.0"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.30.2"
 ```
 
 Output:
@@ -603,7 +603,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.30.0
+#yourhost        Ready    control-plane,master   10m   v1.30.2
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -690,8 +690,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.30.0
-#yourhost-worker Ready                           10m   v1.30.0
+#yourhost        Ready    control-plane,master   10m   v1.30.2
+#yourhost-worker Ready                           10m   v1.30.2
 ```
 
 ### Installing GPU Operator
@@ -713,7 +713,7 @@ Install GPU Operator:
 `NOTE:` As we are preinstalled with NVIDIA Driver and NVIDIA Container Toolkit, we need to set as `false` when installing the GPU Operator
 
 ```
- helm install --version 24.3.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+ helm install --version 24.6.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 ```
 
 #### Validating the State of the GPU Operator:
@@ -930,7 +930,7 @@ Execute the below commands to uninstall the GPU Operator:
 ```
 $ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 nvidia-gpu-operator         1               2023-04-14 20:23:28.063421701 +0000 UTC deployed        gpu-operator-23.6.0      v23.3.2
+gpu-operator-1606173805 nvidia-gpu-operator            1               2024-08-20 20:23:28.063421701 +0000 UTC deployed        gpu-operator-24.6.1      v24.6.1
 
 $ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 ```

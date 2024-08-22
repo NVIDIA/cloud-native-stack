@@ -13,7 +13,7 @@ Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA L
 Please make sure to meet the following prerequisites to Install the Cloud Native Stack
 
 - system has direct internet access
-- system should have an Operating system either Ubuntu 20.04 and above or RHEL 8.7
+- system should have an Operating system either Ubuntu 22.04 and above or RHEL 8.8
 - system has adequate internet bandWidth
 - DNS server is working fine on the System
 - system can access Google repo(for k8s installation)
@@ -39,7 +39,7 @@ nano hosts
 
 [master]
 <master-IP> ansible_ssh_user=nvidia ansible_ssh_pass=nvidipass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
-[node]
+[nodes]
 <worker-IP> ansible_ssh_user=nvidia ansible_ssh_pass=nvidiapass ansible_sudo_pass=nvidiapass ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
@@ -50,21 +50,29 @@ bash setup.sh install
 ```
 For more Information about customize the values, please refer [Installation](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation)
 
+## Cloud Native Stack Life Cycle
+
+When NVIDIA Cloud Native Stack batch is released, the previous batch enters maintenance support and only receives patch release updates. All prior batches enter end-of-life (EOL) and are no longer supported and do not receive patch updates.
+
+> Note: Upgrades are only supported from previous batch to latest batch.
+
+| Cloud Native Stack Batch | Status              |
+| :-----:                  | :--------------:|
+| 24.8.0                   | Generally Available | 
+| 24.5.0                   | Maintenance         |
+| 24.3.0                   | EOL                 |
+
+For more information, Refer [Cloud Native Stack Releases](https://github.com/NVIDIA/cloud-native-stack/releases)
+
 ## NVIDIA Cloud Native Stack Component Matrix
 
-| Branch/Release | Version | Initial Release Date   | Platform              | OS    | Containerd | CRI-O | K8s    | Helm  | NVIDIA GPU Operator | NVIDIA Network Operator | NVIDIA Data Center Driver |
-| :---:   |    :------:        | :---:                  | :---:                 | :---: | :---:      | :----: |  :---: | :---:        | :---:            | :---:      | :---: |
-| 24.8.0/master  | 13.1   | 20 August 2024 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.20 | 1.30.2 | 1.30.2 |  3.15.3 | 24.6.1   | 24.4.1(x86 only) | 550.90.07  |
-| 24.8.0/master  | 13.1   | 20 August 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.8                     | 1.7.20 | 1.30.2 | 1.30.2 |  3.15.3 | 24.6.1   | 24.4.1(x86 only)    | 550.90.07 |
-| 24.8.0/master  | 13.1   | 20 August 2024 | DGX Server                             | DGX OS 6.2(Ubuntu 22.04 LTS) | 1.7.20 | 1.30.2 | 1.30.2 |  3.15.3 | 24.6.1   | N/A              | N/A |
-|                |        |               |                               |                             |            |       |       |                  |            |                  |
-| 24.8.0/master  | 12.2   | 20 August 2024 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.20 | 1.29.6 | 1.29.6 |  3.15.3 | 24.6.1   | 24.4.1(x86 only) | 550.90.07  |
-| 24.8.0/master  | 12.2   | 20 August 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.8                     | 1.7.20 | 1.29.6 | 1.29.6 |  3.15.3 | 24.6.1   | 24.4.1(x86 only)      | 550.90.07 |
-| 24.8.0/master  | 12.2   | 20 August 2024 | DGX Server                             | DGX OS 6.2(Ubuntu 22.04 LTS) | 1.7.20 | 1.29.6 | 1.29.6 |  3.15.3 | 24.6.1   | N/A              | N/A |
-|                |        |               |                               |                             |            |       |       |                  |       |                  |
-| 24.8.0/masrer  | 11.3   | 20 August 2024 | NVIDIA Certified Server (x86 & arm64)  | Ubuntu 22.04 LTS             | 1.7.20 | 1.28.8 | 1.28.12 |  3.15.3 | 24.6.1   | 24.4.1(x86 only) | 550.90.07  |
-| 24.8.0/master  | 11.3   | 20 August 2024 | NVIDIA Certified Server (x86 & arm64)  | RHEL 8.8                     | 1.7.20 | 1.28.8 | 1.28.12 |  3.15.3 | 24.6.1   | 24.4.1(x86 only)    | 550.90.07 |
-| 24.8.0/master  | 11.3   | 20 August 2024 | DGX Server                             | DGX OS 6.2(Ubuntu 22.04 LTS) | 1.7.20 | 1.28.8 | 1.28.12 |  3.15.3 | 24.6.1   | N/A              | N/A |
+| CNS Version |  Platforms              | Supported OS    | Containerd | CRI-O | K8s    | NVIDIA GPU Operator | NVIDIA Network Operator | NVIDIA Data Center Driver | Helm  |
+| :------:| :---:                 | :---: | :---:      | :----: |  :---: | :---:        | :---:            | :---:      | :---: |
+| 13.1   | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul>| <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.8</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> | 1.7.20 | 1.30.2 | 1.30.2 |  24.6.1   | 24.4.1(x86 only)    | 550.90.07 | 3.15.3 |
+|        |                              |                             |            |       |       |                  |            |                  |
+| 12.2   | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul>| <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.8</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> | 1.7.20 | 1.29.6 | 1.29.6 |  24.6.1   | 24.4.1(x86 only) | 550.90.07  | 3.15.3 |
+|        |               |                               |                             |            |       |       |                  |       |                  |
+| 11.3   | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul>| <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.8</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> | 1.7.20 | 1.28.8 | 1.28.12 | 24.6.1   | 24.4.1(x86 only) | 550.90.07  | 3.15.3 |
 
 To Find other CNS Release Information, please refer to [Cloud Native Stack Component Matrix](https://github.com/NVIDIA/cloud-native-stack/tree/24.5.0?tab=readme-ov-file#nvidia-cloud-native-stack-component-matrix-1)
 
@@ -88,9 +96,9 @@ To Find other CNS Release Information, please refer to [Cloud Native Stack Compo
 - [LoadBalancer on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#load-balancer-on-cns)
 - [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
 
-| Branch/Release | CNS Version  | Release Date   | Kserve | LoadBalancer | Storage  | Monitoring    |
-| :---:          | :------:     | :---:                  | :---:  | :---:        | :---:    | :---:         | 
-| 24.8.0/master  | 13.1 <br /> 12.2 <br /> 11.3   | 20 August 2024 | <br />  **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul>  | MetalLB: 0.14.5 |  NFS: 4.0.18 <br /> Local Path: 0.0.26 | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 |
+| CNS Version  | Release Date   | MicroK8s | Kserve | LoadBalancer | Storage  | Monitoring    |
+| :------:     | :---:          | :---:    | :---:  | :---:        | :---:    | :---:| 
+| 13.1 <br /> 12.2 <br /> 11.3   | 20 August 2024 | 1.30 <br /> 1.29 <br /> 1.28 | <br /> **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul>  | MetalLB: 0.14.5 |  NFS: 4.0.18 <br /> Local Path: 0.0.26 | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 |
 
 
 # Getting help or Providing feedback

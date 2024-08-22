@@ -36,6 +36,20 @@ To Find other CNS Release Information, please refer to [Cloud Native Stack Compo
 
 `NOTE:` Above CNS versions are available on master branch as well but it's recommend to use specific branch with respective release 
 
+# Cloud Native Stack Features
+
+- Kubernetes with GPU Operator, Network Operator 
+- [MicroK8s on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-microk8s)
+- [Installation on CSP's](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation-on-csps)
+- [Storage on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#storage-on-cns)
+- [Monitoring on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#monitoring-on-cns)
+- [LoadBalancer on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#load-balancer-on-cns)
+- [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
+
+| CNS Version  | Release Date   | MicroK8s | Kserve | LoadBalancer | Storage  | Monitoring    |
+| :------:     | :---:          | :---:    | :---:  | :---:        | :---:    | :---:| 
+| 13.1 <br /> 12.2 <br /> 11.3   | 20 August 2024 | 1.30 <br /> 1.29 <br /> 1.28 | <br /> **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul>  | MetalLB: 0.14.5 |  NFS: 4.0.18 <br /> Local Path: 0.0.26 | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 |
+
 # Getting Started
 
 #### Prerequisites
@@ -87,21 +101,6 @@ For more Information about customize the values, please refer [Installation](htt
     - 1 control plane node and any number of worker nodes
 
 `NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
-
-# Cloud Native Stack Features
-
-- Kubernetes with GPU Operator, Network Operator 
-- [MicroK8s on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-microk8s)
-- [Installation on CSP's](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation-on-csps)
-- [Storage on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#storage-on-cns)
-- [Monitoring on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#monitoring-on-cns)
-- [LoadBalancer on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#load-balancer-on-cns)
-- [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
-
-| CNS Version  | Release Date   | MicroK8s | Kserve | LoadBalancer | Storage  | Monitoring    |
-| :------:     | :---:          | :---:    | :---:  | :---:        | :---:    | :---:| 
-| 13.1 <br /> 12.2 <br /> 11.3   | 20 August 2024 | 1.30 <br /> 1.29 <br /> 1.28 | <br /> **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul>  | MetalLB: 0.14.5 |  NFS: 4.0.18 <br /> Local Path: 0.0.26 | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 |
-
 
 # Getting help or Providing feedback
 

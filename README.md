@@ -52,9 +52,13 @@ To Find other CNS Release Information, please refer to [Cloud Native Stack Compo
 - [LoadBalancer on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#load-balancer-on-cns)
 - [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
 
-| CNS Version  | Release Date   | MicroK8s | Kserve | LoadBalancer | Storage  | Monitoring    |
-| :------:     | :---:          | :---:    | :---:  | :---:        | :---:    | :---:| 
-| 13.1 <br /> 12.2 <br /> 11.3   | 20 August 2024 | 1.30 <br /> 1.29 <br /> 1.28 | <br /> **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul>  | MetalLB: 0.14.5 |  NFS: 4.0.18 <br /> Local Path: 0.0.26 | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 |
+| CNS Version               | 13.1    | 12.2 | 11.3 |
+| :-----:                   | :-----: | :------: | :------: |
+| MicroK8s                  | 1.30    | 1.29     | 1.28 |
+| KServe                    | <br /> **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul> | <br /> **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul>  | <br /> **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul> | 
+| LoadBalancer              | MetalLB: 0.14.5 | MetalLB: 0.14.5 | MetalLB: 0.14.5 |
+| Storage                   | NFS: 4.0.18 <br /> Local Path: 0.0.26 | NFS: 4.0.18 <br /> Local Path: 0.0.26 | NFS: 4.0.18 <br /> Local Path: 0.0.26 | 
+| Monitoring                | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 |
 
 # Getting Started
 

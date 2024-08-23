@@ -34,7 +34,7 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 | CRI-O                     | 1.30.2 |1.29.6 | 1.28.8 |
 | Kubernetes                | 1.30.2 | 1.29.6 | 1.28.12 |
 | NVIDIA GPU Operator       | 24.6.1 | 24.6.1 | 24.6.1 |
-| NVIDIA Network Operator   | 24.4.1 | 24.4.1 | 24.4.1 |
+| NVIDIA Network Operator   | 24.4.1(x86 Only) | 24.4.1(x86 Only) | 24.4.1(x86 Only) |
 | NVIDIA Data Center Driver | 550.90.07 | 550.90.07 | 550.90.07 |
 | Helm                      | 3.15.3 | 3.15.3 | 3.15.3 |
 

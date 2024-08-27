@@ -106,7 +106,6 @@ bash setup.sh install
 For more Information about customize the values, please refer [Installation](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation)
 
 # Topologies
-============
 
 - Cloud Native Stack allows to deploy:
     - 1 node with both control plane and worker functionalities

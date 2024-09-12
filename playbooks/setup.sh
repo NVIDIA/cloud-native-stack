@@ -23,7 +23,7 @@ ansible_install() {
   if [ ! command -v python 2>/dev/null || ! command -v python3 2>/dev/null ]
   then
     if [[ $os == "ubuntu" ]]; then
-  	  sudo apt update 2>&1 >/dev/null && sudo apt install python3 python3-pip sshpass -y 2>&1 >/dev/null
+         sudo apt-get update 2>&1 >/dev/null && sudo apt-get install python3 python3-pip sshpass -y 2>&1 >/dev/null
     elif [ $os == '"rhel"' ]; then
       sudo yum install python39 python39-pip -y 2>&1 >/dev/null
     fi
@@ -34,7 +34,7 @@ ansible_install() {
         if [[ $os == "ubuntu" ]]; then
 		os_version=$(cat /etc/os-release  | grep -iw 'VERSION_ID' | awk -F'=' '{print $2}')
             if [[ $os_version == '"20.04"' ]]; then
-                sudo apt update 2>&1 >/dev/null && sudo apt install python3.9 python3-pip sshpass -y 2>&1 >/dev/null
+                sudo apt-get update 2>&1 >/dev/null && sudo apt-get install python3.9 python3-pip sshpass -y 2>&1 >/dev/null
                 sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
                 sudo ln -sf /usr/bin/python3.9 /usr/bin/python
 				sudo ln -sf /usr/lib/python3/dist-packages/apt_pkg.cpython-* /usr/lib/python3/dist-packages/apt_pkg.so
@@ -49,7 +49,7 @@ ansible_install() {
   fi
 
 if [[ $os == "ubuntu" ]]; then
-    sudo apt update 2>&1 >/dev/null && sudo apt install python3-pip sshpass -y 2>&1 >/dev/null
+    sudo apt-get update 2>&1 >/dev/null && sudo apt-get install python3-pip sshpass -y 2>&1 >/dev/null
 elif [ $os == '"rhel"' ]; then
     sudo yum install python39-pip sshpass -y 2>&1 >/dev/null
 fi
@@ -77,7 +77,7 @@ os=$(uname -o)
 if [[ $os == 'GNU/Linux' ]]; then
 os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
       if [[ $os == "ubuntu" ]]; then
-    	sudo apt update 2>&1 >/dev/null && sudo apt install curl -y 2>&1 >/dev/null
+       sudo apt-get update 2>&1 >/dev/null && sudo apt-get install curl -y 2>&1 >/dev/null
       elif [ $os == '"rhel"' ]; then
         sudo subscription-manager release --set 8.8
     	sudo yum install curl -y 2>&1 >/dev/null
@@ -111,7 +111,7 @@ ostype=$(uname -o)
         if [[ $os == "ubuntu" ]]; then
 		ansible_version=$(sudo pip3 list | grep ansible | awk '{print $2}' | head -n1 | awk -F'.' '{print $1}')
                 if [[ $ansible_version -le 2 ]]; then
-                	sudo apt purge ansible -y 2>&1 >/dev/null && sudo apt autoremove -y 2>&1 >/dev/null
+                       sudo apt-get purge ansible -y 2>&1 >/dev/null && sudo apt-get autoremove -y 2>&1 >/dev/null
 	         		ansible_install
   				fi
 		fi

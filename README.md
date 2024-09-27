@@ -9,9 +9,11 @@ Interested in a pre-provisioned NVIDIA Cloud Native Stack environment? [NVIDIA L
 
 ## Objective
 
-- CNS comes as a reference architecture that list all components that have been tested successfully together. the CNS reference architectuee is intended for Production enviuronment specification.
+- CNS comes as a reference architecture that list all components that have been tested successfully together. the CNS reference architecture can be used as specification for production deployments.
 
 - CNS also comes as installation guides and playbook that can be used to instantiate a quick K8s environment with NVIDIA operators. The CNS installation guides and playbook are intended only for test and PoC environments.
+
+  Note: The K8s layer that CNS install guide or playbook deploys is basic (no HA for instance) and as such cannot be used for production. However all NVIDIA componants in CNS are fully operable in production environment. 
 
 ## Life Cycle
 

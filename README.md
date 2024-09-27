@@ -113,6 +113,9 @@ For more Information about customize the values, please refer [Installation](htt
 
 `NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
 
+# Troubleshooting
+
+Troubleshoot CNS installation issues
 
 # Getting help or Providing feedback
 

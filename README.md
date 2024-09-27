@@ -115,7 +115,7 @@ For more Information about customize the values, please refer [Installation](htt
 
 # Troubleshooting
 
-Troubleshoot CNS installation issues
+[Troubleshoot CNS installation issues](https://github.com/NVIDIA/cloud-native-stack/blob/master/troubleshooting/README.md)
 
 # Getting help or Providing feedback
 

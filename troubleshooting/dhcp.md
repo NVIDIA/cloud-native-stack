@@ -1,6 +1,17 @@
 # DNS troubleshooting
 
 ## DNS resolution for pods
+
+### Driver Container failed to access archive.ubuntu.com
+
+#### Issue:
+
+Driver Container logs display the following error messages:
+![driver container logs](https://github.com/NVIDIA/cloud-native-stack/blob/master/troubleshooting/driver-container-logs.png)
+
+
+#### Troubleshooting:
+
 follow the steps located here: https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/ to troubleshoot DNS pod resolution.
 
 To install the dnsutils pod, launch the command:

@@ -1,6 +1,8 @@
 # NVIDIA Cloud Native Stack 
 
+
 ## Introduction
+
 NVIDIA Cloud Native Stack (CNS) is a collection of software to run cloud native workloads on NVIDIA GPUs. NVIDIA Cloud Native Stack is based on Ubuntu/RHEL, Kubernetes, Helm and the NVIDIA GPU and Network Operator.
 
 Interested in deploying NVIDIA Cloud Native Stack? This repository has [install guides](https://github.com/NVIDIA/cloud-native-stack/tree/master/install-guides) for manual installations and [ansible playbooks](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks) for automated installations.
@@ -24,7 +26,7 @@ When NVIDIA Cloud Native Stack batch is released, the previous batch enters main
 
 |  Batch  | Status              |
 | :-----: | :--------------:|
-| [24.8.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.8.0)                   | Generally Available | 
+| [24.8.1](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.8.1)                   | Generally Available | 
 | [24.5.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.5.0)                   | Maintenance         |
 | [24.3.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.3.0) and lower                   | EOL                 |
 
@@ -40,10 +42,11 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 | Platforms                 | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> |
 | Supported OS              |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.8</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.8</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.8</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |
 | Containerd                | 1.7.20 | 1.7.20 | 1.7.20 |
+| NVIDIA Container Toolkit  | 1.16.2 | 1.16.2 | 1.16.2 |
 | CRI-O                     | 1.30.2 |1.29.6 | 1.28.8 |
 | Kubernetes                | 1.30.2 | 1.29.6 | 1.28.12 |
 | CNI (Calico)              | 3.27.4 | 3.27.4 |  3.27.4 |
-| NVIDIA GPU Operator       | 24.6.1 | 24.6.1 | 24.6.1 |
+| NVIDIA GPU Operator       | 24.6.2 | 24.6.2 | 24.6.2 |
 | NVIDIA Network Operator   | 24.4.1(x86 Only) | 24.4.1(x86 Only) | 24.4.1(x86 Only) |
 | NVIDIA Data Center Driver | 550.90.07 | 550.90.07 | 550.90.07 |
 | Helm                      | 3.15.3 | 3.15.3 | 3.15.3 |
@@ -121,6 +124,10 @@ For more Information about customize the values, please refer [Installation](htt
     - 1 control plane node and any number of worker nodes
 
 `NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
+
+# Troubleshooting
+
+[Troubleshoot CNS installation issues](https://github.com/NVIDIA/cloud-native-stack/blob/master/troubleshooting/README.md)
 
 # Getting help or Providing feedback
 

@@ -122,10 +122,6 @@ For more Information about customize the values, please refer [Installation](htt
 
 `NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
 
-# Troubleshooting
-
-[Troubleshoot CNS installation issues](https://github.com/NVIDIA/cloud-native-stack/blob/master/troubleshooting/README.md)
-
 # Getting help or Providing feedback
 
 Please open an [issue](https://github.com/NVIDIA/cloud-native-stack/issues) on the GitHub project for any questions. Your feedback is appreciated.

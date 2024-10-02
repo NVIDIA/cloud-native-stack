@@ -7,7 +7,7 @@
 #### Issue:
 
 Driver Container logs display the following error messages:
-![driver container logs](https://github.com/NVIDIA/cloud-native-stack/blob/master/troubleshooting/driver-container-logs.png)
+![driver container logs](driver-container-logs.png)
 
 
 #### Troubleshooting:

@@ -40,9 +40,9 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 | CNS Version               | 14.0    | 13.2 | 12.3 |
 | :-----:                   | :-----: | :------: | :------: |
 | Platforms                 | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> |
-| Supported OS              |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.8</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.8</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.8</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |
+| Supported OS              |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.10</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.10</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.10</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |
 | Containerd                | 1.7.23 | 1.7.23 | 1.7.23 |
-| NVIDIA Container Toolkit  | 1.16.2 | 1.16.2 | 1.16.2 |
+| NVIDIA Container Toolkit  | 1.17.0 | 1.17.0 | 1.17.0 |
 | CRI-O                     | 1.31.2 | 1.30.6 | 1.29.10 |
 | Kubernetes                | 1.31.2 | 1.30.6 | 1.29.10 |
 | CNI (Calico)              | 3.28.2 | 3.28.2 |  3.28.2 |
@@ -57,6 +57,8 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 
 # Software
 
+`NOTE:` currently MicroK8s functionality is limited with GPU Operator 24.9.0 as there's known [bug](https://github.com/NVIDIA/gpu-operator/issues/1109). we expected to fix this with another release soon. 
+
 - Kubernetes
   - [GPU Operator](https://github.com/NVIDIA/gpu-operator)
   - [Network Operator](https://github.com/Mellanox/network-operator)  
@@ -69,8 +71,6 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 - [LoadBalancer on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#load-balancer-on-cns)
 - [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
 - [LeaderWorkerSet(lws)](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-leaderworkerset)
-
-`NOTE:` currently MicroK8s functionality is limited with GPU Operator 24.9.0 as there's known [bug](https://github.com/NVIDIA/gpu-operator/issues/1109). we expected to fix this with another release soon. 
 
 | CNS Version               | 14.0    | 13.2 | 12.3 |
 | :-----:                   | :-----: | :------: | :------: |
@@ -88,7 +88,7 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 Please make sure to meet the following prerequisites to Install the Cloud Native Stack
 
 - system has direct internet access
-- system should have an Operating system either Ubuntu 22.04 and above or RHEL 8.8
+- system should have an Operating system either Ubuntu 22.04 and above or RHEL 8.10
 - system has adequate internet bandWidth
 - DNS server is working fine on the System
 - system can access Google repo(for k8s installation)

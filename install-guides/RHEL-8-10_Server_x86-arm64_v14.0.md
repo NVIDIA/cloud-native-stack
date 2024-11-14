@@ -367,7 +367,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.1/manifests/calico.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/calico.yaml
 ```
 
 Update the Calico Daemonset 

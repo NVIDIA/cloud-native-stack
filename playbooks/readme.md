@@ -301,8 +301,6 @@ kubectl get --raw /metrics  | grep kubernetes_feature_enabled  | grep -i Dynamic
 
 If you wnt to enable NIM Operator on Cloud Native Stack, you can enable the configuration in `cns_values_xx.yaml` and trigger the installation
 
-`NOTE:` For NIM Operator you need to provide your NGC API Key, Please refer to get a [NGC API KEY](https://org.ngc.nvidia.com/setup/api-key)
-
 Example:
 ```
 $ nano cns_values_13.2.yaml

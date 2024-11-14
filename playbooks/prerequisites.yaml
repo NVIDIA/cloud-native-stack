@@ -69,7 +69,6 @@
         gpgkey: "{{ k8s_gpg_key }}"
         gpgcheck: yes
         enabled: yes
-        repo_gpgcheck: yes        
 
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack
       become: true
@@ -124,9 +123,11 @@
     - name: disable Firewall
       become: true
       when: "'running' not in k8sup.stdout and ansible_distribution == 'RedHat'"
-      service:
+      systemd_service:
         state: stopped
         name: firewalld
+        enabled: false
+        daemon_reload: true
 
 #    - name: Firewall Rules
 #      become: true
@@ -190,7 +191,7 @@
     - name: Setup Kubelet Parameters
       become: true
       lineinfile:
-        line: KUBELET_EXTRA_ARGS=--serialize-image-pulls=true"
+        line: KUBELET_EXTRA_ARGS=--serialize-image-pulls=true
         path: /etc/default/kubelet
         create: yes
       when: "cns_version >= 10.0"
@@ -310,8 +311,8 @@
           changed_when: false
           register: containerd_config_default
 
-        - name: Enable systemd cgroups
-          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml; sed -i 's/    max_concurrent_downloads = 3/    max_concurrent_downloads = {{ containerd_max_concurrent_downloads}}/g' /etc/containerd/config.toml
+        - name: Enable containerd features
+          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml; sed -i 's/    max_concurrent_downloads = 3/    max_concurrent_downloads = {{ containerd_max_concurrent_downloads}}/g' /etc/containerd/config.toml;  sed -i 's/enable_cdi \= false/enable_cdi \= true/g' /etc/containerd/config.toml
 
         - name: restart containerd
           systemd_service:
@@ -886,6 +887,15 @@
             update_cache: yes
             force: yes
       when: "ansible_distribution == 'Ubuntu' and release == 'tegra'"
+
+    - name: Starting and enabling the required services
+      become: true
+      when: container_runtime == 'containerd'
+      lineinfile:
+        path: /etc/systemd/system/containerd.service
+        insertafter: 'LimitCORE=infinity'
+        line: 'LimitNOFILE=1047552'
+      failed_when: false
 
     - name: Starting and enabling the required services
       become: true

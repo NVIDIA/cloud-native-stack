@@ -162,6 +162,11 @@
       register: crio_version
       ignore_errors: yes
 
+    - name: Get CRI-Dockerd version
+      shell: cri-dockerd --version | awk '{print $2}'
+      register: cridockerd_version
+      ignore_errors: yes
+
     - name: check master node is up and running
       shell: kubectl get nodes | grep -i ready
       register: nodeready
@@ -186,7 +191,23 @@
       ignore_errors: yes
 
     - name: Create NVIDIA-SMI yaml
-      when: "cns_version == 10.5 and ansible_distribution == 'RedHat' or cns_version == 11.2 and ansible_distribution == 'RedHat' or cns_version == 12.1 and ansible_distribution == 'RedHat' or cns_version == 13.0 and ansible_distribution == 'RedHat'"
+      when: "cns_version == 12.3 and ansible_distribution == 'RedHat' or cns_version == 13.2 and ansible_distribution == 'RedHat' or cns_version == 14.0 and ansible_distribution == 'RedHat'"
+      copy:
+        content:  |
+                 apiVersion: v1
+                 kind: Pod
+                 metadata:
+                   name: nvidia-smi
+                 spec:
+                   restartPolicy: OnFailure
+                   containers:
+                     - name: nvidia-smi
+                       image: "nvidia/cuda:12.6.0-base-ubi8"
+                       args: ["nvidia-smi"]
+        dest: nvidia-smi.yaml
+
+    - name: Create NVIDIA-SMI yaml
+      when: "cns_version == 12.2 and ansible_distribution == 'RedHat' or cns_version == 10.5 and ansible_distribution == 'RedHat' or cns_version == 11.2 and ansible_distribution == 'RedHat' or cns_version == 12.1 and ansible_distribution == 'RedHat' or cns_version == 13.0 and ansible_distribution == 'RedHat'"
       copy:
         content:  |
                  apiVersion: v1
@@ -198,6 +219,22 @@
                    containers:
                      - name: nvidia-smi
                        image: "nvidia/cuda:12.4.1-base-ubi8"
+                       args: ["nvidia-smi"]
+        dest: nvidia-smi.yaml
+
+    - name: Create NVIDIA-SMI yaml
+      when: "cns_version == 12.3 and ansible_distribution == 'Ubuntu' or cns_version == 13.1 and ansible_distribution == 'Ubuntu' or cns_version == 14.0 and ansible_distribution == 'Ubuntu'"
+      copy:
+        content:  |
+                 apiVersion: v1
+                 kind: Pod
+                 metadata:
+                   name: nvidia-smi
+                 spec:
+                   restartPolicy: OnFailure
+                   containers:
+                     - name: nvidia-smi
+                       image: "nvidia/cuda:12.6.0-base-ubuntu22.04"
                        args: ["nvidia-smi"]
         dest: nvidia-smi.yaml
 
@@ -233,22 +270,6 @@
                        args: ["nvidia-smi"]
         dest: nvidia-smi.yaml
 
-    - name: Create NVIDIA-SMI yaml
-      when: "cns_version == 10.0 and ansible_distribution == 'Ubuntu' or cns_version == 10.1 and ansible_distribution == 'Ubuntu' or cns_version == 10.2 and ansible_distribution == 'Ubuntu' or cns_version == 9.4 and ansible_distribution == 'Ubuntu' or cns_version == 10.3 and ansible_distribution == 'Ubuntu' or cns_version == 11.0 and ansible_distribution == 'Ubuntu'"
-      copy:
-        content:  |
-                 apiVersion: v1
-                 kind: Pod
-                 metadata:
-                   name: nvidia-smi
-                 spec:
-                   restartPolicy: OnFailure
-                   containers:
-                     - name: nvidia-smi
-                       image: "nvidia/cuda:12.2.0-base-ubuntu22.04"
-                       args: ["nvidia-smi"]
-        dest: nvidia-smi.yaml
-
     - name: Report Operating System Version of RHEL/CentOS
       when: "ansible_distribution in ['RedHat', 'CentOS']"
       ignore_errors: yes
@@ -268,243 +289,6 @@
         msg: "Docker Version {{ dockerversion.stdout }}"
 
     - name: Componenets Target Versions Vs Installed Versions
-      when: cns_docker == false and cns_version == 7.4 or cns_docker == false and cns_version == 8.3 or  cns_docker == false and cns_version == 9.1 or  cns_docker == false and cns_version == 10.0
-      register: compare_74
-      args:
-        executable: /bin/bash
-      shell: |
-        echo -e "==========================================================================================="
-        echo -e "  Components                          Target Version          ||     Installed Version    "
-        echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_23_3_1['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_23_3_1['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
-        echo -e "GPU Operator NV Toolkit Driver        {{ release_23_3_1['container_toolkit'] }}                 ||     {{ nvtoolkit.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_23_3_1['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_23_3_1['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_23_3_1['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_23_3_1['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_23_3_1['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_23_3_1['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
-        echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
-        echo -e
-        echo -e "Please validate between Target Version and Installed Version listed above"
-
-    - name: Report Versions
-      when: cns_docker == false and cns_version == 7.4 or cns_docker == false and cns_version == 8.3 or cns_docker == false and cns_version == 9.1 or  cns_docker == false and cns_version == 10.0
-      debug:
-        msg: "{{ compare_74.stdout_lines }}"
-
-    - name: Componenets Target Versions Vs Installed Versions
-      when: cns_docker == false and cns_version == 7.5 or cns_docker == false and cns_version == 8.4 or  cns_docker == false and cns_version == 9.2 or  cns_docker == false and cns_version == 10.1
-      register: compare_75
-      args:
-        executable: /bin/bash
-      shell: |
-        echo -e "==========================================================================================="
-        echo -e "  Components                          Target Version          ||     Installed Version    "
-        echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_23_3_2['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_23_3_2['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
-        echo -e "GPU Operator NV Toolkit Driver        {{ release_23_3_2['container_toolkit'] }}                 ||     {{ nvtoolkit.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_23_3_2['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_23_3_2['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_23_3_2['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_23_3_2['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_23_3_2['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_23_3_2['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
-        echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
-        echo -e
-        echo -e "Please validate between Target Version and Installed Version listed above"
-
-    - name: Report Versions
-      when: cns_docker == false and cns_version == 7.5 or cns_docker == false and cns_version == 8.4 or  cns_docker == false and cns_version == 9.2 or  cns_docker == false and cns_version == 10.1
-      debug:
-        msg: "{{ compare_75.stdout_lines }}"
-
-    - name: Componenets Target Versions Vs Installed Versions
-      when: cns_docker == false and cns_version == 8.5 or  cns_docker == false and cns_version == 9.3 or  cns_docker == false and cns_version == 10.2
-      register: compare_85
-      args:
-        executable: /bin/bash
-      shell: |
-        echo -e "==========================================================================================="
-        echo -e "  Components                          Target Version          ||     Installed Version    "
-        echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_23_6_0['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_23_6_0['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
-        echo -e "GPU Operator NV Toolkit Driver        {{ release_23_6_0['container_toolkit'] }}                 ||     {{ nvtoolkit.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_23_6_0['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_23_6_0['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_23_6_0['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_23_6_0['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_23_6_0['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_23_6_0['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
-        echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
-        echo -e
-        echo -e "Please validate between Target Version and Installed Version listed above"
-
-    - name: Report Versions
-      when: cns_docker == false and cns_version == 8.5 or  cns_docker == false and cns_version == 9.3 or  cns_docker == false and cns_version == 10.2
-      debug:
-        msg: "{{ compare_85.stdout_lines }}"
-
-    - name: Componenets Target Versions Vs Installed Versions
-      when:  cns_version == 9.1 and cns_docker == true or cns_version == 7.4 and cns_docker == true or cns_version == 8.3 and cns_docker == true or cns_version == 10.0 and cns_docker == true
-      register: compare_74
-      args:
-        executable: /bin/bash
-      shell: |
-        echo -e "==========================================================================================="
-        echo -e "  Components                          Target Version          ||     Installed Version    "
-        echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_23_3_1['gpu_operator_version'] }}                ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_23_3_1['gpu_driver_version'] }}             ||     {{ nvidia_driver.stdout }}"
-        echo -e "NVIDIA Toolkit Driver                 {{ release_23_3_1['container_toolkit'] }}                 ||     {{ nvidia_ct.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_23_3_1['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_23_3_1['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_23_3_1['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_23_3_1['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_23_3_1['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_23_3_1['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
-        echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
-        echo -e
-        echo -e "Please validate between Target Version and Installed Version listed above"
-
-    - name: Report Versions
-      when:  cns_version == 9.1 and cns_docker == true or cns_version == 7.4 and cns_docker == true or cns_version == 8.3 and cns_docker == true or cns_version == 10.0 and cns_docker == true
-      debug:
-        msg: "{{ compare_74.stdout_lines }}"
-
-    - name: Componenets Target Versions Vs Installed Versions
-      when:  cns_version == 9.2 and cns_docker == true or cns_version == 7.5 and cns_docker == true or cns_version == 8.4 and cns_docker == true or cns_version == 10.1 and cns_docker == true
-      register: compare_75
-      args:
-        executable: /bin/bash
-      shell: |
-        echo -e "==========================================================================================="
-        echo -e "  Components                          Target Version          ||     Installed Version    "
-        echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_23_3_2['gpu_operator_version'] }}                ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_23_3_2['gpu_driver_version'] }}             ||     {{ nvidia_driver.stdout }}"
-        echo -e "NVIDIA Toolkit Driver                 {{ release_23_3_2['container_toolkit'] }}                 ||     {{ nvidia_ct.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_23_3_2['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_23_3_2['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_23_3_2['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_23_3_2['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_23_3_2['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_23_3_2['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
-        echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
-        echo -e
-        echo -e "Please validate between Target Version and Installed Version listed above"
-
-    - name: Report Versions
-      when:  cns_version == 9.2 and cns_docker == true or cns_version == 7.5 and cns_docker == true or cns_version == 8.4 and cns_docker == true or cns_version == 10.1 and cns_docker == true
-      debug:
-        msg: "{{ compare_75.stdout_lines }}"
-
-    - name: Componenets Target Versions Vs Installed Versions
-      when:  cns_version == 9.3 and cns_docker == true or cns_version == 8.5 and cns_docker == true or cns_version == 10.2 and cns_docker == true
-      register: compare_85
-      args:
-        executable: /bin/bash
-      shell: |
-        echo -e "==========================================================================================="
-        echo -e "  Components                          Target Version          ||     Installed Version    "
-        echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_23_6_0['gpu_operator_version'] }}                ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_23_6_0['gpu_driver_version'] }}             ||     {{ nvidia_driver.stdout }}"
-        echo -e "NVIDIA Toolkit Driver                 {{ release_23_6_0['container_toolkit'] }}                 ||     {{ nvidia_ct.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_23_6_0['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_23_6_0['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_23_6_0['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_23_6_0['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_23_6_0['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_23_6_0['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
-        echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
-        echo -e
-        echo -e "Please validate between Target Version and Installed Version listed above"
-
-    - name: Report Versions
-      when:  cns_version == 9.3 and cns_docker == true or cns_version == 8.5 and cns_docker == true or cns_version == 10.2 and cns_docker == true
-      debug:
-        msg: "{{ compare_85.stdout_lines }}"
-
-    - name: Componenets Target Versions Vs Installed Versions
-      when: cns_docker == false and cns_version == 9.4 or  cns_docker == false and cns_version == 10.3 or cns_docker == false and cns_version == 11.0
-      register: compare_94
-      args:
-        executable: /bin/bash
-      shell: |
-        echo -e "==========================================================================================="
-        echo -e "  Components                          Target Version          ||     Installed Version    "
-        echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_23_9_1['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_23_9_1['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
-        echo -e "GPU Operator NV Toolkit Driver        {{ release_23_9_1['container_toolkit'] }}                 ||     {{ nvtoolkit.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_23_9_1['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_23_9_1['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_23_9_1['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_23_9_1['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_23_9_1['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_23_9_1['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
-        echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
-        echo -e
-        echo -e "Please validate between Target Version and Installed Version listed above"
-
-    - name: Componenets Target Versions Vs Installed Versions
-      when: cns_docker == false and cns_version == 10.4 or  cns_docker == false and cns_version == 11.1 or cns_docker == false and cns_version == 12.0
-      register: compare_104
-      args:
-        executable: /bin/bash
-      shell: |
-        echo -e "==========================================================================================="
-        echo -e "  Components                          Target Version          ||     Installed Version    "
-        echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_23_9_2['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_23_9_2['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
-        echo -e "GPU Operator NV Toolkit Driver        {{ release_23_9_2['container_toolkit'] }}                 ||     {{ nvtoolkit.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_23_9_2['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_23_9_2['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_23_9_2['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_23_9_2['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_23_9_2['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_23_9_2['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
-        echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
-        echo -e
-        echo -e "Please validate between Target Version and Installed Version listed above"
-
-    - name: Componenets Target Versions Vs Installed Versions
-      when: cns_docker == false and cns_version == 10.5 or  cns_docker == false and cns_version == 11.2 or cns_docker == false and cns_version == 12.1 or cns_docker == false and cns_version == 13.0
-      register: compare_105
-      args:
-        executable: /bin/bash
-      shell: |
-        echo -e "==========================================================================================="
-        echo -e "  Components                          Target Version          ||     Installed Version    "
-        echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_24_3_0['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_24_3_0['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
-        echo -e "GPU Operator NV Toolkit Driver        {{ release_24_3_0['container_toolkit'] }}                 ||     {{ nvtoolkit.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_24_3_0['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_24_3_0['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_24_3_0['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_24_3_0['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_24_3_0['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_24_3_0['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
-        echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
-        echo -e
-        echo -e "Please validate between Target Version and Installed Version listed above"
-
-    - name: Componenets Target Versions Vs Installed Versions
       when: cns_docker == false and cns_version == 11.3 or cns_docker == false and cns_version == 12.2 or cns_docker == false and cns_version == 13.1
       register: compare_113
       args:
@@ -513,85 +297,15 @@
         echo -e "==========================================================================================="
         echo -e "  Components                          Target Version          ||     Installed Version    "
         echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_24_6_0['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_24_6_0['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
-        echo -e "GPU Operator NV Toolkit Driver        {{ release_24_6_0['container_toolkit'] }}                 ||     {{ nvtoolkit.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_24_6_0['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_24_6_0['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_24_6_0['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_24_6_0['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_24_6_0['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_24_6_0['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
-        echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
-        echo -e
-        echo -e "Please validate between Target Version and Installed Version listed above"
-
-    - name: Componenets Target Versions Vs Installed Versions
-      when:  cns_version == 9.4 and cns_docker == true or cns_version == 10.3 and cns_docker == true or cns_version == 11.0 and cns_docker == true
-      register: compare_94docker
-      args:
-        executable: /bin/bash
-      shell: |
-        echo -e "==========================================================================================="
-        echo -e "  Components                          Target Version          ||     Installed Version    "
-        echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_23_9_1['gpu_operator_version'] }}                ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_23_9_1['gpu_driver_version'] }}             ||     {{ nvidia_driver.stdout }}"
-        echo -e "NVIDIA Toolkit Driver                 {{ release_23_9_1['container_toolkit'] }}                 ||     {{ nvidia_ct.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_23_9_1['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_23_9_1['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_23_9_1['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_23_9_1['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_23_9_1['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_23_9_1['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
-        echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
-        echo -e
-        echo -e "Please validate between Target Version and Installed Version listed above"
-
-
-    - name: Componenets Target Versions Vs Installed Versions
-      when:  cns_version == 10.4 and cns_docker == true or cns_version == 11.1 and cns_docker == true or cns_version == 12.0 and cns_docker == true
-      register: compare_104docker
-      args:
-        executable: /bin/bash
-      shell: |
-        echo -e "==========================================================================================="
-        echo -e "  Components                          Target Version          ||     Installed Version    "
-        echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_23_9_2['gpu_operator_version'] }}                ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_23_9_2['gpu_driver_version'] }}             ||     {{ nvidia_driver.stdout }}"
-        echo -e "NVIDIA Toolkit Driver                 {{ release_23_9_2['container_toolkit'] }}                 ||     {{ nvidia_ct.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_23_9_2['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_23_9_2['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_23_9_2['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_23_9_2['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_23_9_2['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_23_9_2['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
-        echo -e
-        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
-        echo -e
-        echo -e "Please validate between Target Version and Installed Version listed above"
-
-    - name: Componenets Target Versions Vs Installed Versions
-      when:  cns_version == 10.5 and cns_docker == true or cns_version == 11.2 and cns_docker == true or cns_version == 12.1 and cns_docker == true or cns_version == 13.0 and cns_docker == true
-      register: compare_105docker
-      args:
-        executable: /bin/bash
-      shell: |
-        echo -e "==========================================================================================="
-        echo -e "  Components                          Target Version          ||     Installed Version    "
-        echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_24_3_0['gpu_operator_version'] }}                ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_24_3_0['gpu_driver_version'] }}             ||     {{ nvidia_driver.stdout }}"
-        echo -e "NVIDIA Toolkit Driver                 {{ release_24_3_0['container_toolkit'] }}                 ||     {{ nvidia_ct.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_24_3_0['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_24_3_0['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_24_3_0['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_24_3_0['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_24_3_0['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_24_3_0['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
+        echo -e "GPU Operator Version                  {{ release_24_6_2['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
+        echo -e "NVIDIA Container Driver Version       {{ release_24_6_2['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
+        echo -e "GPU Operator NV Toolkit Driver        {{ release_24_6_2['container_toolkit'] }}                 ||     {{ nvtoolkit.stdout }}"
+        echo -e "K8sDevice Plugin Version              {{ release_24_6_2['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
+        echo -e "Data Center GPU Manager(DCGM) Version {{ release_24_6_2['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
+        echo -e "Node Feature Discovery Version        {{ release_24_6_2['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
+        echo -e "GPU Feature Discovery Version         {{ release_24_6_2['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
+        echo -e "NVIDIA validator version              {{ release_24_6_2['validator_version'] }}                 ||     {{ validator.stdout }}"
+        echo -e "NVIDIA MIG Manager version            {{ release_24_6_2['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
         echo -e
         echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
         echo -e
@@ -606,15 +320,61 @@
         echo -e "==========================================================================================="
         echo -e "  Components                          Target Version          ||     Installed Version    "
         echo -e "==========================================================================================="
-        echo -e "GPU Operator Version                  {{ release_24_6_0['gpu_operator_version'] }}                ||     {{ gpuoperator.stdout }}"
-        echo -e "NVIDIA Container Driver Version       {{ release_24_6_0['gpu_driver_version'] }}             ||     {{ nvidia_driver.stdout }}"
-        echo -e "NVIDIA Toolkit Driver                 {{ release_24_6_0['container_toolkit'] }}                 ||     {{ nvidia_ct.stdout }}"
-        echo -e "K8sDevice Plugin Version              {{ release_24_6_0['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
-        echo -e "Data Center GPU Manager(DCGM) Version {{ release_24_6_0['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
-        echo -e "Node Feature Discovery Version        {{ release_24_6_0['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
-        echo -e "GPU Feature Discovery Version         {{ release_24_6_0['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
-        echo -e "NVIDIA validator version              {{ release_24_6_0['validator_version'] }}                 ||     {{ validator.stdout }}"
-        echo -e "NVIDIA MIG Manager version            {{ release_24_6_0['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
+        echo -e "GPU Operator Version                  {{ release_24_6_2['gpu_operator_version'] }}                ||     {{ gpuoperator.stdout }}"
+        echo -e "NVIDIA Container Driver Version       {{ release_24_6_2['gpu_driver_version'] }}             ||     {{ nvidia_driver.stdout }}"
+        echo -e "NVIDIA Toolkit Driver                 {{ release_24_6_2['container_toolkit'] }}                 ||     {{ nvidia_ct.stdout }}"
+        echo -e "K8sDevice Plugin Version              {{ release_24_6_2['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
+        echo -e "Data Center GPU Manager(DCGM) Version {{ release_24_6_2['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
+        echo -e "Node Feature Discovery Version        {{ release_24_6_2['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
+        echo -e "GPU Feature Discovery Version         {{ release_24_6_2['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
+        echo -e "NVIDIA validator version              {{ release_24_6_2['validator_version'] }}                 ||     {{ validator.stdout }}"
+        echo -e "NVIDIA MIG Manager version            {{ release_24_6_2['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
+        echo -e
+        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
+        echo -e
+        echo -e "Please validate between Target Version and Installed Version listed above"
+
+    - name: Componenets Target Versions Vs Installed Versions
+      when: cns_docker == false and cns_version == 14.0 or cns_docker == false and cns_version == 12.3 or cns_docker == false and cns_version == 13.2
+      register: compare_140
+      args:
+        executable: /bin/bash
+      shell: |
+        echo -e "==========================================================================================="
+        echo -e "  Components                          Target Version          ||     Installed Version    "
+        echo -e "==========================================================================================="
+        echo -e "GPU Operator Version                  {{ release_24_9_0['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
+        echo -e "NVIDIA Container Driver Version       {{ release_24_9_0['gpu_driver_version'] }}               ||     {{ nvcdriver.stdout }}"
+        echo -e "GPU Operator NV Toolkit Driver        {{ release_24_9_0['container_toolkit'] }}                 ||     {{ nvtoolkit.stdout }}"
+        echo -e "K8sDevice Plugin Version              {{ release_24_9_0['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
+        echo -e "Data Center GPU Manager(DCGM) Version {{ release_24_9_0['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
+        echo -e "Node Feature Discovery Version        {{ release_24_9_0['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
+        echo -e "GPU Feature Discovery Version         {{ release_24_9_0['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
+        echo -e "NVIDIA validator version              {{ release_24_9_0['validator_version'] }}                 ||     {{ validator.stdout }}"
+        echo -e "NVIDIA MIG Manager version            {{ release_24_9_0['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
+        echo -e
+        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
+        echo -e
+        echo -e "Please validate between Target Version and Installed Version listed above"
+
+    - name: Componenets Target Versions Vs Installed Versions
+      when:  cns_version == 14.0 and cns_docker == true or cns_version == 12.3 and cns_docker == true or cns_version == 13.2 and cns_docker == true
+      register: compare_140docker
+      args:
+        executable: /bin/bash
+      shell: |
+        echo -e "==========================================================================================="
+        echo -e "  Components                          Target Version          ||     Installed Version    "
+        echo -e "==========================================================================================="
+        echo -e "GPU Operator Version                  {{ release_24_9_0['gpu_operator_version'] }}                ||     {{ gpuoperator.stdout }}"
+        echo -e "NVIDIA Container Driver Version       {{ release_24_9_0['gpu_driver_version'] }}             ||     {{ nvidia_driver.stdout }}"
+        echo -e "NVIDIA Toolkit Driver                 {{ release_24_9_0['container_toolkit'] }}                 ||     {{ nvidia_ct.stdout }}"
+        echo -e "K8sDevice Plugin Version              {{ release_24_9_0['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
+        echo -e "Data Center GPU Manager(DCGM) Version {{ release_24_9_0['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
+        echo -e "Node Feature Discovery Version        {{ release_24_9_0['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
+        echo -e "GPU Feature Discovery Version         {{ release_24_9_0['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
+        echo -e "NVIDIA validator version              {{ release_24_9_0['validator_version'] }}                 ||     {{ validator.stdout }}"
+        echo -e "NVIDIA MIG Manager version            {{ release_24_9_0['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
         echo -e
         echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
         echo -e
@@ -635,8 +395,8 @@
         echo -e "Helm Version                          {{ helmversion.stdout }}"
         echo -e "Etcd Version                          {{ etcd_version.stdout }}"
         echo -e "CRI-O Version                         {{ crio_version.stdout }}"
+        echo -e "CRI-Dockerd Version                   {{ cridockerd_version.stdout }}"
         echo -e "Calico Version                        {{ calico_ver.stdout }}"
-        echo -e "Flannel Version                       {{ flannel_ver.stdout }}"
         echo -e
 
     - name: Componenets Target Versions Vs Installed Versions
@@ -694,36 +454,6 @@
         msg: "{{ pods.stdout_lines }}"
 
     - name: Report Versions
-      when:  cns_version == 9.4 and cns_docker == false or cns_version == 10.3 and cns_docker == false or cns_version == 11.0 and cns_docker == false
-      debug:
-        msg: "{{ compare_94.stdout_lines }}"
-
-    - name: Report Versions
-      when:  cns_version == 9.4 and cns_docker == true or cns_version == 10.3 and cns_docker == true or cns_version == 11.0 and cns_docker == true
-      debug:
-        msg: "{{ compare_94docker.stdout_lines }}"
-
-    - name: Report Versions
-      when:  cns_version == 10.4 and cns_docker == true or cns_version == 11.1 and cns_docker == true or cns_version == 12.0 and cns_docker == true
-      debug:
-        msg: "{{ compare_104docker.stdout_lines }}"
-
-    - name: Report Versions
-      when:  cns_version == 10.4 and cns_docker == false or cns_version == 11.1 and cns_docker == false or cns_version == 12.0 and cns_docker == false
-      debug:
-        msg: "{{ compare_104.stdout_lines }}"
-
-    - name: Report Versions
-      when:  cns_version == 10.5 and cns_docker == true or cns_version == 11.2 and cns_docker == true or cns_version == 12.1 and cns_docker == true or cns_version == 13.0 and cns_docker == true
-      debug:
-        msg: "{{ compare_105docker.stdout_lines }}"
-
-    - name: Report Versions
-      when:  cns_version == 10.5 and cns_docker == false or cns_version == 11.2 and cns_docker == false or cns_version == 12.1 and cns_docker == false or cns_version == 13.0 and cns_docker == false
-      debug:
-        msg: "{{ compare_105.stdout_lines }}"
-
-    - name: Report Versions
       when:  cns_version == 11.3 and cns_docker == false or cns_version == 12.2 and cns_docker == false or cns_version == 13.1 and cns_docker == false
       debug:
         msg: "{{ compare_113.stdout_lines }}"
@@ -732,6 +462,16 @@
       when:  cns_version == 11.3 and cns_docker == true or cns_version == 12.2 and cns_docker == true or cns_version == 13.1 and cns_docker == true
       debug:
         msg: "{{ compare_113docker.stdout_lines }}"
+
+    - name: Report Versions
+      when:  cns_version == 14.0 and cns_docker == false or cns_version == 12.3 and cns_docker == false or cns_version == 13.2 and cns_docker == false
+      debug:
+        msg: "{{ compare_140.stdout_lines }}"
+
+    - name: Report Versions
+      when:  cns_version == 14.0 and cns_docker == true or cns_version == 12.3 and cns_docker == true or cns_version == 13.2 and cns_docker == true
+      debug:
+        msg: "{{ compare_140docker.stdout_lines }}"
 
     - name: Report Stack Version
       debug:

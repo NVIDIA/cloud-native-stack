@@ -1,4 +1,4 @@
-cns_version: 12.2
+cns_version: 11.3
 
 ## MicroK8s cluster
 microk8s: no
@@ -13,23 +13,20 @@ runc_version: "1.1.13"
 cni_plugins_version: "1.5.1"
 containerd_max_concurrent_downloads: "5"
 nvidia_container_toolkit_version: "1.16.1"
-crio_version: "1.29.6"
+crio_version: "1.28.8"
 cri_dockerd_version: "0.3.15"
-k8s_version: "1.29.6"
+k8s_version: "1.28.12"
 calico_version: "3.27.4"
 flannel_version: "0.25.5"
 helm_version: "3.15.3"
 gpu_operator_version: "24.6.1"
 network_operator_version: "24.4.1"
-nim_operator_version: "1.0.0"
 local_path_provisioner: "0.0.26"
 nfs_provisioner: "4.0.18"
 metallb_version: "0.14.5"
 kserve_version: "0.13"
-prometheus_stack: "25.27.0"
-prometheus_adapter: "4.11.0"
+prometheus_stack: "61.3.0"
 elastic_stack: "8.14.1"
-lws_version: "0.4.0"
 
 # GPU Operator Values
 enable_gpu_operator: yes
@@ -75,19 +72,15 @@ https_proxy: ""
 cns_docker: no
 ## Enable For Cloud Native Stack Developers with TRD Driver
 cns_nvidia_driver: no
-nvidia_driver_mig: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key"
-k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.29/rpm/repodata/repomd.xml.key"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
 # Install NVIDIA NIM Operator 
 enable_nim_operator: no
-
-# LeaderWorkerSet https://github.com/kubernetes-sigs/lws/tree/main
-lws: no
 
 # Local Path Provisioner and NFS Provisoner as Storage option
 storage: no

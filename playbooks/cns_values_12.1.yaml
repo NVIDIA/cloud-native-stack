@@ -12,21 +12,24 @@ containerd_version: "1.7.16"
 runc_version: "1.1.12"
 cni_plugins_version: "1.4.1"
 containerd_max_concurrent_downloads: "5"
-nvidia_container_toolkit_version: "1.16.2"
+nvidia_container_toolkit_version: "1.15.0"
 crio_version: "1.29.4"
 cri_dockerd_version: "0.3.13"
 k8s_version: "1.29.4"
 calico_version: "3.27.3"
 flannel_version: "0.25.1"
 helm_version: "3.14.4"
-gpu_operator_version: "24.6.2"
+gpu_operator_version: "24.3.0"
 network_operator_version: "24.1.1"
+nim_operator_version: "1.0.0"
 local_path_provisioner: "0.0.26"
 nfs_provisioner: "4.0.18"
 metallb_version: "0.14.5"
 kserve_version: "0.13"
-prometheus_stack: "61.3.0"
+prometheus_stack: "25.27.0"
+prometheus_adapter: "4.11.0"
 elastic_stack: "8.14.1"
+lws_version: "0.4.0"
 
 # GPU Operator Values
 enable_gpu_operator: yes
@@ -46,13 +49,15 @@ vgpu_license_server: ""
 helm_repository: https://helm.ngc.nvidia.com/nvidia
 # Name of the helm chart to be deployed
 gpu_operator_helm_chart: nvidia/gpu-operator
-## If using a private/protected registry. NGC API Key. Leave blank for public registries
-gpu_operator_registry_password: ""
-## This is most likely an NGC email
-gpu_operator_registry_email: ""
 ## This is most likely GPU Operator Driver Registry
 gpu_operator_driver_registry: "nvcr.io/nvidia"
-gpu_operator_registry_username: "$oauthtoken"
+
+# NGC Values
+## If using a private/protected registry. NGC API Key. Leave blank for public registries
+ngc_registry_password: ""
+## This is most likely an NGC email
+ngc_registry_email: ""
+ngc_registry_username: "$oauthtoken"
 
 # Network Operator Values
 ## If the Network Operator is yes then make sure enable_rdma as well yes
@@ -70,12 +75,19 @@ https_proxy: ""
 cns_docker: no
 ## Enable For Cloud Native Stack Developers with TRD Driver
 cns_nvidia_driver: no
+nvidia_driver_mig: no
 
 ## Kubernetes resources
 k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key"
 k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.29/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
+
+# Install NVIDIA NIM Operator 
+enable_nim_operator: no
+
+# LeaderWorkerSet https://github.com/kubernetes-sigs/lws/tree/main
+lws: no
 
 # Local Path Provisioner and NFS Provisoner as Storage option
 storage: no

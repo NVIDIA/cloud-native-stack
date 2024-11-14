@@ -58,7 +58,7 @@ fi
   if [[ $uname == 'tegra' ]]; then
           pip3 install ansible 2>&1 >/dev/null
   else
-         python3 -m pip install ansible==7.0.0 2>&1 >/dev/null
+         python3 -m pip install ansible==8.7.0 2>&1 >/dev/null
   fi
   if [[ $os == "ubuntu" || $os == '"rhel"' ]]; then
           echo PATH=$PATH:$HOME/.local/bin >> ~/.bashrc
@@ -79,7 +79,7 @@ os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
       if [[ $os == "ubuntu" ]]; then
     	sudo apt update 2>&1 >/dev/null && sudo apt install curl -y 2>&1 >/dev/null
       elif [ $os == '"rhel"' ]; then
-        sudo subscription-manager release --set 8.8
+        sudo subscription-manager release --set 8.10
     	sudo yum install curl -y 2>&1 >/dev/null
       fi
 elif [[ $os == 'Darwin' ]]; then

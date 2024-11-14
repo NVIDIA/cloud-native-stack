@@ -1,4 +1,4 @@
-cns_version: 12.2
+cns_version: 14.0
 
 ## MicroK8s cluster
 microk8s: no
@@ -8,33 +8,33 @@ install_k8s: yes
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "1.7.20"
-runc_version: "1.1.13"
+containerd_version: "1.7.23"
+runc_version: "1.1.14"
 cni_plugins_version: "1.5.1"
 containerd_max_concurrent_downloads: "5"
-nvidia_container_toolkit_version: "1.16.1"
-crio_version: "1.29.6"
+nvidia_container_toolkit_version: "1.17.1"
+crio_version: "1.31.2"
 cri_dockerd_version: "0.3.15"
-k8s_version: "1.29.6"
-calico_version: "3.27.4"
-flannel_version: "0.25.5"
-helm_version: "3.15.3"
-gpu_operator_version: "24.6.1"
-network_operator_version: "24.4.1"
+k8s_version: "1.31.2"
+calico_version: "3.28.2"
+flannel_version: "0.25.6"
+helm_version: "3.16.2"
+gpu_operator_version: "24.9.0"
+network_operator_version: "24.7.0"
 nim_operator_version: "1.0.0"
-local_path_provisioner: "0.0.26"
+local_path_provisioner: "0.0.30"
 nfs_provisioner: "4.0.18"
-metallb_version: "0.14.5"
-kserve_version: "0.13"
+metallb_version: "0.14.8"
+kserve_version: "0.14"
 prometheus_stack: "25.27.0"
 prometheus_adapter: "4.11.0"
-elastic_stack: "8.14.1"
+elastic_stack: "8.15.3"
 lws_version: "0.4.0"
 
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "550.90.07"
+gpu_driver_version: "550.127.05"
 use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
@@ -78,8 +78,8 @@ cns_nvidia_driver: no
 nvidia_driver_mig: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key"
-k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.29/rpm/repodata/repomd.xml.key"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.31/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 

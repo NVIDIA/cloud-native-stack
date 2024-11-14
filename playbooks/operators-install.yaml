@@ -205,7 +205,7 @@
      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false --wait --generate-name
 
    - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
-     when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == tru and cns_nvidia_driver == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and ngc_registry_password == ''"
+     when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == true and cns_nvidia_driver == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and gpu_operator.rc >= 1 and ngc_registry_password == ''"
      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 
    - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Stack

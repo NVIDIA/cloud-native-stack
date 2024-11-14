@@ -122,77 +122,25 @@
      shell: route add -net 0.0.0.0/0 gw {{ network.stdout_lines[0] }}
      when: gateway.rc | default ('') == 1 and proxy == true
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
-     when: "proxy == false and container_runtime == 'containerd' and release != 'tegra'"
-     command: 'kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:///run/containerd/containerd.sock --kubernetes-version="v{{ k8s_version }}" --image-repository={{ k8s_registry }}'
-     become: true
-     register: kubeadm
+   - name: subnet
+     set_fact:
+       subnet: "{% if release != 'tegra' %}192.168.32.0/22{% elif release == 'tegra' %}10.244.0.0/16{% endif %}"
+
+   - name: CRI Socket
+     set_fact:
+       cri_socket: "{% if container_runtime == 'containerd' %}unix:///run/containerd/containerd.sock{% elif container_runtime == 'cri-o' %}unix:///var/run/crio/crio.sock{%elif container_runtime == 'cri-dockerd' %}unix:///run/cri-dockerd.sock{% endif %}"
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
-     when: "proxy == true and container_runtime == 'containerd' and release != 'tegra'"
-     command: 'kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:///run/containerd/containerd.sock --kubernetes-version="v{{ k8s_version }}" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}'
-     become: true
-     register: kubeadm
+     block:
+       - name: Generate kubeadm init config
+         template:
+           src: kubeadm-init-config.template
+           dest: /tmp/kubeadm-init-config.yaml
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
-     when: "proxy == false and container_runtime == 'containerd' and release == 'tegra'"
-     command: 'kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///run/containerd/containerd.sock --kubernetes-version="v{{ k8s_version }}" --image-repository={{ k8s_registry }}'
-     become: true
-     register: kubeadm
-
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
-     when: "proxy == true and container_runtime == 'containerd' and release == 'tegra'"
-     command: 'kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///run/containerd/containerd.sock --kubernetes-version="v{{ k8s_version }}" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}'
-     become: true
-     register: kubeadm
-
-   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-O for Cloud Native Stack
-     when: "proxy == false and container_runtime == 'cri-o' and release != 'tegra'"
-     command: 'kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:///var/run/crio/crio.sock --kubernetes-version="v{{ k8s_version }}" --image-repository={{ k8s_registry }}'
-     become: true
-     register: kubeadm
-
-   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-O for Cloud Native Stack
-     when: "proxy == true and container_runtime == 'cri-o' and release != 'tegra'"
-     command: 'kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:///var/run/crio/crio.sock --kubernetes-version="v{{ k8s_version }}" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}'
-     become: true
-     register: kubeadm
-
-   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-O for Cloud Native Stack
-     when: "proxy == false and container_runtime == 'cri-o' and release == 'tegra'"
-     command: 'kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///var/run/crio/crio.sock --kubernetes-version="v{{ k8s_version }}" --image-repository={{ k8s_registry }}'
-     become: true
-     register: kubeadm
-
-   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-O for Cloud Native Stack
-     when: "proxy == true and container_runtime == 'cri-o' and release == 'tegra'"
-     command: 'kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///var/run/crio/crio.sock --kubernetes-version="v{{ k8s_version }}" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}'
-     become: true
-     register: kubeadm
-
-   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-Dockerd for Cloud Native Stack
-     when: "proxy == false and container_runtime == 'cri-dockerd' and release != 'tegra'"
-     command: 'kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:///run/cri-dockerd.sock --kubernetes-version="v{{ k8s_version }}" --image-repository={{ k8s_registry }}'
-     become: true
-     register: kubeadm
-
-   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-Dockerd for Cloud Native Stack
-     when: "proxy == true and container_runtime == 'cri-dockerd' and release != 'tegra'"
-     command: 'kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:///run/cri-dockerd.sock --kubernetes-version="v{{ k8s_version }}" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}'
-     become: true
-     register: kubeadm
-
-   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-Dockerd for Cloud Native Stack
-     when: "proxy == false and container_runtime == 'cri-dockerd' and release == 'tegra'"
-     command: 'kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///run/cri-dockerd.sock --kubernetes-version="v{{ k8s_version }}" --image-repository={{ k8s_registry }}'
-     become: true
-     register: kubeadm
-
-   - name: Iniitialize the Kubernetes cluster using kubeadm and CRI-Dockerd for Cloud Native Stack
-     when: "proxy == true and container_runtime == 'cri-dockerd' and release == 'tegra'"
-     command: 'kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///run/cri-dockerd.sock --kubernetes-version="v{{ k8s_version }}" --apiserver-advertise-address={{ network.stdout_lines[0] }} --image-repository={{ k8s_registry }}'
-     become: true
-     register: kubeadm
+       - name: Run kubeadm init
+         command: 'kubeadm init --config=/tmp/kubeadm-init-config.yaml'
+         become: true
+         register: kubeadm
 
    - name: Create kube directory
      file:
@@ -232,46 +180,38 @@
      command: "kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v{{ flannel_version }}/Documentation/kube-flannel.yml"
 
    - name: Taint the Kubernetes Control Plane node
-     when: "cns_version < 7.0"
-     failed_when: false
-     command: kubectl taint nodes --all node-role.kubernetes.io/master-
-
-   - name: Taint the Kubernetes Control Plane node
-     when: "cns_version == 7.0 or cns_version == 7.1 or cns_version == 7.2 or cns_version == 7.3 or cns_version == 7.4 or cns_version == 7.5"
-     command: kubectl taint nodes --all node-role.kubernetes.io/master- node-role.kubernetes.io/control-plane-
-
-   - name: Taint the Kubernetes Control Plane node
-     when: "cns_version >= 8.0 or cns_version == 6.4"
      failed_when: false
      command: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 
+   - name: Generate join token IP
+     become: true
+     shell: kubeadm token create --print-join-command | awk '{print $3}'
+     register: kubeadm_join_ip
+
    - name: Generate join token
      become: true
-     shell: kubeadm token create --print-join-command
-     register: kubeadm_join_cmd
+     shell: kubeadm token create --print-join-command | awk '{print $5}'
+     register: kubeadm_join_token
 
-   - set_fact:
-       kubeadm_join: "{{ kubeadm_join_cmd.stdout }} --cri-socket=unix:///var/run/cri-dockerd.sock"
-     when: container_runtime == 'cri-dockerd'
-
-   - set_fact:
-       kubeadm_join: "{{ kubeadm_join_cmd.stdout }} --cri-socket=unix:///var/run/crio/crio.sock "
-     when: container_runtime == 'cri-o'
-
-   - set_fact:
-       kubeadm_join: "{{ kubeadm_join_cmd.stdout }} --cri-socket=unix:///run/containerd/containerd.sock"
-     when: container_runtime == 'containerd'
-
-   - name: Store join command
+   - name: Generate join token hash
      become: true
-     copy:
-       content: "{{ kubeadm_join }}"
-       dest: "/tmp/kubeadm-join.command"
+     shell: kubeadm token create --print-join-command | awk '{print $7}'
+     register: kubeadm_join_hash
+
+   - set_fact:
+       api_endpoint: "{{ kubeadm_join_ip.stdout }}"
+       kubeadm_token: "{{ kubeadm_join_token.stdout }}"
+       ca_cert_hash: "{{ kubeadm_join_hash.stdout }}"
+
+   - name: Generate kubeadm init config
+     template:
+       src: kubeadm-join.template
+       dest: /tmp/kubeadm-join.yaml
 
    - name: Copy Join Command
      fetch:
-       src: "/tmp/kubeadm-join.command"
-       dest: "/tmp/kubeadm-join.command"
+       src: "/tmp/kubeadm-join.yaml"
+       dest: "/tmp/kubeadm-join.yaml"
        flat: true
 
 - hosts: nodes
@@ -294,8 +234,8 @@
    - name: Copy kubeadm-join command to node
      become: true
      copy:
-       src: "/tmp/kubeadm-join.command"
-       dest: "/tmp/kubeadm-join.command"
+       src: "/tmp/kubeadm-join.yaml"
+       dest: "/tmp/kubeadm-join.yaml"
 
    - name: Get the Active Mellanox NIC on nodes
      when: "enable_network_operator == true and cns_version >= 4.1"
@@ -312,12 +252,10 @@
        flat: yes
 
 - hosts: nodes
-  vars:
-     kubeadm_join: "{{ lookup('file', '/tmp/kubeadm-join.command') }}"
   tasks:
    - name: Run kubeadm join
      become: true
-     shell: "{{ kubeadm_join }}"
+     shell: "kubeadm join --config=/tmp/kubeadm-join.yaml"
 
    - pause:
        seconds: 30

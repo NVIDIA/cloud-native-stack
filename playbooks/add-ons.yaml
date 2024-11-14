@@ -1,3 +1,14 @@
+- hosts: nodes
+  vars_files:
+    - cns_values.yaml
+  tasks:
+   - name: Install NFS Packages on Ubuntu
+     become: true
+     when: storage == true and ansible_distribution == 'Ubuntu'
+     apt:
+      name: ['nfs-common']
+      state: present
+      update_cache: true
 - hosts: master
   vars_files:
     - cns_values.yaml
@@ -60,7 +71,8 @@
      when: storage == true
      shell: |
        helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner --force-update
-       helm install --version {{ nfs_provisioner }} nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_default_ipv4.address }} --set nfs.path=/data/nfs --set storageClass.onDelete=true --create-namespace --namespace nfs-client
+       helm repo update
+       helm install --version {{ nfs_provisioner }} nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_default_ipv4.address }} --set nfs.path=/data/nfs --set storageClass.archiveOnDelete=false --create-namespace --namespace nfs-client
        sleep 10
        kubectl patch storageclass nfs-client -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 
@@ -70,9 +82,7 @@
        src: "{{ item }}"
        dest: "{{ ansible_user_dir }}/"
      with_fileglob:
-       - "{{lookup('pipe', 'pwd')}}/files/grafana-dashboard.yaml"
-       - "{{lookup('pipe', 'pwd')}}/files/kube-prometheus-stack.values"
-       - "{{lookup('pipe', 'pwd')}}/files/grafana-patch.json"
+       - "{{lookup('pipe', 'pwd')}}/files/grafana.yaml"
        - "{{lookup('pipe', 'pwd')}}/files/fluent-values.yaml"
 
    - name: Install Kserve on Kubernetes
@@ -85,7 +95,7 @@
      ignore_errors: true
 
    - name: Install MetalLB
-     shell: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v{{ metallb_version }}/config/manifests/metallb-native.yaml; sleep 35"
+     shell: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v{{ metallb_version }}/config/manifests/metallb-native.yaml; sleep 45"
      when: loadbalancer == true
 
    - name: Apply Layer2 Config for MetalLB
@@ -183,15 +193,41 @@
 
    - name: Install Prometheus Stack on NVIDIA Cloud Native Stack
      ignore_errors: true
-     failed_when: false
-     shell: "{{ item }}"
      when: monitoring == true
-     with_items:
-       - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-       - helm repo update
-       - helm install --version {{ prometheus_stack }} prometheus-community/kube-prometheus-stack --create-namespace --namespace monitoring --generate-name --values  {{ ansible_user_dir }}/kube-prometheus-stack.values
-       - kubectl patch svc $(kubectl get svc -n monitoring | grep grafana | awk '{print $1}') --type='json' -p '[{"op":"replace","path":"/spec/type","value":"NodePort"},{"op":"replace","path":"/spec/ports/0/nodePort","value":32222}]' -n monitoring
-       - kubectl apply -f  {{ ansible_user_dir }}/grafana-dashboard.yaml -n monitoring
-       - kubectl patch deployment $(kubectl get deployments -n monitoring | grep grafana | awk '{print $1}')  -n monitoring  --patch "$(cat {{ ansible_user_dir }}/grafana-patch.json)"
-       - kubectl patch clusterpolicy/cluster-policy --type='json' -p='[{"op":"replace", "path":"/spec/dcgmExporter/serviceMonitor/enabled", "value":true}]'
-       - kubectl delete pod $(kubectl get pods -n nvidia-gpu-operator | grep dcgm | awk '{print $1}') -n nvidia-gpu-operator --force
+     block:
+       - name: Add Prometheus Helm repository
+         shell: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+         register: helm_repo_add
+
+       - name: Update Helm repositories
+         shell: helm repo update
+         when: helm_repo_add.rc == 0
+
+       - name: Install Prometheus
+         shell: "helm install --version {{ prometheus_stack }} prometheus prometheus-community/prometheus --create-namespace --namespace monitoring"
+         when: helm_repo_add.rc == 0
+
+       - name: Apply Grafana configuration
+         shell: kubectl apply -f {{ ansible_user_dir }}/grafana.yaml -n monitoring
+
+       - name: Install Prometheus Adapter
+         shell: "helm install --version {{ prometheus_adapter }} prometheus-adapter prometheus-community/prometheus-adapter --namespace monitoring --set prometheus.url=http://prometheus-server,prometheus.port=80"
+         when: helm_repo_add.rc == 0
+
+       - name: Apply Metrics Server configuration
+         shell: kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+       - name: Patch Metrics Server Deployment
+         shell: "kubectl patch deployment metrics-server -n kube-system --type='json' -p='[{\"op\": \"add\", \"path\": \"/spec/template/spec/containers/0/args/-\", \"value\": \"--kubelet-insecure-tls\"}]'"
+
+       - name: Patch Cluster Policy for DCGM Exporter
+         shell: "kubectl patch clusterpolicy/cluster-policy --type='json' -p='[{\"op\": \"replace\", \"path\": \"/spec/dcgmExporter/serviceMonitor/enabled\", \"value\": true}]'"
+
+       - name: Delete DCGM Pod
+         shell: kubectl delete pod $(kubectl get pods -n nvidia-gpu-operator | grep dcgm | awk '{print $1}') -n nvidia-gpu-operator --force
+
+   - name: Install LeaderWorkerSet on NVIDIA Cloud Native Stack
+     ignore_errors: true
+     failed_when: false
+     shell: "kubectl apply --server-side -f https://github.com/kubernetes-sigs/lws/releases/download/v{{ lws_version }}/manifests.yaml"
+     when: lws == true

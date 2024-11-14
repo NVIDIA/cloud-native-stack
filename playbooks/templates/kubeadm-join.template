@@ -1,0 +1,10 @@
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: JoinConfiguration
+nodeRegistration:
+  criSocket: "{{ cri_socket }}"
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: "{{ api_endpoint }}"
+    token: "{{ kubeadm_token }}"
+    caCertHashes:
+    - "{{ ca_cert_hash }}"

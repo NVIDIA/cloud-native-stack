@@ -80,18 +80,14 @@ Cloud Native Stack Supports below versions.
 
 Available versions are:
 
-- 13.0
-- 12.1
+- 14.0
+- 13.2
+- 13.2
+- 13.2
+- 12.3
+- 12.2
+- 13.2
 - 12.0
-- 11.2
-- 11.1
-- 11.0
-- 10.5
-- 10.4
-- 10.3
-- 10.2
-- 10.1
-- 10.0
 
 Edit the `cns_version.yaml` and update the version you want to install
 
@@ -103,34 +99,44 @@ If you want to cusomize any predefined components versions or any other custom p
 
 Example:
 ```
-$ nano cns_values_12.1.yaml
+$ nano cns_values_13.2.yaml
+cns_version: 13.2
 
-cns_version: 12.1
-
+## MicroK8s cluster
 microk8s: no
+## Kubernetes Install with Kubeadm 
+install_k8s: yes 
 
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "1.7.16"
-runc_version: "1.1.12"
-cni_plugins_version: "1.4.1"
+containerd_version: "1.7.20"
+runc_version: "1.1.13"
+cni_plugins_version: "1.5.1"
 containerd_max_concurrent_downloads: "5"
-nvidia_container_toolkit_version: "1.15.0"
-crio_version: "1.29.4"
-cri_dockerd_version: "0.3.13"
-k8s_version: "1.29.4"
-calico_version: "3.27.3"
-flannel_version: "0.25.1"
-helm_version: "3.14.4"
-gpu_operator_version: "24.3.0"
-network_operator_version: "24.1.1"
+nvidia_container_toolkit_version: "1.16.1"
+crio_version: "1.30.2"
+cri_dockerd_version: "0.3.15"
+k8s_version: "1.30.2"
+calico_version: "3.27.4"
+flannel_version: "0.25.5"
+helm_version: "3.15.3"
+gpu_operator_version: "24.6.1"
+network_operator_version: "24.4.1"
+nim_operator_version: "1.0.0"
 local_path_provisioner: "0.0.26"
+nfs_provisioner: "4.0.18"
+metallb_version: "0.14.5"
+kserve_version: "0.13"
+prometheus_stack: "25.27.0"
+prometheus_adapter: "4.11.0"
+elastic_stack: "8.14.1"
+lws_version: "0.4.0"
 
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "550.54.15"
+gpu_driver_version: "550.90.07"
 use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
@@ -145,13 +151,15 @@ vgpu_license_server: ""
 helm_repository: https://helm.ngc.nvidia.com/nvidia
 # Name of the helm chart to be deployed
 gpu_operator_helm_chart: nvidia/gpu-operator
-## If using a private/protected registry. NGC API Key. Leave blank for public registries
-gpu_operator_registry_password: ""
-## This is most likely an NGC email
-gpu_operator_registry_email: ""
 ## This is most likely GPU Operator Driver Registry
 gpu_operator_driver_registry: "nvcr.io/nvidia"
-gpu_operator_registry_username: "$oauthtoken"
+
+# NGC Values
+## If using a private/protected registry. NGC API Key. Leave blank for public registries
+ngc_registry_password: ""
+## This is most likely an NGC email
+ngc_registry_email: ""
+ngc_registry_username: "$oauthtoken"
 
 # Network Operator Values
 ## If the Network Operator is yes then make sure enable_rdma as well yes
@@ -169,12 +177,16 @@ https_proxy: ""
 cns_docker: no
 ## Enable For Cloud Native Stack Developers with TRD Driver
 cns_nvidia_driver: no
+nvidia_driver_mig: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key"
-k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.29/rpm/repodata/repomd.xml.key"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
+
+# Install NVIDIA NIM Operator 
+enable_nim_operator: no
 
 # Local Path Provisioner and NFS Provisoner as Storage option
 storage: no
@@ -185,9 +197,9 @@ monitoring: no
 # Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
 kserve: no
 
-# Install MetalLB with NodeIP
+# Install MetalLB
 loadbalancer: no
-# Example input loadbalancer_ip: "10.117.20.50/32"
+# Example input loadbalancer_ip: "10.117.20.50/32", it could be node/host IP
 loadbalancer_ip: ""
 
 ## Cloud Native Stack Validation
@@ -238,18 +250,95 @@ k8s_apt_repository: "deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-x
 k8s_registry: "registry.aliyuncs.com/google_containers"
 ```
 
+#### Enable Feature Gates to Cloud Native Stack
+
+`NOTE:` Below config only works with CNS version 14.0 and above which is kubernetes 1.31 and above. 
+
+Update the `templates/kubeadm-init-config.template` with feature gates like below and trigger the installation
+
+```
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+nodeRegistration:
+  criSocket: "{{ cri_socket }}"
+localAPIEndpoint:
+  advertiseAddress: "{{ network.stdout_lines[0] }}"
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+apiServer:
+  extraArgs:
+  - name: "feature-gates"
+    value: "DynamicResourceAllocation=true"
+  - name: "runtime-config"
+    value: "resource.k8s.io/v1alpha3=true"
+controllerManager:
+  extraArgs:
+  - name: "feature-gates"
+    value: "DynamicResourceAllocation=true"
+scheduler:
+  extraArgs:
+  - name: "feature-gates"
+    value: "DynamicResourceAllocation=true"
+networking:
+  podSubnet: "{{ subnet }}"
+kubernetesVersion: "v{{ k8s_version }}"
+imageRepository: "{{ k8s_registry }}"
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+featureGates:
+  DynamicResourceAllocation: true
+```
+
+Run the below command to verify if the features is enabled 
+
+```
+kubectl get --raw /metrics  | grep kubernetes_feature_enabled  | grep -i DynamicResourceAllocation
+```
+
+## Enable NIM Operator
+
+If you wnt to enable NIM Operator on Cloud Native Stack, you can enable the configuration in `cns_values_xx.yaml` and trigger the installation
+
+`NOTE:` For NIM Operator you need to provide your NGC API Key, Please refer to get a [NGC API KEY](https://org.ngc.nvidia.com/setup/api-key)
+
+Example:
+```
+$ nano cns_values_13.2.yaml
+
+cns_version: 13.2
+
+enable_nim_operator: yes
+```
+For more information, Refer [NIM Operator](https://docs.nvidia.com/nim-operator/latest/index.html)
+
 ### Enable MicroK8s 
 
 If you want to use microk8s you can enable the configuration in `cns_values_xx.yaml` and trigger the installation
 
 Example:
 ```
-$ nano cns_values_12.1.yaml
+$ nano cns_values_13.2.yaml
 
-cns_version: 12.1
+cns_version: 13.2
 
 microk8s: yes
 ```
+
+### Enable LeaderWorkerSet 
+
+If you want to use LWS you can enable the configuration in `cns_values_xx.yaml` and trigger the installation
+
+Example:
+```
+$ nano cns_values_13.2.yaml
+
+cns_version: 13.2
+
+lws: yes
+```
+For more information, Refer [LeaderWorkerSet](https://github.com/kubernetes-sigs/lws/tree/main). Examples can be found [here](https://github.com/kubernetes-sigs/lws/blob/main/docs/examples/sample/README.md)
 
 ### Enable Kserve on CNS
 
@@ -259,7 +348,7 @@ If you want to use Kserve on CNS, you can enable the configuration in `cns_value
 
 Example: 
 ```
-nano cns_values_12.1.yaml
+nano cns_values_13.2.yaml
 
 # Local Path Provisioner and NFS Provisoner as Storage option
 storage: yes

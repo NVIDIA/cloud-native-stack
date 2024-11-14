@@ -196,7 +196,7 @@
     - name: add NVIDIA Container Toolkit repo on RHEL
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
       get_url:
-        url:  https://nvidia.github.io/libnvidia-container/centos8/libnvidia-container.repo
+        url:   https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo 
         dest: /etc/yum.repos.d/nvidia-container-toolkit.repo
         mode: 0644
         owner: root
@@ -273,22 +273,33 @@
         append: yes
 
     - name: Configure CDI
-      shell: nvidia-ctk runtime configure --cdi.enabled; nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+      shell: nvidia-ctk runtime configure --runtime containerd --cdi.enabled --config /etc/containerd/config.toml; nvidia-ctk runtime configure --runtime docker --cdi.enabled; nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
       become: true
       when: nvidia_docker_exists.rc >= 1
       ignore_errors: true
 
     - name: NGC CLI Setup
-      become: true
       block:
         - name: Download CLI
           get_url:
-            url: https://ngc.nvidia.com/downloads/ngccli_linux.zip
+            url: https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/3.51.0/files/ngccli_linux.zip
             dest: /tmp/ngccli_linux.zip
             mode: 0664
 
         - name: Install NGC CLI
           unarchive:
             src: /tmp/ngccli_linux.zip
-            dest: /usr/local/bin/
+            dest: "{{ ansible_user_dir }}"
             remote_src: yes
+
+        - name: change ngc file permission
+          file:
+            path: "{{ ansible_user_dir }}/ngc-cli/ngc"
+            mode: '0777'
+
+        - name: Add Path to bashrc
+          lineinfile:
+            path: "{{ ansible_user_dir }}/.bashrc"
+            insertafter: '^PATH='
+            line: 'PATH=$PATH:{{ ansible_user_dir }}/ngc-cli'
+            state: present

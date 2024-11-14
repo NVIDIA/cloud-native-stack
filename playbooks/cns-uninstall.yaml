@@ -60,8 +60,24 @@
        line: 'alias helm="microk8s helm"'
        state: absent
 
+   - name: remove snap from bashrc
+     when: microk8s == true
+     become: false
+     lineinfile:
+       path: '{{ ansible_user_dir }}/.bashrc'
+       insertafter: '^PATH='
+       line: 'PATH=$PATH:/snap/bin'
+       state: absent
+
    - set_fact:
        release: "{{ release.stdout }}"
+
+   - name: disable mig
+     ignore_errors: true
+     shell: nvidia-smi -mig 0
+     when: nvidia_driver_mig == true
+     args:
+       executable: /bin/bash
 
    - name: Uninstall the GPU Operator with MIG
      ignore_errors: true
@@ -368,6 +384,7 @@
         - /etc/yum.repos.d/nvidia-docker.repo
         - /etc/yum.repos.d/docker-ce.repo
         - /etc/yum.repos.d/kubernetes.repo
+        - /var/cache/dnf/
         - /opt/cni/bin
 
    - name: Cleanup Directories

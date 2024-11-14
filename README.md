@@ -26,30 +26,30 @@ When NVIDIA Cloud Native Stack batch is released, the previous batch enters main
 
 |  Batch  | Status              |
 | :-----: | :--------------:|
-| [24.8.1](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.8.1)                   | Generally Available | 
-| [24.5.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.5.0)                   | Maintenance         |
-| [24.3.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.3.0) and lower                   | EOL                 |
+| [24.11.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.11.0)                   | Generally Available | 
+| [24.8.1](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.8.1)                   | Maintenance         |
+| [24.5.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.5.0) and lower                   | EOL                 |
 
 
 For more information, Refer [Cloud Native Stack Releases](https://github.com/NVIDIA/cloud-native-stack/releases)
 
 ## Component Matrix
 
-#### Cloud Native Stack Batch 24.8.0 (Release Date: 20 August 2024)
+#### Cloud Native Stack Batch 24.11.0 (Release Date: 14 November 2024)
 
-| CNS Version               | 13.1    | 12.2 | 11.3 |
+| CNS Version               | 14.0    | 13.2 | 12.3 |
 | :-----:                   | :-----: | :------: | :------: |
 | Platforms                 | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> |
 | Supported OS              |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.8</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.8</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.8</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |
-| Containerd                | 1.7.20 | 1.7.20 | 1.7.20 |
+| Containerd                | 1.7.23 | 1.7.23 | 1.7.23 |
 | NVIDIA Container Toolkit  | 1.16.2 | 1.16.2 | 1.16.2 |
-| CRI-O                     | 1.30.2 |1.29.6 | 1.28.8 |
-| Kubernetes                | 1.30.2 | 1.29.6 | 1.28.12 |
-| CNI (Calico)              | 3.27.4 | 3.27.4 |  3.27.4 |
-| NVIDIA GPU Operator       | 24.6.2 | 24.6.2 | 24.6.2 |
-| NVIDIA Network Operator   | 24.4.1(x86 Only) | 24.4.1(x86 Only) | 24.4.1(x86 Only) |
-| NVIDIA Data Center Driver | 550.90.07 | 550.90.07 | 550.90.07 |
-| Helm                      | 3.15.3 | 3.15.3 | 3.15.3 |
+| CRI-O                     | 1.31.2 | 1.30.6 | 1.29.10 |
+| Kubernetes                | 1.31.2 | 1.30.6 | 1.29.10 |
+| CNI (Calico)              | 3.28.2 | 3.28.2 |  3.28.2 |
+| NVIDIA GPU Operator       | 24.9.0 | 24.9.0 | 24.9.0 |
+| NVIDIA Network Operator   | 24.7.0(x86 Only) | 24.7.0(x86 Only) | 24.7.0(x86 Only) |
+| NVIDIA Data Center Driver | 550.127.05 | 550.127.05 | 550.127.05 |
+| Helm                      | 3.16.2 | 3.16.2 | 3.16.2 |
 
 > Note: To Previous Cloud Native Stack release information can be found [here](https://github.com/NVIDIA/cloud-native-stack/tree/24.5.0?tab=readme-ov-file#nvidia-cloud-native-stack-component-matrix)
 
@@ -57,21 +57,29 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 
 # Software
 
-- Kubernetes with [GPU Operator](https://github.com/NVIDIA/gpu-operator) and [Network Operator](https://github.com/Mellanox/network-operator) 
+- Kubernetes
+  - [GPU Operator](https://github.com/NVIDIA/gpu-operator)
+  - [Network Operator](https://github.com/Mellanox/network-operator)  
+  - [NVIDIA NIM Operator](https://docs.nvidia.com/nim-operator/latest/index.html)
+  - [FeatureGates](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-feature-gates-to-cloud-native-stack)
 - [MicroK8s on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-microk8s)
 - [Installation on CSP's](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation-on-csps)
 - [Storage on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#storage-on-cns)
 - [Monitoring on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#monitoring-on-cns)
 - [LoadBalancer on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#load-balancer-on-cns)
 - [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
+- [LeaderWorkerSet(lws)](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-leaderworkerset)
 
-| CNS Version               | 13.1    | 12.2 | 11.3 |
+`NOTE:` currently MicroK8s functionality is limited with GPU Operator 24.9.0 as there's known [bug](https://github.com/NVIDIA/gpu-operator/issues/1109). we expected to fix this with another release soon. 
+
+| CNS Version               | 14.0    | 13.2 | 12.3 |
 | :-----:                   | :-----: | :------: | :------: |
-| MicroK8s                  | 1.30    | 1.29     | 1.28 |
-| KServe                    | <br /> **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul> | <br /> **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul>  | <br /> **0.13** <br /> <br /> <ul><li>Istio: 1.20.4</li><li>Knative: 1.13.1</li><li>CertManager: 1.9.0</li></ul> | 
+| MicroK8s                  | 1.31    | 1.30     | 1.29 |
+| KServe                    | <br /> **0.14** <br /> <br /> <ul><li>Istio: 1.23.2</li><li>Knative: 1.15.7</li><li>CertManager: 1.16.1</li></ul> | <br /> **0.14** <br /> <br /> <ul><li>Istio: 1.23.2</li><li>Knative: 1.15.7</li><li>CertManager: 1.16.1</li></ul>  | <br /> **0.14** <br /> <br /> <ul><li>Istio: 1.23.2</li><li>Knative: 1.15.7</li><li>CertManager: 1.16.1</li></ul> | 
+| LeaderWorkerSet           | 0.4.1 | 0.4.1 | 0.4.1|
 | LoadBalancer              | MetalLB: 0.14.5 | MetalLB: 0.14.5 | MetalLB: 0.14.5 |
-| Storage                   | NFS: 4.0.18 <br /> Local Path: 0.0.26 | NFS: 4.0.18 <br /> Local Path: 0.0.26 | NFS: 4.0.18 <br /> Local Path: 0.0.26 | 
-| Monitoring                | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 | Prometheus: 61.3.0 <br /> Elastic: 8.14.1 |
+| Storage                   | NFS: 4.0.18 <br /> Local Path: 0.0.30 | NFS: 4.0.18 <br /> Local Path: 0.0.30 | NFS: 4.0.18 <br /> Local Path: 0.0.30 | 
+| Monitoring                | Prometheus: 25.27.0 <br /> Prometheus Adapter: 4.11.0 <br /> Elastic: 8.15.3 | Prometheus: 25.27.0 <br /> Prometheus Adapter: 4.11.0 <br /> Elastic: 8.15.3 | Prometheus: 25.27.0 <br /> Prometheus Adapter: 4.11.0 <br /> Elastic: 8.15.3 |
 
 # Getting Started
 

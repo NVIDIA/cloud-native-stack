@@ -26,7 +26,7 @@
             name: containerd
             state: restarted
             daemon_reload: yes
-      when: "cns_docker == true and cns_nvidia_driver == true and microk8s == false"
+      when: "cns_docker == true and cns_nvidia_driver == true and microk8s == false and container_runtime == 'containerd'"
 
     - name: Check NVIDIA Driver Modules are loaded
       shell: "lsmod | grep -i nvidia"
@@ -115,6 +115,63 @@
           ignore_errors: yes
           failed_when: false
 
+    - name: Download NVIDIA CUDA Key for Ubuntu
+      when: ansible_distribution == 'Ubuntu' and ansible_architecture == 'aarch64'
+      become: true
+      get_url:
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/{{ ansible_distribution | lower }}{{ ansible_distribution_version | regex_replace ('[.~]', '') }}/arm64/cuda-keyring_1.1-1_all.deb"
+        dest: /tmp/cuda-keyring_1.1-1_all.deb
+
+    - name: Download NVIDIA CUDA Key for Ubuntu
+      when: ansible_distribution == 'Ubuntu' and ansible_architecture == 'x86_64'
+      become: true
+      get_url:
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/{{ ansible_distribution | lower }}{{ ansible_distribution_version | regex_replace ('[.~]', '') }}/x86_64/cuda-keyring_1.1-1_all.deb"
+        dest: /tmp/cuda-keyring_1.1-1_all.deb
+
+    - name: Install NVIDIA CUDA keyring package for Ubuntu
+      when: ansible_distribution == 'Ubuntu'
+      become: true
+      block:
+        - name: Install CUDA keyring package
+          become: true
+          apt:
+            deb: /tmp/cuda-keyring_1.1-1_all.deb
+
+        - name: Clean up the downloaded package
+          become: true
+          file:
+            path: /tmp/cuda-keyring_1.1-1_all.deb
+            state: absent
+
+    - name: Download NVIDIA CUDA keyring package for RHEL
+      when: ansible_distribution == 'RedHat' and  ansible_architecture == 'x86_64'
+      become: true
+      get_url:
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/rhel{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/cuda-rhel{{ ansible_distribution_major_version }}.repo"
+        dest: /tmp//cuda-{{ ansible_distribution | lower }}.repo
+
+    - name: Download NVIDIA CUDA keyring package for RHEL
+      when: ansible_distribution == 'RedHat' and  ansible_architecture == 'aarch64'
+      become: true
+      get_url:
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/rhel{{ ansible_distribution_major_version }}/sbsa/cuda-rhel{{ ansible_distribution_major_version }}.repo"
+        dest: /tmp//cuda-{{ ansible_distribution | lower }}.repo
+
+    - name: Install NVIDIA CUDA keyring package for RHEL
+      when: ansible_distribution == 'RedHat'
+      become: true
+      block:
+        - name: Install CUDA keyring package
+          yum:
+            name: /tmp/cuda-{{ ansible_distribution | lower }}.repo
+            state: present
+
+        - name: Clean up the downloaded package
+          file:
+            path: /tmp//cuda-{{ ansible_distribution | lower }}.repo
+            state: absent
+
     - name:  ensure we have kernel-headers installed for the current kernel on RHEL
       when:  "cns_version >= 10.0 and ansible_distribution == 'RedHat'"
       block:
@@ -181,13 +238,27 @@
         - name: Install driver packages
           shell: "BASE_URL=https://us.download.nvidia.com/tesla; curl -fSsl -O $BASE_URL/{{ gpu_driver_version }}/NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; chmod +x ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; sh ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run --silent"
 
-    - name: check dgx
-      stat:
-        path: /etc/dgx-release
-      register: dgx
-
-    - name: Install NVIDIA Fabric Manager
+    - name: Enable MIG with nvidia-smi
       become: true
-      when:  "dgx.stat.exists == True and ansible_distribution == 'Ubuntu'"
+      shell: nvidia-smi -mig 1
+      register: mig
+      when: nvidia_driver_mig == true
+
+    - name: Trim the GPU Driver Version
+      shell: "echo {{ gpu_driver_version }} | awk -F'.' '{print $1}'"
+      register: dversion
+
+    - set_fact:
+        driver_version: "{{ dversion.stdout }}"
+
+    - name: Install NVIDIA Fabric Manager on Ubuntu
+      become: true
+      when: ansible_distribution == 'Ubuntu'
       ignore_errors: true
-      shell: "sudo apt install nvidia-fabricmanager-550 -y; sudo systemctl --now enable nvidia-fabricmanager; sudo systemctl daemon-reload"
+      shell: "apt update; apt install nvidia-fabricmanager-{{ driver_version }} -y; sudo systemctl --now enable nvidia-fabricmanager; sudo systemctl daemon-reload"
+
+    - name: Install NVIDIA Fabric Manager on RHEL
+      become: true
+      when: ansible_distribution == 'RedHat'
+      ignore_errors: true
+      shell: "yum update -y; yum install nvidia-fabricmanager-{{ driver_version }} -y; sudo systemctl --now enable nvidia-fabricmanager; sudo systemctl daemon-reload"

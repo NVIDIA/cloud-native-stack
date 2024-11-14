@@ -204,7 +204,7 @@ sudo apt update
 Install NVIDIA Conatiner Toolkit
 
 ```
-sudo apt-get install -y nvidia-container-toolkit=1.15.0-1
+sudo apt-get install -y nvidia-container-toolkit=1.16.2-1
 ```
 
 

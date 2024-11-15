@@ -54,6 +54,11 @@
       when: ansible_os_family == 'RedHat'
       become: true
 
+    - name: check and update RHEL version
+      when: "ansible_distribution_version != '8.10' and ansible_os_family == 'RedHat'"
+      shell: subscription-manager release --set 8.10; sudo yum update -y -q
+      become: true
+
     - name: check for Kernel SNP release
       shell: uname -r | awk -F'-' '{print $3}'
       register: snp

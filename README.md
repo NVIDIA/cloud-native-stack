@@ -47,7 +47,7 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 | Kubernetes                | 1.31.2 | 1.30.6 | 1.29.10 |
 | CNI (Calico)              | 3.28.2 | 3.28.2 |  3.28.2 |
 | NVIDIA GPU Operator       | 24.9.0 | 24.9.0 | 24.9.0 |
-| NVIDIA Network Operator   | 24.7.0(x86 Only) | 24.7.0(x86 Only) | 24.7.0(x86 Only) |
+| NVIDIA Network Operator   | 24.7.0 | 24.7.0 | 24.7.0 |
 | NVIDIA Data Center Driver | 550.127.05 | 550.127.05 | 550.127.05 |
 | Helm                      | 3.16.2 | 3.16.2 | 3.16.2 |
 

@@ -149,28 +149,14 @@
       become: true
       get_url:
         url: "https://developer.download.nvidia.com/compute/cuda/repos/rhel{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/cuda-rhel{{ ansible_distribution_major_version }}.repo"
-        dest: /tmp//cuda-{{ ansible_distribution | lower }}.repo
+        dest: /etc/yum.repos.d/cuda-{{ ansible_distribution | lower }}.repo
 
     - name: Download NVIDIA CUDA keyring package for RHEL
       when: ansible_distribution == 'RedHat' and  ansible_architecture == 'aarch64'
       become: true
       get_url:
         url: "https://developer.download.nvidia.com/compute/cuda/repos/rhel{{ ansible_distribution_major_version }}/sbsa/cuda-rhel{{ ansible_distribution_major_version }}.repo"
-        dest: /tmp//cuda-{{ ansible_distribution | lower }}.repo
-
-    - name: Install NVIDIA CUDA keyring package for RHEL
-      when: ansible_distribution == 'RedHat'
-      become: true
-      block:
-        - name: Install CUDA keyring package
-          yum:
-            name: /tmp/cuda-{{ ansible_distribution | lower }}.repo
-            state: present
-
-        - name: Clean up the downloaded package
-          file:
-            path: /tmp//cuda-{{ ansible_distribution | lower }}.repo
-            state: absent
+        dest: /etc/yum.repos.d/cuda-{{ ansible_distribution | lower }}.repo
 
     - name:  ensure we have kernel-headers installed for the current kernel on RHEL
       when:  "cns_version >= 10.0 and ansible_distribution == 'RedHat'"
@@ -251,14 +237,53 @@
     - set_fact:
         driver_version: "{{ dversion.stdout }}"
 
+    - name: check if NVSwitch/NVlink
+      shell: lspci | grep -i nvidia | egrep -i 'bridge|nvlink|nvswitch'
+      register: nvlink
+      failed_when: false
+
+    - name: check nvlink status with NVIDIA SMI
+      shell: nvidia-smi nvlink -s -i 0 | tail -1f | awk '{print $NF}' | tr -dd '\n'
+      register: nvlink_status
+      failed_when: false
+
+    - name: check dgx
+      ignore_errors: true
+      stat:
+        path: /etc/dgx-release
+      register: dgx
+
+    - name: check l4t
+      ignore_errors: true
+      stat:
+        path: /etc/l4t-release
+      register: l4t
+
     - name: Install NVIDIA Fabric Manager on Ubuntu
       become: true
-      when: ansible_distribution == 'Ubuntu'
+      when: ansible_distribution == 'Ubuntu' and dgx.stat.exists == True or ansible_distribution == 'Ubuntu' and l4t.stat.exists == True or ansible_distribution == 'Ubuntu' and nvlink_status.stdout != 'inActive'
       ignore_errors: true
-      shell: "apt update; apt install nvidia-fabricmanager-{{ driver_version }} -y; sudo systemctl --now enable nvidia-fabricmanager; sudo systemctl daemon-reload"
+      apt:
+        name: "nvidia-fabricmanager-{{ driver_version }}={{ gpu_driver_version}}-1"
+        state: present
+        update_cache: true
+        force: yes
 
-    - name: Install NVIDIA Fabric Manager on RHEL
+    - name: Install NVIDIA Fabric Manager for NVSwitch on RHEL
       become: true
-      when: ansible_distribution == 'RedHat'
+      when: "ansible_distribution == 'RedHat' and dgx.stat.exists == True or ansible_distribution == 'RedHat' and l4t.stat.exists == True or ansible_distribution == 'RedHat' and and nvlink_status.stdout != 'inActive'"
       ignore_errors: true
-      shell: "yum update -y; yum install nvidia-fabricmanager-{{ driver_version }} -y; sudo systemctl --now enable nvidia-fabricmanager; sudo systemctl daemon-reload"
+      yum:
+        name: "nvidia-fabric-manager-{{ gpu_driver_version}}-1"
+        state: present
+        update_cache: true
+
+    - name: Enable and restart NVIDIA Fabric manager
+      when: dgx.stat.exists == True or l4t.stat.exists == True or nvlink_status.stdout != 'inActive'
+      ignore_errors: true
+      become: true
+      systemd_service:
+        name: nvidia-fabricmanager
+        enabled: true
+        state: started
+        daemon_reload: true

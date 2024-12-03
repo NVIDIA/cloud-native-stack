@@ -237,14 +237,14 @@
     - set_fact:
         driver_version: "{{ dversion.stdout }}"
 
-    - name: check if NVSwitch/NVlink
-      shell: lspci | grep -i nvidia | egrep -i 'bridge|nvlink|nvswitch'
-      register: nvlink
+    - name: check if NVSwitches
+      shell: ls -A /proc/driver/nvidia-nvswitch/devices | wc -l | tr -d '\n'
+      register: nvswitch
       failed_when: false
 
     - name: check nvlink status with NVIDIA SMI
-      shell: nvidia-smi nvlink -s -i 0 | tail -1f | awk '{print $NF}' | tr -dd '\n'
-      register: nvlink_status
+      shell: nvidia-smi nvlink -s -i 0 | tail -1f | awk '{print $NF}' | tr -d '\n'
+      register: nvlink
       failed_when: false
 
     - name: check dgx
@@ -261,7 +261,8 @@
 
     - name: Install NVIDIA Fabric Manager on Ubuntu
       become: true
-      when: ansible_distribution == 'Ubuntu' and dgx.stat.exists == True or ansible_distribution == 'Ubuntu' and l4t.stat.exists == True or ansible_distribution == 'Ubuntu' and nvlink_status.stdout != 'inActive'
+      when: ansible_distribution == 'Ubuntu' and dgx.stat.exists == True or ansible_distribution == 'Ubuntu' and l4t.stat.exists == True or ansible_distribution == 'Ubuntu' and nvswitch.stdout | int > 0
+      ignore_errors: true
       ignore_errors: true
       apt:
         name: "nvidia-fabricmanager-{{ driver_version }}={{ gpu_driver_version}}-1"
@@ -271,7 +272,7 @@
 
     - name: Install NVIDIA Fabric Manager for NVSwitch on RHEL
       become: true
-      when: "ansible_distribution == 'RedHat' and dgx.stat.exists == True or ansible_distribution == 'RedHat' and l4t.stat.exists == True or ansible_distribution == 'RedHat' and and nvlink_status.stdout != 'inActive'"
+      when: "ansible_distribution == 'RedHat' and dgx.stat.exists == True or ansible_distribution == 'RedHat' and l4t.stat.exists == True or ansible_distribution == 'RedHat' and nvswitch.stdout | int > 0"
       ignore_errors: true
       yum:
         name: "nvidia-fabric-manager-{{ gpu_driver_version}}-1"
@@ -279,7 +280,7 @@
         update_cache: true
 
     - name: Enable and restart NVIDIA Fabric manager
-      when: dgx.stat.exists == True or l4t.stat.exists == True or nvlink_status.stdout != 'inActive'
+      when: dgx.stat.exists == True or l4t.stat.exists == True or nvswitch.stdout | int > 0
       ignore_errors: true
       become: true
       systemd_service:

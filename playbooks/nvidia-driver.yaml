@@ -263,7 +263,6 @@
       become: true
       when: ansible_distribution == 'Ubuntu' and dgx.stat.exists == True or ansible_distribution == 'Ubuntu' and l4t.stat.exists == True or ansible_distribution == 'Ubuntu' and nvswitch.stdout | int > 0
       ignore_errors: true
-      ignore_errors: true
       apt:
         name: "nvidia-fabricmanager-{{ driver_version }}={{ gpu_driver_version}}-1"
         state: present

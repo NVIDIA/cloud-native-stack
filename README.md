@@ -26,7 +26,7 @@ When NVIDIA Cloud Native Stack batch is released, the previous batch enters main
 
 |  Batch  | Status              |
 | :-----: | :--------------:|
-| [24.11.1](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.11.0)                   | Generally Available | 
+| [24.11.1](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.11.1)                   | Generally Available | 
 | [24.8.1](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.8.1)                   | Maintenance         |
 | [24.5.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.5.0) and lower                   | EOL                 |
 
@@ -35,7 +35,7 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 
 ## Component Matrix
 
-#### Cloud Native Stack Batch 24.11.0 (Release Date: 14 November 2024)
+#### Cloud Native Stack Batch 24.11.1 (Release Date: 6 December 2024)
 
 | CNS Version               | 14.0    | 13.2 | 12.3 |
 | :-----:                   | :-----: | :------: | :------: |

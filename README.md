@@ -26,7 +26,7 @@ When NVIDIA Cloud Native Stack batch is released, the previous batch enters main
 
 |  Batch  | Status              |
 | :-----: | :--------------:|
-| [24.11.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.11.0)                   | Generally Available | 
+| [24.11.1](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.11.1)                   | Generally Available | 
 | [24.8.1](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.8.1)                   | Maintenance         |
 | [24.5.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.5.0) and lower                   | EOL                 |
 
@@ -35,20 +35,20 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 
 ## Component Matrix
 
-#### Cloud Native Stack Batch 24.11.0 (Release Date: 14 November 2024)
+#### Cloud Native Stack Batch 24.11.1 (Release Date: 6 December 2024)
 
 | CNS Version               | 14.0    | 13.2 | 12.3 |
 | :-----:                   | :-----: | :------: | :------: |
 | Platforms                 | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> |
 | Supported OS              |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.10</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.10</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.10</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |
 | Containerd                | 1.7.23 | 1.7.23 | 1.7.23 |
-| NVIDIA Container Toolkit  | 1.17.0 | 1.17.0 | 1.17.0 |
+| NVIDIA Container Toolkit  | 1.17.3 | 1.17.3 | 1.17.3 |
 | CRI-O                     | 1.31.2 | 1.30.6 | 1.29.10 |
 | Kubernetes                | 1.31.2 | 1.30.6 | 1.29.10 |
 | CNI (Calico)              | 3.28.2 | 3.28.2 |  3.28.2 |
-| NVIDIA GPU Operator       | 24.9.0 | 24.9.0 | 24.9.0 |
+| NVIDIA GPU Operator       | 24.9.1 | 24.9.1 | 24.9.1 |
 | NVIDIA Network Operator   | 24.7.0 | 24.7.0 | 24.7.0 |
-| NVIDIA Data Center Driver | 550.127.05 | 550.127.05 | 550.127.05 |
+| NVIDIA Data Center Driver | 550.127.08 | 550.127.08 | 550.127.08 |
 | Helm                      | 3.16.2 | 3.16.2 | 3.16.2 |
 
 > Note: To Previous Cloud Native Stack release information can be found [here](https://github.com/NVIDIA/cloud-native-stack/tree/24.5.0?tab=readme-ov-file#nvidia-cloud-native-stack-component-matrix)

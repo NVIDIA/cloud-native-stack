@@ -204,8 +204,11 @@
          when: helm_repo_add.rc == 0
 
        - name: Install Prometheus
-         shell: "helm install --version {{ prometheus_stack }} prometheus prometheus-community/prometheus --create-namespace --namespace monitoring"
+         shell: "helm install --version {{ prometheus_stack }} prometheus-community/kube-prometheus-stack --create-namespace --namespace monitoring --generate-name --values  {{ ansible_user_dir }}/kube-prometheus-stack.values"
          when: helm_repo_add.rc == 0
+
+       - name: Install Grafana Operator
+         shell: "helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version {{ grafana_operator }} -n monitoring"
 
        - name: Apply Grafana configuration
          shell: kubectl apply -f {{ ansible_user_dir }}/grafana.yaml -n monitoring

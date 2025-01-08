@@ -204,7 +204,7 @@
          when: helm_repo_add.rc == 0
 
        - name: Install Prometheus
-         shell: "helm install --version {{ prometheus_stack }} prometheus-community/kube-prometheus-stack --create-namespace --namespace monitoring --generate-name --values  {{ ansible_user_dir }}/kube-prometheus-stack.values"
+         shell: "helm install kube-prometheus-stack --version {{ prometheus_stack }} prometheus-community/kube-prometheus-stack --create-namespace --namespace monitoring --values  {{ ansible_user_dir }}/kube-prometheus-stack.values"
          when: helm_repo_add.rc == 0
 
        - name: Install Grafana Operator

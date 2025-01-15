@@ -83,6 +83,7 @@
        dest: "{{ ansible_user_dir }}/"
      with_fileglob:
        - "{{lookup('pipe', 'pwd')}}/files/grafana.yaml"
+       - "{{lookup('pipe', 'pwd')}}/files/kube-prometheus-stack.values"
        - "{{lookup('pipe', 'pwd')}}/files/fluent-values.yaml"
 
    - name: Install Kserve on Kubernetes

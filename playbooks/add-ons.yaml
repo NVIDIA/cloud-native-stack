@@ -215,7 +215,7 @@
          shell: kubectl apply -f {{ ansible_user_dir }}/grafana.yaml -n monitoring
 
        - name: Install Prometheus Adapter
-         shell: "helm install --version {{ prometheus_adapter }} prometheus-adapter prometheus-community/prometheus-adapter --namespace monitoring --set prometheus.url=http://prometheus-server,prometheus.port=80"
+         shell: "helm install --version {{ prometheus_adapter }} prometheus-adapter prometheus-community/prometheus-adapter --namespace monitoring --set prometheus.url=http://kube-prometheus-stack-prometheus.monitoring,prometheus.port=9090"
          when: helm_repo_add.rc == 0
 
        - name: Apply Metrics Server configuration

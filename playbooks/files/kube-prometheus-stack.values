@@ -1,0 +1,7 @@
+grafana:
+  enabled: false
+prometheus:
+  service:
+    type: NodePort
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false

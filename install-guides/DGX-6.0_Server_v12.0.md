@@ -715,7 +715,7 @@ Execute the below commands to uninstall the GPU Operator:
 ```
 $ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 nvidia-gpu-operator            1               2024-03-20 20:23:28.063421701 +0000 UTC deployed        gpu-operator-23.9.2      v23.9.2
+gpu-operator-1606173805 nvidia-gpu-operator            1               2024-03-21 20:23:28.063421701 +0000 UTC deployed        gpu-operator-23.9.2      v23.9.2
 
 $ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 ```

@@ -8,9 +8,9 @@ NVIDIA Cloud Native Stack v12.3 includes:
 - Containerd 1.7.23
 - Kubernetes version 1.29.10
 - Helm 3.16.2
-- NVIDIA GPU Driver: 550.127.05
-- NVIDIA Container Toolkit: 1.17.1
-- NVIDIA GPU Operator 24.9.0
+- NVIDIA GPU Driver: 570.86.15
+- NVIDIA Container Toolkit: 1.17.4
+- NVIDIA GPU Operator 24.9.2
   - NVIDIA K8S Device Plugin: 0.17.0
   - NVIDIA DCGM-Exporter: 3.3.8-3.6.0
   - NVIDIA DCGM: 3.3.8-1
@@ -95,7 +95,7 @@ Expected Output:
 ```
 Mon Nov  11 16:26:04 2024
 +-----------------------------------------------------------------------------------------+
-| NVIDIA-SMI 550.127.05            Driver Version: 550.127.05      CUDA Version: 12.4     |
+| NVIDIA-SMI 570.86.15            Driver Version: 570.86.15      CUDA Version: 12.4     |
 |-----------------------------------------+------------------------+----------------------+
 | GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
@@ -203,7 +203,7 @@ sudo apt update
 Install NVIDIA Conatiner Toolkit
 
 ```
-sudo apt-get install -y nvidia-container-toolkit=1.17.1-1
+sudo apt-get install -y nvidia-container-toolkit=1.17.4-1
 ```
 
 
@@ -713,7 +713,7 @@ Install GPU Operator:
 `NOTE:` As we are preinstalled with NVIDIA Driver and NVIDIA Container Toolkit, we need to set as `false` when installing the GPU Operator
 
 ```
- helm install --version 24.9.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+ helm install --version 24.9.2 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 ```
 
 #### Validating the State of the GPU Operator:
@@ -789,7 +789,7 @@ Output:
 ``` 
 Mon Nov  11 16:26:04 2024
 +-----------------------------------------------------------------------------------------+
-| NVIDIA-SMI 550.127.05            Driver Version: 550.127.05      CUDA Version: 12.4     |
+| NVIDIA-SMI 570.86.15            Driver Version: 570.86.15      CUDA Version: 12.4     |
 |-----------------------------------------+------------------------+----------------------+
 | GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |

@@ -2,7 +2,7 @@
 	"name": "Cloud Native Stack",
 	"latest": {
 		"version": "14.0",
-		"release_date": "14 November 2024",
+		"release_date": "14 Feb 2024",
 		"platforms": [{
 				"name": "NVIDIA Certified Server",
 				"CPU architecture": "x86, Arm64",
@@ -13,9 +13,9 @@
 					"k8s version": "1.31.2",
 					"Calico": "v3.28.2",
 					"helm version": "3.16.2",
-					"NVIDIA GPU Operator": "24.9.0",
-					"NVIDIA Network Operator": "24.7.0",
-					"NVIDIA DataCenter Driver": "550.127.05"
+					"NVIDIA GPU Operator": "24.9.2",
+					"NVIDIA Network Operator": "24.10.1",
+					"NVIDIA DataCenter Driver": "570.86.15"
 				}
 			}
 		]

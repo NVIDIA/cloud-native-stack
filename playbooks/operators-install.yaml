@@ -44,22 +44,23 @@
 
    - name: Check NVIDIA Driver Modules are loaded
      shell: "lsmod | grep -i nvidia"
-     when: cns_nvidia_driver != true
      register: nvidia_mod
      no_log: True
+     ignore_errors: true
      failed_when: false
 
    - name: Check NVIDIA SMI loaded
-     when: cns_nvidia_driver != true
      shell: "nvidia-smi"
      register: nvidia_smi
      no_log: True
+     ignore_errors: true
      failed_when: false
 
    - name: NVIDIA Driver Alert
      debug:
        msg: "NVIIDA Driver is installed on the system, please uninstall the NVIDIA Driver and continue the installation. Example: 'sudo /usr/bin/nvidia-uninstall'"
-     when: nvidia_mod.rc > 1 or nvidia_smi.rc == 0
+     when: cns_nvidia_driver != true and nvidia_mod.rc > 1 or cns_nvidia_driver != true and nvidia_smi.rc == 0
+     ignore_errors: true
      failed_when: false
 
    - name: GPU PCI ID

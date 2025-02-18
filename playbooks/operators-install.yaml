@@ -59,7 +59,7 @@
    - name: NVIDIA Driver Alert
      debug:
        msg: "NVIIDA Driver is installed on the system, please uninstall the NVIDIA Driver and continue the installation. Example: 'sudo /usr/bin/nvidia-uninstall'"
-     when: nvidia_mod.rc > 1 or nvidia_smi.rc == 0
+     when: nvidia_mod.rc > 1 and cns_nvidia_driver != true or nvidia_smi.rc == 0 and cns_nvidia_driver != true
      failed_when: false
 
    - name: GPU PCI ID

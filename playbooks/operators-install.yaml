@@ -59,7 +59,7 @@
    - name: NVIDIA Driver Alert
      debug:
        msg: "NVIIDA Driver is installed on the system, please uninstall the NVIDIA Driver and continue the installation. Example: 'sudo /usr/bin/nvidia-uninstall'"
-     when: cns_nvidia_driver != true and nvidia_mod.rc > 1 or cns_nvidia_driver != true and nvidia_smi.rc == 0
+     when: cns_nvidia_driver != true and nvidia_smi.rc == 0 or cns_nvidia_driver != true and nvidia_mod.rc > 1
      ignore_errors: true
      failed_when: false
 

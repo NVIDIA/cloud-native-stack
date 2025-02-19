@@ -82,11 +82,11 @@ Available versions are:
 
 - 14.0
 - 13.2
-- 13.2
-- 13.2
+- 13.1
+- 13.0
 - 12.3
 - 12.2
-- 13.2
+- 12.1
 - 12.0
 
 Edit the `cns_version.yaml` and update the version you want to install
@@ -104,39 +104,40 @@ cns_version: 13.2
 
 ## MicroK8s cluster
 microk8s: no
-## Kubernetes Install with Kubeadm 
-install_k8s: yes 
+## Kubernetes Install with Kubeadm
+install_k8s: yes
 
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "1.7.20"
-runc_version: "1.1.13"
+containerd_version: "1.7.23"
+runc_version: "1.1.14"
 cni_plugins_version: "1.5.1"
 containerd_max_concurrent_downloads: "5"
-nvidia_container_toolkit_version: "1.16.1"
-crio_version: "1.30.2"
+nvidia_container_toolkit_version: "1.17.4"
+crio_version: "1.30.6"
 cri_dockerd_version: "0.3.15"
-k8s_version: "1.30.2"
-calico_version: "3.27.4"
-flannel_version: "0.25.5"
-helm_version: "3.15.3"
-gpu_operator_version: "24.6.1"
-network_operator_version: "24.4.1"
+k8s_version: "1.30.6"
+calico_version: "3.28.2"
+flannel_version: "0.25.6"
+helm_version: "3.16.2"
+gpu_operator_version: "24.9.2"
+network_operator_version: "24.10.1"
 nim_operator_version: "1.0.0"
-local_path_provisioner: "0.0.26"
+local_path_provisioner: "0.0.30"
 nfs_provisioner: "4.0.18"
-metallb_version: "0.14.5"
-kserve_version: "0.13"
-prometheus_stack: "25.27.0"
+metallb_version: "0.14.8"
+kserve_version: "0.14"
+prometheus_stack: "67.5.0"
 prometheus_adapter: "4.11.0"
-elastic_stack: "8.14.1"
+grafana_operator: "v5.15.1"
+elastic_stack: "8.15.3"
 lws_version: "0.4.0"
 
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "550.90.07"
+gpu_driver_version: "570.86.15"
 use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
@@ -185,8 +186,11 @@ k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.ke
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
-# Install NVIDIA NIM Operator 
+# Install NVIDIA NIM Operator
 enable_nim_operator: no
+
+# LeaderWorkerSet https://github.com/kubernetes-sigs/lws/tree/main
+lws: no
 
 # Local Path Provisioner and NFS Provisoner as Storage option
 storage: no
@@ -205,7 +209,7 @@ loadbalancer_ip: ""
 ## Cloud Native Stack Validation
 cns_validation: no
 
-# BMC Details for Confidential Computing 
+# BMC Details for Confidential Computing
 bmc_ip:
 bmc_username:
 bmc_password:
@@ -218,7 +222,7 @@ aws_gpu_instance_type: g4dn.2xlarge
 
 ## Google Cloud GKE Values
 #https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
-gke_project_id: 
+gke_project_id:
 #https://cloud.google.com/compute/docs/regions-zones#available
 gke_region: us-west1
 gke_node_zones: ["us-west1-b"]

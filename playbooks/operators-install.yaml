@@ -116,6 +116,18 @@
      failed_when: false
      shell: 'sed -i "s/devices: \[.*\]/devices: \\[ {{ active_nic.stdout }}\]/g" {{ ansible_user_dir }}/network-operator-values.yaml'
 
+   - name: Generate NIC Cluster Policy template
+     when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cns_version >= 4.1 and network_operator_version >= '24.10.1'"
+     copy:
+       src: "{{lookup('pipe', 'pwd')}}/files/nic-cluster-policy.yaml"
+       dest: "{{ ansible_user_dir }}/nic-cluster-policy.yaml.j2"
+
+   - name: Create final NIC Cluster Policy configuration
+     when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cns_version >= 4.1 and network_operator_version >= '24.10.1'"
+     ansible.builtin.template:
+       src: "{{ ansible_user_dir }}/nic-cluster-policy.yaml.j2"
+       dest: "{{ ansible_user_dir }}/nic-cluster-policy.yaml"
+
    - name: Installing the Network Operator on NVIDIA Cloud Native Stack
      when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and cns_version >= 4.1"
      shell: "{{ item }}"
@@ -127,6 +139,10 @@
    - name: Installing the Network Operator on NVIDIA Cloud Native Stack
      when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and ansible_architecture == 'x86_64'"
      shell: "helm install --version {{ network_operator_version }} -f {{ ansible_user_dir }}/network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator"
+
+   - name: Applying the NIC Cluster Policy on NVIDIA Cloud Native Stack
+     when: "enable_network_operator == true and network_operator.rc == 1 and 'running' in k8sup.stdout and ansible_architecture == 'x86_64' and cns_version >= 4.1 and network_operator_version >= '24.10.1'"
+     shell: "kubectl apply -f {{ ansible_user_dir }}/nic-cluster-policy.yaml"
 
    - name: Checking if GPU Operator is installed
      shell: helm ls -A | grep gpu-operator
@@ -191,7 +207,7 @@
        - name: Install CC Runtime
          shell: "kubectl apply -f {{ ansible_user_dir }}/ccruntime.yaml"
 
-       - name: Install NVIDIA GPU Operator for Confidential Computing 
+       - name: Install NVIDIA GPU Operator for Confidential Computing
          shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --wait --generate-name -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set sandboxWorkloads.enabled=true --set kataManager.enabled=true --set ccManager.enabled=true --set nfd.nodefeaturerules=true
 
        - name: Setting the Node Level Mode

@@ -1,9 +1,3 @@
-deployCR: true
-ofedDriver:
-  deploy: true
-rdmaSharedDevicePlugin:
-  deploy: true
-  resources:
-    - name: rdma_shared_device_a
-      vendors: [15b3]
-      ifNames: [ ens160f0,ens160f1]
+nfd:
+  enabled: true
+  deployNodeFeatureRules: true

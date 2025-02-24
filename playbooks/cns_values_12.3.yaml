@@ -65,6 +65,8 @@ ngc_registry_username: "$oauthtoken"
 enable_network_operator: no
 ## Enable RDMA yes for NVIDIA Certification
 enable_rdma: no
+## Enable for MLNX-OFED Driver Deployment
+deploy_ofed: no
 
 # Prxoy Configuration
 proxy: no

@@ -1,0 +1,72 @@
+apiVersion: mellanox.com/v1alpha1
+kind: NicClusterPolicy
+metadata:
+  name: nic-cluster-policy
+spec:
+{% if deploy_ofed %}
+  ofedDriver:
+    readinessProbe:
+      initialDelaySeconds: 10
+      periodSeconds: 30
+    forcePrecompiled: false
+    terminationGracePeriodSeconds: 300
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 30
+    env:
+      - name: UNLOAD_STORAGE_MODULES
+        value: 'true'
+    upgradePolicy:
+      autoUpgrade: true
+      drain:
+        deleteEmptyDir: true
+        enable: true
+        force: true
+        timeoutSeconds: 300
+        podSelector: ''
+      maxParallelUpgrades: 1
+      safeLoad: false
+      waitForCompletion:
+        timeoutSeconds: 0
+    startupProbe:
+      initialDelaySeconds: 10
+      periodSeconds: 20
+    image: doca-driver
+    repository: nvcr.io/nvidia/mellanox
+    version: 24.10-0.7.0.0-0
+{% endif %}
+  rdmaSharedDevicePlugin:
+    image: k8s-rdma-shared-dev-plugin
+    repository: ghcr.io/mellanox
+    version: v1.5.2
+    # The config below directly propagates to k8s-rdma-shared-device-plugin configuration.
+    # Replace 'devices' with your (RDMA capable) netdevice name.
+    config: |
+      {
+        "configList": [
+          {
+            "resourceName": "rdma_shared_device_a",
+            "rdmaHcaMax": 63,
+            "selectors": {
+              "vendors": ["15b3"],
+              "ifNames": ["ens2f0"]
+            }
+          }
+        ]
+      }
+  secondaryNetwork:
+    cniPlugins:
+      image: plugins
+      repository: ghcr.io/k8snetworkplumbingwg
+      version: v1.5.0
+      imagePullSecrets: []
+    multus:
+      image: multus-cni
+      repository: ghcr.io/k8snetworkplumbingwg
+      version: v4.1.0
+      imagePullSecrets: []
+    ipamPlugin:
+      image: whereabouts
+      repository: ghcr.io/k8snetworkplumbingwg
+      version: v0.7.0
+      imagePullSecrets: []

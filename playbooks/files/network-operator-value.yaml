@@ -1,0 +1,3 @@
+nfd:
+  enabled: true
+  deployNodeFeatureRules: true

@@ -61,10 +61,12 @@ ngc_registry_email: ""
 ngc_registry_username: "$oauthtoken"
 
 # Network Operator Values
-## If the Network Operator is yes then make sure enable_rdma as well yes
+## If the Network Operator is yes then make sure enable_rdma as well yesgit br
 enable_network_operator: no
 ## Enable RDMA yes for NVIDIA Certification
 enable_rdma: no
+## Enable for MLNX-OFED Driver Deployment
+deploy_ofed: no
 
 # Prxoy Configuration
 proxy: no

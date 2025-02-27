@@ -327,9 +327,6 @@
      shell: 'sleep 60; kubectl get clusterpolicy cluster-policy -o yaml | sed "/validator:/a\    driver:\n      env:\n      - name: DISABLE_DEV_CHAR_SYMLINK_CREATION\n        value: \"true\"" | kubectl apply -f -'
      when: "enable_gpu_operator == true and container_runtime == 'cri-dockerd'"
 
-   - name: nodes length
-     set_fact: nodes_group="{{ groups['nodes'] | length }}"
-
    - name: Container Networking Plugin changes
      when: "enable_gpu_operator == true"
      shell: "sleep 20; timeout 15 kubectl delete pods $(kubectl get pods -n kube-system | grep core | awk '{print $1}') -n kube-system; for ns in `kubectl get pods -A  | grep node-feature | grep -v master | awk '{print $1}'`; do kubectl get pods -n $ns  | grep node-feature | grep -v master | awk '{print $1}' | xargs kubectl delete pod -n $ns; done"

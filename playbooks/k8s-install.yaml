@@ -12,6 +12,10 @@
         systemd_service:
           daemon_reload: true
         failed_when: false
+        retries: 5
+        delay: 5
+        register: reload_daemon
+        until: reload_daemon is succeeded
 
       - name: restart services
         failed_when: false
@@ -25,6 +29,10 @@
           - containerd
           - crio
           - cri-o
+        retries: 5
+        delay: 5
+        register: restart_services
+        until: restart_services is succeeded
 
 - hosts: master
   vars_files:
@@ -36,9 +44,16 @@
    - name: Get Nvidia Tegra Release
      shell: uname -r | awk -F'-' '{print $2}'
      register: release
+     retries: 5
+     delay: 5
+     until: release is succeeded
 
    - set_fact:
       release: "{{ release.stdout }}"
+     retries: 5
+     delay: 5
+     register: set_release
+     until: set_release is succeeded
 
    - name: Reset Kubernetes component
      when: container_runtime == 'cri-o'
@@ -46,6 +61,10 @@
      become: true
      failed_when: false
      no_log: True
+     retries: 5
+     delay: 5
+     register: reset_kubernetes_crio
+     until: reset_kubernetes_crio is succeeded
 
    - name: Reset Kubernetes component
      when: container_runtime == 'cri-dockerd'
@@ -53,6 +72,10 @@
      become: true
      failed_when: false
      no_log: True
+     retries: 5
+     delay: 5
+     register: reset_kubernetes_cri_dockerd
+     until: reset_kubernetes_cri_dockerd is succeeded
 
    - name: Reset Kubernetes component
      when: container_runtime == 'containerd'
@@ -60,18 +83,30 @@
      become: true
      failed_when: false
      no_log: True
+     retries: 5
+     delay: 5
+     register: reset_kubernetes_containerd
+     until: reset_kubernetes_containerd is succeeded
 
    - name: reload daemon
      become: true
      systemd_service:
        daemon_reload: true
      failed_when: false
+     retries: 5
+     delay: 5
+     register: reload_daemon_master
+     until: reload_daemon_master is succeeded
 
    - name: remove etcd directory
      become: true
      file:
        path: "/var/lib/etcd"
        state: absent
+     retries: 5
+     delay: 5
+     register: remove_etcd
+     until: remove_etcd is succeeded
 
    - name: Check proxy conf exists
      when: proxy == true
@@ -82,14 +117,23 @@
      check_mode: yes
      changed_when: false
      register: proxyconf
+     retries: 5
+     delay: 5
+     until: proxyconf is succeeded
 
    - name: Get Host IP
      shell: interface=$(ip a | grep 'state UP' |  egrep 'enp*|ens*|eno*|enc*|eth*|bond*|wlan*' | awk '{print $2}' | sed 's/://g'); for i in $interface; do ifconfig $i | grep -iw inet | awk '{print $2}'; done
      register: network
+     retries: 5
+     delay: 5
+     until: network is succeeded
 
    - name: subnet information
      shell: "echo {{ network.stdout_lines[0] }} | cut -d. -f1-3"
      register: subnet
+     retries: 5
+     delay: 5
+     until: subnet is succeeded
 
    - name: add proxy lines to environment
      when: proxy == true and not proxyconf.found
@@ -105,30 +149,53 @@
        - HTTPS_PROXY={{ https_proxy }}
        - no_proxy={{ network.stdout_lines[0] }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24
        - NO_PROXY={{ network.stdout_lines[0] }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24
+     retries: 5
+     delay: 5
+     register: add_proxy_lines
+     until: add_proxy_lines is succeeded
 
    - name: source the env
      when: proxy == true and not proxyconf.found
      shell: source /etc/environment
      args:
        executable: /bin/bash
+     retries: 5
+     delay: 5
+     register: source_env
+     until: source_env is succeeded
 
    - name: check default gateway
      shell: ip r | grep default
      failed_when: false
      register: gateway
      when: proxy == true
+     retries: 5
+     delay: 5
+     until: gateway is succeeded
 
    - name: add default gateway
      shell: route add -net 0.0.0.0/0 gw {{ network.stdout_lines[0] }}
      when: gateway.rc | default ('') == 1 and proxy == true
+     retries: 5
+     delay: 5
+     register: add_default_gateway
+     until: add_default_gateway is succeeded
 
    - name: subnet
      set_fact:
        subnet: "{% if release != 'tegra' %}192.168.32.0/22{% elif release == 'tegra' %}10.244.0.0/16{% endif %}"
+     retries: 5
+     delay: 5
+     register: set_subnet
+     until: set_subnet is succeeded
 
    - name: CRI Socket
      set_fact:
        cri_socket: "{% if container_runtime == 'containerd' %}unix:///run/containerd/containerd.sock{% elif container_runtime == 'cri-o' %}unix:///var/run/crio/crio.sock{%elif container_runtime == 'cri-dockerd' %}unix:///run/cri-dockerd.sock{% endif %}"
+     retries: 5
+     delay: 5
+     register: set_cri_socket
+     until: set_cri_socket is succeeded
 
    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
      block:
@@ -136,22 +203,37 @@
          template:
            src: kubeadm-init-config.template
            dest: /tmp/kubeadm-init-config.yaml
+         retries: 5
+         delay: 5
+         register: generate_kubeadm_config
+         until: generate_kubeadm_config is succeeded
 
        - name: Run kubeadm init
          command: 'kubeadm init --config=/tmp/kubeadm-init-config.yaml'
          become: true
          register: kubeadm
+         retries: 5
+         delay: 5
+         until: kubeadm is succeeded
 
    - name: Create kube directory
      file:
       path: $HOME/.kube
       state: directory
+     retries: 5
+     delay: 5
+     register: create_kube_dir
+     until: create_kube_dir is succeeded
 
    - name: admin permissions
      become: true
      file:
        path: /etc/kubernetes/admin.conf
        mode: '0644'
+     retries: 5
+     delay: 5
+     register: set_admin_permissions
+     until: set_admin_permissions is succeeded
 
    - name: Copy kubeconfig to home
      copy:
@@ -159,6 +241,10 @@
        src:  /etc/kubernetes/admin.conf
        dest:  $HOME/.kube/config
        mode: '0600'
+     retries: 5
+     delay: 5
+     register: copy_kubeconfig
+     until: copy_kubeconfig is succeeded
 
    - pause:
        seconds: 15
@@ -166,53 +252,94 @@
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
      when: "cns_version >= 7.1 and release != 'tegra' or cns_version == 6.4 and release != 'tegra'"
      command: "kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/calico.yaml"
+     retries: 5
+     delay: 5
+     register: install_networking_plugin_calico
+     until: install_networking_plugin_calico is succeeded
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
      when: "cns_version <= 6.3 and ansible_distribution_major_version == '20' and release != 'tegra' or cns_version == 7.0 and release != 'tegra' and ansible_distribution_major_version == '22'"
      command: "kubectl apply -f https://projectcalico.docs.tigera.io/archive/v{{ calico_version }}/manifests/calico.yaml"
+     retries: 5
+     delay: 5
+     register: install_networking_plugin_calico_old
+     until: install_networking_plugin_calico_old is succeeded
 
    - name: Update Network plugin for Calico on NVIDIA Cloud Native Stack
      when: "cns_version >= 3.1 and release != 'tegra'"
      shell: "sleep 5; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*"
+     retries: 5
+     delay: 5
+     register: update_network_plugin_calico
+     until: update_network_plugin_calico is succeeded
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
      when: "release == 'tegra'"
      command: "kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v{{ flannel_version }}/Documentation/kube-flannel.yml"
+     retries: 5
+     delay: 5
+     register: install_networking_plugin_flannel
+     until: install_networking_plugin_flannel is succeeded
 
    - name: Taint the Kubernetes Control Plane node
      failed_when: false
      command: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+     retries: 5
+     delay: 5
+     register: taint_control_plane
+     until: taint_control_plane is succeeded
 
    - name: Generate join token IP
      become: true
      shell: kubeadm token create --print-join-command | awk '{print $3}'
      register: kubeadm_join_ip
+     retries: 5
+     delay: 5
+     until: kubeadm_join_ip is succeeded
 
    - name: Generate join token
      become: true
      shell: kubeadm token create --print-join-command | awk '{print $5}'
      register: kubeadm_join_token
+     retries: 5
+     delay: 5
+     until: kubeadm_join_token is succeeded
 
    - name: Generate join token hash
      become: true
      shell: kubeadm token create --print-join-command | awk '{print $7}'
      register: kubeadm_join_hash
+     retries: 5
+     delay: 5
+     until: kubeadm_join_hash is succeeded
 
    - set_fact:
        api_endpoint: "{{ kubeadm_join_ip.stdout }}"
        kubeadm_token: "{{ kubeadm_join_token.stdout }}"
        ca_cert_hash: "{{ kubeadm_join_hash.stdout }}"
+     retries: 5
+     delay: 5
+     register: set_join_facts
+     until: set_join_facts is succeeded
 
    - name: Generate kubeadm init config
      template:
        src: kubeadm-join.template
        dest: /tmp/kubeadm-join.yaml
+     retries: 5
+     delay: 5
+     register: generate_join_config
+     until: generate_join_config is succeeded
 
    - name: Copy Join Command
      fetch:
        src: "/tmp/kubeadm-join.yaml"
        dest: "/tmp/kubeadm-join.yaml"
        flat: true
+     retries: 5
+     delay: 5
+     register: copy_join_command
+     until: copy_join_command is succeeded
 
 - hosts: nodes
   vars_files:
@@ -224,24 +351,38 @@
      shell: "kubeadm reset --force"
      register: reset_cluster
      failed_when: false
+     retries: 5
+     delay: 5
+     until: reset_cluster is succeeded
 
    - name: Create kube directory
      become: true
      file:
        path: /etc/kubernetes
        state: directory
+     retries: 5
+     delay: 5
+     register: create_kube_dir_node
+     until: create_kube_dir_node is succeeded
 
    - name: Copy kubeadm-join command to node
      become: true
      copy:
        src: "/tmp/kubeadm-join.yaml"
        dest: "/tmp/kubeadm-join.yaml"
+     retries: 5
+     delay: 5
+     register: copy_join_command_node
+     until: copy_join_command_node is succeeded
 
    - name: Get the Active Mellanox NIC on nodes
      when: "enable_network_operator == true and cns_version >= 4.1"
      become: true
      shell: "for device in `sudo lshw -class network -short | grep -i ConnectX | awk '{print $2}' | egrep -v 'Device|path' | sed '/^$/d'`;do echo -n $device; sudo ethtool $device | grep -i 'Link detected'; done | grep yes | awk '{print $1}' > /tmp/$(hostname)-nic"
      register: node_nic
+     retries: 5
+     delay: 5
+     until: node_nic is succeeded
 
    - name: Copy Mellanox NIC Active File to master
      when: "enable_network_operator == true and cns_version >= 4.1"
@@ -250,12 +391,20 @@
        src: "/tmp/{{ ansible_nodename }}-nic"
        dest: "/tmp/"
        flat: yes
+     retries: 5
+     delay: 5
+     register: copy_mellanox_nic
+     until: copy_mellanox_nic is succeeded
 
 - hosts: nodes
   tasks:
    - name: Run kubeadm join
      become: true
      shell: "kubeadm join --config=/tmp/kubeadm-join.yaml"
+     retries: 5
+     delay: 5
+     register: run_kubeadm_join
+     until: run_kubeadm_join is succeeded
 
    - pause:
        seconds: 30

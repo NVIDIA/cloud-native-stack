@@ -102,7 +102,7 @@
       reboot:
         reboot_timeout: 900
 
-    - name: Install PreRequisistes dependencies
+    - name: Install PreRequisites dependencies
       when: ansible_distribution == 'Ubuntu'
       become: true
       apt:
@@ -110,7 +110,7 @@
         state: present
         update_cache: yes
 
-    - name: Install PreRequisistes dependencies
+    - name: Install PreRequisites dependencies
       when: ansible_distribution == 'RedHat'
       become: true
       yum:

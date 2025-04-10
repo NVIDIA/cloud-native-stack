@@ -44,6 +44,7 @@ mig_strategy: single
 enable_gds: no
 #Secure Boot for only Ubuntu
 enable_secure_boot: no
+enable_cdi: no
 enable_vgpu: no
 vgpu_license_server: ""
 # URL of Helm repo to be added. If using NGC get this from the fetch command in the console

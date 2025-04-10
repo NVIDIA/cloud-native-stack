@@ -11,21 +11,37 @@
           file:
             path: /etc/containerd
             state: directory
+          retries: 5
+          delay: 5
+          register: create_containerd_dir
+          until: create_containerd_dir is succeeded
 
         - name: Write defaults to config.toml
           copy:
             src: "{{lookup('pipe', 'pwd')}}/files/config.toml"
             dest: /etc/containerd/config.toml
             mode: 0664
+          retries: 5
+          delay: 5
+          register: write_config_toml
+          until: write_config_toml is succeeded
 
         - name: Enable systemd cgroups
           shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+          retries: 5
+          delay: 5
+          register: enable_systemd_cgroups
+          until: enable_systemd_cgroups is succeeded
 
         - name: restart containerd
           service:
             name: containerd
             state: restarted
             daemon_reload: yes
+          retries: 5
+          delay: 5
+          register: restart_containerd
+          until: restart_containerd is succeeded
       when: "cns_docker == true and cns_nvidia_driver == true and microk8s == false and container_runtime == 'containerd'"
 
     - name: Check NVIDIA Driver Modules are loaded
@@ -33,25 +49,42 @@
       register: nvidia_mod
       no_log: True
       failed_when: false
+      retries: 5
+      delay: 5
+      until: nvidia_mod is succeeded
 
     - name: Check NVIDIA SMI loaded
       shell: "nvidia-smi"
       register: nvidia_smi
       no_log: True
       failed_when: false
+      retries: 5
+      delay: 5
+      until: nvidia_smi is succeeded
 
     - name: Trim the GPU Driver Version
       shell: "echo {{ gpu_driver_version }} | awk -F'.' '{print $1}'"
       register: dversion
+      retries: 5
+      delay: 5
+      until: dversion is succeeded
 
     - set_fact:
         driver_version: "{{ dversion.stdout }}"
+      retries: 5
+      delay: 5
+      register: set_driver_version
+      until: set_driver_version is succeeded
 
     - name: unload NVIDIA
       when: nvidia_smi.rc == 0
       shell: /usr/bin/nvidia-uninstall --silent; kill -9 $(lsof /dev/nvidia* | awk '{print $2}' | grep -v PID | uniq); rmmod nvidia_uvm; rmmod nvidia_drm; rmmod nvidia_modeset; rmmod nvidia
       become: true
       failed_when: false
+      retries: 5
+      delay: 5
+      register: unload_nvidia
+      until: unload_nvidia is succeeded
 
     - name: NVIDIA Driver Clean Up
       when:  nvidia_mod.rc >= 1 and ansible_distribution == 'Ubuntu' or nvidia_smi.rc == 0 and ansible_distribution == 'Ubuntu'
@@ -62,16 +95,18 @@
             state: absent
             purge: yes
           register: apt_cleanup
-          retries: 10
-          until: apt_cleanup is success
+          retries: 5
+          delay: 5
+          until: apt_cleanup is succeeded
 
         - name: Remove OLD Apt Repository
           apt_repository:
             repo: ppa:graphics-drivers/ppa
             state: absent
           register: ppa_clean
-          retries: 10
-          until: ppa_clean is success
+          retries: 5
+          delay: 5
+          until: ppa_clean is succeeded
 
         - name: Remove NVIDIA packages
           apt:
@@ -103,17 +138,26 @@
             purge: yes
             state: absent
           register: nvidia_cleanup
-          retries: 10
-          until: nvidia_cleanup is success
+          retries: 5
+          delay: 5
+          until: nvidia_cleanup is succeeded
 
         - name: Remove old keyring
           shell:
             cmd: "apt-key del 7fa2af80"
+          retries: 5
+          delay: 5
+          register: remove_keyring
+          until: remove_keyring is succeeded
 
         - name: unload NVIDIA
           shell: /usr/bin/nvidia-uninstall --silent; kill -9 $(lsof /dev/nvidia* | awk '{print $2}' | grep -v PID | uniq); rmmod -f nvidia_uvm; rmmod -f nvidia_drm; rmmod -f nvidia_modeset; rmmod -f nvidia
           ignore_errors: yes
           failed_when: false
+          retries: 5
+          delay: 5
+          register: unload_nvidia_force
+          until: unload_nvidia_force is succeeded
 
     - name: Download NVIDIA CUDA Key for Ubuntu
       when: ansible_distribution == 'Ubuntu' and ansible_architecture == 'aarch64'
@@ -121,6 +165,10 @@
       get_url:
         url: "https://developer.download.nvidia.com/compute/cuda/repos/{{ ansible_distribution | lower }}{{ ansible_distribution_version | regex_replace ('[.~]', '') }}/arm64/cuda-keyring_1.1-1_all.deb"
         dest: /tmp/cuda-keyring_1.1-1_all.deb
+      retries: 5
+      delay: 5
+      register: download_cuda_key_arm
+      until: download_cuda_key_arm is succeeded
 
     - name: Download NVIDIA CUDA Key for Ubuntu
       when: ansible_distribution == 'Ubuntu' and ansible_architecture == 'x86_64'
@@ -128,6 +176,10 @@
       get_url:
         url: "https://developer.download.nvidia.com/compute/cuda/repos/{{ ansible_distribution | lower }}{{ ansible_distribution_version | regex_replace ('[.~]', '') }}/x86_64/cuda-keyring_1.1-1_all.deb"
         dest: /tmp/cuda-keyring_1.1-1_all.deb
+      retries: 5
+      delay: 5
+      register: download_cuda_key_x86
+      until: download_cuda_key_x86 is succeeded
 
     - name: Install NVIDIA CUDA keyring package for Ubuntu
       when: ansible_distribution == 'Ubuntu'
@@ -137,12 +189,20 @@
           become: true
           apt:
             deb: /tmp/cuda-keyring_1.1-1_all.deb
+          retries: 5
+          delay: 5
+          register: install_cuda_keyring
+          until: install_cuda_keyring is succeeded
 
         - name: Clean up the downloaded package
           become: true
           file:
             path: /tmp/cuda-keyring_1.1-1_all.deb
             state: absent
+          retries: 5
+          delay: 5
+          register: cleanup_cuda_keyring
+          until: cleanup_cuda_keyring is succeeded
 
     - name: Download NVIDIA CUDA keyring package for RHEL
       when: ansible_distribution == 'RedHat' and  ansible_architecture == 'x86_64'
@@ -150,6 +210,10 @@
       get_url:
         url: "https://developer.download.nvidia.com/compute/cuda/repos/rhel{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/cuda-rhel{{ ansible_distribution_major_version }}.repo"
         dest: /etc/yum.repos.d/cuda-{{ ansible_distribution | lower }}.repo
+      retries: 5
+      delay: 5
+      register: download_cuda_keyring_rhel_x86
+      until: download_cuda_keyring_rhel_x86 is succeeded
 
     - name: Download NVIDIA CUDA keyring package for RHEL
       when: ansible_distribution == 'RedHat' and  ansible_architecture == 'aarch64'
@@ -157,6 +221,10 @@
       get_url:
         url: "https://developer.download.nvidia.com/compute/cuda/repos/rhel{{ ansible_distribution_major_version }}/sbsa/cuda-rhel{{ ansible_distribution_major_version }}.repo"
         dest: /etc/yum.repos.d/cuda-{{ ansible_distribution | lower }}.repo
+      retries: 5
+      delay: 5
+      register: download_cuda_keyring_rhel_arm
+      until: download_cuda_keyring_rhel_arm is succeeded
 
     - name:  ensure we have kernel-headers installed for the current kernel on RHEL
       when:  "cns_version >= 10.0 and ansible_distribution == 'RedHat'"
@@ -170,6 +238,11 @@
               - "kernel-devel-{{ ansible_kernel }}"
               - "kernel-debug-devel-{{ ansible_kernel }}"
             state: present
+          retries: 5
+          delay: 5
+          register: install_kernel_support
+          until: install_kernel_support is succeeded
+
         - name: update the kernel to latest version so we have a supported version
           yum:
             name:
@@ -180,6 +253,10 @@
               - "kernel-devel"
               - "kernel-debug-devel"
             state: latest
+          retries: 5
+          delay: 5
+          register: update_kernel
+          until: update_kernel is succeeded
 
     - name: Update Ubuntu System
       become: true
@@ -191,16 +268,18 @@
             update_cache: true
           changed_when: false
           register: update
-          retries: 10
-          until: update is success
+          retries: 5
+          delay: 5
+          until: update is succeeded
 
         - name: Ensure kmod is installed
           apt:
             name: "kmod"
             state: "present"
           register: kmod_check
-          retries: 10
-          until: kmod_check is success
+          retries: 5
+          delay: 5
+          until: kmod_check is succeeded
 
     - name: Install NVIDIA TRD Driver
       become: true
@@ -209,9 +288,17 @@
       block:
         - name: Temporarily adjust account password policy to allow for successful NVIDIA driver install
           shell: chage -d 1 root
+          retries: 5
+          delay: 5
+          register: adjust_password_policy
+          until: adjust_password_policy is succeeded
 
         - name: Install driver packages
           shell: "BASE_URL=https://us.download.nvidia.com/tesla; curl -fSsl -O $BASE_URL/{{ gpu_driver_version }}/NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; chmod +x ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; sh ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run -m=kernel-open --silent"
+          retries: 5
+          delay: 5
+          register: install_driver_packages
+          until: install_driver_packages is succeeded
 
     - name: Install NVIDIA TRD Driver
       become: true
@@ -220,44 +307,60 @@
       block:
         - name: Temporarily adjust account password policy to allow for successful NVIDIA driver install
           shell: chage -d 1 root
+          retries: 5
+          delay: 5
+          register: adjust_password_policy_2
+          until: adjust_password_policy_2 is succeeded
 
         - name: Install driver packages
           shell: "BASE_URL=https://us.download.nvidia.com/tesla; curl -fSsl -O $BASE_URL/{{ gpu_driver_version }}/NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; chmod +x ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; sh ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run --silent"
+          retries: 5
+          delay: 5
+          register: install_driver_packages_2
+          until: install_driver_packages_2 is succeeded
 
     - name: Enable MIG with nvidia-smi
       become: true
       shell: nvidia-smi -mig 1
       register: mig
       when: nvidia_driver_mig == true
-
-    - name: Trim the GPU Driver Version
-      shell: "echo {{ gpu_driver_version }} | awk -F'.' '{print $1}'"
-      register: dversion
-
-    - set_fact:
-        driver_version: "{{ dversion.stdout }}"
+      retries: 5
+      delay: 5
+      until: mig is succeeded
 
     - name: check if NVSwitches
       shell: ls -A /proc/driver/nvidia-nvswitch/devices | wc -l | tr -d '\n'
       register: nvswitch
       failed_when: false
+      retries: 5
+      delay: 5
+      until: nvswitch is succeeded
 
     - name: check nvlink status with NVIDIA SMI
       shell: nvidia-smi nvlink -s -i 0 | tail -1f | awk '{print $NF}' | tr -d '\n'
       register: nvlink
       failed_when: false
+      retries: 5
+      delay: 5
+      until: nvlink is succeeded
 
     - name: check dgx
       ignore_errors: true
       stat:
         path: /etc/dgx-release
       register: dgx
+      retries: 5
+      delay: 5
+      until: dgx is succeeded
 
     - name: check l4t
       ignore_errors: true
       stat:
         path: /etc/l4t-release
       register: l4t
+      retries: 5
+      delay: 5
+      until: l4t is succeeded
 
     - name: Install NVIDIA Fabric Manager on Ubuntu
       become: true
@@ -268,6 +371,10 @@
         state: present
         update_cache: true
         force: yes
+      retries: 5
+      delay: 5
+      register: install_fabric_manager_ubuntu
+      until: install_fabric_manager_ubuntu is succeeded
 
     - name: Install NVIDIA Fabric Manager for NVSwitch on RHEL
       become: true
@@ -277,6 +384,10 @@
         name: "nvidia-fabric-manager-{{ gpu_driver_version}}-1"
         state: present
         update_cache: true
+      retries: 5
+      delay: 5
+      register: install_fabric_manager_rhel
+      until: install_fabric_manager_rhel is succeeded
 
     - name: Enable and restart NVIDIA Fabric manager
       when: dgx.stat.exists == True or l4t.stat.exists == True or nvswitch.stdout | int > 0
@@ -287,3 +398,7 @@
         enabled: true
         state: started
         daemon_reload: true
+      retries: 5
+      delay: 5
+      register: enable_fabric_manager
+      until: enable_fabric_manager is succeeded

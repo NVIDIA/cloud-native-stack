@@ -36,7 +36,7 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 
 ## Component Matrix
 
-#### Cloud Native Stack Batch 25.4.0 (Release Date: 8th April 2025)
+#### Cloud Native Stack Batch 25.4.0 (Release Date: 10 April 2025)
 
 | CNS Version               | 15.0    | 14.1 | 13.3 |
 | :-----:                   | :-----: | :------: | :------: |

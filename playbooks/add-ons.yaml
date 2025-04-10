@@ -9,6 +9,11 @@
       name: ['nfs-common']
       state: present
       update_cache: true
+     retries: 5
+     delay: 5
+     register: install_nfs_common
+     until: install_nfs_common is succeeded
+
 - hosts: master
   vars_files:
     - cns_values.yaml
@@ -16,6 +21,10 @@
    - name: Install Local Path Provisoner on NVIDIA Cloud Native Stack
      shell: kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v{{ local_path_provisioner }}/deploy/local-path-storage.yaml
      when: storage == true
+     retries: 5
+     delay: 5
+     register: install_local_path_provisioner
+     until: install_local_path_provisioner is succeeded
 
    - name: Install NFS Packages on RHEL
      become: true
@@ -23,6 +32,10 @@
      yum:
       name: ['nfs-utils']
       state: present
+     retries: 5
+     delay: 5
+     register: install_nfs_utils
+     until: install_nfs_utils is succeeded
 
    - name: Install NFS Packages on Ubuntu
      become: true
@@ -31,6 +44,10 @@
       name: ['nfs-kernel-server', 'nfs-common']
       state: present
       update_cache: true
+     retries: 5
+     delay: 5
+     register: install_nfs_packages
+     until: install_nfs_packages is succeeded
 
    - name: Setup NFS provisioner
      become: true
@@ -41,15 +58,27 @@
            mkdir -p /data/nfs
            chown nobody:nogroup /data/nfs
            chmod 2770 /data/nfs
+         retries: 5
+         delay: 5
+         register: setup_nfs_mounts
+         until: setup_nfs_mounts is succeeded
 
        - name: Update Exports for NFS
          lineinfile:
            path: /etc/exports
            insertafter: EOF
            line: "/data/nfs  *(rw,sync,no_subtree_check,no_root_squash,insecure)"
+         retries: 5
+         delay: 5
+         register: update_nfs_exports
+         until: update_nfs_exports is succeeded
 
        - name: Run exports
          shell: exportfs -a
+         retries: 5
+         delay: 5
+         register: run_exports
+         until: run_exports is succeeded
 
    - name: NFS service restart service on Ubuntu
      become: true
@@ -58,6 +87,10 @@
        name: nfs-kernel-server
        state: restarted
        daemon_reload: yes
+     retries: 5
+     delay: 5
+     register: restart_nfs_ubuntu
+     until: restart_nfs_ubuntu is succeeded
 
    - name: NFS Service restart service on RHEL
      become: true
@@ -66,6 +99,10 @@
        name: nfs-server
        state: restarted
        daemon_reload: yes
+     retries: 5
+     delay: 5
+     register: restart_nfs_rhel
+     until: restart_nfs_rhel is succeeded
 
    - name: Install NFS External Provisioner
      when: storage == true
@@ -75,6 +112,10 @@
        helm install --version {{ nfs_provisioner }} nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_default_ipv4.address }} --set nfs.path=/data/nfs --set storageClass.archiveOnDelete=false --create-namespace --namespace nfs-client
        sleep 10
        kubectl patch storageclass nfs-client -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+     retries: 5
+     delay: 5
+     register: install_nfs_provisioner
+     until: install_nfs_provisioner is succeeded
 
    - name: Copy files
      when: monitoring == true
@@ -85,10 +126,15 @@
        - "{{lookup('pipe', 'pwd')}}/files/grafana.yaml"
        - "{{lookup('pipe', 'pwd')}}/files/kube-prometheus-stack.values"
        - "{{lookup('pipe', 'pwd')}}/files/fluent-values.yaml"
+     retries: 5
+     delay: 5
+     register: copy_monitoring_files
+     until: copy_monitoring_files is succeeded
 
    - name: Install Kserve on Kubernetes
      when: kserve == true
-     retries: 3
+     retries: 5
+     delay: 5
      until: kserve_check.stdout == 'Successfully installed KServe'
      shell: curl -s "https://raw.githubusercontent.com/kserve/kserve/release-{{ kserve_version }}/hack/quick_install.sh" | bash > /tmp/kserve-install.log; cat /tmp/kserve-install.log | tail -1f | cut -d " " -f2-
      register: kserve_check
@@ -98,6 +144,10 @@
    - name: Install MetalLB
      shell: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v{{ metallb_version }}/config/manifests/metallb-native.yaml; sleep 45"
      when: loadbalancer == true
+     retries: 5
+     delay: 5
+     register: install_metallb
+     until: install_metallb is succeeded
 
    - name: Apply Layer2 Config for MetalLB
      when: loadbalancer == true
@@ -121,6 +171,10 @@
          ipAddressPools:
          - first-pool
        EOF
+     retries: 5
+     delay: 5
+     register: apply_metallb_config
+     until: apply_metallb_config is succeeded
 
    - name: Install Elastic Stack
      ignore_errors: true
@@ -134,6 +188,10 @@
        - helm install elastic-operator elastic/eck-operator -n elastic-system --create-namespace
        - sleep 5
        - kubectl create ns monitoring
+     retries: 5
+     delay: 5
+     register: install_elastic_stack
+     until: install_elastic_stack is succeeded
 
    - name: Apply Elastic Config
      ignore_errors: true
@@ -178,6 +236,10 @@
          elasticsearchRef:
            name: cloud-native
        EOF
+     retries: 5
+     delay: 5
+     register: apply_elastic_config
+     until: apply_elastic_config is succeeded
 
    - name: Install Fluent Bit
      shell: "{{ item }}"
@@ -191,6 +253,10 @@
        - "helm install -f {{ ansible_user_dir }}/fluent-values.yaml fluent/fluent-bit -n monitoring --generate-name"
        - "curl -u 'elastic:cns-stack' -X POST -k \"https://$(kubectl get svc -n monitoring | grep cloud-native-kb-http | awk '{print $3}'):5601/api/data_views/data_view\" -H 'kbn-xsrf: true' -H 'Content-Type: application/json' -d' {  \"data_view\": { \"title\": \"logs*\", \"name\": \"My Logs\"}}'"
        - kubectl patch svc $(kubectl get svc -n monitoring | grep cloud-native-kb-http | awk '{print $1}') --type='json' -p '[{"op":"replace","path":"/spec/type","value":"NodePort"},{"op":"replace","path":"/spec/ports/0/nodePort","value":32221}]' -n monitoring
+     retries: 5
+     delay: 5
+     register: install_fluent_bit
+     until: install_fluent_bit is succeeded
 
    - name: Install Prometheus Stack on NVIDIA Cloud Native Stack
      ignore_errors: true
@@ -199,39 +265,82 @@
        - name: Add Prometheus Helm repository
          shell: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
          register: helm_repo_add
+         retries: 5
+         delay: 5
+         until: helm_repo_add is succeeded
 
        - name: Update Helm repositories
          shell: helm repo update
          when: helm_repo_add.rc == 0
+         retries: 5
+         delay: 5
+         register: update_helm_repos
+         until: update_helm_repos is succeeded
 
        - name: Install Prometheus
          shell: "helm install kube-prometheus-stack --version {{ prometheus_stack }} prometheus-community/kube-prometheus-stack --create-namespace --namespace monitoring --values  {{ ansible_user_dir }}/kube-prometheus-stack.values"
          when: helm_repo_add.rc == 0
+         retries: 5
+         delay: 5
+         register: install_prometheus
+         until: install_prometheus is succeeded
 
        - name: Install Grafana Operator
          shell: "helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version {{ grafana_operator }} -n monitoring"
+         retries: 5
+         delay: 5
+         register: install_grafana_operator
+         until: install_grafana_operator is succeeded
 
        - name: Apply Grafana configuration
          shell: kubectl apply -f {{ ansible_user_dir }}/grafana.yaml -n monitoring
+         retries: 5
+         delay: 5
+         register: apply_grafana_config
+         until: apply_grafana_config is succeeded
 
        - name: Install Prometheus Adapter
          shell: "helm install --version {{ prometheus_adapter }} prometheus-adapter prometheus-community/prometheus-adapter --namespace monitoring --set prometheus.url=http://kube-prometheus-stack-prometheus.monitoring,prometheus.port=9090"
          when: helm_repo_add.rc == 0
+         retries: 5
+         delay: 5
+         register: install_prometheus_adapter
+         until: install_prometheus_adapter is succeeded
 
        - name: Apply Metrics Server configuration
          shell: kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+         retries: 5
+         delay: 5
+         register: apply_metrics_server
+         until: apply_metrics_server is succeeded
 
        - name: Patch Metrics Server Deployment
          shell: "kubectl patch deployment metrics-server -n kube-system --type='json' -p='[{\"op\": \"add\", \"path\": \"/spec/template/spec/containers/0/args/-\", \"value\": \"--kubelet-insecure-tls\"}]'"
+         retries: 5
+         delay: 5
+         register: patch_metrics_server
+         until: patch_metrics_server is succeeded
 
        - name: Patch Cluster Policy for DCGM Exporter
          shell: "kubectl patch clusterpolicy/cluster-policy --type='json' -p='[{\"op\": \"replace\", \"path\": \"/spec/dcgmExporter/serviceMonitor/enabled\", \"value\": true}]'"
+         retries: 5
+         delay: 5
+         register: patch_cluster_policy
+         until: patch_cluster_policy is succeeded
 
        - name: Delete DCGM Pod
          shell: kubectl delete pod $(kubectl get pods -n nvidia-gpu-operator | grep dcgm | awk '{print $1}') -n nvidia-gpu-operator --force
+         retries: 5
+         delay: 5
+         register: delete_dcgm_pod
+         until: delete_dcgm_pod is succeeded
 
    - name: Install LeaderWorkerSet on NVIDIA Cloud Native Stack
      ignore_errors: true
      failed_when: false
      shell: "kubectl apply --server-side -f https://github.com/kubernetes-sigs/lws/releases/download/v{{ lws_version }}/manifests.yaml"
      when: lws == true
+     retries: 5
+     delay: 5
+     register: install_lws
+     until: install_lws is succeeded

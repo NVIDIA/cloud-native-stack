@@ -57,8 +57,14 @@ fi
   uname=$(uname -r | awk -F'-' '{print $NF}')
   if [[ $uname == 'tegra' ]]; then
           pip3 install ansible 2>&1 >/dev/null
-  else
-         python3 -m pip install ansible==8.7.0 2>&1 >/dev/null
+   else
+         pversion=$(python3 --version | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
+         p2version=$(python --version 2>&1 | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
+         if [[ $pversion < 3.10 || $pversion == 3.10 || $p2version == 3.10 || $p2version < 3.10  ]]; then
+                 python3 -m pip install ansible==8.7.0 2>&1 >/dev/null
+         elif [[ $pversion > 3.10 ]]; then
+                 python3 -m pip install ansible==11.4.0 --break-system-packages 2>&1 >/dev/null
+        fi
   fi
   if [[ $os == "ubuntu" || $os == '"rhel"' ]]; then
           echo PATH=$PATH:$HOME/.local/bin >> ~/.bashrc

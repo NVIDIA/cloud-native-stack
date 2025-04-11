@@ -11,18 +11,23 @@
           path: /usr/bin/nvidia-container-runtime
           runtimeArgs: []
   tasks:
-
     - name: Check docker is installed
       shell: docker
       register: docker_exists
       no_log: true
       failed_when: false
+      retries: 5
+      delay: 5
+      until: docker_exists is succeeded
 
     - name: Check NVIDIA docker is installed
       shell: nvidia-docker
       register: nvidia_docker_exists
       no_log: true
       failed_when: false
+      retries: 5
+      delay: 5
+      until: nvidia_docker_exists is succeeded
 
     - name: Install Docker Dependencies on Ubuntu
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
@@ -36,6 +41,10 @@
           - unzip
         state: latest
         update_cache: true
+      retries: 5
+      delay: 5
+      register: install_docker_deps_ubuntu
+      until: install_docker_deps_ubuntu is succeeded
 
     - name: Install Docker Dependencies on RHEL
       when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat' or nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
@@ -47,14 +56,22 @@
           - unzip
         state: latest
         update_cache: true
+      retries: 5
+      delay: 5
+      register: install_docker_deps_rhel
+      until: install_docker_deps_rhel is succeeded
 
     - name: create docker.asc file
-      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      when: ansible_distribution == 'Ubuntu'
       become: true
       file: 
         path: /etc/apt/keyrings/docker.asc
         mode: '0644'
         state: touch
+      retries: 5
+      delay: 5
+      register: create_docker_asc
+      until: create_docker_asc is succeeded
 
     - name: Add Docker APT signing key
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
@@ -62,6 +79,10 @@
         url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
         keyring: /etc/apt/keyrings/docker.asc
         state: present
+      retries: 5
+      delay: 5
+      register: add_docker_key
+      until: add_docker_key is succeeded
 
     - name: Add Docker repository into sources list
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
@@ -69,12 +90,20 @@
         repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
+      retries: 5
+      delay: 5
+      register: add_docker_repo
+      until: add_docker_repo is succeeded
 
     - name: Add Docker repo on RHEL
       when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
       get_url:
         url: https://download.docker.com/linux/centos/docker-ce.repo
         dest: /etc/yum.repos.d/docer-ce.repo
+      retries: 5
+      delay: 5
+      register: add_docker_repo_rhel
+      until: add_docker_repo_rhel is succeeded
 
     - name: Create docker systemd file
       when: docker_exists.rc >= 1 and microk8s == true
@@ -107,6 +136,10 @@
           OOMScoreAdjust=-500
           [Install]
           WantedBy=multi-user.target
+      retries: 5
+      delay: 5
+      register: create_docker_systemd_microk8s
+      until: create_docker_systemd_microk8s is succeeded
 
     - name: Create docker systemd file
       when: docker_exists.rc >= 1 and microk8s == false
@@ -139,26 +172,42 @@
           OOMScoreAdjust=-500
           [Install]
           WantedBy=multi-user.target
+      retries: 5
+      delay: 5
+      register: create_docker_systemd
+      until: create_docker_systemd is succeeded
 
     - name: Install Docker on Ubuntu
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and microk8s == false
       package:
-        name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+        name: ['docker-ce', 'docker-ce-cli', 'containerd.io', 'docker-buildx-plugin', 'docker-compose-plugin']
         state: latest
+      retries: 5
+      delay: 5
+      register: install_docker_ubuntu
+      until: install_docker_ubuntu is succeeded
 
     - name: Install Docker on Ubuntu
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and microk8s == true
       package:
-        name: ['docker-ce', 'docker-ce-cli']
+        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
         state: latest
+      retries: 5
+      delay: 5
+      register: install_docker_ubuntu_microk8s
+      until: install_docker_ubuntu_microk8s is succeeded
 
     - name: Install Docker on RHEL
       when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
       yum:
-        name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+        name: ['docker-ce', 'docker-ce-cli', 'containerd.io', 'docker-buildx-plugin', 'docker-compose-plugin']
         state: latest
         allowerasing: true
         update_cache: true
+      retries: 5
+      delay: 5
+      register: install_docker_rhel
+      until: install_docker_rhel is succeeded
 
     - name: remove nvidia-docker on RHEL
       when: nvidia_docker_exists.rc == 0 and ansible_distribution == 'RedHat'
@@ -168,6 +217,10 @@
           - nvidia-docker2
         state: absent
         autoremove: yes
+      retries: 5
+      delay: 5
+      register: remove_nvidia_docker_rhel
+      until: remove_nvidia_docker_rhel is succeeded
 
     - name: remove nvidia-docker v1
       when: nvidia_docker_exists.rc == 0 and ansible_distribution == 'Ubuntu'
@@ -175,6 +228,10 @@
         name: nvidia-docker
         state: absent
         purge: yes
+      retries: 5
+      delay: 5
+      register: remove_nvidia_docker_ubuntu
+      until: remove_nvidia_docker_ubuntu is succeeded
 
     - name: Add NVIDIA Docker apt signing key for Ubuntu
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
@@ -182,6 +239,10 @@
         url: https://nvidia.github.io/libnvidia-container/gpgkey
         keyring: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
         state: present
+      retries: 5
+      delay: 5
+      register: add_nvidia_docker_key
+      until: add_nvidia_docker_key is succeeded
 
     - name: Get NVIDIA Container Toolkit Apt list
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
@@ -192,6 +253,10 @@
       with_items:
         - deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/ubuntu18.04/$(ARCH) /
         - deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH) /
+      retries: 5
+      delay: 5
+      register: get_nvidia_container_toolkit_apt
+      until: get_nvidia_container_toolkit_apt is succeeded
 
     - name: add NVIDIA Container Toolkit repo on RHEL
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
@@ -201,6 +266,10 @@
         mode: 0644
         owner: root
         group: root
+      retries: 5
+      delay: 5
+      register: add_nvidia_container_toolkit_repo_rhel
+      until: add_nvidia_container_toolkit_repo_rhel is succeeded
 
     - name: Remove old nvidia container tooklit
       when: nvidia_docker_exists.rc >= 1
@@ -209,6 +278,10 @@
         name: ['nvidia-container-toolkit*', 'nvidia-container-runtime*', 'libnvidia-container*']
         state: absent
         autoremove: yes
+      retries: 5
+      delay: 5
+      register: remove_old_nvidia_container_toolkit
+      until: remove_old_nvidia_container_toolkit is succeeded
 
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
@@ -216,6 +289,10 @@
         name: ['nvidia-container-toolkit={{ nvidia_container_toolkit_version }}-1', 'nvidia-container-toolkit-base={{ nvidia_container_toolkit_version }}-1', 'libnvidia-container-tools={{ nvidia_container_toolkit_version }}-1', 'libnvidia-container1={{ nvidia_container_toolkit_version }}-1']
         state: present
         update_cache: true
+      retries: 5
+      delay: 5
+      register: install_nvidia_docker_ubuntu
+      until: install_nvidia_docker_ubuntu is succeeded
 
     - name: install NVIDIA container runtime and NVIDIA Docker on RHEL
       when: nvidia_docker_exists.rc >= 1 and cns_version >= 10.0 and ansible_distribution == 'RedHat'
@@ -223,6 +300,10 @@
         name: ['nvidia-container-toolkit', 'nvidia-docker2']
         state: present
         update_cache: yes
+      retries: 5
+      delay: 5
+      register: install_nvidia_docker_rhel
+      until: install_nvidia_docker_rhel is succeeded
 
     - name: Update docker default runtime
       when: nvidia_docker_exists.rc >= 1
@@ -232,6 +313,10 @@
         owner: root
         group: root
         mode: 0644
+      retries: 5
+      delay: 5
+      register: update_docker_runtime
+      until: update_docker_runtime is succeeded
 
     - name: Update Containerd Runtime for NVIDIA Cloud Native Stack
       become: true
@@ -240,21 +325,37 @@
           file:
             path: /etc/containerd
             state: directory
+          retries: 5
+          delay: 5
+          register: create_containerd_dir
+          until: create_containerd_dir is succeeded
 
         - name: Write defaults to config.toml
           copy:
             src: "{{lookup('pipe', 'pwd')}}/files/config.toml"
             dest: /etc/containerd/config.toml
             mode: 0664
+          retries: 5
+          delay: 5
+          register: write_config_toml
+          until: write_config_toml is succeeded
 
         - name: Enable systemd cgroups
           shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+          retries: 5
+          delay: 5
+          register: enable_systemd_cgroups
+          until: enable_systemd_cgroups is succeeded
 
         - name: restart containerd
           systemd_service:
             name: containerd
             state: restarted
             daemon_reload: yes
+          retries: 5
+          delay: 5
+          register: restart_containerd
+          until: restart_containerd is succeeded
       when: "container_runtime == 'containerd' and microk8s == false"
 
     - name: Create "docker" group
@@ -263,6 +364,10 @@
       group:
         name: docker
         state: present
+      retries: 5
+      delay: 5
+      register: create_docker_group
+      until: create_docker_group is succeeded
 
     - name: Add remote "ubuntu" user to "docker" group
       when: docker_exists.rc >= 1
@@ -271,12 +376,20 @@
         name: "{{ ansible_user_id }}"
         group: docker
         append: yes
+      retries: 5
+      delay: 5
+      register: add_user_to_docker_group
+      until: add_user_to_docker_group is succeeded
 
     - name: Configure CDI
       shell: nvidia-ctk runtime configure --runtime containerd --cdi.enabled --config /etc/containerd/config.toml; nvidia-ctk runtime configure --runtime docker --cdi.enabled; nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
       become: true
       when: nvidia_docker_exists.rc >= 1
       ignore_errors: true
+      retries: 5
+      delay: 5
+      register: configure_cdi
+      until: configure_cdi is succeeded
 
     - name: NGC CLI Setup
       block:
@@ -285,17 +398,29 @@
             url: https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/3.51.0/files/ngccli_linux.zip
             dest: /tmp/ngccli_linux.zip
             mode: 0664
+          retries: 5
+          delay: 5
+          register: download_ngc_cli
+          until: download_ngc_cli is succeeded
 
         - name: Install NGC CLI
           unarchive:
             src: /tmp/ngccli_linux.zip
             dest: "{{ ansible_user_dir }}"
             remote_src: yes
+          retries: 5
+          delay: 5
+          register: install_ngc_cli
+          until: install_ngc_cli is succeeded
 
         - name: change ngc file permission
           file:
             path: "{{ ansible_user_dir }}/ngc-cli/ngc"
             mode: '0777'
+          retries: 5
+          delay: 5
+          register: change_ngc_permission
+          until: change_ngc_permission is succeeded
 
         - name: Add Path to bashrc
           lineinfile:
@@ -303,3 +428,7 @@
             insertafter: '^PATH='
             line: 'PATH=$PATH:{{ ansible_user_dir }}/ngc-cli'
             state: present
+          retries: 5
+          delay: 5
+          register: add_path_to_bashrc
+          until: add_path_to_bashrc is succeeded

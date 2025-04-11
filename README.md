@@ -26,38 +26,37 @@ When NVIDIA Cloud Native Stack batch is released, the previous batch enters main
 
 |  Batch  | Status              |
 | :-----: | :--------------:|
-| [24.11.2](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.11.2)                   | Generally Available | 
-| [24.8.1](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.8.1)                   | Maintenance         |
+| [25.4.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.4.0)                   | Generally Available | 
+| [24.11.2](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.11.2)                   | Maintenance         |
 | [24.5.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.5.0) and lower                   | EOL                 |
 
+`NOTE:` CNS Version 15.0 only is Now supports Ubuntu 24.04
 
 For more information, Refer [Cloud Native Stack Releases](https://github.com/NVIDIA/cloud-native-stack/releases)
 
 ## Component Matrix
 
-#### Cloud Native Stack Batch 24.11.2 (Release Date: 14 Feb 2025)
+#### Cloud Native Stack Batch 25.4.0 (Release Date: 10 April 2025)
 
-| CNS Version               | 14.0    | 13.2 | 12.3 |
+| CNS Version               | 15.0    | 14.1 | 13.3 |
 | :-----:                   | :-----: | :------: | :------: |
 | Platforms                 | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> |
-| Supported OS              |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.10</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.10</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li><li>RHEL 8.10</li><li>DGX OS 6.2(Ubuntu 22.04 LTS)</li></ul> |
-| Containerd                | 1.7.23 | 1.7.23 | 1.7.23 |
-| NVIDIA Container Toolkit  | 1.17.4 | 1.17.4 | 1.17.4 |
-| CRI-O                     | 1.31.2 | 1.30.6 | 1.29.10 |
-| Kubernetes                | 1.31.2 | 1.30.6 | 1.29.10 |
-| CNI (Calico)              | 3.28.2 | 3.28.2 |  3.28.2 |
-| NVIDIA GPU Operator       | 24.9.2 | 24.9.2 | 24.9.2 |
-| NVIDIA Network Operator   | 24.10.1 | 24.10.1 | 24.10.1 |
-| NVIDIA Data Center Driver | 570.86.15 | 570.86.15 | 570.86.15 |
-| Helm                      | 3.16.2 | 3.16.2 | 3.16.2 |
+| Supported OS              |  <ul><li>Ubuntu 24.04 LTS</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li></ul> |
+| Containerd                | 2.0.3  | 2.0.3  | 1.7.27 |
+| NVIDIA Container Toolkit  | 1.17.5 | 1.17.5 | 1.17.5 |
+| CRI-O                     | 1.32.1 | 1.31.5 | 1.30.10 |
+| Kubernetes                | 1.32.2 | 1.31.6 | 1.30.10 |
+| CNI (Calico)              | 3.29.2 | 3.29.2 |  3.29.2 |
+| NVIDIA GPU Operator       | 25.3.0 | 25.3.0 | 25.3.0 |
+| NVIDIA Network Operator   | 25.1.0 | 25.1.0 | 25.1.0 |
+| NVIDIA Data Center Driver | 570.124.06 | 570.124.06 | 570.124.06 |
+| Helm                      | 3.17.2 | 3.17.2 | 3.17.2 |
 
 > Note: To Previous Cloud Native Stack release information can be found [here](https://github.com/NVIDIA/cloud-native-stack/tree/24.5.0?tab=readme-ov-file#nvidia-cloud-native-stack-component-matrix)
 
 `NOTE:` Cloud Native Stack versions are available with the master branch but it's recommend to use the specific branch.
 
 # Software
-
-`NOTE:` currently MicroK8s functionality is limited with GPU Operator 24.9.0 as there's known [bug](https://github.com/NVIDIA/gpu-operator/issues/1109). we expected to fix this with another release soon. 
 
 - Kubernetes
   - [GPU Operator](https://github.com/NVIDIA/gpu-operator)
@@ -72,14 +71,14 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 - [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
 - [LeaderWorkerSet(lws)](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-leaderworkerset)
 
-| CNS Version               | 14.0    | 13.2 | 12.3 |
+| CNS Version               | 15.0    | 14.1 | 13.3 |
 | :-----:                   | :-----: | :------: | :------: |
-| MicroK8s                  | 1.31    | 1.30     | 1.29 |
-| KServe                    | <br /> **0.14** <br /> <br /> <ul><li>Istio: 1.23.2</li><li>Knative: 1.15.7</li><li>CertManager: 1.16.1</li></ul> | <br /> **0.14** <br /> <br /> <ul><li>Istio: 1.23.2</li><li>Knative: 1.15.7</li><li>CertManager: 1.16.1</li></ul>  | <br /> **0.14** <br /> <br /> <ul><li>Istio: 1.23.2</li><li>Knative: 1.15.7</li><li>CertManager: 1.16.1</li></ul> | 
-| LeaderWorkerSet           | 0.4.1 | 0.4.1 | 0.4.1|
-| LoadBalancer              | MetalLB: 0.14.5 | MetalLB: 0.14.5 | MetalLB: 0.14.5 |
-| Storage                   | NFS: 4.0.18 <br /> Local Path: 0.0.30 | NFS: 4.0.18 <br /> Local Path: 0.0.30 | NFS: 4.0.18 <br /> Local Path: 0.0.30 | 
-| Monitoring                | Prometheus: 25.27.0 <br /> Prometheus Adapter: 4.11.0 <br /> Elastic: 8.15.3 | Prometheus: 25.27.0 <br /> Prometheus Adapter: 4.11.0 <br /> Elastic: 8.15.3 | Prometheus: 25.27.0 <br /> Prometheus Adapter: 4.11.0 <br /> Elastic: 8.15.3 |
+| MicroK8s                  | 1.32    | 1.31     | 1.30 |
+| KServe                    | <br /> **0.15** <br /> <br /> <ul><li>Istio: 1.23.2</li><li>Knative: 1.15.7</li><li>CertManager: 1.16.1</li></ul> | <br /> **0.15** <br /> <br /> <ul><li>Istio: 1.23.2</li><li>Knative: 1.15.7</li><li>CertManager: 1.16.1</li></ul>  | <br /> **0.15** <br /> <br /> <ul><li>Istio: 1.23.2</li><li>Knative: 1.15.7</li><li>CertManager: 1.16.1</li></ul> | 
+| LeaderWorkerSet           | 0.5.1 | 0.5.1 | 0.5.1|
+| LoadBalancer              | MetalLB: 0.14.9 | MetalLB: 0.14.9 | MetalLB: 0.14.9 |
+| Storage                   | NFS: 4.0.18 <br /> Local Path: 0.0.31 | NFS: 4.0.18 <br /> Local Path: 0.0.31 | NFS: 4.0.18 <br /> Local Path: 0.0.31 | 
+| Monitoring                | Prometheus: 70.3.0 <br /> Prometheus Adapter: 4.13.0 <br /> Elastic: 8.17.4 | Prometheus: 70.3.0 <br /> Prometheus Adapter: 4.13.0 <br /> Elastic: 8.17.4  | Prometheus: 70.3.0 <br /> Prometheus Adapter: 4.13.0 <br /> Elastic: 8.17.4  |
 
 # Getting Started
 
@@ -88,7 +87,7 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 Please make sure to meet the following prerequisites to Install the Cloud Native Stack
 
 - system has direct internet access
-- system should have an Operating system either Ubuntu 22.04 and above or RHEL 8.10
+- system should have an Operating system either Ubuntu 22.04/24.04 and above
 - system has adequate internet bandWidth
 - DNS server is working fine on the System
 - system can access Google repo(for k8s installation)

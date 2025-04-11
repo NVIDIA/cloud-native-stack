@@ -80,14 +80,13 @@ Cloud Native Stack Supports below versions.
 
 Available versions are:
 
+- 15.0 (Ubuntu 24.04)
+- 14.1
 - 14.0
+- 13.3
 - 13.2
 - 13.1
 - 13.0
-- 12.3
-- 12.2
-- 12.1
-- 12.0
 
 Edit the `cns_version.yaml` and update the version you want to install
 
@@ -99,8 +98,8 @@ If you want to cusomize any predefined components versions or any other custom p
 
 Example:
 ```
-$ nano cns_values_13.2.yaml
-cns_version: 13.2
+$ nano cns_values_14.1.yaml
+cns_version: 14.1
 
 ## MicroK8s cluster
 microk8s: no
@@ -110,34 +109,34 @@ install_k8s: yes
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "1.7.23"
-runc_version: "1.1.14"
-cni_plugins_version: "1.5.1"
+containerd_version: "2.0.3"
+runc_version: "1.2.6"
+cni_plugins_version: "1.6.2"
 containerd_max_concurrent_downloads: "5"
-nvidia_container_toolkit_version: "1.17.4"
-crio_version: "1.30.6"
-cri_dockerd_version: "0.3.15"
-k8s_version: "1.30.6"
-calico_version: "3.28.2"
+nvidia_container_toolkit_version: "1.17.5"
+crio_version: "1.31.6"
+cri_dockerd_version: "0.3.16"
+k8s_version: "1.31.6"
+calico_version: "3.29.3"
 flannel_version: "0.25.6"
-helm_version: "3.16.2"
-gpu_operator_version: "24.9.2"
-network_operator_version: "24.10.1"
-nim_operator_version: "1.0.0"
-local_path_provisioner: "0.0.30"
+helm_version: "3.17.2"
+gpu_operator_version: "25.3.0"
+network_operator_version: "25.1.0"
+nim_operator_version: "1.0.1"
+local_path_provisioner: "0.0.31"
 nfs_provisioner: "4.0.18"
-metallb_version: "0.14.8"
-kserve_version: "0.14"
-prometheus_stack: "67.5.0"
-prometheus_adapter: "4.11.0"
-grafana_operator: "v5.15.1"
-elastic_stack: "8.15.3"
-lws_version: "0.4.0"
+metallb_version: "0.14.9"
+kserve_version: "0.15"
+prometheus_stack: "70.3.0"
+prometheus_adapter: "4.13.0"
+grafana_operator: "v5.17.0"
+elastic_stack: "8.17.4"
+lws_version: "0.5.1"
 
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "570.86.15"
+gpu_driver_version: "570.124.06"
 use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
@@ -149,7 +148,7 @@ enable_secure_boot: no
 enable_vgpu: no
 vgpu_license_server: ""
 # URL of Helm repo to be added. If using NGC get this from the fetch command in the console
-helm_repository: https://helm.ngc.nvidia.com/nvidia
+helm_repository: "https://helm.ngc.nvidia.com/nvidia"
 # Name of the helm chart to be deployed
 gpu_operator_helm_chart: nvidia/gpu-operator
 ## This is most likely GPU Operator Driver Registry
@@ -167,6 +166,8 @@ ngc_registry_username: "$oauthtoken"
 enable_network_operator: no
 ## Enable RDMA yes for NVIDIA Certification
 enable_rdma: no
+## Enable for MLNX-OFED Driver Deployment
+deploy_ofed: no
 
 # Prxoy Configuration
 proxy: no
@@ -181,13 +182,13 @@ cns_nvidia_driver: no
 nvidia_driver_mig: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key"
-k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.31/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
 # Install NVIDIA NIM Operator
-enable_nim_operator: no
+enable_nim_operator: yes
 
 # LeaderWorkerSet https://github.com/kubernetes-sigs/lws/tree/main
 lws: no
@@ -203,7 +204,7 @@ kserve: no
 
 # Install MetalLB
 loadbalancer: no
-# Example input loadbalancer_ip: "10.117.20.50/32", it could be node/host IP
+# Example input loadbalancer_ip: "10.78.17.85/32"
 loadbalancer_ip: ""
 
 ## Cloud Native Stack Validation
@@ -256,7 +257,7 @@ k8s_registry: "registry.aliyuncs.com/google_containers"
 
 #### Enable Feature Gates to Cloud Native Stack
 
-`NOTE:` Below config only works with CNS version 14.0 and above which is kubernetes 1.31 and above. 
+`NOTE:` Below config only works with CNS version 15.0 and above which is kubernetes 1.32 and above. 
 
 Update the `templates/kubeadm-init-config.template` with feature gates like below and trigger the installation
 
@@ -275,7 +276,7 @@ apiServer:
   - name: "feature-gates"
     value: "DynamicResourceAllocation=true"
   - name: "runtime-config"
-    value: "resource.k8s.io/v1alpha3=true"
+    value: "resource.k8s.io/v1beta1=true"
 controllerManager:
   extraArgs:
   - name: "feature-gates"
@@ -301,15 +302,26 @@ Run the below command to verify if the features is enabled
 kubectl get --raw /metrics  | grep kubernetes_feature_enabled  | grep -i DynamicResourceAllocation
 ```
 
+If you're planning to enable DRA, then it's recommended to enable CDI with GPU Operator. Set the flag as per below
+
+Example:
+```
+$ nano cns_values_14.1.yaml
+
+cns_version: 14.1
+
+enable_cdi: yes
+```
+
 ## Enable NIM Operator
 
 If you wnt to enable NIM Operator on Cloud Native Stack, you can enable the configuration in `cns_values_xx.yaml` and trigger the installation
 
 Example:
 ```
-$ nano cns_values_13.2.yaml
+$ nano cns_values_14.1.yaml
 
-cns_version: 13.2
+cns_version: 14.1
 
 enable_nim_operator: yes
 ```
@@ -321,9 +333,9 @@ If you want to use microk8s you can enable the configuration in `cns_values_xx.y
 
 Example:
 ```
-$ nano cns_values_13.2.yaml
+$ nano cns_values_14.1.yaml
 
-cns_version: 13.2
+cns_version: 14.1
 
 microk8s: yes
 ```
@@ -334,9 +346,9 @@ If you want to use LWS you can enable the configuration in `cns_values_xx.yaml` 
 
 Example:
 ```
-$ nano cns_values_13.2.yaml
+$ nano cns_values_14.1.yaml
 
-cns_version: 13.2
+cns_version: 14.1
 
 lws: yes
 ```
@@ -350,7 +362,7 @@ If you want to use Kserve on CNS, you can enable the configuration in `cns_value
 
 Example: 
 ```
-nano cns_values_13.2.yaml
+nano cns_values_14.1.yaml
 
 # Local Path Provisioner and NFS Provisoner as Storage option
 storage: yes
@@ -801,7 +813,9 @@ Cloud Native Stack can be support life cycle management with upgrade option. you
 
 Upgrade option is available from one minor version to next minor version of CNS.
 
-Example: Cloud Native Stack 8.0 can upgrade to 8.1 but 8.x can not upgrade to 9.x
+Example: Cloud Native Stack 13.0 can upgrade to 13.1 but 13.x can not upgrade to 14.x
+
+`NOTE:` Currently there's a containerd limitation for upgrade from CNS 14.0 to CNS 14.1, please find the details [here](https://github.com/containerd/containerd/issues/11535)
 
 ### Uninstall
 

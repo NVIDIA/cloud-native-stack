@@ -107,6 +107,52 @@
       register: add_rhel_repo
       until: add_rhel_repo is succeeded
 
+
+    - name: check update GCC for build essentials
+      when: "ansible_distribution == 'Ubuntu'"
+      become: true
+      block:
+        - name: capture gcc expected version
+          shell: cat /proc/version | tr -d '(' | tr -d ')' | awk '{print $8}' | cut -d '.' -f 1
+          register: gcc_expected_version
+
+        - name: install expected gcc version
+          apt:
+            name: "gcc-{{ gcc_expected_version.stdout }}"
+            state: present
+
+        - name: install expected g++ version
+          apt:
+            name: "g++-{{ gcc_expected_version.stdout }}"
+            state: present
+
+        - name: capture gcc binary path
+          shell: "which gcc"
+          register: gcc_bin_path
+
+        - name: capture g++ binary path
+          shell: "which g++"
+          register: g_plus_plus_bin_path
+
+        - name: capture gcc expected version binary path
+          shell: "which gcc-{{ gcc_expected_version.stdout }}"
+          register: gcc_expected_version_bin_path
+
+        - name: capture g++ expected version binary path
+          shell: "which g++-{{ gcc_expected_version.stdout }}"
+          register: g_plus_plus_expected_version_bin_path
+
+        - name: setup expected gcc as primary gcc
+          community.general.alternatives:
+            name: gcc
+            link: "{{ gcc_bin_path.stdout }}"
+            path: "{{ gcc_expected_version_bin_path.stdout }}"
+            subcommands:
+            - name: g++
+              link: "{{ g_plus_plus_bin_path.stdout }}"
+              path: "{{ g_plus_plus_expected_version_bin_path.stdout }}"
+            state: auto
+
     - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack
       become: true
       when: "ansible_distribution == 'Ubuntu'"

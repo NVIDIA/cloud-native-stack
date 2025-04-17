@@ -11,3 +11,4 @@ networking:
   podSubnet: "{{ subnet }}"
 kubernetesVersion: "v{{ k8s_version }}"
 imageRepository: "{{ k8s_registry }}"
+controlPlaneEndpoint: "{{ ansible_fqdn }}"

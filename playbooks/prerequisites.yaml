@@ -107,6 +107,30 @@
       register: add_rhel_repo
       until: add_rhel_repo is succeeded
 
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack
+      become: true
+      when: "ansible_distribution == 'Ubuntu'"
+      apt:
+        name: ['build-essential', 'net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet={{ k8s_version }}-1.1', 'kubeadm={{ k8s_version }}-1.1', 'kubectl={{ k8s_version }}-1.1']
+        state: present
+        update_cache: true
+        allow_change_held_packages: yes
+        force: yes
+      retries: 5
+      delay: 5
+      register: install_k8s_ubuntu
+      until: install_k8s_ubuntu is succeeded
+
+    - name: Install kubernetes components for RedHat on NVIDIA Cloud Native Stack
+      become: true
+      when: "ansible_distribution == 'RedHat'"
+      yum:
+        name: ['net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}', 'kubeadm-{{ k8s_version }}', 'kubectl-{{ k8s_version }}']
+        state: present
+      retries: 5
+      delay: 5
+      register: install_k8s_rhel
+      until: install_k8s_rhel is succeeded
 
     - name: check update GCC for build essentials
       when: "ansible_distribution == 'Ubuntu'"
@@ -152,31 +176,6 @@
               link: "{{ g_plus_plus_bin_path.stdout }}"
               path: "{{ g_plus_plus_expected_version_bin_path.stdout }}"
             state: auto
-
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack
-      become: true
-      when: "ansible_distribution == 'Ubuntu'"
-      apt:
-        name: ['build-essential', 'net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet={{ k8s_version }}-1.1', 'kubeadm={{ k8s_version }}-1.1', 'kubectl={{ k8s_version }}-1.1']
-        state: present
-        update_cache: true
-        allow_change_held_packages: yes
-        force: yes
-      retries: 5
-      delay: 5
-      register: install_k8s_ubuntu
-      until: install_k8s_ubuntu is succeeded
-
-    - name: Install kubernetes components for RedHat on NVIDIA Cloud Native Stack
-      become: true
-      when: "ansible_distribution == 'RedHat'"
-      yum:
-        name: ['net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}', 'kubeadm-{{ k8s_version }}', 'kubectl-{{ k8s_version }}']
-        state: present
-      retries: 5
-      delay: 5
-      register: install_k8s_rhel
-      until: install_k8s_rhel is succeeded
 
     - name: Hold the installed Packages
       become: true

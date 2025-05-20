@@ -137,7 +137,7 @@
       become: true
       block:
         - name: capture gcc expected version
-          shell: cat /proc/version | tr -d '(' | tr -d ')' | awk '{print $8}' | cut -d '.' -f 1
+          shell: cat /proc/version | cut -d '(' -f 4 | cut -d ')' -f 1 | cut -d ' ' -f 2 | cut -d '.' -f 1
           register: gcc_expected_version
 
         - name: install expected gcc version

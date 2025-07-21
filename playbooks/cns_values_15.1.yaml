@@ -1,4 +1,4 @@
-cns_version: 13.0
+cns_version: 15.1
 
 ## MicroK8s cluster
 microk8s: no
@@ -8,34 +8,35 @@ install_k8s: yes
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "1.7.16"
-runc_version: "1.1.12"
-cni_plugins_version: "1.4.1"
+containerd_version: "2.1.3"
+runc_version: "1.3.0"
+cni_plugins_version: "1.7.1"
 containerd_max_concurrent_downloads: "5"
-nvidia_container_toolkit_version: "1.15.0"
-crio_version: "1.30.0"
-cri_dockerd_version: "0.3.13"
-k8s_version: "1.30.0"
-calico_version: "3.27.3"
-flannel_version: "0.25.1"
-helm_version: "3.14.4"
-gpu_operator_version: "24.6.2"
-network_operator_version: "24.1.1"
-nim_operator_version: "1.0.0"
-local_path_provisioner: "0.0.26"
+nvidia_container_toolkit_version: "1.17.8"
+crio_version: "1.32.6"
+cri_dockerd_version: "0.3.18"
+k8s_version: "1.32.6"
+calico_version: "3.30.2"
+flannel_version: "0.25.6"
+helm_version: "3.18.3"
+gpu_operator_version: "25.3.1"
+network_operator_version: "25.4.0"
+nim_operator_version: "2.0.1"
+nsight_operator_version: "1.1.2"
+local_path_provisioner: "0.0.31"
 nfs_provisioner: "4.0.18"
-metallb_version: "0.14.5"
-kserve_version: "0.13"
-prometheus_stack: "67.5.0"
-prometheus_adapter: "4.11.0"
-grafana_operator: "v5.15.1"
-elastic_stack: "8.14.1"
-lws_version: "0.4.0"
+metallb_version: "0.15.2"
+kserve_version: "0.15"
+prometheus_stack: "75.9.0"
+prometheus_adapter: "4.14.1"
+grafana_operator: "v5.18.0"
+elastic_stack: "9.0.0"
+lws_version: "0.6.2"
 
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "550.54.15"
+gpu_driver_version: "570.158.01"
 use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
@@ -48,7 +49,7 @@ enable_cdi: no
 enable_vgpu: no
 vgpu_license_server: ""
 # URL of Helm repo to be added. If using NGC get this from the fetch command in the console
-helm_repository: https://helm.ngc.nvidia.com/nvidia
+helm_repository: "https://helm.ngc.nvidia.com/nvidia"
 # Name of the helm chart to be deployed
 gpu_operator_helm_chart: nvidia/gpu-operator
 ## This is most likely GPU Operator Driver Registry
@@ -62,7 +63,7 @@ ngc_registry_email: ""
 ngc_registry_username: "$oauthtoken"
 
 # Network Operator Values
-## If the Network Operator is yes then make sure enable_rdma as well yesgit br
+## If the Network Operator is yes then make sure enable_rdma as well yes
 enable_network_operator: no
 ## Enable RDMA yes for NVIDIA Certification
 enable_rdma: no
@@ -82,10 +83,13 @@ cns_nvidia_driver: no
 nvidia_driver_mig: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key"
-k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
+
+# Enable NVIDIA NSight Operator
+enable_nsight_operator: no
 
 # Install NVIDIA NIM Operator
 enable_nim_operator: no
@@ -104,7 +108,7 @@ kserve: no
 
 # Install MetalLB
 loadbalancer: no
-# Example input loadbalancer_ip: "10.117.20.50/32", it could be node/host IP
+# Example input loadbalancer_ip: "10.78.17.85/32"
 loadbalancer_ip: ""
 
 ## Cloud Native Stack Validation

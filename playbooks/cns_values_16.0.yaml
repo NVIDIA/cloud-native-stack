@@ -1,4 +1,4 @@
-cns_version: 15.0
+cns_version: 16.0
 
 ## MicroK8s cluster
 microk8s: no
@@ -8,35 +8,35 @@ install_k8s: yes
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "2.0.3"
-runc_version: "1.2.6"
-cni_plugins_version: "1.6.2"
+containerd_version: "2.1.3"
+runc_version: "1.3.0"
+cni_plugins_version: "1.7.1"
 containerd_max_concurrent_downloads: "5"
-nvidia_container_toolkit_version: "1.17.5"
-crio_version: "1.32.1"
-cri_dockerd_version: "0.3.16"
-k8s_version: "1.32.2"
-calico_version: "3.29.3"
+nvidia_container_toolkit_version: "1.17.8"
+crio_version: "1.33.2"
+cri_dockerd_version: "0.3.18"
+k8s_version: "1.33.2"
+calico_version: "3.30.2"
 flannel_version: "0.25.6"
-helm_version: "3.17.2"
-gpu_operator_version: "25.3.0"
-network_operator_version: "25.1.0"
-nim_operator_version: "2.0.0"
-nsight_operator_version: "1.1.1"
+helm_version: "3.18.3"
+gpu_operator_version: "25.3.1"
+network_operator_version: "25.4.0"
+nim_operator_version: "2.0.1"
+nsight_operator_version: "1.1.2"
 local_path_provisioner: "0.0.31"
 nfs_provisioner: "4.0.18"
-metallb_version: "0.14.9"
+metallb_version: "0.15.2"
 kserve_version: "0.15"
-prometheus_stack: "70.3.0"
-prometheus_adapter: "4.13.0"
-grafana_operator: "v5.17.0"
-elastic_stack: "8.17.4"
-lws_version: "0.5.1"
+prometheus_stack: "75.9.0"
+prometheus_adapter: "4.14.1"
+grafana_operator: "v5.18.0"
+elastic_stack: "9.0.0"
+lws_version: "0.6.2"
 
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "570.124.06"
+gpu_driver_version: "570.158.01"
 use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
@@ -83,8 +83,8 @@ cns_nvidia_driver: no
 nvidia_driver_mig: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key"
-k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.33/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 

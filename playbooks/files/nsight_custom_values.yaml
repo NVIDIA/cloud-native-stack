@@ -1,0 +1,24 @@
+# Nsight Systems profiling configuration
+profile:
+  # The arguments for the Nsight Systems. The placeholders will be replaced with the actual values.
+  # Limit collection duration to 20 seconds
+  devtoolArgs: "profile --duration 20 --kill none -o /home/auto_{NVDT_PROCESS_NAME}_%{NVDT_POD_FULLNAME}_%{NVDT_CONTAINER_NAME}_{NVDT_TIMESTAMP}_{NVDT_UID}.nsys-rep"
+  # The regex to match applications to profile.
+  injectionIncludePatterns:
+    - ".*yourawesomeapp.*"
+#clusterWideInjectionFilter:
+#  matchConditions:
+#    - name: "is-pod"
+#      expression: "object.kind == 'Pod'"
+#  namespaceSelector:
+#    matchExpressions:
+#      - key: kubernetes.io/metadata.name
+#        operator: "NotIn"
+#        values:
+#          - kube-system
+#          - kube-node-lease
+#          - kube-public
+#      - key: nvidia-nsight-profile
+#        operator: "In"
+#        values:
+#          - enabled

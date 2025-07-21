@@ -107,13 +107,37 @@
       register: add_rhel_repo
       until: add_rhel_repo is succeeded
 
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack
+      become: true
+      when: "ansible_distribution == 'Ubuntu'"
+      apt:
+        name: ['build-essential', 'net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet={{ k8s_version }}-1.1', 'kubeadm={{ k8s_version }}-1.1', 'kubectl={{ k8s_version }}-1.1']
+        state: present
+        update_cache: true
+        allow_change_held_packages: yes
+        force: yes
+      retries: 5
+      delay: 5
+      register: install_k8s_ubuntu
+      until: install_k8s_ubuntu is succeeded
+
+    - name: Install kubernetes components for RedHat on NVIDIA Cloud Native Stack
+      become: true
+      when: "ansible_distribution == 'RedHat'"
+      yum:
+        name: ['net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}', 'kubeadm-{{ k8s_version }}', 'kubectl-{{ k8s_version }}']
+        state: present
+      retries: 5
+      delay: 5
+      register: install_k8s_rhel
+      until: install_k8s_rhel is succeeded
 
     - name: check update GCC for build essentials
       when: "ansible_distribution == 'Ubuntu'"
       become: true
       block:
         - name: capture gcc expected version
-          shell: cat /proc/version | tr -d '(' | tr -d ')' | awk '{print $8}' | cut -d '.' -f 1
+          shell: cat /proc/version | cut -d '(' -f 4 | cut -d ')' -f 1 | cut -d ' ' -f 2 | cut -d '.' -f 1
           register: gcc_expected_version
 
         - name: install expected gcc version
@@ -152,31 +176,6 @@
               link: "{{ g_plus_plus_bin_path.stdout }}"
               path: "{{ g_plus_plus_expected_version_bin_path.stdout }}"
             state: auto
-
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack
-      become: true
-      when: "ansible_distribution == 'Ubuntu'"
-      apt:
-        name: ['build-essential', 'net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet={{ k8s_version }}-1.1', 'kubeadm={{ k8s_version }}-1.1', 'kubectl={{ k8s_version }}-1.1']
-        state: present
-        update_cache: true
-        allow_change_held_packages: yes
-        force: yes
-      retries: 5
-      delay: 5
-      register: install_k8s_ubuntu
-      until: install_k8s_ubuntu is succeeded
-
-    - name: Install kubernetes components for RedHat on NVIDIA Cloud Native Stack
-      become: true
-      when: "ansible_distribution == 'RedHat'"
-      yum:
-        name: ['net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}', 'kubeadm-{{ k8s_version }}', 'kubectl-{{ k8s_version }}']
-        state: present
-      retries: 5
-      delay: 5
-      register: install_k8s_rhel
-      until: install_k8s_rhel is succeeded
 
     - name: Hold the installed Packages
       become: true
@@ -291,6 +290,9 @@
             - {name: "net.bridge.bridge-nf-call-ip6tables", value: "1", reload: no}
             - {name: "net.bridge.bridge-nf-call-iptables", value: "1", reload: no}
             - {name: "net.ipv4.ip_forward", value: "1", reload: yes}
+            - {name: "fs.inotify.max_user_watches", value: "2099999999", reload: no}
+            - {name: "fs.inotify.max_user_instances", value: "2099999999", reload: no}
+            - {name: "fs.inotify.max_queued_events", value: "2099999999", reload: yes}
           retries: 5
           delay: 5
           register: add_sysctl
@@ -520,13 +522,13 @@
           delay: 5
           register: restart_containerd
           until: restart_containerd is succeeded
-      when: "cns_version >= 4.1 and ansible_system == 'Linux' and container_runtime == 'containerd'"
+      when: "cns_version >= 4.1 and ansible_system == 'Linux' and container_runtime == 'containerd' or cns_version >= 4.1 and ansible_system == 'Linux' and container_runtime == 'cri-dockerd'"
 
     - name: Add Containerd Proxy configuration
       become: true
       block:
         - name: Get Host IP
-          shell: interface=$(ip a | grep 'state UP' |  egrep 'enp*|ens*|eno*|enc*|eth*|bond*|wlan*' | awk '{print $2}' | sed 's/://g'); for i in $interface; do ifconfig $i | grep -iw inet | awk '{print $2}'; done
+          shell: ip route get 1 | awk '{print $7; exit}' | tr -d '\n'
           register: network
           retries: 5
           delay: 5
@@ -577,7 +579,7 @@
       when: "proxy == true and cns_version >= 6.1 and container_runtime == 'containerd'"
 
     - name: Install CRI-O on Ubuntu
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and cns_version >= 12.0"
+      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu'"
       become: true
       block:
         - name: trim CRI-O version
@@ -597,8 +599,8 @@
 
         - name: Adding CRI-O apt key
           apt_key:
-            url: "https://pkgs.k8s.io/addons:/cri-o:/stable:/v{{ version }}/deb/Release.key"
-            keyring: "/etc/apt/keyrings/cri-o-apt-keyring.gpg"
+            url: "https://download.opensuse.org/repositories/isv:/cri-o:/stable:/v{{ version }}/deb/Release.key"
+            keyring: /etc/apt/keyrings/cri-o-apt-keyring.gpg
             state: present
           retries: 5
           delay: 5
@@ -616,21 +618,21 @@
 
         - name: Add CRIO repository
           apt_repository:
-            repo: "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/stable:/v{{ version }}/deb/ /"
+            repo: "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://download.opensuse.org/repositories/isv:/cri-o:/stable:/v{{ version }}/deb/ /"
             state: present
-            filename: cri-o.list
+            filename: cri-o
           retries: 5
           delay: 5
           register: add_crio_repo
           until: add_crio_repo is succeeded
 
     - name: Install CRI-O on Ubuntu
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and cns_version >= 12.0"
+      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu'"
       become: true
       block:
         - name: install CRI-O
           apt:
-            name: ['cri-o']
+            name: ['cri-o={{ crio_version }}*']
             state: present
             update_cache: true
             force: yes
@@ -660,173 +662,8 @@
           register: update_crio_conf
           until: update_crio_conf is succeeded
 
-    - name: Install CRI-O on Ubuntu 22.04
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '22' and cns_version < 12.0"
-      become: true
-      block:
-        - name: trim CRI-O version
-          shell: echo {{ crio_version }} | awk -F'.' '{print $1"."$2}'
-          register: cri_version
-          retries: 5
-          delay: 5
-          until: cri_version is succeeded
-
-        - name: set version
-          set_fact:
-            version: "{{ cri_version.stdout }}"
-          retries: 5
-          delay: 5
-          register: set_cri_version_22
-          until: set_cri_version_22 is succeeded
-
-        - name: Adding CRI-O apt key
-          apt_key:
-            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_22.04/Release.key"
-            keyring: /etc/apt/keyrings/libcontainers-archive-keyring.gpg
-            state: present
-          retries: 5
-          delay: 5
-          register: add_crio_key_22
-          until: add_crio_key_22 is succeeded
-
-        - name: Adding CRI-O apt key
-          apt_key:
-            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/x{{ ansible_distribution }}_22.04/Release.key"
-            keyring: /etc/apt/keyrings/libcontainers-crio-archive-keyring.gpg
-            state: present
-          retries: 5
-          delay: 5
-          register: add_crio_key_22_2
-          until: add_crio_key_22_2 is succeeded
-
-        - name: copy the apt keys
-          shell: "{{ item }}"
-          with_items:
-            - cp /etc/apt/trusted.gpg /etc/apt/trusted.gpg.d
-          retries: 5
-          delay: 5
-          register: copy_apt_keys_22
-          until: copy_apt_keys_22 is succeeded
-
-        - name: Add CRIO repository
-          apt_repository:
-            repo: "deb  [signed-by=/etc/apt/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_22.04 /"
-            state: present
-            filename: devel:kubic:libcontainers:stable
-          retries: 5
-          delay: 5
-          register: add_crio_repo_22
-          until: add_crio_repo_22 is succeeded
-
-        - name: Add CRIO repository
-          apt_repository:
-            repo: "deb [signed-by=/etc/apt/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/x{{ ansible_distribution }}_22.04 /"
-            state: present
-            filename: devel:kubic:libcontainers:stable:cri-o:{{ k8s_version }}
-          retries: 5
-          delay: 5
-          register: add_crio_repo_22_2
-          until: add_crio_repo_22_2 is succeeded
-
-    - name: Install CRI-O on Ubuntu 20.04
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version <= '20' and cns_version < 12.0"
-      become: true
-      block:
-        - name: trim CRI-O version
-          shell: echo {{ crio_version }} | awk -F'.' '{print $1"."$2}'
-          register: cri_version
-          retries: 5
-          delay: 5
-          until: cri_version is succeeded
-
-        - name: set version
-          set_fact:
-            version: "{{ cri_version.stdout }}"
-          retries: 5
-          delay: 5
-          register: set_cri_version_20
-          until: set_cri_version_20 is succeeded
-
-        - name: Adding CRI-O apt key
-          apt_key:
-            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_20.04/Release.key"
-            state: present
-          retries: 5
-          delay: 5
-          register: add_crio_key_20
-          until: add_crio_key_20 is succeeded
-
-        - name: Adding CRI-O apt key
-          apt_key:
-            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/x{{ ansible_distribution }}_20.04/Release.key"
-            state: present
-          retries: 5
-          delay: 5
-          register: add_crio_key_20_2
-          until: add_crio_key_20_2 is succeeded
-
-        - name: copy the apt keys
-          shell: "{{ item }}"
-          with_items:
-            - cp /etc/apt/trusted.gpg /etc/apt/trusted.gpg.d
-          retries: 5
-          delay: 5
-          register: copy_apt_keys_20
-          until: copy_apt_keys_20 is succeeded
-
-        - name: Add CRIO repository
-          apt_repository:
-            repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_20.04 /"
-            state: present
-            filename: devel:kubic:libcontainers:stable
-          retries: 5
-          delay: 5
-          register: add_crio_repo_20
-          until: add_crio_repo_20 is succeeded
-
-        - name: Add CRIO repository
-          apt_repository:
-            repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/x{{ ansible_distribution }}_20.04 /"
-            state: present
-            filename: devel:kubic:libcontainers:stable:cri-o:{{ k8s_version }}
-          retries: 5
-          delay: 5
-          register: add_crio_repo_20_2
-          until: add_crio_repo_20_2 is succeeded
-
-    - name: Install CRI-O on Ubuntu
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and cns_version < 10.0 "
-      become: true
-      block:
-        - name: Setup CRI-O for Ubuntu
-          become: true
-          lineinfile:
-            line: KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:///var/run/crio/crio.sock"
-            path: /etc/default/kubelet
-            create: yes
-          retries: 5
-          delay: 5
-          register: setup_crio_ubuntu
-          until: setup_crio_ubuntu is succeeded
-
-    - name: Install CRI-O on Ubuntu
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and cns_version < 12.0"
-      become: true
-      block:
-        - name: install CRI-O
-          apt:
-            name: ['cri-o', 'cri-o-runc']
-            state: present
-            update_cache: true
-            allow_change_held_packages: yes
-            force: yes
-          retries: 5
-          delay: 5
-          register: install_crio_ubuntu
-          until: install_crio_ubuntu is succeeded
-
     - name: Install CRI-O on RHEL
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'RedHat' and cns_version < 12.0"
+      when: "container_runtime == 'cri-o' and ansible_distribution == 'RedHat'"
       become: true
       block:
         - name: trim CRI-O version
@@ -846,10 +683,10 @@
 
         - name: Add CRIO repository
           yum_repository:
-            name: devel:kubic:libcontainers:stable:cri-o:{{ version }}
-            baseurl: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/CentOS_8/
+            name: cri-o
+            baseurl: https://download.opensuse.org/repositories/isv:/cri-o:/stable:/v{{ version }}/rpm/
             gpgcheck: 1
-            gpgkey: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/CentOS_8/repodata/repomd.xml.key
+            gpgkey: https://download.opensuse.org/repositories/isv:/cri-o:/stable:/v{{ version }}/rpm/repodata/repomd.xml.key
             enabled: 1
             description: CRIO Repo
           retries: 5
@@ -857,23 +694,9 @@
           register: add_crio_repo_rhel
           until: add_crio_repo_rhel is succeeded
 
-        - name: Add CRIO repository
-          yum_repository:
-            baseurl: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8/
-            gpgcheck: 1
-            gpgkey: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8/repodata/repomd.xml.key
-            enabled: 1
-            name: devel:kubic:libcontainers:stable
-            description: CRIO Repo
-          retries: 5
-          delay: 5
-          register: add_crio_repo_rhel_2
-          until: add_crio_repo_rhel_2 is succeeded
-
         - name: install CRI-O
-          when: cns_version < 12.0
           yum:
-            name: ['cri-o', 'cri-tools']
+            name: ['container-selinux', 'cri-o', 'cri-tools']
             state: present
           retries: 5
           delay: 5
@@ -881,7 +704,7 @@
           until: install_crio_rhel is succeeded
 
     - name: Install CRI-O
-      when: "container_runtime == 'cri-o' and cns_version < 12.0"
+      when: "container_runtime == 'cri-o'"
       become: true
       block:
         - name: Create overlay-images directory
@@ -912,69 +735,6 @@
           delay: 5
           register: update_crio_conf_2
           until: update_crio_conf_2 is succeeded
-
-    - name: Install CRI-O on RHEL
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'RedHat' and cns_version >= 12.0"
-      become: true
-      block:
-        - name: trim CRI-O version
-          shell: echo {{ crio_version }} | awk -F'.' '{print $1"."$2}'
-          register: cri_version
-          retries: 5
-          delay: 5
-          until: cri_version is succeeded
-
-        - name: set version
-          set_fact:
-            version: "{{ cri_version.stdout }}"
-          retries: 5
-          delay: 5
-          register: set_cri_version_rhel_12
-          until: set_cri_version_rhel_12 is succeeded
-
-        - name: Add CRIO repository
-          yum_repository:
-            name: cri-o
-            baseurl: https://pkgs.k8s.io/addons:/cri-o:/stable:/v{{ version }}/rpm/
-            gpgcheck: 1
-            gpgkey: https://pkgs.k8s.io/addons:/cri-o:/stable:/v{{ version }}/rpm/repodata/repomd.xml.key
-            enabled: 1
-            description: CRIO Repo
-          retries: 5
-          delay: 5
-          register: add_crio_repo_rhel_12
-          until: add_crio_repo_rhel_12 is succeeded
-
-        - name: install CRI-O
-          when: cns_version >= 12.0
-          yum:
-            name: ['container-selinux', 'cri-o']
-            state: present
-          retries: 5
-          delay: 5
-          register: install_crio_rhel_12
-          until: install_crio_rhel_12 is succeeded
-
-        - name: Create overlay-images directory
-          file:
-            path: /var/lib/containers/storage/overlay-images
-            state: directory
-          retries: 5
-          delay: 5
-          register: create_overlay_dir_rhel_12
-          until: create_overlay_dir_rhel_12 is succeeded
-
-        - name: Update crio.conf
-          blockinfile:
-            path: /etc/crio/crio.conf.d/10-crio.conf
-            block: |
-              hooks_dir = [
-                    "/usr/share/containers/oci/hooks.d",
-              ]
-          retries: 5
-          delay: 5
-          register: update_crio_conf_rhel_12
-          until: update_crio_conf_rhel_12 is succeeded
 
     - name: Create OCI directory
       when: cns_docker == true and container_runtime == 'cri-o'
@@ -1155,7 +915,7 @@
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       package:
-        name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin'] 
         state: latest
       register: docker_status
       retries: 5
@@ -1166,7 +926,7 @@
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'RedHat'
       yum:
-        name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
         state: latest
         allowerasing: true
       register: docker_status_rhel
@@ -1183,343 +943,6 @@
       delay: 5
       register: update_docker_service
       until: update_docker_service is succeeded
-
-## For Jetson Only
-    - name: get current JetPack version
-      shell: cat /etc/nv_tegra_release | awk '{print $5}' | sed 's/,//g'
-      when: release == 'tegra'
-      register: jversion
-      retries: 5
-      delay: 5
-      until: jversion is succeeded
-
-    - name: get Current Tegra release
-      shell: "cat /etc/apt/sources.list.d/nvidia-l4t-apt-source.list | awk '{print $3}' | tail -1f"
-      register: tver
-      retries: 5
-      delay: 5
-      until: tver is succeeded
-
-    - name: Installing Latest Nvidia Jetson JetPack
-      become: true
-      block:
-        - name: update Tegra Release to r35.4
-          shell: sed -i "s/{{ tver.stdout }}/r35.4/g" /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
-          become: true
-          retries: 5
-          delay: 5
-          register: update_tegra_release
-          until: update_tegra_release is succeeded
-          
-        - name: Install New Jetapck 5.1.2
-          ignore_errors: yes
-          apt:
-            name: nvidia-jetpack
-            state: present
-            force: yes
-            autoremove: yes
-            update_cache: yes
-          retries: 5
-          delay: 5
-          register: install_jetpack
-          until: install_jetpack is succeeded
-      when: "release == 'tegra' and cns_version == 10.2 or release == 'tegra' and cns_version == 9.3 or release == 'tegra' and cns_version == 8.5"
-
-    - name: Installing Latest Nvidia Jetson JetPack
-      become: true
-      block:
-        - name: get Current Tegra release
-          shell: "cat /etc/apt/sources.list.d/nvidia-l4t-apt-source.list | awk '{print $3}' | tail -1f"
-          register: tver
-          retries: 5
-          delay: 5
-          until: tver is succeeded
-
-        - name: update Tegra Release to r35.3
-          shell: sed -i "s/{{ tver.stdout }}/r35.3/g" /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
-          become: true
-          retries: 5
-          delay: 5
-          register: update_tegra_release_35_3
-          until: update_tegra_release_35_3 is succeeded
-
-        - name: Install New Jetapck 5.1.1
-          ignore_errors: yes
-          apt:
-            name: nvidia-jetpack
-            state: present
-            force: yes
-            autoremove: yes
-            update_cache: yes
-          retries: 5
-          delay: 5
-          register: install_jetpack_35_3
-          until: install_jetpack_35_3 is succeeded
-      when: "release == 'tegra' and cns_version <= 10.1 and jversion.stdout < '3.1' or release == 'tegra' and cns_version <= 9.2 and jversion.stdout < '3.1' or release == 'tegra' and cns_version <= 8.4 and jversion.stdout < '3.1'"
-
-    - name: Configure Containerd for NVIDIA Cloud Native Stack
-      become: true
-      block:
-        - name: Create /etc/containerd
-          file:
-            path: /etc/containerd
-            state: directory
-          retries: 5
-          delay: 5
-          register: create_containerd_dir_2
-          until: create_containerd_dir_2 is succeeded
-            
-        - name: Write defaults to config.toml
-          copy:
-            src: "{{lookup('pipe', 'pwd')}}/files/config.toml"
-            dest: /etc/containerd/config.toml
-            mode: 0664
-          retries: 5
-          delay: 5
-          register: write_config_toml
-          until: write_config_toml is succeeded
-
-        - name: Enable systemd cgroups
-          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
-          retries: 5
-          delay: 5
-          register: enable_systemd_cgroups_2
-          until: enable_systemd_cgroups_2 is succeeded
-
-        - name: restart containerd
-          systemd_service:
-            name: containerd
-            state: restarted
-            daemon_reload: yes
-          retries: 5
-          delay: 5
-          register: restart_containerd_2
-          until: restart_containerd_2 is succeeded
-      when: "cns_version >= 5.0 and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18' and 'running' not in k8sup.stdout and release == 'tegra' and container_runtime == 'containerd'"
-
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 7.4 or 8.3 or 9.1 or 10.0
-      become: true
-      block:
-        - name: Add NVIDIA Docker apt signing key for Ubuntu
-          apt_key:
-            url: https://nvidia.github.io/libnvidia-container/gpgkey
-            state: present
-          retries: 5
-          delay: 5
-          register: add_nvidia_key
-          until: add_nvidia_key is succeeded
-
-        - name: Get NVIDIA Docker Apt list
-          get_url:
-            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
-            dest: /etc/apt/sources.list.d/libnvidia-container.list
-            mode: 0644
-          retries: 5
-          delay: 5
-          register: get_nvidia_apt_list
-          until: get_nvidia_apt_list is succeeded
-
-        - name: Remove old nvidia container tooklit
-          apt:
-            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
-            state: absent
-            autoremove: yes
-          retries: 5
-          delay: 5
-          register: remove_old_nvidia
-          until: remove_old_nvidia is succeeded
-
-        - name: Install NVIDIA Container Runtime
-          apt:
-            name: ['nvidia-docker2=2.13.0-1', 'nvidia-container-toolkit=1.13.1-1', 'nvidia-container-toolkit-base=1.13.1-1', 'libnvidia-container-tools=1.13.1-1', 'libnvidia-container1=1.13.1-1']
-            state: present
-            update_cache: yes
-            force: yes
-          retries: 5
-          delay: 5
-          register: install_nvidia_runtime
-          until: install_nvidia_runtime is succeeded
-      when: "cns_version == 7.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 8.3 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 9.1 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 10.0 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
-
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 7.5 or 8.4 or 9.2 or 10.1
-      become: true
-      block:
-        - name: Add NVIDIA Docker apt signing key for Ubuntu
-          apt_key:
-            url: https://nvidia.github.io/libnvidia-container/gpgkey
-            state: present
-          retries: 5
-          delay: 5
-          register: add_nvidia_key_2
-          until: add_nvidia_key_2 is succeeded
-
-        - name: Get NVIDIA Docker Apt list
-          get_url:
-            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
-            dest: /etc/apt/sources.list.d/libnvidia-container.list
-            mode: 0644
-          retries: 5
-          delay: 5
-          register: get_nvidia_apt_list_2
-          until: get_nvidia_apt_list_2 is succeeded
-
-        - name: Remove old nvidia container tooklit
-          apt:
-            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
-            state: absent
-            autoremove: yes
-          retries: 5
-          delay: 5
-          register: remove_old_nvidia_2
-          until: remove_old_nvidia_2 is succeeded
-
-        - name: Install NVIDIA Container Runtime
-          apt:
-            name: ['nvidia-docker2=2.13.0-1', 'nvidia-container-toolkit=1.13.2-1', 'nvidia-container-toolkit-base=1.13.2-1', 'libnvidia-container-tools=1.13.2-1', 'libnvidia-container1=1.13.2-1']
-            state: present
-            update_cache: yes
-            force: yes
-          retries: 5
-          delay: 5
-          register: install_nvidia_runtime_2
-          until: install_nvidia_runtime_2 is succeeded
-      when: "cns_version == 7.5 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 8.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 9.2 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 10.1 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
-
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 8.5 or 9.3 or 10.2
-      become: true
-      block:
-        - name: Add NVIDIA Docker apt signing key for Ubuntu
-          apt_key:
-            url: https://nvidia.github.io/libnvidia-container/gpgkey
-            state: present
-          retries: 5
-          delay: 5
-          register: add_nvidia_key_3
-          until: add_nvidia_key_3 is succeeded
-
-        - name: Get NVIDIA Docker Apt list
-          get_url:
-            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
-            dest: /etc/apt/sources.list.d/libnvidia-container.list
-            mode: 0644
-          retries: 5
-          delay: 5
-          register: get_nvidia_apt_list_3
-          until: get_nvidia_apt_list_3 is succeeded
-
-        - name: Remove old nvidia container tooklit
-          apt:
-            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
-            state: absent
-            autoremove: yes
-          retries: 5
-          delay: 5
-          register: remove_old_nvidia_3
-          until: remove_old_nvidia_3 is succeeded
-
-        - name: Install NVIDIA Container Runtime
-          apt:
-            name: ['nvidia-docker2=2.13.0-1', 'nvidia-container-toolkit=1.13.5-1', 'nvidia-container-toolkit-base=1.13.5-1', 'libnvidia-container-tools=1.13.5-1', 'libnvidia-container1=1.13.5-1']
-            state: present
-            update_cache: yes
-            force: yes
-          retries: 5
-          delay: 5
-          register: install_nvidia_runtime_3
-          until: install_nvidia_runtime_3 is succeeded
-      when: "cns_version == 8.5 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 9.3 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 10.2 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
-
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 9.4 or 10.3 or 11.0
-      become: true
-      block:
-        - name: Add NVIDIA Docker apt signing key for Ubuntu
-          apt_key:
-            url: https://nvidia.github.io/libnvidia-container/gpgkey
-            state: present
-          retries: 5
-          delay: 5
-          register: add_nvidia_key_4
-          until: add_nvidia_key_4 is succeeded
-
-        - name: Get NVIDIA Docker Apt list
-          get_url:
-            url: https://nvidia.github.io/libnvidia-container/ubuntu22.04/libnvidia-container.list
-            dest: /etc/apt/sources.list.d/libnvidia-container.list
-            mode: 0644
-          retries: 5
-          delay: 5
-          register: get_nvidia_apt_list_4
-          until: get_nvidia_apt_list_4 is succeeded
-
-        - name: Remove old nvidia container tooklit
-          apt:
-            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
-            state: absent
-            autoremove: yes
-          retries: 5
-          delay: 5
-          register: remove_old_nvidia_4
-          until: remove_old_nvidia_4 is succeeded
-
-        - name: Install NVIDIA Container Runtime
-          apt:
-            name: ['nvidia-docker2=2.14.0-1', 'nvidia-container-toolkit=1.14.3-1', 'nvidia-container-toolkit-base=1.14.3-1', 'libnvidia-container-tools=1.14.3-1', 'libnvidia-container1=1.14.3-1']
-            state: present
-            update_cache: yes
-            force: yes
-          retries: 5
-          delay: 5
-          register: install_nvidia_runtime_4
-          until: install_nvidia_runtime_4 is succeeded
-      when: "cns_version == 9.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 10.3 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 11.0 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
-
-    - name: Installing Latest Nvidia Container Runtime on Cloud Native Stack 10.4 or 11.1 or 12.0
-      become: true
-      block:
-        - name: Add NVIDIA Docker apt signing key for Ubuntu
-          apt_key:
-            url: https://nvidia.github.io/libnvidia-container/gpgkey
-            keyring: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-            state: present
-          retries: 5
-          delay: 5
-          register: add_nvidia_key_5
-          until: add_nvidia_key_5 is succeeded
-
-        - name: Get NVIDIA Container Toolkit Apt list
-          apt_repository:
-            repo: "{{ item }}"
-            state: present
-            filename: libnvidia-container.list
-          with_items:
-            - deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/ubuntu18.04/$(ARCH) /
-            - deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH) /
-          retries: 5
-          delay: 5
-          register: get_nvidia_apt_list_5
-          until: get_nvidia_apt_list_5 is succeeded
-
-        - name: Remove old nvidia container tooklit
-          apt:
-            name: ['nvidia-container-toolkit=*', 'nvidia-container-runtime*']
-            state: absent
-            autoremove: yes
-          retries: 5
-          delay: 5
-          register: remove_old_nvidia_5
-          until: remove_old_nvidia_5 is succeeded
-
-        - name: Install NVIDIA Container Runtime
-          apt:
-            name: ['nvidia-docker2=2.14.0-1', 'nvidia-container-toolkit=1.14.6-1', 'nvidia-container-toolkit-base=1.14.6-1', 'libnvidia-container-tools=1.14.6-1', 'libnvidia-container1=1.14.6-1']
-            state: present
-            update_cache: yes
-            force: yes
-          retries: 5
-          delay: 5
-          register: install_nvidia_runtime_5
-          until: install_nvidia_runtime_5 is succeeded
-      when: "cns_version == 10.4 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 11.1 and ansible_distribution == 'Ubuntu' and release == 'tegra' or cns_version == 12.0 and ansible_distribution == 'Ubuntu' and release == 'tegra'"
 
     - name: Starting and enabling the required services
       become: true

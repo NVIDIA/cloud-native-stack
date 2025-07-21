@@ -13,9 +13,9 @@ spec:
     livenessProbe:
       initialDelaySeconds: 30
       periodSeconds: 30
-    env:
-      - name: UNLOAD_STORAGE_MODULES
-        value: 'true'
+#    env:
+#      - name: UNLOAD_STORAGE_MODULES
+#        value: 'true'
     upgradePolicy:
       autoUpgrade: true
       drain:
@@ -33,12 +33,12 @@ spec:
       periodSeconds: 20
     image: doca-driver
     repository: nvcr.io/nvidia/mellanox
-    version: 25.01-0.6.0.0-0
+    version: 25.04-0.6.1.0-2
 {% endif %}
   rdmaSharedDevicePlugin:
     image: k8s-rdma-shared-dev-plugin
     repository: ghcr.io/mellanox
-    version: v1.5.2
+    version: v1.5.3
     # The config below directly propagates to k8s-rdma-shared-device-plugin configuration.
     # Replace 'devices' with your (RDMA capable) netdevice name.
     config: |
@@ -49,7 +49,7 @@ spec:
             "rdmaHcaMax": 63,
             "selectors": {
               "vendors": ["15b3"],
-              "ifNames": ["ens2f0"]
+              "deviceIDs": ["101b"]
             }
           }
         ]
@@ -58,7 +58,7 @@ spec:
     cniPlugins:
       image: plugins
       repository: ghcr.io/k8snetworkplumbingwg
-      version: v1.5.0
+      version: v1.6.2-update.1
       imagePullSecrets: []
     multus:
       image: multus-cni

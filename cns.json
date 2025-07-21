@@ -1,26 +1,64 @@
 {
 	"name": "Cloud Native Stack",
 	"latest": {
-		"version": "15.0",
-		"release_date": "10 April 2025",
+		"version": "16.0",
+		"release_date": "21 July 2025",
 		"platforms": [{
 				"name": "NVIDIA Certified Server",
 				"CPU architecture": "x86, Arm64",
 				"os": "Ubuntu 24.04 LTS",
 				"components": {
-					"containerd": "2.0.3",
-					"cri-o": "1.33.1",
+					"containerd": "2.1.3",
+					"cri-o": "1.33.2",
 					"k8s version": "1.33.2",
-					"Calico": "v3.29.2",
-					"helm version": "3.17.2",
-					"NVIDIA GPU Operator": "25.3.0",
-					"NVIDIA Network Operator": "25.1.0",
-					"NVIDIA DataCenter Driver": "570.124.06"
+					"Calico": "v3.30.2",
+					"helm version": "3.18.3",
+					"NVIDIA GPU Operator": "25.3.1",
+					"NVIDIA Network Operator": "25.4.0",
+					"NVIDIA DataCenter Driver": "570.158.01"
 				}
 			}
 		]
 	},
 	"versions": [{
+		"16.0": {
+			"release_date": "21 July 2025",
+			"platforms": [{
+					"name": "NVIDIA Certified Server",
+					"CPU architecture": "x86, Arm64",
+					"os": "Ubuntu 24.04 LTS",
+					"components": {
+						"containerd": "2.1.3",
+						"cri-o": "1.33.2",
+						"k8s version": "1.33.2",
+						"Calico": "v3.30.2",
+						"helm version": "3.18.3",
+						"NVIDIA GPU Operator": "25.3.1",
+						"NVIDIA Network Operator": "25.4.0",
+						"NVIDIA DataCenter Driver": "570.158.01"
+					}
+				}
+			]
+		},
+		"15.1": {
+			"release_date": "21 July 2025",
+			"platforms": [{
+					"name": "NVIDIA Certified Server",
+					"CPU architecture": "x86, Arm64",
+					"os": "Ubuntu 24.04 LTS",
+					"components": {
+						"containerd": "2.1.3",
+						"cri-o": "1.32.6",
+						"k8s version": "1.32.6",
+						"Calico": "v3.30.2",
+						"helm version": "3.18.3",
+						"NVIDIA GPU Operator": "25.3.1",
+						"NVIDIA Network Operator": "25.4.0",
+						"NVIDIA DataCenter Driver": "570.158.01"
+					}
+				}
+			]
+		},
 		"15.0": {
 			"release_date": "10 April 2025",
 			"platforms": [{
@@ -36,6 +74,25 @@
 						"NVIDIA GPU Operator": "25.3.0",
 						"NVIDIA Network Operator": "25.1.0",
 						"NVIDIA DataCenter Driver": "570.124.06"
+					}
+				}
+			]
+		},
+		"14.2": {
+			"release_date": "21 July 2025",
+			"platforms": [{
+					"name": "NVIDIA Certified Server",
+					"CPU architecture": "x86, Arm64",
+					"os": "Ubuntu 22.04 LTS",
+					"components": {
+						"containerd": "2.1.3",
+						"cri-o": "1.31.10",
+						"k8s version": "1.31.10",
+						"Calico": "v3.30.2",
+						"helm version": "3.18.3",
+						"NVIDIA GPU Operator": "25.3.1",
+						"NVIDIA Network Operator": "25.4.0",
+						"NVIDIA DataCenter Driver": "570.158.01"
 					}
 				}
 			]

@@ -212,7 +212,7 @@
      until: install_network_operator is succeeded
 
    - name: Installing the Network Operator on NVIDIA Cloud Native Stack
-     when: "enable_network_operator == true and ansible_architecture == 'x86_64' and  network_operator_version < '24.10.1'"
+     when: "enable_network_operator == true and  network_operator_version < '24.10.1'"
      shell: "helm install --version {{ network_operator_version }} -f {{ ansible_user_dir }}/network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator"
      retries: 5
      delay: 5
@@ -220,7 +220,7 @@
      until: install_network_operator_x86 is succeeded
 
    - name: Installing the Network Operator on NVIDIA Cloud Native Stack
-     when: "enable_network_operator == true and ansible_architecture == 'x86_64' and  network_operator_version >= '24.10.1'"
+     when: "enable_network_operator == true and  network_operator_version >= '24.10.1'"
      shell: "helm install --version {{ network_operator_version }} -f {{ ansible_user_dir }}/network-operator-value.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator"
      retries: 5
      delay: 5
@@ -282,6 +282,13 @@
      delay: 5
      register: get_gpu_operator_values
      until: get_gpu_operator_values is succeeded
+
+   - name: Get Host IP
+     shell: ip route get 1 | awk '{print $7; exit}' | tr -d '\n'
+     register: network
+     retries: 5
+     delay: 5
+     until: network is succeeded
 
    - name: create GPU Custom Values for proxy
      when: proxy == true
@@ -393,7 +400,7 @@
      until: install_gpu_operator_docker_host_driver is succeeded
 
    - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
-     when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_cdi == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
+     when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and cns_docker == false and cns_nvidia_driver == false and enable_cdi == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
      retries: 5
      delay: 5
@@ -575,3 +582,21 @@
      delay: 5
      register: install_nim_operator
      until: install_nim_operator is succeeded
+
+   - name: Create NSight Operator custom values
+     when: "enable_nsight_operator == true"
+     copy:
+       src: "{{lookup('pipe', 'pwd')}}/files/nsight_custom_values.yaml"
+       dest: "{{ ansible_user_dir }}/nsight_custom_values.yaml"
+     retries: 5
+     delay: 5
+     register: create_nsight_custom_values
+     until: create_nsight_custom_values is succeeded
+
+   - name: Install NSight Operator
+     shell: "helm install -f {{ ansible_user_dir }}/nsight_custom_values.yaml nsight-operator --create-namespace --namespace nsight-operator https://helm.ngc.nvidia.com/nvidia/devtools/charts/nsight-operator-{{ nsight_operator_version }}.tgz"
+     when: "enable_nsight_operator == true"
+     retries: 5
+     delay: 5
+     register: install_nsight_operator
+     until: install_nsight_operator is succeeded

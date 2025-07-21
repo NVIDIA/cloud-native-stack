@@ -83,7 +83,8 @@ Available versions are:
 - 16.0 (Ubuntu 24.04)
 - 15.1 (Ubuntu 24.04)
 - 15.0 (Ubuntu 24.04)
-- 15.1
+- 14.2
+- 14.1
 - 14.0
 
 Edit the `cns_version.yaml` and update the version you want to install

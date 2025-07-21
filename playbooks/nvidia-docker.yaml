@@ -180,7 +180,7 @@
     - name: Install Docker on Ubuntu
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and microk8s == false
       package:
-        name: ['docker-ce', 'docker-ce-cli', 'containerd.io', 'docker-buildx-plugin', 'docker-compose-plugin']
+        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
         state: latest
       retries: 5
       delay: 5
@@ -200,7 +200,7 @@
     - name: Install Docker on RHEL
       when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
       yum:
-        name: ['docker-ce', 'docker-ce-cli', 'containerd.io', 'docker-buildx-plugin', 'docker-compose-plugin']
+        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
         state: latest
         allowerasing: true
         update_cache: true
@@ -318,46 +318,6 @@
       register: update_docker_runtime
       until: update_docker_runtime is succeeded
 
-    - name: Update Containerd Runtime for NVIDIA Cloud Native Stack
-      become: true
-      block:
-        - name: Create /etc/containerd
-          file:
-            path: /etc/containerd
-            state: directory
-          retries: 5
-          delay: 5
-          register: create_containerd_dir
-          until: create_containerd_dir is succeeded
-
-        - name: Write defaults to config.toml
-          copy:
-            src: "{{lookup('pipe', 'pwd')}}/files/config.toml"
-            dest: /etc/containerd/config.toml
-            mode: 0664
-          retries: 5
-          delay: 5
-          register: write_config_toml
-          until: write_config_toml is succeeded
-
-        - name: Enable systemd cgroups
-          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
-          retries: 5
-          delay: 5
-          register: enable_systemd_cgroups
-          until: enable_systemd_cgroups is succeeded
-
-        - name: restart containerd
-          systemd_service:
-            name: containerd
-            state: restarted
-            daemon_reload: yes
-          retries: 5
-          delay: 5
-          register: restart_containerd
-          until: restart_containerd is succeeded
-      when: "container_runtime == 'containerd' and microk8s == false"
-
     - name: Create "docker" group
       when: docker_exists.rc >= 1
       become: true
@@ -382,7 +342,7 @@
       until: add_user_to_docker_group is succeeded
 
     - name: Configure CDI
-      shell: nvidia-ctk runtime configure --runtime containerd --cdi.enabled --config /etc/containerd/config.toml; nvidia-ctk runtime configure --runtime docker --cdi.enabled; nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+      shell: nvidia-ctk runtime configure --runtime containerd --nvidia-set-as-default --cdi.enabled --config /etc/containerd/config.toml; nvidia-ctk runtime configure --runtime docker --cdi.enabled --nvidia-set-as-default; nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
       become: true
       when: nvidia_docker_exists.rc >= 1
       ignore_errors: true

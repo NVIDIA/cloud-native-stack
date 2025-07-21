@@ -141,6 +141,22 @@
      failed_when: false
      ignore_errors: true
 
+   - name: Apply Nginx IngressClass Name for Kserve
+     when: kserve == true
+     shell: |
+       kubectl apply -f - <<EOF
+       apiVersion: networking.k8s.io/v1
+       kind: IngressClass
+       metadata:
+         name: nginx
+       spec:
+         controller: istio.io/ingress-controller
+       EOF
+     retries: 5
+     delay: 5
+     register: apply_ingress_config
+     until: apply_ingress_config is succeeded
+
    - name: Install MetalLB
      shell: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v{{ metallb_version }}/config/manifests/metallb-native.yaml; sleep 45"
      when: loadbalancer == true
@@ -148,6 +164,17 @@
      delay: 5
      register: install_metallb
      until: install_metallb is succeeded
+
+   - name: Get Host IP
+     shell: ip route get 1 | awk '{print $7; exit}' | tr -d '\n'
+     register: network
+     retries: 5
+     delay: 5
+     until: network is succeeded
+
+   - name: Local IP
+     set_fact:
+       load_balancer_ip: "{% if loadbalancer_ip == '' %}{{ network.stdout_lines[0] }}/32{%elif loadbalancer_ip != '' %}{{ loadbalancer_ip }}{% endif %}"
 
    - name: Apply Layer2 Config for MetalLB
      when: loadbalancer == true
@@ -160,7 +187,7 @@
          namespace: metallb-system
        spec:
          addresses:
-         - {{  loadbalancer_ip }}
+         - {{  load_balancer_ip }}
        ---
        apiVersion: metallb.io/v1beta1
        kind: L2Advertisement

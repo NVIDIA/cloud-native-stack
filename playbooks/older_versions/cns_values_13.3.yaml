@@ -1,4 +1,4 @@
-cns_version: 15.0
+cns_version: 13.3
 
 ## MicroK8s cluster
 microk8s: no
@@ -8,14 +8,14 @@ install_k8s: yes
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "2.0.3"
+containerd_version: "1.7.27"
 runc_version: "1.2.6"
 cni_plugins_version: "1.6.2"
 containerd_max_concurrent_downloads: "5"
 nvidia_container_toolkit_version: "1.17.5"
-crio_version: "1.32.1"
+crio_version: "1.30.10"
 cri_dockerd_version: "0.3.16"
-k8s_version: "1.32.2"
+k8s_version: "1.30.10"
 calico_version: "3.29.3"
 flannel_version: "0.25.6"
 helm_version: "3.17.2"
@@ -83,8 +83,8 @@ cns_nvidia_driver: no
 nvidia_driver_mig: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key"
-k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 

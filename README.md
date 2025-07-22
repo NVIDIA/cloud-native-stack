@@ -48,11 +48,13 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 | Kubernetes                | 1.33.2 | 1.32.6 | 1.31.10 |
 | CNI (Calico)              | 3.30.2 | 3.30.2 |  3.30.2 |
 | NVIDIA GPU Operator       | 25.3.1 | 25.3.1 | 25.3.1 |
-| NVIDIA Network Operator   | 25.4.0 | 25.4.0 | 25.4.0 |
+| NVIDIA Network Operator   |  N/A   | 25.4.0 | 25.4.0 |
 | NVIDIA NIM Operator       | 2.0.1  | 2.0.1  | 2.0.1  |
 | NVIIDA NSight Operator    | 1.1.2  | 1.1.2  | 1.1.2  |
 | NVIDIA Data Center Driver | 570.158.01 | 570.158.01 | 570.158.01 |
 | Helm                      | 3.18.3 | 3.18.3  | 3.18.3  |
+
+> NOTE: NVIDIA Network Operator is not Supported with CNS 16.0 yet
 
 > Note: To Previous Cloud Native Stack release information can be found [here](https://github.com/NVIDIA/cloud-native-stack/tree/24.11.1?tab=readme-ov-file#nvidia-cloud-native-stack-component-matrix)
 

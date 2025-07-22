@@ -354,6 +354,7 @@
         - /etc/apt/sources.list.d/libnvidia-container.list
         - /etc/apt/keyrings/libcontainers-crio-archive-keyring.gpg
         - /etc/apt/keyrings/libcontainers-archive-keyring.gpg
+        - /etc/apt/keyrings/kubernetes-apt-keyring.gpg
         - /etc/apt/sources.list.d/nvidia-container-toolkit.list
         - /usr/local/bin/helm
         - /var/lib/crio
@@ -372,6 +373,8 @@
         - /opt/local-path-provisioner
         - /usr/local/bin/cri-dockerd
         - /etc/systemd/system/cri-docker.service
+        - /etc/systemd/system/docker.service
+        - /usr/lib/systemd/system/docker.service
         - /etc/systemd/system/cri-docker.socket
         - /etc/apt/sources.list.d/libnvidia-container.list
         - /etc/apt/sources.list.d/nvidia-container-toolkit.list

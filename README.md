@@ -26,33 +26,35 @@ When NVIDIA Cloud Native Stack batch is released, the previous batch enters main
 
 |  Batch  | Status              |
 | :-----: | :--------------:|
-| [25.4.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.4.0)                   | Generally Available | 
-| [24.11.2](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.11.2)                   | Maintenance         |
-| [24.5.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.5.0) and lower                   | EOL                 |
+| [25.7.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.7.0)                   | Generally Available | 
+| [25.4.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.4.0)                   | Maintenance | 
+| [24.11.2](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.11.2)                   | EOL         |
 
-`NOTE:` CNS Version 15.0 only is Now supports Ubuntu 24.04
+`NOTE:` CNS Version 15.0 and above is Now supports Ubuntu 24.04
 
 For more information, Refer [Cloud Native Stack Releases](https://github.com/NVIDIA/cloud-native-stack/releases)
 
 ## Component Matrix
 
-#### Cloud Native Stack Batch 25.4.0 (Release Date: 10 April 2025)
+#### Cloud Native Stack Batch 25.7.0 (Release Date: 21 July 2025)
 
-| CNS Version               | 15.0    | 14.1 | 13.3 |
+| CNS Version               | 16.0    | 15.1 | 14.2 |
 | :-----:                   | :-----: | :------: | :------: |
 | Platforms                 | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> |
-| Supported OS              |  <ul><li>Ubuntu 24.04 LTS</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li></ul> |
-| Containerd                | 2.0.3  | 2.0.3  | 1.7.27 |
-| NVIDIA Container Toolkit  | 1.17.5 | 1.17.5 | 1.17.5 |
-| CRI-O                     | 1.32.1 | 1.31.5 | 1.30.10 |
-| Kubernetes                | 1.32.2 | 1.31.6 | 1.30.10 |
-| CNI (Calico)              | 3.29.2 | 3.29.2 |  3.29.2 |
-| NVIDIA GPU Operator       | 25.3.0 | 25.3.0 | 25.3.0 |
-| NVIDIA Network Operator   | 25.1.0 | 25.1.0 | 25.1.0 |
-| NVIDIA Data Center Driver | 570.124.06 | 570.124.06 | 570.124.06 |
-| Helm                      | 3.17.2 | 3.17.2 | 3.17.2 |
+| Supported OS              |  <ul><li>Ubuntu 24.04 LTS</li></ul> |  <ul><li>Ubuntu 24.04 LTS</li></ul> |  <ul><li>Ubuntu 22.04 LTS</li></ul> |
+| Containerd                | 2.1.3  | 2.1.3  | 2.1.3 |
+| NVIDIA Container Toolkit  | 1.17.8 | 1.17.8 | 1.17.8 |
+| CRI-O                     | 1.33.2 | 1.32.6 | 1.31.10 |
+| Kubernetes                | 1.33.2 | 1.32.6 | 1.31.10 |
+| CNI (Calico)              | 3.30.2 | 3.30.2 |  3.30.2 |
+| NVIDIA GPU Operator       | 25.3.1 | 25.3.1 | 25.3.1 |
+| NVIDIA Network Operator   | 25.4.0 | 25.4.0 | 25.4.0 |
+| NVIDIA NIM Operator       | 2.0.1  | 2.0.1  | 2.0.1  |
+| NVIIDA NSight Operator    | 1.1.2  | 1.1.2  | 1.1.2  |
+| NVIDIA Data Center Driver | 570.158.01 | 570.158.01 | 570.158.01 |
+| Helm                      | 3.18.3 | 3.18.3  | 3.18.3  |
 
-> Note: To Previous Cloud Native Stack release information can be found [here](https://github.com/NVIDIA/cloud-native-stack/tree/24.5.0?tab=readme-ov-file#nvidia-cloud-native-stack-component-matrix)
+> Note: To Previous Cloud Native Stack release information can be found [here](https://github.com/NVIDIA/cloud-native-stack/tree/24.11.1?tab=readme-ov-file#nvidia-cloud-native-stack-component-matrix)
 
 `NOTE:` Cloud Native Stack versions are available with the master branch but it's recommend to use the specific branch.
 
@@ -62,6 +64,7 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
   - [GPU Operator](https://github.com/NVIDIA/gpu-operator)
   - [Network Operator](https://github.com/Mellanox/network-operator)  
   - [NVIDIA NIM Operator](https://docs.nvidia.com/nim-operator/latest/index.html)
+  - [NVIDIA NSight Operator](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/devtools/helm-charts/nsight-operator)
   - [FeatureGates](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-feature-gates-to-cloud-native-stack)
 - [MicroK8s on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-microk8s)
 - [Installation on CSP's](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation-on-csps)
@@ -71,14 +74,14 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 - [Kserve](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-kserve-on-cns)
 - [LeaderWorkerSet(lws)](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-leaderworkerset)
 
-| CNS Version               | 15.0    | 14.1 | 13.3 |
+| CNS Version               | 16.0    | 15.1 | 14.2 |
 | :-----:                   | :-----: | :------: | :------: |
-| MicroK8s                  | 1.32    | 1.31     | 1.30 |
+| MicroK8s                  | 1.33    | 1.32     | 1.31 |
 | KServe                    | <br /> **0.15** <br /> <br /> <ul><li>Istio: 1.23.2</li><li>Knative: 1.15.7</li><li>CertManager: 1.16.1</li></ul> | <br /> **0.15** <br /> <br /> <ul><li>Istio: 1.23.2</li><li>Knative: 1.15.7</li><li>CertManager: 1.16.1</li></ul>  | <br /> **0.15** <br /> <br /> <ul><li>Istio: 1.23.2</li><li>Knative: 1.15.7</li><li>CertManager: 1.16.1</li></ul> | 
-| LeaderWorkerSet           | 0.5.1 | 0.5.1 | 0.5.1|
-| LoadBalancer              | MetalLB: 0.14.9 | MetalLB: 0.14.9 | MetalLB: 0.14.9 |
+| LeaderWorkerSet           | 0.6.2 | 0.6.2 | 0.6.2|
+| LoadBalancer              | MetalLB: 0.15.2| MetalLB: 0.15.2 | MetalLB: 0.15.2|
 | Storage                   | NFS: 4.0.18 <br /> Local Path: 0.0.31 | NFS: 4.0.18 <br /> Local Path: 0.0.31 | NFS: 4.0.18 <br /> Local Path: 0.0.31 | 
-| Monitoring                | Prometheus: 70.3.0 <br /> Prometheus Adapter: 4.13.0 <br /> Elastic: 8.17.4 | Prometheus: 70.3.0 <br /> Prometheus Adapter: 4.13.0 <br /> Elastic: 8.17.4  | Prometheus: 70.3.0 <br /> Prometheus Adapter: 4.13.0 <br /> Elastic: 8.17.4  |
+| Monitoring                | Prometheus: 75.9.0 <br /> Prometheus Adapter: 4.14.1 <br /> Elastic: 9.0.0 | Prometheus: 75.9.0 <br /> Prometheus Adapter: 4.14.1 <br /> Elastic: 9.0.0 | Prometheus: 75.9.0 <br /> Prometheus Adapter: 4.14.1 <br /> Elastic: 9.0.0 |
 
 # Getting Started
 

@@ -1,35 +1,34 @@
-# NVIDIA Cloud Native Stack v13.0 - Install Guide for Ubuntu Server
+# NVIDIA Cloud Native Stack v15.1 - Install Guide for Ubuntu Server
 ## Introduction
 
 This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple NVIDIA Certified Systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
-NVIDIA Cloud Native Stack v13.0 includes:
-- Ubuntu 22.04 LTS
-- Containerd 1.7.16
-- Kubernetes version 1.30.0
-- Helm 3.14.4
-- NVIDIA GPU Operator 24.3.0
-  - NVIDIA GPU Driver: 550.54.15
-  - NVIDIA Container Toolkit: 1.15.0
-  - NVIDIA K8S Device Plugin: 0.15.0
-  - NVIDIA DCGM-Exporter: 3.3.5-3.4.1
-  - NVIDIA DCGM: 3.3.5-1
-  - NVIDIA GPU Feature Discovery: 0.15.0
-  - NVIDIA K8s MIG Manager: 0.7.0
-  - NVIDIA Driver Manager: 0.6.8
-  - Node Feature Discovery: 0.15.4
-  - NVIDIA KubeVirt GPU Device Plugin: 1.2.7
-  - NVIDIA GDS Driver: 2.17.5
-  - NVIDIA Kata Manager for Kubernetes: 0.2.0
+NVIDIA Cloud Native Stack v15.1 includes:
+- Ubuntu 24.04 LTS
+- Containerd 2.1.3
+- Kubernetes version 1.32.6
+- Helm 3.18.3
+- NVIDIA GPU Operator 25.3.1
+  - NVIDIA GPU Driver: 570.158.01
+  - NVIDIA Container Toolkit: 1.17.8
+  - NVIDIA K8S Device Plugin: 0.17.2
+  - NVIDIA DCGM-Exporter: 4.2.3-4.1.3
+  - NVIDIA DCGM: 4.2.3-1
+  - NVIDIA GPU Feature Discovery: 0.17.2
+  - NVIDIA K8s MIG Manager: 0.12.1
+  - Node Feature Discovery: 0.17.3
+  - NVIDIA KubeVirt GPU Device Plugin: 1.3.1
+  - NVIDIA GDS Driver: 2.20.5
+  - NVIDIA Kata Manager for Kubernetes: 0.2.3
   - NVIDIA Confidential Computing Manager for Kubernetes: 0.1.1
-- NVIDIA Network Operator 24.1.1
-  - Mellanox MOFED Driver 24.01-0.3.3.1-10:
-  - Mellanox NV Peer Memory Driver 1.1-0
-  - RDMA Shared Device Plugin 1.4.0
-  - SRIOV Device Plugin 3.6.2
-  - Container Networking Plugins 1.3.0
-  - Multus 3.9.3
-  - Whereabouts 0.6.2
+- NVIDIA Network Operator 25.4.0
+  - Node Feature Discovery: 0.15.6
+  - Mellanox MOFED/DOCA Driver 25.04-0.6.1.0-2
+  - RDMA Shared Device Plugin 1.5.3
+  - SRIOV Device Plugin 3.9.0
+  - Container Networking Plugins 1.6.2
+  - Multus 4.1.0
+  - Whereabouts 0.7.0
 
 ## Table of Contents
 
@@ -64,7 +63,7 @@ Please note that NVIDIA Cloud Native Stack is validated only on systems with the
 
 
 ### Installing the Ubuntu Operating System
-These instructions require installing Ubuntu Server LTS 22.04 Ubuntu Server can be downloaded [here](http://cdimage.ubuntu.com/releases/20.04.4/release/).
+These instructions require installing Ubuntu Server LTS 24.04 Ubuntu Server can be downloaded [here](http://cdimage.ubuntu.com/releases/24.04/release/).
 
 Please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
 
@@ -125,30 +124,30 @@ sudo sysctl --system
 Download the Containerd for `x86-64` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.7.16/cri-containerd-cni-1.7.16-linux-amd64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v2.1.3/containerd-2.1.3-linux-amd64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.16-linux-amd64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf containerd-2.1.3-linux-amd64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.7.16-linux-amd64.tar.gz
+rm -rf containerd-2.1.3-linux-amd64.tar.gz
 ```
 
 
 Download the Containerd for `ARM` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v1.7.16/cri-containerd-cni-1.7.16-linux-arm64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v2.1.3/containerd-2.1.3-linux-arm64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf cri-containerd-cni-1.7.16-linux-arm64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf containerd-2.1.3-linux-arm64.tar.gz
 ```
 
 ```
-rm -rf cri-containerd-cni-1.7.16-linux-arm64.tar.gz
+rm -rf containerd-2.1.3-linux-arm64.tar.gz
 ```
 
 Install the Containerd
@@ -168,6 +167,22 @@ sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/c
 sudo systemctl restart containerd
 ```
 
+Install Runc
+
+```
+wget https://github.com/opencontainers/runc/releases/download/v1.2.6/runc.amd64
+install -m 755 runc.amd64 /usr/local/sbin/runc
+```
+
+Install CNI Plugins
+
+```
+wget https://github.com/containernetworking/plugins/releases/download/v1.6.2/cni-plugins-linux-amd64-v1.6.2.tgz
+sudo mkdir -p /opt/cni/bin
+sudo tar -C /opt/cni/bin -xzvf cni-plugins-linux-amd64-v1.6.2.tgz
+sudo systemctl restart containerd
+```
+
 For additional information on installing Containerd, please reference [Install Containerd with Release Tarball](https://github.com/containerd/containerd/blob/master/docs/cri/installation.md).
 
 ### Installing CRI-O(Option 2)
@@ -175,8 +190,8 @@ For additional information on installing Containerd, please reference [Install C
 Setup the Apt repositry for CRI-O
 
 ```
-OS=xUbuntu_22.04
-VERSION=1.30
+OS=xUbuntu_24.04
+VERSION=1.32
 ```
 `NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
 
@@ -227,7 +242,7 @@ Execute the following to add apt keys:
 ```
 
 ```
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 ```
 
@@ -238,7 +253,7 @@ sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 Create kubernetes.list:
 
 ```
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list 
 ```
 
@@ -250,7 +265,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
 ```
 
 ```
- sudo apt install -y -q kubelet=1.30.0-1.1  kubectl=1.30.0-1.1  kubeadm=1.30.0-1.1 
+ sudo apt install -y -q kubelet=1.32.6-1.1  kubectl=1.32.6-1.1  kubeadm=1.32.6-1.1 
 ```
 
 ```
@@ -304,13 +319,13 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command for `Containerd` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.30.0"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.32.6"
 ```
 
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.30.0"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.32.6"
 ```
 
 Output:
@@ -355,7 +370,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.1/manifests/calico.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/calico.yaml
 ```
 
 Update the Calico Daemonset 
@@ -395,7 +410,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane          10m   v1.30.0
+#yourhost        Ready    control-plane          10m   v1.32.6
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -409,14 +424,14 @@ for more information.
 
 ### Installing Helm 
 
-Execute the following command to download and install Helm 3.14.4 for `x86-64` system: 
+Execute the following command to download and install Helm 3.18.3 for `x86-64` system: 
 
 ```
-wget https://get.helm.sh/helm-v3.14.4-linux-amd64.tar.gz
+wget https://get.helm.sh/helm-v3.18.3-linux-amd64.tar.gz
 ```
 
 ```
-tar -zxvf helm-v3.14.4-linux-amd64.tar.gz
+tar -zxvf helm-v3.18.3-linux-amd64.tar.gz
  ```
  
  ```
@@ -424,17 +439,17 @@ sudo mv linux-amd64/helm /usr/local/bin/helm
  ```
 
  ```
-rm -rf helm-v3.14.4-linux-amd64.tar.gz linux-amd64/
+rm -rf helm-v3.18.3-linux-amd64.tar.gz linux-amd64/
 ```
 
-Download and install Helm 3.14.4 for `ARM` system: 
+Download and install Helm 3.18.3 for `ARM` system: 
 
 ```
-wget https://get.helm.sh/helm-v3.14.4-linux-arm64.tar.gz
+wget https://get.helm.sh/helm-v3.18.3-linux-arm64.tar.gz
 ```
 
 ```
-tar -zxvf helm-v3.14.4-linux-arm64.tar.gz
+tar -zxvf helm-v3.18.3-linux-arm64.tar.gz
  ```
  
 ```
@@ -442,10 +457,10 @@ sudo mv linux-arm64/helm /usr/local/bin/helm
 ```
 
 ```
-rm -rf helm-v3.14.4-linux-arm64.tar.gz linux-arm64/
+rm -rf helm-v3.18.3-linux-arm64.tar.gz linux-arm64/
 ```
 
-Refer to the Helm 3.14.4 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
+Refer to the Helm 3.18.3 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
 
 
 ### Adding an Additional Node to NVIDIA Cloud Native Stack
@@ -482,8 +497,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane          10m   v1.30.0
-#yourhost-worker Ready                           10m   v1.30.0
+#yourhost        Ready    control-plane          10m   v1.32.6
+#yourhost-worker Ready                           10m   v1.32.6
 ```
 
 ### Installing NVIDIA Network Operator
@@ -547,7 +562,7 @@ kubectl label nodes --all node-role.kubernetes.io/master- --overwrite
 ```
 
 ```
-helm install -f --version 24.1.0 ./network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
+helm install -f --version 25.1.0 ./network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator
 ```
 #### Validating the State of the Network Operator
 
@@ -591,7 +606,7 @@ Install GPU Operator:
 `NOTE:` If you installed Network Operator, please skip the below command and follow the [GPU Operator with RDMA](#GPU-Operator-with-RDMA)
 
 ```
-helm install --version 24.3.0 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.version=550.54.15 --wait --generate-name
+helm install --version 25.3.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.version=570.124.06 --wait --generate-name
 ```
 
 #### GPU Operator with RDMA 
@@ -602,7 +617,7 @@ helm install --version 24.3.0 --create-namespace --namespace nvidia-gpu-operator
 After Network Operator installation is completed, execute the below command to install the GPU Operator to load nv_peer_mem modules:
 
 ```
- helm install --version 24.3.0 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.rdma.enabled=true  --wait --generate-name
+ helm install --version 25.3.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.rdma.enabled=true  --wait --generate-name
 ```
 
 #### GPU Operator with Host MOFED Driver and RDMA 
@@ -610,7 +625,7 @@ After Network Operator installation is completed, execute the below command to i
 If the host is already installed MOFED driver without network operator, execute the below command to install the GPU Operator to load nv_peer_mem module 
 
 ```
- helm install --version 24.3.0 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait --generate-name 
+ helm install --version 25.3.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait --generate-name 
 
 ```
 
@@ -619,7 +634,7 @@ If the host is already installed MOFED driver without network operator, execute 
 Execute the below command to enable the GPU Direct Storage Driver on GPU Operator 
 
 ```
-helm install --version 24.3.0 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set gds.enabled=true
+helm install --version 25.3.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set gds.enabled=true
 ```
 For more information refer, [GPU Direct Storage](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/gpu-operator-rdma.html)
 
@@ -955,7 +970,7 @@ spec:
   restartPolicy: OnFailure
   containers:
     - name: nvidia-smi
-      image: "nvidia/cuda:12.1.0-base-ubuntu22.04"
+      image: "nvidia/cuda:12.8.0-base-ubuntu24.04"
       args: ["nvidia-smi"]
 EOF
 ```
@@ -971,26 +986,26 @@ kubectl logs nvidia-smi
 Output:
 
 ``` 
-Wed Mar 20 12:47:29 2024
-+-----------------------------------------------------------------------------+
-| NVIDIA-SMI 550.54.15    Driver Version: 550.54.15    CUDA Version: 12.4     |
-|-------------------------------+----------------------+----------------------+
-| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
-| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
-|                               |                      |               MIG M. |
-|===============================+======================+======================|
-|   0  Tesla T4            On   | 00000000:14:00.0 Off |                  Off |
-| N/A   47C    P8    16W /  70W |      0MiB / 16127MiB |      0%      Default |
-|                               |                      |                  N/A |
-+-------------------------------+----------------------+----------------------+
+Mon Mar 31 20:39:28 2025
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 570.124.06             Driver Version: 570.124.06     CUDA Version: 12.8     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100-SXM4-80GB          On  |   00000000:03:00.0 Off |                    0 |
+| N/A   29C    P0             50W /  275W |       1MiB /  81920MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
 
-+-----------------------------------------------------------------------------+
-| Processes:                                                                  |
-|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
-|        ID   ID                                                   Usage      |
-|=============================================================================|
-|  No running processes found                                                 |
-+-----------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
 ```
 
 #### Example 2: CUDA-Vector-Add
@@ -1109,7 +1124,7 @@ Execute the below commands to uninstall the GPU Operator:
 ```
 $ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 nvidia-gpu-operator            1               2024-03-20 20:23:28.063421701 +0000 UTC deployed        gpu-operator-24.3.0      24.3.0 
+gpu-operator-1606173805 nvidia-gpu-operator            1               2025-03-31 20:23:28.063421701 +0000 UTC deployed        gpu-operator-25.3.1      25.3.1 
 
 $ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 
@@ -1122,7 +1137,7 @@ Execute the below commands to uninstall the Network Operator:
 ```
 $ helm ls -n network-operator
 NAME            	NAMESPACE       	REVISION	UPDATED                                	STATUS  	CHART                 	APP VERSION
-network-operator	network-operator	1       	2024-03-20 17:09:04.665593336 +0000 UTC	deployed	network-operator-24.1.0	v24.1.0
+network-operator	network-operator	1       	2025-03-31 17:09:04.665593336 +0000 UTC	deployed	network-operator-25.1.0	v25.1.0
 
 $ helm del network-operator -n network-operator
 ```

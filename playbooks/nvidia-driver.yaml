@@ -4,46 +4,6 @@
     - cns_values.yaml
   become_method: sudo
   tasks:
-    - name: Update Containerd Runtime for NVIDIA Cloud Native Stack
-      become: true
-      block:
-        - name: Create /etc/containerd
-          file:
-            path: /etc/containerd
-            state: directory
-          retries: 5
-          delay: 5
-          register: create_containerd_dir
-          until: create_containerd_dir is succeeded
-
-        - name: Write defaults to config.toml
-          copy:
-            src: "{{lookup('pipe', 'pwd')}}/files/config.toml"
-            dest: /etc/containerd/config.toml
-            mode: 0664
-          retries: 5
-          delay: 5
-          register: write_config_toml
-          until: write_config_toml is succeeded
-
-        - name: Enable systemd cgroups
-          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
-          retries: 5
-          delay: 5
-          register: enable_systemd_cgroups
-          until: enable_systemd_cgroups is succeeded
-
-        - name: restart containerd
-          service:
-            name: containerd
-            state: restarted
-            daemon_reload: yes
-          retries: 5
-          delay: 5
-          register: restart_containerd
-          until: restart_containerd is succeeded
-      when: "cns_docker == true and cns_nvidia_driver == true and microk8s == false and container_runtime == 'containerd'"
-
     - name: Check NVIDIA Driver Modules are loaded
       shell: "lsmod | grep -i nvidia"
       register: nvidia_mod
@@ -75,16 +35,6 @@
       delay: 5
       register: set_driver_version
       until: set_driver_version is succeeded
-
-    - name: unload NVIDIA
-      when: nvidia_smi.rc == 0
-      shell: /usr/bin/nvidia-uninstall --silent; kill -9 $(lsof /dev/nvidia* | awk '{print $2}' | grep -v PID | uniq); rmmod nvidia_uvm; rmmod nvidia_drm; rmmod nvidia_modeset; rmmod nvidia
-      become: true
-      failed_when: false
-      retries: 5
-      delay: 5
-      register: unload_nvidia
-      until: unload_nvidia is succeeded
 
     - name: NVIDIA Driver Clean Up
       when:  nvidia_mod.rc >= 1 and ansible_distribution == 'Ubuntu' or nvidia_smi.rc == 0 and ansible_distribution == 'Ubuntu'

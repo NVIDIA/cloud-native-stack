@@ -331,6 +331,20 @@ enable_nim_operator: yes
 ```
 For more information, Refer [NIM Operator](https://docs.nvidia.com/nim-operator/latest/index.html)
 
+## Enable Nsight Operator
+
+If you wnt to enable Nsight Operator on Cloud Native Stack, you can enable the configuration in `cns_values_xx.yaml` and trigger the installation
+
+Example:
+```
+$ nano cns_values_15.1.yaml
+
+cns_version: 15.1
+
+enable_nsight_operator: yes
+```
+For more information, Refer [Nsight Operator](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/devtools/helm-charts/nsight-operator)
+
 ### Enable MicroK8s 
 
 If you want to use microk8s you can enable the configuration in `cns_values_xx.yaml` and trigger the installation

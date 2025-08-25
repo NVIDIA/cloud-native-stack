@@ -19,7 +19,7 @@ k8s_version: "1.33.2"
 calico_version: "3.30.2"
 flannel_version: "0.25.6"
 helm_version: "3.18.3"
-gpu_operator_version: "25.3.1"
+gpu_operator_version: "25.3.2"
 network_operator_version: "25.4.0"
 nim_operator_version: "2.0.1"
 nsight_operator_version: "1.1.2"
@@ -36,7 +36,7 @@ lws_version: "0.6.2"
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "570.158.01"
+gpu_driver_version: "580.65.06"
 use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled

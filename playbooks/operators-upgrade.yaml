@@ -153,9 +153,9 @@
      shell: "{{ item }}"
      with_items:
        - kubectl delete crd clusterpolicies.nvidia.com nvidiadrivers.nvidia.com
-       - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v25.3.1/deployments/gpu-operator/crds/nvidia.com_clusterpolicies.yaml
-       - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v25.3.1/deployments/gpu-operator/charts/node-feature-discovery/crds/nfd-api-crds.yaml
-       - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v25.3.1/deployments/gpu-operator/crds/nvidia.com_nvidiadrivers.yaml
+       - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v25.3.2/deployments/gpu-operator/crds/nvidia.com_clusterpolicies.yaml
+       - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v25.3.2/deployments/gpu-operator/charts/node-feature-discovery/crds/nfd-api-crds.yaml
+       - kubectl apply -f https://gitlab.com/nvidia/kubernetes/gpu-operator/-/raw/v25.3.2/deployments/gpu-operator/crds/nvidia.com_nvidiadrivers.yaml
        - helm show --version=v{{ gpu_operator_version }} values nvidia/gpu-operator > {{ ansible_user_dir }}/values.yaml
      retries: 5
      delay: 5

@@ -49,7 +49,7 @@
    - name: DNS Alert
      debug:
        msg: "Looks like your system network doesn't reachable to archive.ubuntu.com, please update your DNS settings to proceed further"
-     when: "dns_check.stdout != 'archive.ubuntu.com'"
+     when: '"archive.ubuntu.com" not in dns_check.stdout'
      failed_when: true
      retries: 5
      delay: 5

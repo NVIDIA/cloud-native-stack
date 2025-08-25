@@ -13,9 +13,9 @@
 					"k8s version": "1.33.2",
 					"Calico": "v3.30.2",
 					"helm version": "3.18.3",
-					"NVIDIA GPU Operator": "25.3.1",
+					"NVIDIA GPU Operator": "25.3.2",
 					"NVIDIA Network Operator": "25.4.0",
-					"NVIDIA DataCenter Driver": "570.158.01"
+					"NVIDIA DataCenter Driver": "580.65.06"
 				}
 			}
 		]
@@ -33,9 +33,9 @@
 						"k8s version": "1.33.2",
 						"Calico": "v3.30.2",
 						"helm version": "3.18.3",
-						"NVIDIA GPU Operator": "25.3.1",
+						"NVIDIA GPU Operator": "25.3.2",
 						"NVIDIA Network Operator": "25.4.0",
-						"NVIDIA DataCenter Driver": "570.158.01"
+						"NVIDIA DataCenter Driver": "580.65.06"
 					}
 				}
 			]
@@ -52,9 +52,9 @@
 						"k8s version": "1.32.6",
 						"Calico": "v3.30.2",
 						"helm version": "3.18.3",
-						"NVIDIA GPU Operator": "25.3.1",
+						"NVIDIA GPU Operator": "25.3.2",
 						"NVIDIA Network Operator": "25.4.0",
-						"NVIDIA DataCenter Driver": "570.158.01"
+						"NVIDIA DataCenter Driver": "580.65.06"
 					}
 				}
 			]
@@ -90,9 +90,9 @@
 						"k8s version": "1.31.10",
 						"Calico": "v3.30.2",
 						"helm version": "3.18.3",
-						"NVIDIA GPU Operator": "25.3.1",
+						"NVIDIA GPU Operator": "25.3.2",
 						"NVIDIA Network Operator": "25.4.0",
-						"NVIDIA DataCenter Driver": "570.158.01"
+						"NVIDIA DataCenter Driver": "580.65.06"
 					}
 				}
 			]

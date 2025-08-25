@@ -47,12 +47,14 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 | CRI-O                     | 1.33.2 | 1.32.6 | 1.31.10 |
 | Kubernetes                | 1.33.2 | 1.32.6 | 1.31.10 |
 | CNI (Calico)              | 3.30.2 | 3.30.2 |  3.30.2 |
-| NVIDIA GPU Operator       | 25.3.1 | 25.3.1 | 25.3.1 |
-| NVIDIA Network Operator   | 25.4.0 | 25.4.0 | 25.4.0 |
+| NVIDIA GPU Operator       | 25.3.2 | 25.3.2 | 25.3.2 |
+| NVIDIA Network Operator   |  N/A   | 25.4.0 | 25.4.0 |
 | NVIDIA NIM Operator       | 2.0.1  | 2.0.1  | 2.0.1  |
-| NVIIDA NSight Operator    | 1.1.2  | 1.1.2  | 1.1.2  |
-| NVIDIA Data Center Driver | 570.158.01 | 570.158.01 | 570.158.01 |
+| NVIDIA Nsight Operator    | 1.1.2  | 1.1.2  | 1.1.2  |
+| NVIDIA Data Center Driver | 580.65.06 | 580.65.06 | 580.65.06 |
 | Helm                      | 3.18.3 | 3.18.3  | 3.18.3  |
+
+> NOTE: NVIDIA Network Operator is not Supported with CNS 16.0 yet
 
 > Note: To Previous Cloud Native Stack release information can be found [here](https://github.com/NVIDIA/cloud-native-stack/tree/24.11.1?tab=readme-ov-file#nvidia-cloud-native-stack-component-matrix)
 
@@ -64,7 +66,7 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
   - [GPU Operator](https://github.com/NVIDIA/gpu-operator)
   - [Network Operator](https://github.com/Mellanox/network-operator)  
   - [NVIDIA NIM Operator](https://docs.nvidia.com/nim-operator/latest/index.html)
-  - [NVIDIA NSight Operator](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/devtools/helm-charts/nsight-operator)
+  - [NVIDIA Nsight Operator](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/devtools/helm-charts/nsight-operator)
   - [FeatureGates](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-feature-gates-to-cloud-native-stack)
 - [MicroK8s on CNS](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#enable-microk8s)
 - [Installation on CSP's](https://github.com/NVIDIA/cloud-native-stack/tree/master/playbooks#installation-on-csps)

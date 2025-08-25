@@ -314,10 +314,24 @@
 
     - name: Install NVIDIA Fabric Manager on Ubuntu
       become: true
-      when: ansible_distribution == 'Ubuntu' and dgx.stat.exists == True or ansible_distribution == 'Ubuntu' and l4t.stat.exists == True or ansible_distribution == 'Ubuntu' and nvswitch.stdout | int > 0
+      when: "driver_version | int <= 570 and ansible_distribution == 'Ubuntu' and dgx.stat.exists == True or driver_version | int <= 570 and ansible_distribution == 'Ubuntu' and l4t.stat.exists == True or driver_version | int <= 570 and ansible_distribution == 'Ubuntu' and nvswitch.stdout | int > 0"
       ignore_errors: true
       apt:
         name: "nvidia-fabricmanager-{{ driver_version }}={{ gpu_driver_version}}-1"
+        state: present
+        update_cache: true
+        force: yes
+      retries: 5
+      delay: 5
+      register: install_fabric_manager_ubuntu
+      until: install_fabric_manager_ubuntu is succeeded
+
+    - name: Install NVIDIA Fabric Manager on Ubuntu
+      become: true
+      when: "driver_version | int >= 580 and ansible_distribution == 'Ubuntu' and dgx.stat.exists == True or driver_version | int >= 580 and ansible_distribution == 'Ubuntu' and l4t.stat.exists == True or driver_version | int >= 580 and ansible_distribution == 'Ubuntu' and nvswitch.stdout | int > 0"
+      ignore_errors: true
+      apt:
+        name: "nvidia-fabricmanager={{ gpu_driver_version}}-1"
         state: present
         update_cache: true
         force: yes

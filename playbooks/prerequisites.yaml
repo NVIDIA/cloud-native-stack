@@ -818,11 +818,24 @@
       register: install_docker_deps_rhel
       until: install_docker_deps_rhel is succeeded
 
+    - name: Create a Docker APT KeyRing
+      become: true
+      when: "ansible_distribution == 'Ubuntu'"
+      file:
+        path: /etc/apt/keyrings/docker.asc
+        state: touch
+        mode: '0755'
+      retries: 5
+      delay: 5
+      register: create_docker_asc
+      until: create_docker_asc is succeeded
+
     - name: Add Docker APT signing key
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_key:
         url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+        keyring: /etc/apt/keyrings/docker.asc
         state: present
       retries: 5
       delay: 5
@@ -833,7 +846,7 @@
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_repository:
-        repo: "deb https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
       retries: 5

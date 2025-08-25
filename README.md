@@ -26,9 +26,9 @@ When NVIDIA Cloud Native Stack batch is released, the previous batch enters main
 
 |  Batch  | Status              |
 | :-----: | :--------------:|
-| [25.7.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.7.0)                   | Generally Available | 
-| [25.4.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.4.0)                   | Maintenance | 
-| [24.11.2](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v24.11.2)                   | EOL         |
+| [25.7.1](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.7.1)                   | Generally Available | 
+| [25.7.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.7.0)                   | Maintenance | 
+| [25.4.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.4.0)                   | EOL         |
 
 `NOTE:` CNS Version 15.0 and above is Now supports Ubuntu 24.04
 
@@ -36,7 +36,7 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 
 ## Component Matrix
 
-#### Cloud Native Stack Batch 25.7.0 (Release Date: 21 July 2025)
+#### Cloud Native Stack Batch 25.7.1 (Release Date: 27 August 2025)
 
 | CNS Version               | 16.0    | 15.1 | 14.2 |
 | :-----:                   | :-----: | :------: | :------: |

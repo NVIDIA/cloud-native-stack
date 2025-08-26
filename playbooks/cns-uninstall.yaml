@@ -145,6 +145,16 @@
      failed_when: false
      no_log: True
 
+   - name: Reset iptables default policies to ACCEPT
+     ansible.builtin.shell: "{{ item }}"
+     become: true
+     with_items:
+       - iptables -P INPUT ACCEPT
+       - iptables -P FORWARD ACCEPT
+       - iptables -P OUTPUT ACCEPT
+     ignore_errors: yes
+     failed_when: false
+     
    - name: IPTables Cleanup
      ignore_errors: yes
      failed_when: false

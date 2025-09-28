@@ -108,8 +108,8 @@ kserve: no
 
 # Install MetalLB
 loadbalancer: no
-# Example input loadbalancer_ip: "10.78.17.85/32"
-loadbalancer_ip: ""
+# Example input loadbalancer_ips: ["10.78.17.85/32","10.78.17.86/32"]
+loadbalancer_ips: []
 
 ## Cloud Native Stack Validation
 cns_validation: no

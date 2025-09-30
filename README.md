@@ -26,9 +26,9 @@ When NVIDIA Cloud Native Stack batch is released, the previous batch enters main
 
 |  Batch  | Status              |
 | :-----: | :--------------:|
-| [25.7.1](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.7.1)                   | Generally Available | 
-| [25.7.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.7.0)                   | Maintenance | 
-| [25.4.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.4.0)                   | EOL         |
+| [25.7.2](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.7.1)                   | Generally Available | 
+| [25.7.1](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.7.1)                   | Maintenance | 
+| [25.7.0](https://github.com/NVIDIA/cloud-native-stack/releases/tag/v25.7.0)                   | EOL | 
 
 `NOTE:` CNS Version 15.0 and above is Now supports Ubuntu 24.04
 
@@ -36,7 +36,7 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 
 ## Component Matrix
 
-#### Cloud Native Stack Batch 25.7.1 (Release Date: 27 August 2025)
+#### Cloud Native Stack Batch 25.7.2 (Release Date: 2nd October 2025)
 
 | CNS Version               | 16.0    | 15.1 | 14.2 |
 | :-----:                   | :-----: | :------: | :------: |
@@ -47,11 +47,11 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 | CRI-O                     | 1.33.2 | 1.32.6 | 1.31.10 |
 | Kubernetes                | 1.33.2 | 1.32.6 | 1.31.10 |
 | CNI (Calico)              | 3.30.2 | 3.30.2 |  3.30.2 |
-| NVIDIA GPU Operator       | 25.3.2 | 25.3.2 | 25.3.2 |
+| NVIDIA GPU Operator       | 25.3.4 | 25.3.4 | 25.3.4 |
 | NVIDIA Network Operator   |  N/A   | 25.4.0 | 25.4.0 |
 | NVIDIA NIM Operator       | 2.0.1  | 2.0.1  | 2.0.1  |
 | NVIDIA Nsight Operator    | 1.1.2  | 1.1.2  | 1.1.2  |
-| NVIDIA Data Center Driver | 580.65.06 | 580.65.06 | 580.65.06 |
+| NVIDIA Data Center Driver | 580.82.07 | 580.82.07 | 580.82.07 |
 | Helm                      | 3.18.3 | 3.18.3  | 3.18.3  |
 
 > NOTE: NVIDIA Network Operator is not Supported with CNS 16.0 yet
@@ -136,6 +136,10 @@ For more Information about customize the values, please refer [Installation](htt
     - 1 control plane node and any number of worker nodes
 
 `NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
+
+## Cloud Native Stack with NVIDIA GB200 NVL72
+
+Cloud Native Stack now supports [NVIDIA GB200 NVL72](https://www.nvidia.com/en-us/data-center/gb200-nvl72/) with NVIDIA Kernel. Cloud Native Stack will update the [OS Optimizations](https://docs.nvidia.com/grace-perf-tuning-guide/os-settings.html#operating-system-settings) as part of the Installation and reboot the system. 
 
 # Troubleshooting
 

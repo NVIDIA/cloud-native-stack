@@ -1,5 +1,5 @@
 - hosts: all
-  gather_facts: yes
+  gather_facts: true
   vars_files:
     - cns_values.yaml
   environment:
@@ -96,17 +96,109 @@
       become: true
       shell: sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 
+    - name: Get NVIDIA device id from lspci
+      shell: lspci -nn | grep -i nvidia | egrep -v -i 'nvswitch|Bridge' | awk '{print $(NF-2)}' | awk -F ':' '{print $2}' | sed 's/\]//g' | sort | uniq | tr -d '\n'
+      register: nvidia_id
+      failed_when: false
+      ignore_errors: true
+
+    - name: Verify NVIDIA device has GB200
+      fail:
+        msg: "GB200 device id not found in {{ nvidia_id.stdout }}"
+      when: nvidia_id.stdout != '2941'
+      ignore_errors: true
+      failed_when: false
+
+    - name: Get NVIDIA kernel info
+      shell: uname -r | awk -F'-' '{print $3}'
+      register: nvidia_kernel
+
+    - name: Debug kernel version
+      debug:
+        msg: "Linux Kernel: {{ nvidia_kernel.stdout }}"
+
+    - name: check iommu_passthrough exists in current kernel cmdline
+      shell: grep iommu_passthrough /proc/cmdline
+      register: iommu_passthrough_check
+      ignore_errors: true
+      failed_when: false
+
+    - name: check init_on_alloc exists in current kernel cmdline
+      shell: grep init_on_alloc /proc/cmdline
+      register: init_on_alloc_check
+      ignore_errors: true
+      failed_when: false
+
+    - name: check numa_balancing exists in current kernel cmdline
+      shell: grep numa_balancing /proc/cmdline
+      register: numa_balancing_check
+      ignore_errors: true
+      failed_when: false
+
+    - name: set fact
+      set_fact:
+        nvidia_kernel: "{{ nvidia_kernel.stdout }}"
+
+    - name: Ensure iommu_passthrough option
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and iommu_passthrough_check.rc != 0
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub.d/iommu_passthrough.cfg
+        line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX iommu.passthrough=1"'
+        create: yes
+        mode: '0644'
+
+    - name: Ensure init_on_alloc option
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and init_on_alloc_check.rc != 0
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub.d/disable-init-on-alloc.cfg
+        line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX init_on_alloc=0"'
+        create: yes
+        mode: '0644'
+
+    - name: Ensure disable-numa-balancing option
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and numa_balancing_check.rc != 0
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub.d/disable-numa-balancing.cfg
+        line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX numa_balancing=disable"'
+        create: yes
+        mode: '0644'
+
+    - name: Update grub configuration
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941'
+      command: update-grub
+      become: true
+
     - name: reboot the system
-      when: "nouveau_result.rc == 0 or ansible_os_family == 'RedHat' and selinuxstatus.stdout == 'enforcing' or snp.stdout != 'snp' and confidential_computing == true or cgroup.stdout != 'cgroup2fs' and ansible_os_family == 'RedHat'"
+      when: >
+        (
+          nouveau_result.rc == 0
+          or
+          (ansible_os_family == 'RedHat' and selinuxstatus.stdout == 'enforcing')
+          or
+          (snp.stdout != 'snp' and confidential_computing == true)
+          or
+          (cgroup.stdout != 'cgroup2fs' and ansible_os_family == 'RedHat')
+          or
+          (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and iommu_passthrough_check.rc != 0)
+          or
+          (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and init_on_alloc_check.rc != 0)
+          or
+          (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and numa_balancing_check.rc != 0)
+        )
       become: true
       reboot:
-        reboot_timeout: 900
+        reboot_timeout: 3000
+        msg: "Rebooting the system to apply the changes"
+        post_reboot_delay: 60
 
     - name: Install PreRequisites dependencies
       when: ansible_distribution == 'Ubuntu'
       become: true
       apt:
-        name: ['mokutil', 'jq']
+        name: ['mokutil']
         state: present
         update_cache: yes
 
@@ -126,8 +218,17 @@
 
     - name: Get jq pacakge
       become: true
+      when: ansible_architecture == 'x86_64'
       get_url:
-        url: https://github.com/stedolan/jq/releases/download/jq-1.7.1/jq-linux64
+        url: https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-linux-amd64
+        dest: /usr/local/bin/jq
+        mode: '0777'
+
+    - name: Get jq pacakge
+      become: true
+      when: ansible_architecture == 'aarch64'
+      get_url:
+        url: https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-linux-arm64
         dest: /usr/local/bin/jq
         mode: '0777'
 
@@ -246,7 +347,7 @@
 
         - name: unload NVIDIA
           shell: /usr/bin/nvidia-uninstall --silent; kill -9 $(lsof /dev/nvidia* | awk '{print $2}' | grep -v PID | uniq); rmmod -f nvidia_uvm; rmmod -f nvidia_drm; rmmod -f nvidia_modeset; rmmod -f nvidia
-          ignore_errors: yes
+          ignore_errors: true
           failed_when: false     
 #    - name: Add DHCP Mac to netplan 
 #      become: true 
@@ -280,7 +381,7 @@
   import_playbook: add-ons.yaml
   
 - hosts: all
-  gather_facts: yes
+  gather_facts: true
   vars_files:
     - cns_values.yaml
   tasks:

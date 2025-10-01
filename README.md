@@ -137,9 +137,10 @@ For more Information about customize the values, please refer [Installation](htt
 
 `NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
 
-## Cloud Native Stack with NVIDIA GB200 NVL72
+# OS optimizations for NVIDIA Hardware
 
-Cloud Native Stack now supports [NVIDIA GB200 NVL72](https://www.nvidia.com/en-us/data-center/gb200-nvl72/) with NVIDIA Kernel. Cloud Native Stack will update the [OS Optimizations](https://docs.nvidia.com/grace-perf-tuning-guide/os-settings.html#operating-system-settings) as part of the Installation and reboot the system. 
+- [ NVIDIA GB200 NVL72]((https://github.com/NVIDIA/cloud-native-stack/blob/25.7.2/OS-optimizations/GB200-NVL72))
+ 
 
 # Troubleshooting
 

@@ -139,7 +139,7 @@ For more Information about customize the values, please refer [Installation](htt
 
 # OS optimizations for NVIDIA Hardware
 
-- [NVIDIA GB200 NVL72](https://github.com/NVIDIA/cloud-native-stack/blob/25.7.2/OS-optimizations/GB200-NVL72)
+- [NVIDIA GB200 NVL72](https://github.com/NVIDIA/cloud-native-stack/blob/25.7.2/OS-optimizations/GB200-NVL72.md)
  
 
 # Troubleshooting

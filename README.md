@@ -137,7 +137,7 @@ For more Information about customize the values, please refer [Installation](htt
 
 `NOTE:` (Cloud Native Stack does not allow the deployment of several control plane nodes)
 
-# Advanced Settings for NVIDIA Hardware
+# Advanced Settings for NVIDIA Platforms
 
 - [OS Optimizatios for NVIDIA GB200 NVL72](https://github.com/NVIDIA/cloud-native-stack/blob/25.7.2/OS-optimizations/GB200-NVL72.md)
  

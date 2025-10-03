@@ -118,7 +118,7 @@
         msg: "Linux Kernel: {{ nvidia_kernel.stdout }}"
 
     - name: check iommu_passthrough exists in current kernel cmdline
-      shell: grep iommu_passthrough /proc/cmdline
+      shell: grep iommu.passthrough /proc/cmdline
       register: iommu_passthrough_check
       ignore_errors: true
       failed_when: false

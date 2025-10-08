@@ -139,7 +139,7 @@ For more Information about customize the values, please refer [Installation](htt
 
 # Advanced Settings for NVIDIA Platforms
 
-- [Optimizations for NVIDIA GB200 NVL72](https://github.com/NVIDIA/cloud-native-stack/blob/25.7.2/OS-optimizations/GB200-NVL72.md)
+- [Optimizations for NVIDIA GB200 NVL72](./optimizations/GB200-NVL72.md)
  
 
 # Troubleshooting

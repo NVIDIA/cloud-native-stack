@@ -261,7 +261,7 @@ k8s_registry: "registry.aliyuncs.com/google_containers"
 
 #### Enable Feature Gates to Cloud Native Stack
 
-`NOTE:` Below config only works with CNS version 15.0 and above which is kubernetes 1.32 and above. 
+`NOTE:` Below config only works with CNS version 16.0 and above which is kubernetes 1.33 and above. 
 
 Update the `templates/kubeadm-init-config.template` with feature gates like below and trigger the installation
 
@@ -281,6 +281,8 @@ apiServer:
     value: "DynamicResourceAllocation=true"
   - name: "runtime-config"
     value: "resource.k8s.io/v1beta1=true"
+  - name: "runtime-config"
+    value: "resource.k8s.io/v1beta2=true"
 controllerManager:
   extraArgs:
   - name: "feature-gates"
@@ -298,6 +300,19 @@ apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 featureGates:
   DynamicResourceAllocation: true
+```
+Run the below commands to enable DRA FeatureGates on existing Kubernetes Cluster with Kubernetes v1.33 or newer. 
+
+```sh
+sudo sed -i 's/- kube-apiserver/- kube-apiserver\n    - --feature-gates=DynamicResourceAllocation=true\n    - --runtime-config=resource.k8s.io\/v1beta1=true\n    - --runtime-config=resource.k8s.io\/v1beta2=true/' /etc/kubernetes/manifests/kube-apiserver.yaml
+
+sudo sed -i 's/- kube-scheduler/- kube-scheduler\n    - --feature-gates=DynamicResourceAllocation=true/' /etc/kubernetes/manifests/kube-scheduler.yaml
+         
+sudo sed -i 's/- kube-controller-manager/- kube-controller-manager\n    - --feature-gates=DynamicResourceAllocation=true/' /etc/kubernetes/manifests/kube-controller-manager.yaml
+         
+sudo sed -i '$a\'$'\n''featureGates:\n  DynamicResourceAllocation: true' /var/lib/kubelet/config.yaml 
+         
+sudo systemctl daemon-reload; sudo systemctl restart kubelet
 ```
 
 Run the below command to verify if the features is enabled 

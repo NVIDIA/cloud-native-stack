@@ -5,6 +5,76 @@
     http_proxy: "{{ http_proxy }}"
     https_proxy: "{{ https_proxy }}"
   tasks:
+   - name: Starting and enabling the required services
+     become: true
+     ignore_errors: true
+     failed_when: false
+     when: container_runtime == 'containerd' or container_runtime == 'cri-dockerd'
+     lineinfile:
+       path: /etc/systemd/system/containerd.service
+       insertafter: 'LimitCORE=infinity'
+       line: "{{ item }}"
+     loop:
+       - "LimitNOFILE=1048576"
+       - "LimitNPROC=1048576"
+
+   - name: Check if /etc/docker/daemon.json exists
+     ignore_errors: true
+     failed_when: false
+     when: container_runtime == 'cri-dockerd' or cns_docker == true
+     become: true
+     stat:
+       path: /etc/docker/daemon.json
+     register: daemon_json_stat
+
+   - name: Read existing daemon.json if present
+     ignore_errors: true
+     failed_when: false
+     become: true
+     slurp:
+       path: /etc/docker/daemon.json
+     when: daemon_json_stat.stat.exists and container_runtime == 'cri-dockerd' or  daemon_json_stat.stat.exists and cns_docker == true
+     register: daemon_json_content
+
+   - name: Set existing config or default
+     ignore_errors: true
+     failed_when: false
+     when: container_runtime == 'cri-dockerd' or cns_docker == true
+     become: true
+     set_fact:
+       daemon_json_config: "{{ daemon_json_content.content | b64decode | from_json if daemon_json_stat.stat.exists else {} }}"
+
+   - name: Merge 'default-ulimits' config
+     when: container_runtime == 'cri-dockerd' or cns_docker == true
+     ignore_errors: true
+     failed_when: false
+     become: true
+     set_fact:
+       daemon_json_config: >
+         {{
+           daemon_json_config | combine({
+             'default-ulimits': {
+               'nofile': {
+                 'Name': 'nofile',
+                 'Soft': 1048576,
+                 'Hard': 1048576
+               }
+             }
+           }, recursive=True)
+         }}
+
+   - name: Write updated daemon.json
+     when: container_runtime == 'cri-dockerd' or cns_docker == true
+     ignore_errors: true
+     failed_when: false
+     become: true
+     copy:
+       dest: /etc/docker/daemon.json
+       content: "{{ daemon_json_config | to_nice_json }}"
+       owner: root
+       group: root
+       mode: '0644'
+
    - name: Reload the configurations
      become: true
      block:

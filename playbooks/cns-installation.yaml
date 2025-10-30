@@ -102,10 +102,10 @@
       failed_when: false
       ignore_errors: true
 
-    - name: Verify NVIDIA device has GB200
+    - name: Verify NVIDIA device has GB200/GB300
       fail:
-        msg: "GB200 device id not found in {{ nvidia_id.stdout }}"
-      when: nvidia_id.stdout != '2941'
+        msg: "GB200 or GB300 device id not found in {{ nvidia_id.stdout }}"
+      when: nvidia_id.stdout != '2941' or nvidia_id.stdout != '31c2'
       ignore_errors: true
       failed_when: false
 
@@ -140,7 +140,7 @@
         nvidia_kernel: "{{ nvidia_kernel.stdout }}"
 
     - name: Ensure iommu_passthrough option
-      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and iommu_passthrough_check.rc != 0
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and iommu_passthrough_check.rc != 0 or nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and iommu_passthrough_check.rc != 0
       become: true
       ansible.builtin.lineinfile:
         path: /etc/default/grub.d/iommu_passthrough.cfg
@@ -149,7 +149,7 @@
         mode: '0644'
 
     - name: Ensure init_on_alloc option
-      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and init_on_alloc_check.rc != 0
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and init_on_alloc_check.rc != 0 or nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and init_on_alloc_check.rc != 0
       become: true
       ansible.builtin.lineinfile:
         path: /etc/default/grub.d/disable-init-on-alloc.cfg
@@ -158,7 +158,7 @@
         mode: '0644'
 
     - name: Ensure disable-numa-balancing option
-      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and numa_balancing_check.rc != 0
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and numa_balancing_check.rc != 0 or nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and numa_balancing_check.rc != 0
       become: true
       ansible.builtin.lineinfile:
         path: /etc/default/grub.d/disable-numa-balancing.cfg
@@ -167,7 +167,7 @@
         mode: '0644'
 
     - name: Update grub configuration
-      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941'
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' or nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2'
       command: update-grub
       become: true
 
@@ -187,6 +187,12 @@
           (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and init_on_alloc_check.rc != 0)
           or
           (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and numa_balancing_check.rc != 0)
+          or
+          (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and iommu_passthrough_check.rc != 0)
+          or
+          (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and init_on_alloc_check.rc != 0)
+          or
+          (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and numa_balancing_check.rc != 0)
         )
       become: true
       reboot:

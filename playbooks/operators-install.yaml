@@ -377,7 +377,7 @@
 
    - name: Installing the GPU Operator with NVIDIA Docker on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == true and cns_nvidia_driver == false and  enable_mig == false and enable_vgpu == false and enable_rdma == false and ngc_registry_password == ''"
-     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set toolkit.enabled=false --wait --generate-name
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --wait --generate-name
      retries: 5
      delay: 5
      register: install_gpu_operator_docker
@@ -393,7 +393,7 @@
 
    - name: Installing the GPU Operator with Docker and NVIDIA Host Driver on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == true and cns_nvidia_driver == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and ngc_registry_password == ''"
-     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+     shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false --wait --generate-name
      retries: 5
      delay: 5
      register: install_gpu_operator_docker_host_driver
@@ -575,6 +575,30 @@
      register: container_networking_changes
      until: container_networking_changes is succeeded
 
+   - name: add nvidia-smi alias
+     become: false
+     lineinfile:
+       path: '{{ ansible_user_dir }}/.bashrc'
+       regexp: '^alias nvidia-smi='
+       line: "alias nvidia-smi='sudo chroot /run/nvidia/driver nvidia-smi'"
+       state: present
+
+   - name: Install NVIDIA DRA Operator
+     shell: "helm install --version {{ dra_driver_version }} --create-namespace --namespace nvidia-dra-driver-gpu nvidia-dra-driver-gpu nvidia/nvidia-dra-driver-gpu -n nvidia-dra-driver-gpu --set gpuResourcesEnabledOverride=true     --set nvidiaDriverRoot=/run/nvidia/driver"
+     when: "enable_dra_driver == true and cns_nvidia_driver == false"
+     retries: 5
+     delay: 5
+     register: install_nvidia_dra_operator
+     until: install_nvidia_dra_operator is succeeded
+
+   - name: Install NVIDIA DRA Operator
+     shell: "helm install --version {{ dra_driver_version }} --create-namespace --namespace nvidia-dra-driver-gpu nvidia-dra-driver-gpu nvidia/nvidia-dra-driver-gpu -n nvidia-dra-driver-gpu --set gpuResourcesEnabledOverride=true     --set nvidiaDriverRoot=/"
+     when: "enable_dra_driver == true and cns_nvidia_driver == true"
+     retries: 5
+     delay: 5
+     register: install_nvidia_dra_operator_host_driver
+     until: install_nvidia_dra_operator_host_driver is succeeded
+
    - name: Install NIM Operator
      shell: "helm install --version {{ nim_operator_version }} --create-namespace --namespace nim-operator nim-operator nvidia/k8s-nim-operator -n nim-operator"
      when: "enable_nim_operator == true"
@@ -600,3 +624,7 @@
      delay: 5
      register: install_nsight_operator
      until: install_nsight_operator is succeeded
+
+   - name: Install NVIDIA Kubernetes AI Scheduler
+     shell: helm upgrade -i kai-scheduler oci://ghcr.io/nvidia/kai-scheduler/kai-scheduler -n kai-scheduler --create-namespace --version v{{ kai_scheduler_version }} --set "global.gpuSharing=true"
+     when: enable_kai_scheduler == true

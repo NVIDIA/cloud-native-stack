@@ -957,6 +957,14 @@
       register: update_docker_service
       until: update_docker_service is succeeded
 
+    - name: Add current user to docker group
+      when: container_runtime == 'cri-dockerd'
+      become: true
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
     - name: Starting and enabling the required services
       become: true
       systemd_service:

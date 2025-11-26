@@ -166,8 +166,17 @@
         create: yes
         mode: '0644'
 
+    - name: Disable HMM on NVIDIA UVM for RTX Pro 6000
+      become: true
+      when: nvidia_id.stdout == '2bb5'
+      ansible.builtin.lineinfile:
+        path: /etc/modprobe.d/nvidia-uvm.conf
+        line: 'options nvidia-uvm uvm_disable_hmm=1'
+        create: yes
+        mode: '0644'
+
     - name: Update grub configuration
-      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' or nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2'
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' or nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' or nvidia_id.stdout == '2bb5'
       command: update-grub
       become: true
 
@@ -193,6 +202,8 @@
           (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and init_on_alloc_check.rc != 0)
           or
           (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and numa_balancing_check.rc != 0)
+          or
+          (nvidia_id.stdout == '2bb5')
         )
       become: true
       reboot:
@@ -371,14 +382,14 @@
 - import_playbook: nvidia-driver.yaml
   when: "cns_nvidia_driver == true and release != 'tegra'"
 
-- when: "cns_docker == true and release != 'tegra'"
-  import_playbook: nvidia-docker.yaml
-
 - when: "cns_version > 4.1 and microk8s == false and install_k8s == true"
   import_playbook: k8s-install.yaml
 
 - when: "cns_version > 4.1 and release != 'tegra' and microk8s == false and install_k8s == true"
   import_playbook: operators-install.yaml
+
+- when: "cns_docker == true and release != 'tegra'"
+  import_playbook: nvidia-docker.yaml
 
 - when: "microk8s == true"
   import_playbook: microk8s.yaml

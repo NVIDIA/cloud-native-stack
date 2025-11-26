@@ -123,7 +123,7 @@ gpu_operator_version: "25.10.0"
 network_operator_version: "25.7.0"
 nim_operator_version: "3.0.1"
 nsight_operator_version: "1.1.2"
-kai_scheduler_version: "0.9.7"
+kai_scheduler_version: "0.10.2"
 local_path_provisioner: "0.0.31"
 nfs_provisioner: "4.0.18"
 metallb_version: "0.15.2"
@@ -390,6 +390,75 @@ enable_kai_scheduler: yes
 ```
 For more information, Refer [NVIDIA KAI Scheduler](https://github.com/NVIDIA/KAI-Scheduler/tree/main)
 
+sample validation
+
+create queue.yaml with below content 
+```
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: default
+spec:
+  resources:
+    cpu:
+      quota: -1
+      limit: -1
+      overQuotaWeight: 1
+    gpu:
+      quota: -1
+      limit: -1
+      overQuotaWeight: 1
+    memory:
+      quota: -1
+      limit: -1
+      overQuotaWeight: 1
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: test
+spec:
+  parentQueue: default
+  resources:
+    cpu:
+      quota: -1
+      limit: -1
+      overQuotaWeight: 1
+    gpu:
+      quota: -1
+      limit: -1
+      overQuotaWeight: 1
+    memory:
+      quota: -1
+      limit: -1
+      overQuotaWeight: 1
+```
+
+create gpu-sharing.yaml with below content 
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu-sharing
+  labels:
+    kai.scheduler/queue: test
+  annotations:
+    gpu-fraction: "0.5"
+spec:
+  schedulerName: kai-scheduler
+  containers:
+    - name: ubuntu
+      image: ubuntu
+      args: ["sleep", "infinity"]
+```
+
+apply the changes
+
+```
+kubectl apply -f queue.yaml
+kubectl apply -f gpu-sharing.yaml
+```
 
 ### Enable MicroK8s 
 

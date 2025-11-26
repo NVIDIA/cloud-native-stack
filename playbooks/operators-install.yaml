@@ -583,22 +583,6 @@
        line: "alias nvidia-smi='sudo chroot /run/nvidia/driver nvidia-smi'"
        state: present
 
-   - name: Install NVIDIA DRA Operator
-     shell: "helm install --version {{ dra_driver_version }} --create-namespace --namespace nvidia-dra-driver-gpu nvidia-dra-driver-gpu nvidia/nvidia-dra-driver-gpu -n nvidia-dra-driver-gpu --set gpuResourcesEnabledOverride=true     --set nvidiaDriverRoot=/run/nvidia/driver"
-     when: "enable_dra_driver == true and cns_nvidia_driver == false"
-     retries: 5
-     delay: 5
-     register: install_nvidia_dra_operator
-     until: install_nvidia_dra_operator is succeeded
-
-   - name: Install NVIDIA DRA Operator
-     shell: "helm install --version {{ dra_driver_version }} --create-namespace --namespace nvidia-dra-driver-gpu nvidia-dra-driver-gpu nvidia/nvidia-dra-driver-gpu -n nvidia-dra-driver-gpu --set gpuResourcesEnabledOverride=true     --set nvidiaDriverRoot=/"
-     when: "enable_dra_driver == true and cns_nvidia_driver == true"
-     retries: 5
-     delay: 5
-     register: install_nvidia_dra_operator_host_driver
-     until: install_nvidia_dra_operator_host_driver is succeeded
-
    - name: Install NIM Operator
      shell: "helm install --version {{ nim_operator_version }} --create-namespace --namespace nim-operator nim-operator nvidia/k8s-nim-operator -n nim-operator"
      when: "enable_nim_operator == true"

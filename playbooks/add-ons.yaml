@@ -135,18 +135,6 @@
      ignore_errors: true
      register: storageclass
 
-   - name: Install Dynamo Operator
-     shell: |
-       helm fetch https://helm.ngc.nvidia.com/nvidia/ai-dynamo/charts/dynamo-crds-{{ dynamo_release_version }}.tgz
-       helm fetch https://helm.ngc.nvidia.com/nvidia/ai-dynamo/charts/dynamo-platform-{{ dynamo_release_version }}.tgz
-       helm install dynamo-crds {{ ansible_user_dir }}/dynamo-crds-{{ dynamo_release_version }}.tgz  --namespace dynamo-platform --create-namespace --wait --atomic
-       helm install dynamo-platform {{ ansible_user_dir }}/dynamo-platform-{{ dynamo_release_version }}.tgz --namespace dynamo-platform
-     when: "enable_dynamo_cloud == true and storageclass.stdout != 'No resources found'"
-     retries: 5
-     delay: 5
-     register: install_dynamo_cloud
-     until: install_dynamo_cloud is succeeded
-
    - name: Copy files
      when: monitoring == true
      copy:
@@ -428,23 +416,47 @@
      when: kserve == true and kserve_install.stdout != '1'
      retries: 5
      delay: 30
-     until: kserve_check.stdout == 'Successfully installed KServe'
+     until: install_kserve is succeeded
      shell: |
-       helm uninstall --ignore-not-found kserve kserve-crd -n kserve
-       helm uninstall --ignore-not-found istio-ingressgateway istiod istio-base -n istio-system
-       helm uninstall --ignore-not-found cert-manager -n cert-manager
-       helm uninstall --ignore-not-found keda -n keda
-       helm uninstall --ignore-not-found knative-operator -n knative-serving
-       kubectl delete --ignore-not-found crd $(kubectl get crd | egrep 'kserve|istio|cert|knative' | awk '{print $1}')
-       curl -s "https://raw.githubusercontent.com/kserve/kserve/refs/tags/v{{ kserve_version }}/hack/quick_install.sh" | bash > /tmp/kserve-install.log; sleep 180; cat /tmp/kserve-install.log | tail -1f | cut -d " " -f2-
-     register: kserve_check
+       kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${GATEWAY_API_VERSION}/standard-install.yaml
+       helm repo add istio https://istio-release.storage.googleapis.com/charts --force-update
+       helm install istio-base istio/base -n istio-system --wait --set defaultRevision=default --create-namespace --version ${ISTIO_VERSION}
+       helm install istiod istio/istiod -n istio-system --wait --version ${ISTIO_VERSION} --set proxy.autoInject=disabled --set-string pilot.podAnnotations."cluster-autoscaler\.kubernetes\.io/safe-to-evict"=true
+       helm install istio-ingressgateway istio/gateway -n istio-system --version ${ISTIO_VERSION} --set-string podAnnotations."cluster-autoscaler\.kubernetes\.io/safe-to-evict"=true
+       sleep 20
+       helm repo add jetstack https://charts.jetstack.io --force-update
+       helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace  --version ${CERT_MANAGER_VERSION}  --set crds.enabled=true
+       helm install knative-operator --namespace knative-serving --create-namespace --wait https://github.com/knative/operator/releases/download/knative-${KNATIVE_OPERATOR_VERSION}/knative-operator-${KNATIVE_OPERATOR_VERSION}.tgz
+       kubectl apply -f - <<EOF
+       apiVersion: operator.knative.dev/v1beta1
+       kind: KnativeServing
+       metadata:
+         name: knative-serving
+         namespace: knative-serving
+       spec:
+         version: "${KNATIVE_SERVING_VERSION}"
+         config:
+           domain:
+         # Patch the external domain as the default domain svc.cluster.local is not exposed on ingress (from knative 1.8)
+             example.com: ""
+       EOF
+       helm install kserve-crd oci://ghcr.io/kserve/charts/kserve-crd --version ${KSERVE_VERSION} --namespace kserve --create-namespace --wait
+       helm install kserve oci://ghcr.io/kserve/charts/kserve --version ${KSERVE_VERSION} --namespace kserve --create-namespace --wait --set-string kserve.controller.deploymentMode="Serverless"
+     register: install_kserve
      failed_when: false
      ignore_errors: true
+     environment:
+       ISTIO_VERSION: "1.28.0"
+       KNATIVE_OPERATOR_VERSION: "v1.20.0"
+       KNATIVE_SERVING_VERSION: "1.20.0"
+       KSERVE_VERSION: "v0.16.0"
+       CERT_MANAGER_VERSION: "v1.19.1"
+       GATEWAY_API_VERSION: "v1.4.0"
 
    - name: Patch Knative Serving CRD
      when: kserve == true
      shell: |
-       kubectl patch configmap config-features -n knative-serving --type merge -p '{"data":{"kubernetes.podspec-nodeselector":"enabled"}}'
+       sleep 15; kubectl patch configmap config-features -n knative-serving --type merge -p '{"data":{"kubernetes.podspec-nodeselector":"enabled"}}'
        kubectl patch configmap config-features -n knative-serving --type merge -p '{"data":{"kubernetes.podspec-persistent-volume-claim":"enabled","kubernetes.podspec-persistent-volume-write":"enabled"}}'
      retries: 5
      delay: 5

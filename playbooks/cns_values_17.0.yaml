@@ -6,7 +6,7 @@ microk8s: no
 install_k8s: yes
 
 ## Components Versions
-# Container Runtime options are containerd, cri-o, cri-dockerd
+# Container Runtime options are containerd, cri-o
 container_runtime: "containerd"
 containerd_version: "2.2.0"
 runc_version: "1.3.3"
@@ -23,18 +23,16 @@ gpu_operator_version: "25.10.0"
 network_operator_version: "25.7.0"
 nim_operator_version: "3.0.1"
 nsight_operator_version: "1.1.2"
-kai_scheduler_version: "0.9.7"
+kai_scheduler_version: "0.10.2"
 local_path_provisioner: "0.0.31"
 nfs_provisioner: "4.0.18"
 metallb_version: "0.15.2"
 kserve_version: "0.16.0"
 prometheus_stack: "78.5.0"
 prometheus_adapter: "5.2.0"
-grafana_operator: "5.18.0"
+grafana_operator: "v5.18.0"
 elastic_stack: "9.0.0"
 lws_version: "0.7.0"
-dra_driver_version: "25.8.0"
-dynamo_release_version: "0.6.0"
 volcano_version: "1.13.0"
 
 # GPU Operator Values
@@ -93,39 +91,32 @@ k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
 # Enable NVIDIA Kubernetes AI Scheduler
-enable_kai_scheduler: yes
-
-#Enable NVIDIA Dynamic Resource Allocation(DRA) Driver
-enable_dra_driver: yes
-
-# Enable NVIDIA Dynamo Cloud, Note that Dynamo requires Storage Class on the cluster
-enable_dynamo_cloud: yes
+enable_kai_scheduler: no
 
 # Enable NVIDIA NSight Operator
 enable_nsight_operator: no
 
 # Install NVIDIA NIM Operator
-enable_nim_operator: yes
+enable_nim_operator: no
 
 # LeaderWorkerSet https://github.com/kubernetes-sigs/lws/tree/main
-lws: yes
+lws: no
 
 # Local Path Provisioner and NFS Provisoner as Storage option
-storage: yes
+storage: no
 
 # Monitoring Stack Prometheus/Grafana with GPU Metrics and Elastic Logging stack
-monitoring: yes
+monitoring: no 
 
 # Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
-kserve: yes
-
+kserve: no
 # Install MetalLB
-loadbalancer: yes
+loadbalancer: no
 # Example input loadbalancer_ip: "10.78.17.85/32"
 loadbalancer_ip: ""
 
 # Enable Volcano Scheduler
-volcano: yes
+volcano: no
 
 ## Cloud Native Stack Validation
 cns_validation: no

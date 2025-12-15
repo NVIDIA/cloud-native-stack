@@ -99,6 +99,8 @@ lws: no
 
 # Local Path Provisioner and NFS Provisoner as Storage option
 storage: no
+# NFS storage path
+nfs_path: "/data/nfs"
 
 # Monitoring Stack Prometheus/Grafana with GPU Metrics and Elastic Logging stack
 monitoring: no

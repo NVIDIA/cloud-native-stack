@@ -55,9 +55,9 @@
      block:
        - name: Setup Mounts for NFS
          shell: |
-           mkdir -p /data/nfs
-           chown nobody:nogroup /data/nfs
-           chmod 2770 /data/nfs
+           mkdir -p {{ nfs_path | default('/data/nfs') }}
+           chown nobody:nogroup {{ nfs_path | default('/data/nfs') }}
+           chmod 2770 {{ nfs_path | default('/data/nfs') }}
          retries: 5
          delay: 5
          register: setup_nfs_mounts
@@ -67,7 +67,7 @@
          lineinfile:
            path: /etc/exports
            insertafter: EOF
-           line: "/data/nfs  *(rw,sync,no_subtree_check,no_root_squash,insecure)"
+           line: "{{ nfs_path | default('/data/nfs') }}  *(rw,sync,no_subtree_check,no_root_squash,insecure)"
          retries: 5
          delay: 5
          register: update_nfs_exports
@@ -109,7 +109,7 @@
      shell: |
        helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner --force-update
        helm repo update
-       helm install --version {{ nfs_provisioner }} nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_default_ipv4.address }} --set nfs.path=/data/nfs --set storageClass.archiveOnDelete=false --create-namespace --namespace nfs-client
+       helm install --version {{ nfs_provisioner }} nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_default_ipv4.address }} --set nfs.path={{ nfs_path | default('/data/nfs') }} --set storageClass.archiveOnDelete=false --create-namespace --namespace nfs-client
        sleep 10
        kubectl patch storageclass nfs-client -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
      retries: 5

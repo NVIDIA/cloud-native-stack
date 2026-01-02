@@ -107,18 +107,18 @@ install_k8s: yes
 
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
-container_runtime: "cri-dockerd"
+container_runtime: "containerd"
 containerd_version: "2.2.0"
-runc_version: "1.3.3"
+runc_version: "1.4.0"
 cni_plugins_version: "1.7.1"
 containerd_max_concurrent_downloads: "5"
 nvidia_container_toolkit_version: "1.18.1"
 crio_version: "1.33.6"
 cri_dockerd_version: "0.4.0"
 k8s_version: "1.33.6"
-calico_version: "3.31.0"
+calico_version: "3.31.3"
 flannel_version: "0.25.6"
-helm_version: "4.0.0"
+helm_version: "4.0.4"
 gpu_operator_version: "25.10.1"
 network_operator_version: "25.7.0"
 nim_operator_version: "3.0.2"
@@ -126,21 +126,19 @@ nsight_operator_version: "1.1.2"
 kai_scheduler_version: "0.10.2"
 local_path_provisioner: "0.0.31"
 nfs_provisioner: "4.0.18"
-metallb_version: "0.15.2"
+metallb_version: "0.15.3"
 kserve_version: "0.16.0"
-prometheus_stack: "78.5.0"
+prometheus_stack: "79.9.0"
 prometheus_adapter: "5.2.0"
 grafana_operator: "5.18.0"
-elastic_stack: "9.0.0"
+elastic_stack: "9.2.1"
 lws_version: "0.7.0"
-dra_driver_version: "25.8.0"
-dynamo_release_version: "0.6.0"
 volcano_version: "1.13.0"
 
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "580.95.05"
+gpu_driver_version: "580.105.08"
 use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
@@ -181,7 +179,7 @@ https_proxy: ""
 
 # Cloud Native Stack for Developers Values
 ## Enable for Cloud Native Stack Developers
-cns_docker: yes
+cns_docker: no
 ## Enable For Cloud Native Stack Developers with TRD Driver
 cns_nvidia_driver: no
 nvidia_driver_mig: no
@@ -195,17 +193,11 @@ k8s_registry: "registry.k8s.io"
 # Enable NVIDIA Kubernetes AI Scheduler
 enable_kai_scheduler: no
 
-#Enable NVIDIA Dynamic Resource Allocation(DRA) Driver
-enable_dra_driver: no
-
-# Enable NVIDIA Dynamo Cloud, Note that Dynamo requires Storage Class on the cluster
-enable_dynamo_cloud: no
-
 # Enable NVIDIA NSight Operator
 enable_nsight_operator: no
 
 # Install NVIDIA NIM Operator
-enable_nim_operator: yes
+enable_nim_operator: no
 
 # LeaderWorkerSet https://github.com/kubernetes-sigs/lws/tree/main
 lws: no
@@ -223,6 +215,7 @@ kserve: no
 loadbalancer: no
 # Example input loadbalancer_ip: "10.78.17.85/32"
 loadbalancer_ip: ""
+kubernetes_host_ip: ""
 
 # Enable Volcano Scheduler
 volcano: no

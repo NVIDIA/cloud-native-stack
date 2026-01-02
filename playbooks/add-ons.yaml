@@ -382,7 +382,7 @@
    - name: Install LeaderWorkerSet on NVIDIA Cloud Native Stack
      ignore_errors: true
      failed_when: false
-     shell: helm install lws https://github.com/kubernetes-sigs/lws/releases/download/v{{ lws_version }}/lws-chart-v{{ lws_version }}.tgz --namespace lws-system  --create-namespace  --wait --timeout 300s
+     shell: helm install lws https://github.com/kubernetes-sigs/lws/releases/download/v{{ lws_version }}/lws-chart-{{ lws_version }}.tgz --namespace lws-system  --create-namespace  --wait --timeout 300s
      when: lws == true and lw_set.stdout != '1'
      retries: 5
      delay: 5
@@ -460,6 +460,8 @@
        kubectl patch configmap config-features -n knative-serving --type merge -p '{"data":{"kubernetes.podspec-persistent-volume-claim":"enabled","kubernetes.podspec-persistent-volume-write":"enabled"}}'
      retries: 5
      delay: 5
+     ignore_errors: true
+     failed_when: false
      register: patch_knative_serving_crd
      until: patch_knative_serving_crd is succeeded
 

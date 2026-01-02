@@ -161,19 +161,31 @@
      register: copy_network_files
      until: copy_network_files is succeeded
 
-   - name: Update Active mellanox NIC in network-operator-values.yaml
-     when: "enable_network_operator == true and network_operator_version < '24.10.1'"
-     failed_when: false
-     shell: 'sed -i "s/devices: \[.*\]/devices: \\[ {{ active_nic.stdout }}\]/g" {{ ansible_user_dir }}/network-operator-values.yaml'
+   - name: Download Mellanox NIC Cluster Policy YAML
+     ansible.builtin.get_url:
+       url: "https://raw.githubusercontent.com/Mellanox/network-operator/refs/tags/v{{ network_operator_version }}/example/crs/mellanox.com_v1alpha1_nicclusterpolicy_cr.yaml"
+       dest: "/tmp/mellanox_nic_policy.yaml"
+       mode: '0666'
+     register: download_mellanox_nic_policy
+     until: download_mellanox_nic_policy is succeeded
      retries: 5
      delay: 5
-     register: update_mellanox_nic
-     until: update_mellanox_nic is succeeded
+
+   - name: Update Mellanox Cluster Policy
+     when: "enable_network_operator == true"
+     ansible.builtin.shell: |
+       sed -i 's/nvstaging/nvidia/g' /tmp/mellanox_nic_policy.yaml
+       sed -i '/^spec:$/a\{% raw %}{% if deploy_ofed %}{% endraw %}' /tmp/mellanox_nic_policy.yaml
+       sed -i '/^  rdmaSharedDevicePlugin:/i\{% raw %}{% endif %}{% endraw %}' /tmp/mellanox_nic_policy.yaml
+     retries: 5
+     delay: 5
+     register: update_mellanox_cluster_policy
+     until: update_mellanox_cluster_policy is succeeded
 
    - name: Generate NIC Cluster Policy template
-     when: "enable_network_operator == true and network_operator_version >= '24.10.1'"
+     when: "enable_network_operator == true"
      copy:
-       src: "{{lookup('pipe', 'pwd')}}/files/nic-cluster-policy.yaml"
+       src: "/tmp/mellanox_nic_policy.yaml"
        dest: "{{ ansible_user_dir }}/nic-cluster-policy.yaml.j2"
      retries: 5
      delay: 5
@@ -181,7 +193,7 @@
      until: generate_nic_policy is succeeded
 
    - name: Create final NIC Cluster Policy configuration
-     when: "enable_network_operator == true and network_operator_version >= '24.10.1'"
+     when: "enable_network_operator == true"
      ansible.builtin.template:
        src: "{{ ansible_user_dir }}/nic-cluster-policy.yaml.j2"
        dest: "{{ ansible_user_dir }}/nic-cluster-policy.yaml"
@@ -189,15 +201,6 @@
      delay: 5
      register: create_nic_policy
      until: create_nic_policy is succeeded
-
-   - name: Update Active mellanox NIC in network-operator-values.yaml
-     when: "enable_network_operator == true and cns_version >= 4.1"
-     failed_when: false
-     shell: 'sed -i "s/              \"ifNames\": \[.*\]/              \"ifNames\": \\[\"{{ active_nic.stdout }}\"\]/g" {{ ansible_user_dir }}/nic-cluster-policy.yaml'
-     retries: 5
-     delay: 5
-     register: update_mellanox_nic_cns
-     until: update_mellanox_nic_cns is succeeded
 
    - name: Installing the Network Operator on NVIDIA Cloud Native Stack
      when: "enable_network_operator == true and cns_version >= 4.1"
@@ -212,15 +215,7 @@
      until: install_network_operator is succeeded
 
    - name: Installing the Network Operator on NVIDIA Cloud Native Stack
-     when: "enable_network_operator == true and  network_operator_version < '24.10.1'"
-     shell: "helm install --version {{ network_operator_version }} -f {{ ansible_user_dir }}/network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator"
-     retries: 5
-     delay: 5
-     register: install_network_operator_x86
-     until: install_network_operator_x86 is succeeded
-
-   - name: Installing the Network Operator on NVIDIA Cloud Native Stack
-     when: "enable_network_operator == true and  network_operator_version >= '24.10.1'"
+     when: "enable_network_operator == true"
      shell: "helm install --version {{ network_operator_version }} -f {{ ansible_user_dir }}/network-operator-value.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator"
      retries: 5
      delay: 5
@@ -228,7 +223,7 @@
      until: install_network_operator_x86_new is succeeded
 
    - name: Applying the NIC Cluster Policy on NVIDIA Cloud Native Stack
-     when: "enable_network_operator == true and ansible_architecture == 'x86_64' and network_operator_version >= '24.10.1'"
+     when: "enable_network_operator == true and ansible_architecture == 'x86_64'"
      shell: "kubectl apply -f {{ ansible_user_dir }}/nic-cluster-policy.yaml"
      retries: 5
      delay: 5
@@ -457,7 +452,7 @@
 
    - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Stack
      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-     shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+     shell: "sleep 180 && helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
      retries: 5
      delay: 5
      register: install_gpu_operator_network

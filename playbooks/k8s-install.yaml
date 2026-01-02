@@ -259,6 +259,14 @@
      register: set_subnet
      until: set_subnet is succeeded
 
+   - name: Kubernetes Host IP
+     set_fact:
+       kubernetes_host_ip: "{% if kubernetes_host_ip == '' %}{{ network.stdout_lines[0] }}{% else %}{{ kubernetes_host_ip }}{% endif %}"
+     retries: 5
+     delay: 5
+     register: set_kubernetes_host_ip
+     until: set_kubernetes_host_ip is succeeded
+     
    - name: CRI Socket
      set_fact:
        cri_socket: "{% if container_runtime == 'containerd' %}unix:///run/containerd/containerd.sock{% elif container_runtime == 'cri-o' %}unix:///var/run/crio/crio.sock{%elif container_runtime == 'cri-dockerd' %}unix:///run/cri-dockerd.sock{% endif %}"

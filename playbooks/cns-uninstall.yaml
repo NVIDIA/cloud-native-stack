@@ -65,8 +65,7 @@
      become: false
      lineinfile:
        path: '{{ ansible_user_dir }}/.bashrc'
-       insertafter: '^PATH='
-       line: 'PATH=$PATH:/snap/bin'
+       regexp: '.*\/snap.*'
        state: absent
 
    - name: add nvidia-smi alias
@@ -415,6 +414,7 @@
      with_items:
         - /var/snap
         - /var/lib/snapd/snap
+        - /snap
 
    - name: Reboot the system
      when: "cns_nvidia_driver == true and microk8s == false"

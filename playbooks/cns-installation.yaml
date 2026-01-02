@@ -175,8 +175,14 @@
         create: yes
         mode: '0644'
 
+    - name: check nvidia-uvm.conf exists
+      shell: ls -l /etc/modprobe.d/nvidia-uvm.conf
+      register: nvidia_uvm_conf
+      ignore_errors: true
+      failed_when: false
+
     - name: Update grub configuration
-      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' or nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' or nvidia_id.stdout == '2bb5'
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' or nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' or nvidia_uvm_conf.rc != 0 and nvidia_id.stdout == '2bb5'
       command: update-grub
       become: true
 
@@ -203,7 +209,7 @@
           or
           (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and numa_balancing_check.rc != 0)
           or
-          (nvidia_id.stdout == '2bb5')
+          (nvidia_uvm_conf.rc != 0 and nvidia_id.stdout == '2bb5')
         )
       become: true
       reboot:
@@ -382,19 +388,19 @@
 - import_playbook: nvidia-driver.yaml
   when: "cns_nvidia_driver == true and release != 'tegra'"
 
+- when: "cns_docker == true and release != 'tegra'"
+  import_playbook: nvidia-docker.yaml
+
 - when: "cns_version > 4.1 and microk8s == false and install_k8s == true"
   import_playbook: k8s-install.yaml
 
 - when: "cns_version > 4.1 and release != 'tegra' and microk8s == false and install_k8s == true"
   import_playbook: operators-install.yaml
 
-- when: "cns_docker == true and release != 'tegra'"
-  import_playbook: nvidia-docker.yaml
-
 - when: "microk8s == true"
   import_playbook: microk8s.yaml
 
-- when: "storage == true and install_k8s == true or monitoring == true and install_k8s == true or kserve == true and install_k8s == true or loadbalancer == true and install_k8s == true or lws == true and install_k8s == true"
+- when: "storage == true and install_k8s == true or monitoring == true and install_k8s == true or kserve == true and install_k8s == true or loadbalancer == true and install_k8s == true or lws == true and install_k8s == true or enable_kai_scheduler == true and install_k8s == true or volcano == true and install_k8s == true"
   import_playbook: add-ons.yaml
   
 - hosts: all

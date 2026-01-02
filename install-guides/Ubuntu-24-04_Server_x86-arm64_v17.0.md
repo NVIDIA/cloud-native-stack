@@ -8,14 +8,14 @@ NVIDIA Cloud Native Stack v17.0 includes:
 - Containerd 2.2.0
 - Kubernetes version 1.34.2
 - Helm 4.0.0
-- NVIDIA GPU Operator 25.10.0
-  - NVIDIA GPU Driver: 580.82.07
-  - NVIDIA Container Toolkit: 1.17.8
-  - NVIDIA K8S Device Plugin: 0.17.2
-  - NVIDIA DCGM-Exporter: 4.2.3-4.1.3
-  - NVIDIA DCGM: 4.2.3-1
-  - NVIDIA GPU Feature Discovery: 0.17.2
-  - NVIDIA K8s MIG Manager: 0.12.1
+- NVIDIA GPU Operator 25.10.1
+  - NVIDIA GPU Driver: 580.105.08
+  - NVIDIA Container Toolkit: 1.18.1
+  - NVIDIA K8S Device Plugin: 0.18.1
+  - NVIDIA DCGM-Exporter: 4.4.2-4.7.0
+  - NVIDIA DCGM: 4.4.2-1
+  - NVIDIA GPU Feature Discovery: 0.18.2
+  - NVIDIA K8s MIG Manager: 0.13.1
   - Node Feature Discovery: 0.17.3
   - NVIDIA KubeVirt GPU Device Plugin: 1.3.1
   - NVIDIA GDS Driver: 2.20.5
@@ -606,7 +606,7 @@ Install GPU Operator:
 `NOTE:` If you installed Network Operator, please skip the below command and follow the [GPU Operator with RDMA](#GPU-Operator-with-RDMA)
 
 ```
-helm install --version 25.10.0 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.version=580.82.07 --wait --generate-name
+helm install --version 25.10.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.version=580.105.08 --wait --generate-name
 ```
 
 #### GPU Operator with RDMA 
@@ -617,7 +617,7 @@ helm install --version 25.10.0 --create-namespace --namespace nvidia-gpu-operato
 After Network Operator installation is completed, execute the below command to install the GPU Operator to load nv_peer_mem modules:
 
 ```
- helm install --version 25.10.0 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.rdma.enabled=true  --wait --generate-name
+ helm install --version 25.10.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.rdma.enabled=true  --wait --generate-name
 ```
 
 #### GPU Operator with Host MOFED Driver and RDMA 
@@ -625,7 +625,7 @@ After Network Operator installation is completed, execute the below command to i
 If the host is already installed MOFED driver without network operator, execute the below command to install the GPU Operator to load nv_peer_mem module 
 
 ```
- helm install --version 25.10.0 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait --generate-name 
+ helm install --version 25.10.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait --generate-name 
 
 ```
 
@@ -634,7 +634,7 @@ If the host is already installed MOFED driver without network operator, execute 
 Execute the below command to enable the GPU Direct Storage Driver on GPU Operator 
 
 ```
-helm install --version 25.10.0 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set gds.enabled=true
+helm install --version 25.10.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set gds.enabled=true
 ```
 For more information refer, [GPU Direct Storage](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/gpu-operator-rdma.html)
 
@@ -988,7 +988,7 @@ Output:
 ``` 
 Mon Nov 24 20:39:28 2025
 +-----------------------------------------------------------------------------------------+
-| NVIDIA-SMI 580.95.05             Driver Version: 580.95.05     CUDA Version: 13.0       |
+| NVIDIA-SMI 580.105.08             Driver Version: 580.105.08     CUDA Version: 13.0       |
 |-----------------------------------------+------------------------+----------------------+
 | GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
@@ -1124,7 +1124,7 @@ Execute the below commands to uninstall the GPU Operator:
 ```
 $ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 nvidia-gpu-operator            1               2025-11-24 20:23:28.063421701 +0000 UTC deployed        gpu-operator-25.10.0      25.10.0 
+gpu-operator-1606173805 nvidia-gpu-operator            1               2025-11-24 20:23:28.063421701 +0000 UTC deployed        gpu-operator-25.10.1      25.10.1 
 
 $ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 

@@ -341,8 +341,9 @@
       register: add_user_to_docker_group
       until: add_user_to_docker_group is succeeded
 
+
     - name: Configure CDI for Docker/Containerd
-      shell: nvidia-ctk runtime configure --runtime docker --cdi.enabled --nvidia-set-as-default; sed -i 's/^#root/root/' /etc/nvidia-container-runtime/config.toml
+      shell: "nvidia-ctk runtime configure --runtime docker --cdi.enabled --nvidia-set-as-default; nvidia-ctk runtime configure --runtime containerd --cdi.enabled --nvidia-set-as-default; nvidia-ctk config --config-file /usr/local/nvidia/toolkit/.config/nvidia-container-runtime/config.toml --in-place --set accept-nvidia-visible-devices-as-volume-mounts=true"
       become: true
       when: nvidia_docker_exists.rc >= 1 and container_runtime == 'cri-docker' or nvidia_docker_exists.rc >= 1 and container_runtime == 'containerd' 
       ignore_errors: true
@@ -352,7 +353,7 @@
       until: configure_cdi is succeeded
 
     - name: Configure CDI for CRI-O Container Runtime
-      shell: nvidia-ctk runtime configure --runtime crio --cdi.enabled --nvidia-set-as-default; sed -i 's/^#root/root/' /etc/nvidia-container-runtime/config.toml
+      shell: nvidia-ctk runtime configure --runtime crio --cdi.enabled --nvidia-set-as-default
       become: true
       when: nvidia_docker_exists.rc >= 1 and container_runtime == 'cri-o' 
       ignore_errors: true
@@ -360,6 +361,19 @@
       delay: 5
       register: configure_cdi
       until: configure_cdi is succeeded
+
+    - name: Configure GPU Operator NVIDIA Driver for Nvidia Container Runtime
+      become: true
+      when: cns_nvidia_driver == false
+      ignore_errors: true
+      lineinfile:
+        path: /etc/nvidia-container-runtime/config.toml
+        regexp: '#root = "/run/nvidia/driver"'
+        line: 'root = "/run/nvidia/driver"'
+      retries: 5
+      delay: 5
+      register: configure_nvidia_driver
+      until: configure_nvidia_driver is succeeded
 
     - name: Reload the configurations
       become: true
@@ -393,7 +407,7 @@
     - name: Download NGC CLI
       when: ansible_architecture == 'x86_64'
       get_url:
-        url: https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.9.10/files/ngccli_linux.zip
+        url: https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.10.0/files/ngccli_linux.zip
         dest: /tmp/ngccli_linux.zip
         mode: 0664
       retries: 5
@@ -404,7 +418,7 @@
     - name: Download NGC CLI
       when: ansible_architecture == 'aarch64'
       get_url:
-        url: https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.9.10/files/ngccli_arm64.zip
+        url: https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.10.0/files/ngccli_arm64.zip
         dest: /tmp/ngccli_linux.zip
         mode: 0664
       retries: 5
@@ -417,27 +431,29 @@
         - name: Install NGC CLI
           unarchive:
             src: /tmp/ngccli_linux.zip
-            dest: "{{ ansible_user_dir }}"
+            dest: "{{ ansible_user_dir }}/"
             remote_src: yes
           retries: 5
           delay: 5
           register: install_ngc_cli
           until: install_ngc_cli is succeeded
 
-        - name: change ngc file permission
+        - name: Ensure ngc file is executable
           file:
             path: "{{ ansible_user_dir }}/ngc-cli/ngc"
-            mode: '0777'
+            mode: '0755'
+            state: file
           retries: 5
           delay: 5
           register: change_ngc_permission
           until: change_ngc_permission is succeeded
 
-        - name: Add Path to bashrc
+        - name: Ensure ngc-cli path is in bashrc
           lineinfile:
             path: "{{ ansible_user_dir }}/.bashrc"
-            insertafter: '^PATH='
-            line: 'PATH=$PATH:{{ ansible_user_dir }}/ngc-cli'
+            insertafter: EOF
+            regexp: '^(export )?PATH=.*{{ ansible_user_dir }}/ngc-cli/?(:|$)'
+            line: 'export PATH=$PATH:{{ ansible_user_dir }}/ngc-cli'
             state: present
           retries: 5
           delay: 5

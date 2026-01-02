@@ -8,18 +8,17 @@ NVIDIA Cloud Native Stack v16.1 includes:
 - Containerd 2.2.0
 - Kubernetes version 1.33.6
 - Helm 4.0.0
-- NVIDIA GPU Driver: 580.95.05
+- NVIDIA GPU Driver: 580.105.08
 - NVIDIA Container Toolkit: 1.18.0
-- NVIDIA GPU Operator 25.10.0
-  - NVIDIA K8S Device Plugin: 0.18.0
-  - NVIDIA DCGM-Exporter: v4.4.1-4.6.0
-  - NVIDIA DCGM: 4.4.1
-  - NVIDIA GPU Feature Discovery: 0.18.2
-  - NVIDIA K8s MIG Manager: 0.13.0
-  - Node Feature Discovery: 0.18.2
+- NVIDIA GPU Operator 25.10.1
+  - NVIDIA K8S Device Plugin: 0.18.1
+  - NVIDIA DCGM-Exporter: 4.4.2-4.7.0
+  - NVIDIA DCGM: 4.4.2-1
+  - NVIDIA GPU Feature Discovery: 0.18.1
+  - NVIDIA K8s MIG Manager: 0.13.1
+  - Node Feature Discovery: 0.17.3
   - NVIDIA KubeVirt GPU Device Plugin: 1.3.1
-  - NVIDIA GDS Driver: 2.26.6
-  - NVIDIA Driver Manager for Kubernetes: 0.9.0
+  - NVIDIA GDS Driver: 2.20.5
   - NVIDIA Kata Manager for Kubernetes: 0.2.3
   - NVIDIA Confidential Computing Manager for Kubernetes: 0.1.1
 
@@ -96,7 +95,7 @@ Expected Output:
 ``` 
 Mon Nov 24 20:39:28 2025
 +-----------------------------------------------------------------------------------------+
-| NVIDIA-SMI 580.95.05             Driver Version: 580.95.05     CUDA Version: 13.0       |
+| NVIDIA-SMI 580.105.08             Driver Version: 580.105.08     CUDA Version: 13.0       |
 |-----------------------------------------+------------------------+----------------------+
 | GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
@@ -202,7 +201,7 @@ sudo apt update
 Install NVIDIA Conatiner Toolkit
 
 ```
-sudo apt install -y nvidia-container-toolkit=1.17.5-1
+sudo apt install -y nvidia-container-toolkit=1.18.1-1
 ```
 
 
@@ -727,7 +726,7 @@ Install GPU Operator:
 `NOTE:` As we are preinstalled with NVIDIA Driver and NVIDIA Container Toolkit, we need to set as `false` when installing the GPU Operator
 
 ```
- helm install --version 25.10.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+ helm install --version 25.10.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 ```
 
 #### Validating the State of the GPU Operator:
@@ -803,7 +802,7 @@ Output:
 ``` 
 Mon Nov 24 20:39:28 2025
 +-----------------------------------------------------------------------------------------+
-| NVIDIA-SMI 580.95.05             Driver Version: 580.95.05     CUDA Version: 13.0       |
+| NVIDIA-SMI 580.105.08             Driver Version: 580.105.08     CUDA Version: 13.0       |
 |-----------------------------------------+------------------------+----------------------+
 | GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
@@ -944,7 +943,7 @@ Execute the below commands to uninstall the GPU Operator:
 ```
 $ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 nvidia-gpu-operator            1               2025-11-24 20:23:28.063421701 +0000 UTC deployed        gpu-operator-25.10.0      v25.10.0
+gpu-operator-1606173805 nvidia-gpu-operator            1               2025-11-24 20:23:28.063421701 +0000 UTC deployed        gpu-operator-25.10.1      v25.10.1
 
 $ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 ```

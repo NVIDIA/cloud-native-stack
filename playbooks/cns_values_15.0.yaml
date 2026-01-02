@@ -29,7 +29,7 @@ metallb_version: "0.14.9"
 kserve_version: "0.15"
 prometheus_stack: "70.3.0"
 prometheus_adapter: "4.13.0"
-grafana_operator: "v5.17.0"
+grafana_operator: "5.17.0"
 elastic_stack: "8.17.4"
 lws_version: "0.5.1"
 
@@ -88,6 +88,12 @@ k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.ke
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
+# Enable NVIDIA Kubernetes AI Scheduler
+enable_kai_scheduler: no
+
+# Enable Volcano Scheduler
+volcano: no
+
 # Enable NVIDIA NSight Operator
 enable_nsight_operator: no
 
@@ -110,6 +116,7 @@ kserve: no
 loadbalancer: no
 # Example input loadbalancer_ip: "10.78.17.85/32"
 loadbalancer_ip: ""
+kubernetes_host_ip: ""
 
 ## Cloud Native Stack Validation
 cns_validation: no

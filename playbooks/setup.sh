@@ -327,6 +327,8 @@ if [ $1 == "install" ]; then
                 ansible -c local -i localhost, all -m lineinfile -a "path={{lookup('pipe', 'pwd')}}/cns_values_"$version".yaml regexp='confidential_computing: no' line='confidential_computing: yes'"
                 ansible-playbook -c local -i localhost, cns_cc_bios.yaml
                 ansible-playbook -i hosts cns-installation.yaml
+        elif [[ $2 == 'launchpad' ]]; then
+                ansible-playbook -i hosts cns-installation.yaml
       	elif [ -z $2 ]; then
 		echo "Installing NVIDIA Cloud Native Stack Version $version"
 		id=$(sudo dmidecode --string system-uuid | awk -F'-' '{print $1}' | cut -c -3)

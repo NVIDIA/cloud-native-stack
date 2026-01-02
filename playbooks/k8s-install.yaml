@@ -259,6 +259,14 @@
      register: set_subnet
      until: set_subnet is succeeded
 
+   - name: Kubernetes Host IP
+     set_fact:
+       kubernetes_host_ip: "{% if kubernetes_host_ip == '' %}{{ network.stdout_lines[0] }}{% else %}{{ kubernetes_host_ip }}{% endif %}"
+     retries: 5
+     delay: 5
+     register: set_kubernetes_host_ip
+     until: set_kubernetes_host_ip is succeeded
+     
    - name: CRI Socket
      set_fact:
        cri_socket: "{% if container_runtime == 'containerd' %}unix:///run/containerd/containerd.sock{% elif container_runtime == 'cri-o' %}unix:///var/run/crio/crio.sock{%elif container_runtime == 'cri-dockerd' %}unix:///run/cri-dockerd.sock{% endif %}"
@@ -267,24 +275,33 @@
      register: set_cri_socket
      until: set_cri_socket is succeeded
 
-   - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
-     block:
-       - name: Generate kubeadm init config
-         template:
-           src: kubeadm-init-config.template
-           dest: /tmp/kubeadm-init-config.yaml
-         retries: 5
-         delay: 5
-         register: generate_kubeadm_config
-         until: generate_kubeadm_config is succeeded
+   - name: Generate kubeadm init config
+     when: "cns_version >= 16.0"
+     template:
+       src: kubeadm-init-config-new.template
+       dest: /tmp/kubeadm-init-config.yaml
+     retries: 5
+     delay: 5
+     register: generate_kubeadm_config
+     until: generate_kubeadm_config is succeeded
 
-       - name: Run kubeadm init
-         command: 'kubeadm init --config=/tmp/kubeadm-init-config.yaml'
-         become: true
-         register: kubeadm
-         retries: 5
-         delay: 5
-         until: kubeadm is succeeded
+   - name: Generate kubeadm init config
+     when: "cns_version < 16.0"
+     template:
+       src: kubeadm-init-config.template
+       dest: /tmp/kubeadm-init-config.yaml
+     retries: 5
+     delay: 5
+     register: generate_kubeadm_config
+     until: generate_kubeadm_config is succeeded
+
+   - name: Run kubeadm init
+     command: 'kubeadm init --config=/tmp/kubeadm-init-config.yaml'
+     become: true
+     register: kubeadm
+     retries: 5
+     delay: 5
+     until: kubeadm is succeeded
 
    - name: Create kube directory
      file:
@@ -321,35 +338,20 @@
 
    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
      when: "cns_version >= 7.1 and release != 'tegra' or cns_version == 6.4 and release != 'tegra'"
-     command: "kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/calico.yaml"
+     shell: |
+        curl -s https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/calico.yaml | sed 's/192.168.0.0\/16/192.168.32.0\/22/g' | kubectl apply -f -
      retries: 5
      delay: 5
      register: install_networking_plugin_calico
      until: install_networking_plugin_calico is succeeded
 
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
-     when: "cns_version <= 6.3 and ansible_distribution_major_version == '20' and release != 'tegra' or cns_version == 7.0 and release != 'tegra' and ansible_distribution_major_version == '22'"
-     command: "kubectl apply -f https://projectcalico.docs.tigera.io/archive/v{{ calico_version }}/manifests/calico.yaml"
-     retries: 5
-     delay: 5
-     register: install_networking_plugin_calico_old
-     until: install_networking_plugin_calico_old is succeeded
-
    - name: Update Network plugin for Calico on NVIDIA Cloud Native Stack
      when: "cns_version >= 3.1 and release != 'tegra'"
-     shell: "sleep 5; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*"
+     shell: "sleep 25; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*"
      retries: 5
      delay: 5
      register: update_network_plugin_calico
      until: update_network_plugin_calico is succeeded
-
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
-     when: "release == 'tegra'"
-     command: "kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v{{ flannel_version }}/Documentation/kube-flannel.yml"
-     retries: 5
-     delay: 5
-     register: install_networking_plugin_flannel
-     until: install_networking_plugin_flannel is succeeded
 
    - name: Taint the Kubernetes Control Plane node
      failed_when: false

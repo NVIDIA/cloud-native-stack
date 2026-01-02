@@ -15,7 +15,7 @@ This page describes the steps required to use Ansible to install the NVIDIA Clou
 ## Prerequisites
 
 - system has direct internet access
-- system should have an Operating system either Ubuntu 20.04 and above or RHEL 8.7
+- system should have an Operating system either Ubuntu 22.04 and above or RHEL 8.7
 - system has adequate internet bandWidth
 - DNS server is working fine on the System
 - system can access Google repo(for k8s installation)
@@ -80,12 +80,12 @@ Cloud Native Stack Supports below versions.
 
 Available versions are:
 
-- 16.0 (Ubuntu 24.04)
-- 15.1 (Ubuntu 24.04)
-- 15.0 (Ubuntu 24.04)
-- 14.2
-- 14.1
-- 14.0
+- 17.0
+- 16.1
+- 16.0
+- 15.2 
+- 15.1
+- 15.0
 
 Edit the `cns_version.yaml` and update the version you want to install
 
@@ -97,8 +97,8 @@ If you want to cusomize any predefined components versions or any other custom p
 
 Example:
 ```
-$ nano cns_values_15.1.yaml
-cns_version: 15.1
+$ nano cns_values_16.1.yaml
+cns_version: 16.1
 
 ## MicroK8s cluster
 microk8s: no
@@ -108,35 +108,37 @@ install_k8s: yes
 ## Components Versions
 # Container Runtime options are containerd, cri-o, cri-dockerd
 container_runtime: "containerd"
-containerd_version: "2.1.3"
-runc_version: "1.3.0"
+containerd_version: "2.2.0"
+runc_version: "1.4.0"
 cni_plugins_version: "1.7.1"
 containerd_max_concurrent_downloads: "5"
-nvidia_container_toolkit_version: "1.17.8"
-crio_version: "1.32.6"
-cri_dockerd_version: "0.3.18"
-k8s_version: "1.32.6"
-calico_version: "3.30.2"
+nvidia_container_toolkit_version: "1.18.1"
+crio_version: "1.33.6"
+cri_dockerd_version: "0.4.0"
+k8s_version: "1.33.6"
+calico_version: "3.31.3"
 flannel_version: "0.25.6"
-helm_version: "3.18.3"
-gpu_operator_version: "25.3.1"
-network_operator_version: "25.4.0"
-nim_operator_version: "2.0.1"
+helm_version: "4.0.4"
+gpu_operator_version: "25.10.1"
+network_operator_version: "25.7.0"
+nim_operator_version: "3.0.2"
 nsight_operator_version: "1.1.2"
+kai_scheduler_version: "0.10.2"
 local_path_provisioner: "0.0.31"
 nfs_provisioner: "4.0.18"
-metallb_version: "0.15.2"
-kserve_version: "0.15"
-prometheus_stack: "75.9.0"
-prometheus_adapter: "4.15.1"
-grafana_operator: "v5.18.0"
-elastic_stack: "9.0.0"
-lws_version: "0.6.2"
+metallb_version: "0.15.3"
+kserve_version: "0.16.0"
+prometheus_stack: "79.9.0"
+prometheus_adapter: "5.2.0"
+grafana_operator: "5.18.0"
+elastic_stack: "9.2.1"
+lws_version: "0.7.0"
+volcano_version: "1.13.0"
 
 # GPU Operator Values
 enable_gpu_operator: yes
 confidential_computing: no
-gpu_driver_version: "570.158.01"
+gpu_driver_version: "580.105.08"
 use_open_kernel_module: no
 enable_mig: no
 mig_profile: all-disabled
@@ -183,10 +185,13 @@ cns_nvidia_driver: no
 nvidia_driver_mig: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key"
-k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.33/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
+
+# Enable NVIDIA Kubernetes AI Scheduler
+enable_kai_scheduler: no
 
 # Enable NVIDIA NSight Operator
 enable_nsight_operator: no
@@ -210,6 +215,10 @@ kserve: no
 loadbalancer: no
 # Example input loadbalancer_ip: "10.78.17.85/32"
 loadbalancer_ip: ""
+kubernetes_host_ip: ""
+
+# Enable Volcano Scheduler
+volcano: no
 
 ## Cloud Native Stack Validation
 cns_validation: no
@@ -325,9 +334,9 @@ If you're planning to enable DRA, then it's recommended to enable CDI with GPU O
 
 Example:
 ```
-$ nano cns_values_15.1.yaml
+$ nano cns_values_16.1.yaml
 
-cns_version: 15.1
+cns_version: 16.1
 
 enable_cdi: yes
 ```
@@ -338,9 +347,9 @@ If you wnt to enable NIM Operator on Cloud Native Stack, you can enable the conf
 
 Example:
 ```
-$ nano cns_values_15.1.yaml
+$ nano cns_values_16.1.yaml
 
-cns_version: 15.1
+cns_version: 16.1
 
 enable_nim_operator: yes
 ```
@@ -352,13 +361,97 @@ If you wnt to enable Nsight Operator on Cloud Native Stack, you can enable the c
 
 Example:
 ```
-$ nano cns_values_15.1.yaml
+$ nano cns_values_16.1.yaml
 
-cns_version: 15.1
+cns_version: 16.1
 
 enable_nsight_operator: yes
 ```
 For more information, Refer [Nsight Operator](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/devtools/helm-charts/nsight-operator)
+
+## Enable Kubernetes AI Scheduler
+
+If you wnt to enable Kubernetes AI Scheduler on Cloud Native Stack, you can enable the configuration in `cns_values_xx.yaml` and trigger the installation
+
+Example:
+```
+$ nano cns_values_16.1.yaml
+
+cns_version: 16.1
+
+enable_kai_scheduler: yes
+```
+For more information, Refer [NVIDIA KAI Scheduler](https://github.com/NVIDIA/KAI-Scheduler/tree/main)
+
+sample validation
+
+create queue.yaml with below content 
+```
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: default
+spec:
+  resources:
+    cpu:
+      quota: -1
+      limit: -1
+      overQuotaWeight: 1
+    gpu:
+      quota: -1
+      limit: -1
+      overQuotaWeight: 1
+    memory:
+      quota: -1
+      limit: -1
+      overQuotaWeight: 1
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: test
+spec:
+  parentQueue: default
+  resources:
+    cpu:
+      quota: -1
+      limit: -1
+      overQuotaWeight: 1
+    gpu:
+      quota: -1
+      limit: -1
+      overQuotaWeight: 1
+    memory:
+      quota: -1
+      limit: -1
+      overQuotaWeight: 1
+```
+
+create gpu-sharing.yaml with below content 
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu-sharing
+  labels:
+    kai.scheduler/queue: test
+  annotations:
+    gpu-fraction: "0.5"
+spec:
+  schedulerName: kai-scheduler
+  containers:
+    - name: ubuntu
+      image: ubuntu
+      args: ["sleep", "infinity"]
+```
+
+apply the changes
+
+```
+kubectl apply -f queue.yaml
+kubectl apply -f gpu-sharing.yaml
+```
 
 ### Enable MicroK8s 
 
@@ -366,9 +459,9 @@ If you want to use microk8s you can enable the configuration in `cns_values_xx.y
 
 Example:
 ```
-$ nano cns_values_15.1.yaml
+$ nano cns_values_16.1.yaml
 
-cns_version: 15.1
+cns_version: 16.1
 
 microk8s: yes
 ```
@@ -379,9 +472,9 @@ If you want to use LWS you can enable the configuration in `cns_values_xx.yaml` 
 
 Example:
 ```
-$ nano cns_values_15.1.yaml
+$ nano cns_values_16.1.yaml
 
-cns_version: 15.1
+cns_version: 16.1
 
 lws: yes
 ```
@@ -395,7 +488,7 @@ If you want to use Kserve on CNS, you can enable the configuration in `cns_value
 
 Example: 
 ```
-nano cns_values_15.1.yaml
+nano cns_values_16.1.yaml
 
 # Local Path Provisioner and NFS Provisoner as Storage option
 storage: yes
@@ -848,7 +941,7 @@ Upgrade option is available from one minor version to next minor version of CNS.
 
 Example: Cloud Native Stack 13.0 can upgrade to 13.1 but 13.x can not upgrade to 14.x
 
-`NOTE:` Currently there's a containerd limitation for upgrade from CNS 14.0 to CNS 15.1, please find the details [here](https://github.com/containerd/containerd/issues/11535)
+`NOTE:` Currently there's a containerd limitation for upgrade from CNS 14.0 to CNS 16.1, please find the details [here](https://github.com/containerd/containerd/issues/11535)
 
 ### Uninstall
 

@@ -1,3 +1,16 @@
+release_25_10_1:
+  gpu_operator_version: v25.10.1
+  gpu_driver_version: 580.105.08
+  driver_manager_version: 0.10.0
+  container_toolkit: v1.18.0
+  device_plugin: v0.18.0
+  dcgm_exporter_version: 4.4.1-4.6.0
+  nfd_version: v0.18.3
+  gfd_version: v0.18.1
+  mig_manager_version: v0.14.0
+  dcgm_version: 4.2.3-1
+  validator_version: v25.10.1
+  gds_driver: 2.20.5
 release_25_3_4:
   gpu_operator_version: v25.3.4
   gpu_driver_version: 580.82.07

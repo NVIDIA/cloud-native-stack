@@ -65,8 +65,15 @@
      become: false
      lineinfile:
        path: '{{ ansible_user_dir }}/.bashrc'
-       insertafter: '^PATH='
-       line: 'PATH=$PATH:/snap/bin'
+       regexp: '.*\/snap.*'
+       state: absent
+
+   - name: add nvidia-smi alias
+     become: false
+     lineinfile:
+       path: '{{ ansible_user_dir }}/.bashrc'
+       regexp: '^alias nvidia-smi='
+       line: "alias nvidia-smi='sudo chroot /run/nvidia/driver nvidia-smi'"
        state: absent
 
    - set_fact:
@@ -407,8 +414,9 @@
      with_items:
         - /var/snap
         - /var/lib/snapd/snap
+        - /snap
 
    - name: Reboot the system
-     when: "cns_docker == true and microk8s == false or cns_nvidia_driver == true and microk8s == false"
+     when: "cns_nvidia_driver == true and microk8s == false"
      reboot:
        reboot_timeout: 900

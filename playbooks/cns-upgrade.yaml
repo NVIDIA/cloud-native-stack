@@ -42,6 +42,20 @@
        content: |
          cns_version: 15.1
 
+   - name: Create Cloud Native Stack cns_version.yaml
+     when: "k8sversion.stdout == 'v1.32.6'"
+     copy:
+       dest: "/tmp/cns_version.yaml"
+       content: |
+         cns_version: 15.2
+
+   - name: Create Cloud Native Stack cns_version.yaml
+     when: "k8sversion.stdout == 'v1.33.2'"
+     copy:
+       dest: "/tmp/cns_version.yaml"
+       content: |
+         cns_version: 16.1
+
    - name: Fetch cns_version.yaml
      ansible.builtin.fetch:
        src: "/tmp/cns_version.yaml"
@@ -64,9 +78,13 @@
        - { regex: 'cns_docker: no', replace: 'cns_docker: yes' }
        - { regex: 'cns_nvidia_driver: no', replace: 'cns_nvidia_driver: yes' }
 
-   - name: Uninstall Operator if NVIDIA Cude Driver
+   - name: Uninstall Operator if NVIDIA Cuda Driver
      when: cns_nvidia_driver == true
      shell: helm del $(helm ls -A | grep gpu-oper | awk '{print $1}') --namespace nvidia-gpu-operator; sleep 60
+
+   - name: CleanUp Containerd Config
+     become: true
+     shell: rm -rf /etc/containerd/*
 
 - import_playbook: prerequisites.yaml
 
@@ -87,8 +105,22 @@
      failed_when: false
 
    - name: Check Current Running Cloud Native Stack Version
-     shell: kubectl get nodes --no-headers | awk '{print $NF}'
+     shell: kubectl version -o json | jq .serverVersion.gitVersion | sed 's/\"//g'
      register: k8sversion
+
+   - name: Update Kubeadm configmap
+     shell: "kubectl -n kube-system get cm kubeadm-config -o yaml | sed 's/^ *kubernetesVersion: .*/  kubernetesVersion: v{{ k8s_version }}/' | kubectl apply -f -"
+     when: "'running' in k8sup.stdout"
+
+   - name: Upgrade the Cloud Native Stack from 16.0 to 16.1
+     shell: kubeadm upgrade apply v1.33.6 --force --ignore-preflight-errors=CreateJob
+     when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.33.2'"
+     become: true
+
+   - name: Upgrade the Cloud Native Stack from 15.1 to 15.2
+     shell: kubeadm upgrade apply v1.32.10 --force --ignore-preflight-errors=CreateJob
+     when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.32.6'"
+     become: true
 
    - name: Upgrade the Cloud Native Stack from 15.0 to 15.1
      shell: kubeadm upgrade apply v1.32.6 --force --ignore-preflight-errors=CreateJob
@@ -105,13 +137,12 @@
      when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.31.2'"
      become: true
 
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 15.0 or 14.2
-     when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.32.2' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.31.6' and release != 'tegra'"
-     command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.2/manifests/calico.yaml
-
-   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack 14.1
-     when: "'running' in k8sup.stdout and k8sversion.stdout == 'v1.30.6' and release != 'tegra' or 'running' in k8sup.stdout and k8sversion.stdout == 'v1.31.2' and release != 'tegra'"
-     command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/calico.yaml
+   - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
+     shell: curl -s https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/calico.yaml | sed 's/192.168.0.0\/16/192.168.32.0\/22/g' | kubectl apply -f -
+     retries: 5
+     delay: 5
+     register: install_networking_plugin_calico
+     until: install_networking_plugin_calico is succeeded
 
    - pause:
        seconds: 15

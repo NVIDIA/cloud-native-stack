@@ -18,17 +18,29 @@
   vars_files:
     - cns_values.yaml
   tasks:
+   - name: check Local Path Storage installed
+     shell: kubectl get sc | awk '{print $1}' | grep local-path
+     failed_when: false
+     ignore_errors: true
+     register: local_path
+
    - name: Install Local Path Provisoner on NVIDIA Cloud Native Stack
-     shell: kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v{{ local_path_provisioner }}/deploy/local-path-storage.yaml
-     when: storage == true
+     shell: helm repo add containeroo https://charts.containeroo.ch; helm install local-path-provisioner containeroo/local-path-provisioner --version {{ local_path_provisioner }} --create-namespace --namespace local-path-storage --force
+     when: storage == true and local_path.stdout == ''
      retries: 5
      delay: 5
      register: install_local_path_provisioner
      until: install_local_path_provisioner is succeeded
 
+   - name: check NFS Storage installed
+     shell: kubectl get sc | awk '{print $1}' | grep nfs
+     failed_when: false
+     ignore_errors: true
+     register: nfs_storage
+
    - name: Install NFS Packages on RHEL
      become: true
-     when: storage == true and ansible_distribution == 'RedHat'
+     when: storage == true and ansible_distribution == 'RedHat' and nfs_storage.stdout == ''
      yum:
       name: ['nfs-utils']
       state: present
@@ -39,7 +51,7 @@
 
    - name: Install NFS Packages on Ubuntu
      become: true
-     when: storage == true and ansible_distribution == 'Ubuntu'
+     when: storage == true and ansible_distribution == 'Ubuntu' and nfs_storage.stdout == ''
      apt:
       name: ['nfs-kernel-server', 'nfs-common']
       state: present
@@ -51,7 +63,7 @@
 
    - name: Setup NFS provisioner
      become: true
-     when: storage == true
+     when: storage == true and nfs_storage.stdout == ''
      block:
        - name: Setup Mounts for NFS
          shell: |
@@ -82,7 +94,7 @@
 
    - name: NFS service restart service on Ubuntu
      become: true
-     when: storage == true and ansible_distribution == 'Ubuntu'
+     when: storage == true and ansible_distribution == 'Ubuntu' and nfs_storage.stdout == ''
      systemd_service:
        name: nfs-kernel-server
        state: restarted
@@ -94,7 +106,7 @@
 
    - name: NFS Service restart service on RHEL
      become: true
-     when: storage == true and ansible_distribution == 'RedHat'
+     when: storage == true and ansible_distribution == 'RedHat' and nfs_storage.stdout == ''
      systemd_service:
        name: nfs-server
        state: restarted
@@ -105,17 +117,23 @@
      until: restart_nfs_rhel is succeeded
 
    - name: Install NFS External Provisioner
-     when: storage == true
+     when: storage == true and nfs_storage.stdout == ''
      shell: |
        helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner --force-update
        helm repo update
-       helm install --version {{ nfs_provisioner }} nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_default_ipv4.address }} --set nfs.path=/data/nfs --set storageClass.archiveOnDelete=false --create-namespace --namespace nfs-client
+       helm install --version {{ nfs_provisioner }} nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_default_ipv4.address }} --set nfs.path=/data/nfs --set storageClass.archiveOnDelete=false --create-namespace --namespace nfs-client --force
        sleep 10
        kubectl patch storageclass nfs-client -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
      retries: 5
      delay: 5
      register: install_nfs_provisioner
      until: install_nfs_provisioner is succeeded
+
+   - name: check StorageClass is installed
+     shell: kubectl get sc | tr -d '\n'
+     failed_when: false
+     ignore_errors: true
+     register: storageclass
 
    - name: Copy files
      when: monitoring == true
@@ -131,35 +149,15 @@
      register: copy_monitoring_files
      until: copy_monitoring_files is succeeded
 
-   - name: Install Kserve on Kubernetes
-     when: kserve == true
-     retries: 5
-     delay: 5
-     until: kserve_check.stdout == 'Successfully installed KServe'
-     shell: curl -s "https://raw.githubusercontent.com/kserve/kserve/release-{{ kserve_version }}/hack/quick_install.sh" | bash > /tmp/kserve-install.log; cat /tmp/kserve-install.log | tail -1f | cut -d " " -f2-
-     register: kserve_check
+   - name: check Metal LB installed
+     shell: kubectl get pods -A | grep metallb | awk '{print $2}' | head -n 1 | wc -l | tr -d '\n'
      failed_when: false
      ignore_errors: true
-
-   - name: Apply Nginx IngressClass Name for Kserve
-     when: kserve == true
-     shell: |
-       kubectl apply -f - <<EOF
-       apiVersion: networking.k8s.io/v1
-       kind: IngressClass
-       metadata:
-         name: nginx
-       spec:
-         controller: istio.io/ingress-controller
-       EOF
-     retries: 5
-     delay: 5
-     register: apply_ingress_config
-     until: apply_ingress_config is succeeded
+     register: metallb
 
    - name: Install MetalLB
-     shell: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v{{ metallb_version }}/config/manifests/metallb-native.yaml; sleep 45"
-     when: loadbalancer == true
+     shell: "helm repo add metallb https://metallb.github.io/metallb; helm install my-metallb metallb/metallb --version {{ metallb_version }} --create-namespace --namespace metallb-system --force; sleep 180"
+     when: loadbalancer == true and metallb.stdout != '1'
      retries: 5
      delay: 5
      register: install_metallb
@@ -173,11 +171,12 @@
      until: network is succeeded
 
    - name: Local IP
+     when: loadbalancer == true and metallb.stdout != '1'
      set_fact:
        load_balancer_ip: "{% if loadbalancer_ip == '' %}{{ network.stdout_lines[0] }}/32{%elif loadbalancer_ip != '' %}{{ loadbalancer_ip }}{% endif %}"
 
    - name: Apply Layer2 Config for MetalLB
-     when: loadbalancer == true
+     when: loadbalancer == true and metallb.stdout != '1'
      shell: |
        kubectl apply -f - <<EOF
        apiVersion: metallb.io/v1beta1
@@ -203,16 +202,22 @@
      register: apply_metallb_config
      until: apply_metallb_config is succeeded
 
+   - name: check Elastic Stack Installed
+     shell: kubectl get pods -A | grep elastic | awk '{print $2}' | head -n 1 | wc -l | tr -d '\n'
+     failed_when: false
+     ignore_errors: true
+     register: elastic
+
    - name: Install Elastic Stack
      ignore_errors: true
      failed_when: false
      shell: "{{ item }}"
-     when: monitoring == true
+     when: monitoring == true and elastic.stdout != '1'
      with_items:
        - helm repo add elastic https://helm.elastic.co
        - helm repo add fluent https://fluent.github.io/helm-charts/
        - helm repo update
-       - helm install elastic-operator elastic/eck-operator -n elastic-system --create-namespace
+       - helm install elastic-operator elastic/eck-operator -n elastic-system --create-namespace --force
        - sleep 5
        - kubectl create ns monitoring
      retries: 5
@@ -222,7 +227,7 @@
 
    - name: Apply Elastic Config
      ignore_errors: true
-     when:  monitoring == true
+     when:  monitoring == true and elastic.stdout != '1'
      shell: |
        kubectl apply -f - <<EOF
        apiVersion: elasticsearch.k8s.elastic.co/v1
@@ -244,7 +249,7 @@
                resources:
                  requests:
                    storage: 5Gi
-               storageClassName: local-path
+               storageClassName: nfs-client
            config:
             node.store.allow_mmap: false
        ---
@@ -270,7 +275,7 @@
 
    - name: Install Fluent Bit
      shell: "{{ item }}"
-     when: monitoring == true
+     when: monitoring == true and elastic.stdout != '1'
      ignore_errors: true
      failed_when: false
      with_items:
@@ -285,9 +290,15 @@
      register: install_fluent_bit
      until: install_fluent_bit is succeeded
 
+   - name: Check Prometheus is installed
+     shell: kubectl get pods -A | grep prometheus | awk '{print $2}' | head -n 1 | wc -l | tr -d '\n'
+     failed_when: false
+     ignore_errors: true
+     register: prometheus
+
    - name: Install Prometheus Stack on NVIDIA Cloud Native Stack
      ignore_errors: true
-     when: monitoring == true
+     when: monitoring == true and prometheus.stdout != '1'
      block:
        - name: Add Prometheus Helm repository
          shell: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -313,7 +324,7 @@
          until: install_prometheus is succeeded
 
        - name: Install Grafana Operator
-         shell: "helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version {{ grafana_operator }} -n monitoring"
+         shell: "helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version v{{ grafana_operator }} -n monitoring"
          retries: 5
          delay: 5
          register: install_grafana_operator
@@ -362,12 +373,110 @@
          register: delete_dcgm_pod
          until: delete_dcgm_pod is succeeded
 
+   - name: check LeaderWorkerSet is installed
+     shell: kubectl get pods -A | grep lws | awk '{print $2}' | head -n 1 | wc -l | tr -d '\n'
+     failed_when: false
+     ignore_errors: true
+     register: lw_set
+
    - name: Install LeaderWorkerSet on NVIDIA Cloud Native Stack
      ignore_errors: true
      failed_when: false
-     shell: "kubectl apply --server-side -f https://github.com/kubernetes-sigs/lws/releases/download/v{{ lws_version }}/manifests.yaml"
-     when: lws == true
+     shell: helm install lws https://github.com/kubernetes-sigs/lws/releases/download/v{{ lws_version }}/lws-chart-{{ lws_version }}.tgz --namespace lws-system  --create-namespace  --wait --timeout 300s
+     when: lws == true and lw_set.stdout != '1'
      retries: 5
      delay: 5
      register: install_lws
      until: install_lws is succeeded
+
+   - name: check Volcano Scheduler is installed
+     shell: kubectl get pods -A | grep volcano | awk '{print $2}' | head -n 1 | wc -l | tr -d '\n'
+     failed_when: false
+     ignore_errors: true
+     register: volcano_scheduler
+
+   - name: Install Volcano Scheduler
+     when: volcano == true and volcano_scheduler.stdout != '1'
+     shell: |
+       helm repo add volcano-sh https://volcano-sh.github.io/helm-charts
+       helm repo update
+       helm install volcano volcano-sh/volcano --version {{ volcano_version }} --namespace volcano-system --create-namespace --force
+     retries: 5
+     delay: 5
+     register: install_volcano_scheduler
+     until: install_volcano_scheduler is succeeded
+
+   - name: check Kserve is Installed
+     shell: kubectl get pods -A | grep kserve | awk '{print $2}' | head -n 1 | wc -l | tr -d '\n'
+     failed_when: false
+     ignore_errors: true
+     register: kserve_install  
+
+   - name: Install Kserve on Kubernetes
+     when: kserve == true and kserve_install.stdout != '1'
+     retries: 5
+     delay: 30
+     until: install_kserve is succeeded
+     shell: |
+       kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${GATEWAY_API_VERSION}/standard-install.yaml
+       helm repo add istio https://istio-release.storage.googleapis.com/charts --force-update
+       helm install istio-base istio/base -n istio-system --wait --set defaultRevision=default --create-namespace --version ${ISTIO_VERSION}
+       helm install istiod istio/istiod -n istio-system --wait --version ${ISTIO_VERSION} --set proxy.autoInject=disabled --set-string pilot.podAnnotations."cluster-autoscaler\.kubernetes\.io/safe-to-evict"=true
+       helm install istio-ingressgateway istio/gateway -n istio-system --version ${ISTIO_VERSION} --set-string podAnnotations."cluster-autoscaler\.kubernetes\.io/safe-to-evict"=true
+       sleep 20
+       helm repo add jetstack https://charts.jetstack.io --force-update
+       helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace  --version ${CERT_MANAGER_VERSION}  --set crds.enabled=true
+       helm install knative-operator --namespace knative-serving --create-namespace --wait https://github.com/knative/operator/releases/download/knative-${KNATIVE_OPERATOR_VERSION}/knative-operator-${KNATIVE_OPERATOR_VERSION}.tgz
+       kubectl apply -f - <<EOF
+       apiVersion: operator.knative.dev/v1beta1
+       kind: KnativeServing
+       metadata:
+         name: knative-serving
+         namespace: knative-serving
+       spec:
+         version: "${KNATIVE_SERVING_VERSION}"
+         config:
+           domain:
+         # Patch the external domain as the default domain svc.cluster.local is not exposed on ingress (from knative 1.8)
+             example.com: ""
+       EOF
+       helm install kserve-crd oci://ghcr.io/kserve/charts/kserve-crd --version ${KSERVE_VERSION} --namespace kserve --create-namespace --wait
+       helm install kserve oci://ghcr.io/kserve/charts/kserve --version ${KSERVE_VERSION} --namespace kserve --create-namespace --wait --set-string kserve.controller.deploymentMode="Serverless"
+     register: install_kserve
+     failed_when: false
+     ignore_errors: true
+     environment:
+       ISTIO_VERSION: "1.28.0"
+       KNATIVE_OPERATOR_VERSION: "v1.20.0"
+       KNATIVE_SERVING_VERSION: "1.20.0"
+       KSERVE_VERSION: "v0.16.0"
+       CERT_MANAGER_VERSION: "v1.19.1"
+       GATEWAY_API_VERSION: "v1.4.0"
+
+   - name: Patch Knative Serving CRD
+     when: kserve == true
+     shell: |
+       sleep 15; kubectl patch configmap config-features -n knative-serving --type merge -p '{"data":{"kubernetes.podspec-nodeselector":"enabled"}}'
+       kubectl patch configmap config-features -n knative-serving --type merge -p '{"data":{"kubernetes.podspec-persistent-volume-claim":"enabled","kubernetes.podspec-persistent-volume-write":"enabled"}}'
+     retries: 5
+     delay: 5
+     ignore_errors: true
+     failed_when: false
+     register: patch_knative_serving_crd
+     until: patch_knative_serving_crd is succeeded
+
+   - name: Apply Nginx IngressClass Name for Kserve
+     when: kserve == true and kserve_install.stdout != '1'
+     shell: |
+       kubectl apply -f - <<EOF
+       apiVersion: networking.k8s.io/v1
+       kind: IngressClass
+       metadata:
+         name: nginx
+       spec:
+         controller: istio.io/ingress-controller
+       EOF
+     retries: 5
+     delay: 5
+     register: apply_ingress_config
+     until: apply_ingress_config is succeeded

@@ -1,0 +1,34 @@
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+nodeRegistration:
+  criSocket: "{{ cri_socket }}"
+localAPIEndpoint:
+  advertiseAddress: "{{ kubernetes_host_ip }}"
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+apiServer:
+  extraArgs:
+  - name: "feature-gates"
+    value: "DynamicResourceAllocation=true"
+  - name: "runtime-config"
+    value: "resource.k8s.io/v1beta1=true"
+  - name: "runtime-config"
+    value: "resource.k8s.io/v1beta2=true"
+controllerManager:
+  extraArgs:
+  - name: "feature-gates"
+    value: "DynamicResourceAllocation=true"
+scheduler:
+  extraArgs:
+  - name: "feature-gates"
+    value: "DynamicResourceAllocation=true"
+networking:
+  podSubnet: "{{ subnet }}"
+kubernetesVersion: "v{{ k8s_version }}"
+imageRepository: "{{ k8s_registry }}"
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+featureGates:
+  DynamicResourceAllocation: true

@@ -290,6 +290,8 @@
             - {name: "net.bridge.bridge-nf-call-ip6tables", value: "1", reload: no}
             - {name: "net.bridge.bridge-nf-call-iptables", value: "1", reload: no}
             - {name: "net.ipv4.ip_forward", value: "1", reload: yes}
+            - {name: "net.ipv4.conf.all.rp_filter", value: "0", reload: yes}
+            - {name: "net.ipv4.conf.default.rp_filter", value: "0", reload: yes}
             - {name: "fs.inotify.max_user_watches", value: "2099999999", reload: no}
             - {name: "fs.inotify.max_user_instances", value: "2099999999", reload: no}
             - {name: "fs.inotify.max_queued_events", value: "2099999999", reload: yes}
@@ -956,6 +958,14 @@
       delay: 5
       register: update_docker_service
       until: update_docker_service is succeeded
+
+    - name: Add current user to docker group
+      when: container_runtime == 'cri-dockerd'
+      become: true
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
 
     - name: Starting and enabling the required services
       become: true

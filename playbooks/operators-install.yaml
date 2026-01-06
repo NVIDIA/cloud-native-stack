@@ -571,12 +571,16 @@
      until: container_networking_changes is succeeded
 
    - name: add nvidia-smi alias
-     become: false
+     when: "cns_nvidia_driver == false"
      lineinfile:
        path: '{{ ansible_user_dir }}/.bashrc'
        regexp: '^alias nvidia-smi='
        line: "alias nvidia-smi='sudo chroot /run/nvidia/driver nvidia-smi'"
        state: present
+     retries: 5
+     delay: 5
+     register: add_nvidia_smi_alias
+     until: add_nvidia_smi_alias is succeeded
 
    - name: Install NIM Operator
      shell: "helm install --version {{ nim_operator_version }} --create-namespace --namespace nim-operator nim-operator nvidia/k8s-nim-operator -n nim-operator"

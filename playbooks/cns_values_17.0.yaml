@@ -1,4 +1,4 @@
-cns_version: 16.1
+cns_version: 17.0
 
 ## MicroK8s cluster
 microk8s: no
@@ -13,9 +13,9 @@ runc_version: "1.4.0"
 cni_plugins_version: "1.7.1"
 containerd_max_concurrent_downloads: "5"
 nvidia_container_toolkit_version: "1.18.1"
-crio_version: "1.33.6"
+crio_version: "1.34.2"
 cri_dockerd_version: "0.4.0"
-k8s_version: "1.33.6"
+k8s_version: "1.34.2"
 calico_version: "3.31.3"
 flannel_version: "0.25.6"
 helm_version: "4.0.4"
@@ -85,8 +85,8 @@ cns_nvidia_driver: no
 nvidia_driver_mig: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key"
-k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.33/rpm/repodata/repomd.xml.key"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.34/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.34/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
@@ -106,10 +106,11 @@ lws: no
 storage: no
 
 # Monitoring Stack Prometheus/Grafana with GPU Metrics and Elastic Logging stack
-monitoring: no
+monitoring: no 
 
 # Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
 kserve: no
+
 
 # Install MetalLB
 loadbalancer: no

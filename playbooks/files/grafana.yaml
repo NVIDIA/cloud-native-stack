@@ -45,7 +45,7 @@ spec:
         - name: grafana
           port: 3000
           nodePort: 32222
-  version: 11.2.0
+  version: 12.2.1
 
 ---
 apiVersion: grafana.integreatly.org/v1beta1

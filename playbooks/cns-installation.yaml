@@ -102,10 +102,10 @@
       failed_when: false
       ignore_errors: true
 
-    - name: Verify NVIDIA device has GB200
+    - name: Verify NVIDIA device has GB200/GB300
       fail:
-        msg: "GB200 device id not found in {{ nvidia_id.stdout }}"
-      when: nvidia_id.stdout != '2941'
+        msg: "GB200 or GB300 device id not found in {{ nvidia_id.stdout }}"
+      when: nvidia_id.stdout != '2941' or nvidia_id.stdout != '31c2'
       ignore_errors: true
       failed_when: false
 
@@ -140,7 +140,7 @@
         nvidia_kernel: "{{ nvidia_kernel.stdout }}"
 
     - name: Ensure iommu_passthrough option
-      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and iommu_passthrough_check.rc != 0
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and iommu_passthrough_check.rc != 0 or nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and iommu_passthrough_check.rc != 0
       become: true
       ansible.builtin.lineinfile:
         path: /etc/default/grub.d/iommu_passthrough.cfg
@@ -149,7 +149,7 @@
         mode: '0644'
 
     - name: Ensure init_on_alloc option
-      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and init_on_alloc_check.rc != 0
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and init_on_alloc_check.rc != 0 or nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and init_on_alloc_check.rc != 0
       become: true
       ansible.builtin.lineinfile:
         path: /etc/default/grub.d/disable-init-on-alloc.cfg
@@ -158,7 +158,7 @@
         mode: '0644'
 
     - name: Ensure disable-numa-balancing option
-      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and numa_balancing_check.rc != 0
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and numa_balancing_check.rc != 0 or nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and numa_balancing_check.rc != 0
       become: true
       ansible.builtin.lineinfile:
         path: /etc/default/grub.d/disable-numa-balancing.cfg
@@ -166,8 +166,23 @@
         create: yes
         mode: '0644'
 
+    - name: Disable HMM on NVIDIA UVM for RTX Pro 6000
+      become: true
+      when: nvidia_id.stdout == '2bb5'
+      ansible.builtin.lineinfile:
+        path: /etc/modprobe.d/nvidia-uvm.conf
+        line: 'options nvidia-uvm uvm_disable_hmm=1'
+        create: yes
+        mode: '0644'
+
+    - name: check nvidia-uvm.conf exists
+      shell: ls -l /etc/modprobe.d/nvidia-uvm.conf
+      register: nvidia_uvm_conf
+      ignore_errors: true
+      failed_when: false
+
     - name: Update grub configuration
-      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941'
+      when: nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' or nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' or nvidia_uvm_conf.rc != 0 and nvidia_id.stdout == '2bb5'
       command: update-grub
       become: true
 
@@ -187,6 +202,14 @@
           (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and init_on_alloc_check.rc != 0)
           or
           (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and numa_balancing_check.rc != 0)
+          or
+          (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and iommu_passthrough_check.rc != 0)
+          or
+          (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and init_on_alloc_check.rc != 0)
+          or
+          (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and numa_balancing_check.rc != 0)
+          or
+          (nvidia_uvm_conf.rc != 0 and nvidia_id.stdout == '2bb5')
         )
       become: true
       reboot:
@@ -377,7 +400,7 @@
 - when: "microk8s == true"
   import_playbook: microk8s.yaml
 
-- when: "storage == true and install_k8s == true or monitoring == true and install_k8s == true or kserve == true and install_k8s == true or loadbalancer == true and install_k8s == true or lws == true and install_k8s == true"
+- when: "storage == true and install_k8s == true or monitoring == true and install_k8s == true or kserve == true and install_k8s == true or loadbalancer == true and install_k8s == true or lws == true and install_k8s == true or enable_kai_scheduler == true and install_k8s == true or volcano == true and install_k8s == true"
   import_playbook: add-ons.yaml
   
 - hosts: all

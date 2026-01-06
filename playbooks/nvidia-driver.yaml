@@ -269,6 +269,20 @@
           register: install_driver_packages_2
           until: install_driver_packages_2 is succeeded
 
+    - name: Install NVIDIA Utils on Ubuntu
+      become: true
+      when: "ansible_distribution == 'Ubuntu'"
+      ignore_errors: true
+      apt:
+        name: ['nvidia-compute-utils-{{ driver_version }}={{ gpu_driver_version }}*', 'libnvidia-cfg1-{{ driver_version }}={{ gpu_driver_version}}*', 'nvidia-persistenced={{ gpu_driver_version}}*']
+        state: present
+        update_cache: true
+        force: yes
+      retries: 5
+      delay: 5
+      register: install_nvidia_utils_ubuntu
+      until: install_nvidia_utils_ubuntu is succeeded
+
     - name: Enable MIG with nvidia-smi
       become: true
       shell: nvidia-smi -mig 1

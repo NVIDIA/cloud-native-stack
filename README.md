@@ -159,6 +159,6 @@ Please open an [issue](https://github.com/NVIDIA/cloud-native-stack/issues) on t
 - [NVIDIA LaunchPad Labs](https://docs.nvidia.com/launchpad/index.html)
 - [Cloud Native Stack on LaunchPad](https://docs.nvidia.com/LaunchPad/developer-labs/overview.html)
 - [NVIDIA GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/overview.html)
-- [NVIDIA Network Operator](https://docs.nvidia.com/networking/display/COKAN10/Network+Operator)
+- [NVIDIA Network Operator](https://docs.nvidia.com/networking/software/cloud-orchestration/index.html)
 - [NVIDIA Certified Systems](https://www.nvidia.com/en-us/data-center/products/certified-systems/)
 - [NVIDIA GPU Cloud (NGC)](https://catalog.ngc.nvidia.com/)

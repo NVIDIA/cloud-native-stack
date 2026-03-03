@@ -40,7 +40,7 @@
          sleep 10
          status=$(kubectl get pods dnsutils | awk '{print $3}' | grep -v STATUS)
        done
-       kubectl exec -i -t dnsutils -- nslookup archive.ubuntu.com | grep 'Name:' | uniq | awk '{print $NF}' | head -n1
+       kubectl exec -i dnsutils -- nslookup archive.ubuntu.com | grep 'Name:' | uniq | awk '{print $NF}' | head -n1
      register: dns_check
      retries: 5
      delay: 5

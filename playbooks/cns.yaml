@@ -13,6 +13,9 @@
     cni_plugins_version: "1.7.1"
     containerd_max_concurrent_downloads: "5"
     nvidia_container_toolkit_version: "1.18.1"
+    docker_ce_version: "29.4.3"
+    docker_ce_apt_version: "5:{{ docker_ce_version }}-1~ubuntu.{{ ansible_distribution_version }}~{{ ansible_distribution_release }}"
+    docker_apt_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
     crio_version: "1.33.6"
     cri_dockerd_version: "0.4.0"
     k8s_version: "1.33.6"
@@ -1464,7 +1467,7 @@
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_repository:
-        repo: "deb https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [arch={{ docker_apt_arch }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
       retries: 5
@@ -1545,9 +1548,15 @@
     - name: Install Docker on Ubuntu
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
-      package:
-        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin'] 
-        state: latest
+      ansible.builtin.apt:
+        name:
+          - "docker-ce={{ docker_ce_apt_version }}"
+          - "docker-ce-cli={{ docker_ce_apt_version }}"
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+        allow_downgrades: true
       register: docker_status
       retries: 5
       delay: 5
@@ -1936,7 +1945,7 @@
       become: true
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and cns_docker == true
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [arch={{ docker_apt_arch }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
 
@@ -2014,16 +2023,28 @@
     - name: Install Docker on Ubuntu
       become: true
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and microk8s == false and cns_docker == true
-      package:
-        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
-        state: latest
+      ansible.builtin.apt:
+        name:
+          - "docker-ce={{ docker_ce_apt_version }}"
+          - "docker-ce-cli={{ docker_ce_apt_version }}"
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+        allow_downgrades: true
 
     - name: Install Docker on Ubuntu
       become: true
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and microk8s == true and cns_docker == true
-      package:
-        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
-        state: latest
+      ansible.builtin.apt:
+        name:
+          - "docker-ce={{ docker_ce_apt_version }}"
+          - "docker-ce-cli={{ docker_ce_apt_version }}"
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+        allow_downgrades: true
 
     - name: Install Docker on RHEL
       become: true

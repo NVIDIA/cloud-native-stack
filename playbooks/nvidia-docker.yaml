@@ -87,7 +87,7 @@
     - name: Add Docker repository into sources list
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [arch={{ docker_apt_arch }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
       retries: 5
@@ -179,9 +179,15 @@
 
     - name: Install Docker on Ubuntu
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and microk8s == false
-      package:
-        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
-        state: latest
+      ansible.builtin.apt:
+        name:
+          - "docker-ce={{ docker_ce_apt_version }}"
+          - "docker-ce-cli={{ docker_ce_apt_version }}"
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+        allow_downgrades: true
       retries: 5
       delay: 5
       register: install_docker_ubuntu
@@ -189,9 +195,15 @@
 
     - name: Install Docker on Ubuntu
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and microk8s == true
-      package:
-        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
-        state: latest
+      ansible.builtin.apt:
+        name:
+          - "docker-ce={{ docker_ce_apt_version }}"
+          - "docker-ce-cli={{ docker_ce_apt_version }}"
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+        allow_downgrades: true
       retries: 5
       delay: 5
       register: install_docker_ubuntu_microk8s

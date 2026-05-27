@@ -61,24 +61,25 @@
       register: install_docker_deps_rhel
       until: install_docker_deps_rhel is succeeded
 
-    - name: create docker.asc file
+    - name: Create Docker APT KeyRing directory
       when: ansible_distribution == 'Ubuntu'
       become: true
       file: 
-        path: /etc/apt/keyrings/docker.asc
-        mode: '0644'
-        state: touch
+        path: /etc/apt/keyrings
+        mode: '0755'
+        state: directory
       retries: 5
       delay: 5
-      register: create_docker_asc
-      until: create_docker_asc is succeeded
+      register: create_docker_keyring_dir
+      until: create_docker_keyring_dir is succeeded
 
     - name: Add Docker APT signing key
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
-      ansible.builtin.apt_key:
+      become: true
+      ansible.builtin.get_url:
         url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
-        keyring: /etc/apt/keyrings/docker.asc
-        state: present
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
       retries: 5
       delay: 5
       register: add_docker_key
@@ -247,14 +248,41 @@
 
     - name: Add NVIDIA Docker apt signing key for Ubuntu
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
-      apt_key:
+      become: true
+      get_url:
         url: https://nvidia.github.io/libnvidia-container/gpgkey
-        keyring: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-        state: present
+        dest: /tmp/nvidia-container-toolkit-keyring.asc
+        mode: '0644'
+      retries: 5
+      delay: 5
+      register: download_nvidia_docker_key
+      until: download_nvidia_docker_key is succeeded
+
+    - name: Check NVIDIA Container Toolkit apt signing keyring for Ubuntu
+      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      become: true
+      stat:
+        path: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+      register: nvidia_docker_keyring
+
+    - name: Add NVIDIA Container Toolkit apt signing key for Ubuntu
+      when:
+        - nvidia_docker_exists.rc >= 1
+        - ansible_distribution == 'Ubuntu'
+        - download_nvidia_docker_key.changed or not nvidia_docker_keyring.stat.exists
+      become: true
+      command: "gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg /tmp/nvidia-container-toolkit-keyring.asc"
       retries: 5
       delay: 5
       register: add_nvidia_docker_key
       until: add_nvidia_docker_key is succeeded
+
+    - name: Set NVIDIA Container Toolkit apt signing key permissions for Ubuntu
+      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      become: true
+      file:
+        path: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+        mode: '0644'
 
     - name: Get NVIDIA Container Toolkit Apt list
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'

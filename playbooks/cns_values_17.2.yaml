@@ -1,0 +1,154 @@
+cns_version: 17.2
+
+## MicroK8s cluster
+microk8s: no
+## Kubernetes Install with Kubeadm
+install_k8s: yes
+
+## Components Versions
+# Container Runtime options are containerd, cri-o
+container_runtime: "containerd"
+containerd_version: "2.2.0"
+runc_version: "1.4.0"
+cni_plugins_version: "1.7.1"
+containerd_max_concurrent_downloads: "5"
+nvidia_container_toolkit_version: "1.18.1"
+docker_ce_version: "29.4.3"
+docker_ce_apt_version: "5:{{ docker_ce_version }}-1~ubuntu.{{ ansible_distribution_version }}~{{ ansible_distribution_release }}"
+docker_apt_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+crio_version: "1.35.4"
+cri_dockerd_version: "0.4.0"
+k8s_version: "1.35.6"
+calico_version: "3.31.3"
+flannel_version: "0.25.6"
+helm_version: "4.0.4"
+gpu_operator_version: "25.10.1"
+network_operator_version: "25.7.0"
+nim_operator_version: "3.0.2"
+nsight_operator_version: "1.1.2"
+kai_scheduler_version: "0.10.2"
+local_path_provisioner: "0.0.31"
+nfs_provisioner: "4.0.18"
+metallb_version: "0.15.3"
+kserve_version: "0.16.0"
+prometheus_stack: "79.9.0"
+prometheus_adapter: "5.2.0"
+grafana_operator: "5.18.0"
+elastic_stack: "9.2.1"
+lws_version: "0.7.0"
+volcano_version: "1.13.0"
+
+# GPU Operator Values
+enable_gpu_operator: yes
+confidential_computing: no
+gpu_driver_version: "580.105.08"
+use_open_kernel_module: no
+enable_mig: no
+mig_profile: all-disabled
+mig_strategy: single
+# To use GDS, use_open_kernel_module needs to be enabled
+enable_gds: no
+#Secure Boot for only Ubuntu
+enable_secure_boot: no
+enable_cdi: no
+enable_vgpu: no
+vgpu_license_server: ""
+# URL of Helm repo to be added. If using NGC get this from the fetch command in the console
+helm_repository: "https://helm.ngc.nvidia.com/nvidia"
+# Name of the helm chart to be deployed
+gpu_operator_helm_chart: nvidia/gpu-operator
+## This is most likely GPU Operator Driver Registry
+gpu_operator_driver_registry: "nvcr.io/nvidia"
+
+# NGC Values
+## If using a private/protected registry. NGC API Key. Leave blank for public registries
+ngc_registry_password: ""
+## This is most likely an NGC email
+ngc_registry_email: ""
+ngc_registry_username: "$oauthtoken"
+
+# Network Operator Values
+## If the Network Operator is yes then make sure enable_rdma as well yes
+enable_network_operator: no
+## Enable RDMA yes for NVIDIA Certification
+enable_rdma: no
+## Enable for MLNX-OFED Driver Deployment
+deploy_ofed: no
+
+# Prxoy Configuration
+proxy: no
+http_proxy: ""
+https_proxy: ""
+
+# Cloud Native Stack for Developers Values
+## Enable for Cloud Native Stack Developers
+cns_docker: no
+## Enable For Cloud Native Stack Developers with TRD Driver
+cns_nvidia_driver: no
+nvidia_driver_mig: no
+
+## Kubernetes resources
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.35/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.35/rpm/repodata/repomd.xml.key"
+k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+k8s_registry: "registry.k8s.io"
+
+# Enable NVIDIA Kubernetes AI Scheduler
+enable_kai_scheduler: no
+
+# Enable NVIDIA NSight Operator
+enable_nsight_operator: no
+
+# Install NVIDIA NIM Operator
+enable_nim_operator: no
+
+# LeaderWorkerSet https://github.com/kubernetes-sigs/lws/tree/main
+lws: no
+
+# Local Path Provisioner and NFS Provisoner as Storage option
+storage: no
+
+# Monitoring Stack Prometheus/Grafana with GPU Metrics and Elastic Logging stack
+monitoring: no
+
+# Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
+kserve: no
+
+
+# Install MetalLB
+loadbalancer: no
+# Example input loadbalancer_ip: "10.78.17.85/32"
+loadbalancer_ip: ""
+kubernetes_host_ip: ""
+
+# Enable Volcano Scheduler
+volcano: no
+
+## Cloud Native Stack Validation
+cns_validation: no
+
+# BMC Details for Confidential Computing
+bmc_ip:
+bmc_username:
+bmc_password:
+
+# CSP values
+## AWS EKS values
+aws_region: us-east-2
+aws_cluster_name: cns-cluster-1
+aws_gpu_instance_type: g4dn.2xlarge
+
+## Google Cloud GKE Values
+#https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
+gke_project_id:
+#https://cloud.google.com/compute/docs/regions-zones#available
+gke_region: us-west1
+gke_node_zones: ["us-west1-b"]
+gke_cluster_name: gke-cluster-1
+
+## Azure AKS Values
+aks_cluster_name: aks-cluster-1
+#https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/#geographies
+aks_cluster_location: "West US 2"
+#https://learn.microsoft.com/en-us/partner-center/marketplace/find-tenant-object-id
+azure_object_id: [""]

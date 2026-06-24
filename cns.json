@@ -1,16 +1,16 @@
 {
 	"name": "Cloud Native Stack",
 	"latest": {
-		"version": "17.0",
-		"release_date": "2 January 2026",
+		"version": "17.2",
+		"release_date": "24 June 2026",
 		"platforms": [{
 				"name": "NVIDIA Certified Server",
 				"CPU architecture": "x86, Arm64",
 				"os": "Ubuntu 24.04 LTS",
 				"components": {
 					"containerd": "2.2.0",
-					"cri-o": "1.34.2",
-					"k8s version": "1.34.2",
+					"cri-o": "1.35.4",
+					"k8s version": "1.35.6",
 					"Calico": "v3.31.3",
 					"helm version": "4.0.4",
 					"NVIDIA GPU Operator": "25.10.1",
@@ -34,6 +34,38 @@
 		]
 	},
 	"versions": [{
+		"17.2": {
+			"release_date": "24 June 2026",
+			"platforms": [{
+					"name": "NVIDIA Certified Server",
+					"CPU architecture": "x86, Arm64",
+					"os": "Ubuntu 24.04 LTS",
+					"components": {
+						"containerd": "2.2.0",
+						"cri-o": "1.35.4",
+						"k8s version": "1.35.6",
+						"Calico": "v3.31.3",
+						"helm version": "4.0.4",
+						"NVIDIA GPU Operator": "25.10.1",
+						"NVIDIA Network Operator": "N/A",
+						"NVIDIA DataCenter Driver": "580.105.08",
+						"NVIDIA Nim Operator": "3.0.2",
+						"NVIDIA Kai Scheduler": "0.10.2",
+						"NVIDIA Nsight Operator": "1.1.2",
+						"Local Path Provisioner": "0.0.31",
+						"NFS Provisioner": "4.0.18",
+						"Metallb": "0.15.3",
+						"Kserve": "0.16.0",
+						"Prometheus Stack": "79.9.0",
+						"Prometheus Adapter": "5.2.0",
+						"Grafana Operator": "5.18.0",
+						"Elastic Stack": "9.2.1",
+						"LeaderWorkerSet": "0.7.0",
+						"Volcano": "1.13.0"
+					}
+				}
+			]
+		},
 		"17.0": {
 			"release_date": "2 January 2026",
 			"platforms": [{

@@ -1,0 +1,26 @@
+---
+galaxy_info:
+  role_name: nvidia_container_toolkit
+  namespace: nvidia
+  author: NVIDIA
+  description: Install and configure the NVIDIA Container Toolkit for Docker, containerd, cri-dockerd, or CRI-O
+  license: Apache-2.0
+  min_ansible_version: "2.10"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+    - name: EL
+      versions:
+        - "8"
+        - "9"
+        - "10"
+  galaxy_tags:
+    - nvidia
+    - gpu
+    - cuda
+    - containertoolkit
+    - cloudnative
+
+dependencies: []

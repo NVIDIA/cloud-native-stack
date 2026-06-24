@@ -1,0 +1,115 @@
+---
+- name: Install NVIDIA Container Toolkit on Ubuntu/Debian
+  when: ansible_facts['os_family'] == 'Debian'
+  become: true
+  block:
+    - name: Ensure /usr/share/keyrings exists
+      file:
+        path: /usr/share/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download NVIDIA Container Toolkit apt signing key
+      get_url:
+        url: https://nvidia.github.io/libnvidia-container/gpgkey
+        dest: /tmp/nvidia-container-toolkit-keyring.asc
+        mode: '0644'
+      register: nvidia_container_toolkit_download_key
+      retries: 5
+      delay: 5
+      until: nvidia_container_toolkit_download_key is succeeded
+
+    - name: Check NVIDIA Container Toolkit apt signing keyring
+      stat:
+        path: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+      register: nvidia_container_toolkit_keyring
+
+    - name: Dearmor NVIDIA Container Toolkit apt signing key
+      command: "gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg /tmp/nvidia-container-toolkit-keyring.asc"
+      when: nvidia_container_toolkit_download_key.changed or not nvidia_container_toolkit_keyring.stat.exists
+
+    - name: Set NVIDIA Container Toolkit apt signing key permissions
+      file:
+        path: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+        mode: '0644'
+
+    - name: Add NVIDIA Container Toolkit apt repository
+      apt_repository:
+        repo: "{{ item }}"
+        state: present
+        filename: libnvidia-container.list
+      loop:
+        - "deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/ubuntu18.04/$(ARCH) /"
+        - "deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH) /"
+
+    - name: Remove previously installed NVIDIA Container Toolkit packages
+      apt:
+        name: ['nvidia-container-toolkit*', 'nvidia-container-runtime*', 'libnvidia-container*']
+        state: absent
+        autoremove: true
+      failed_when: false
+      when: nvidia_container_toolkit_remove_existing | bool
+
+    - name: Install NVIDIA Container Toolkit on Ubuntu/Debian
+      apt:
+        name:
+          - "nvidia-container-toolkit={{ nvidia_container_toolkit_version }}-1"
+          - "nvidia-container-toolkit-base={{ nvidia_container_toolkit_version }}-1"
+          - "libnvidia-container-tools={{ nvidia_container_toolkit_version }}-1"
+          - "libnvidia-container1={{ nvidia_container_toolkit_version }}-1"
+        state: present
+        update_cache: true
+      retries: 5
+      delay: 5
+      register: nvidia_container_toolkit_install_deb
+      until: nvidia_container_toolkit_install_deb is succeeded
+
+- name: Install NVIDIA Container Toolkit on RHEL/CentOS
+  when: ansible_facts['os_family'] == 'RedHat'
+  become: true
+  block:
+    - name: Add NVIDIA Container Toolkit yum repository
+      get_url:
+        url: https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+        dest: /etc/yum.repos.d/nvidia-container-toolkit.repo
+        mode: '0644'
+        owner: root
+        group: root
+
+    - name: Remove previously installed NVIDIA Container Toolkit packages
+      yum:
+        name: ['nvidia-container-toolkit', 'nvidia-container-runtime', 'libnvidia-container', 'nvidia-docker2']
+        state: absent
+        autoremove: true
+      failed_when: false
+      when: nvidia_container_toolkit_remove_existing | bool
+
+    - name: Install NVIDIA Container Toolkit on RHEL/CentOS
+      yum:
+        name: >-
+          {{ ['nvidia-container-toolkit'] +
+             (['nvidia-docker2'] if nvidia_container_toolkit_runtime == 'docker' else []) }}
+        state: present
+        update_cache: true
+      retries: 5
+      delay: 5
+      register: nvidia_container_toolkit_install_rpm
+      until: nvidia_container_toolkit_install_rpm is succeeded
+
+- name: Configure CDI for Docker/Containerd
+  become: true
+  command: >-
+    nvidia-ctk runtime configure --runtime={{ nvidia_container_toolkit_runtime }}
+    --cdi.enabled --nvidia-set-as-default
+  when:
+    - nvidia_container_toolkit_enable_cdi | bool
+    - nvidia_container_toolkit_runtime in ['docker', 'containerd', 'cri-docker']
+  changed_when: true
+
+- name: Configure CDI for CRI-O
+  become: true
+  command: "nvidia-ctk runtime configure --runtime crio --cdi.enabled --nvidia-set-as-default"
+  when:
+    - nvidia_container_toolkit_enable_cdi | bool
+    - nvidia_container_toolkit_runtime == 'cri-o'
+  changed_when: true

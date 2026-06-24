@@ -13,6 +13,9 @@ runc_version: "1.4.0"
 cni_plugins_version: "1.7.1"
 containerd_max_concurrent_downloads: "5"
 nvidia_container_toolkit_version: "1.18.1"
+docker_ce_version: "29.4.3"
+docker_ce_apt_version: "5:{{ docker_ce_version }}-1~ubuntu.{{ ansible_distribution_version }}~{{ ansible_distribution_release }}"
+docker_apt_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
 crio_version: "1.33.6"
 cri_dockerd_version: "0.4.0"
 k8s_version: "1.33.6"
@@ -119,6 +122,10 @@ kubernetes_host_ip: ""
 
 # Enable Volcano Scheduler
 volcano: no
+
+# Automatically delete pods stuck Failed/UnexpectedAdmissionError (e.g. GPU/SRIOV
+# device not yet healthy after a node restart) so they get rescheduled
+device_pod_recovery: no
 
 ## Cloud Native Stack Validation
 cns_validation: no

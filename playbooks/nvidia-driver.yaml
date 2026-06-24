@@ -95,6 +95,8 @@
         - name: Remove old keyring
           shell:
             cmd: "apt-key del 7fa2af80"
+          failed_when: false
+          changed_when: remove_keyring.rc == 0
           retries: 5
           delay: 5
           register: remove_keyring

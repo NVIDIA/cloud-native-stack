@@ -13,6 +13,9 @@ runc_version: "1.4.0"
 cni_plugins_version: "1.7.1"
 containerd_max_concurrent_downloads: "5"
 nvidia_container_toolkit_version: "1.18.1"
+docker_ce_version: "29.4.3"
+docker_ce_apt_version: "5:{{ docker_ce_version }}-1~ubuntu.{{ ansible_distribution_version }}~{{ ansible_distribution_release }}"
+docker_apt_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
 crio_version: "1.33.6"
 cri_dockerd_version: "0.4.0"
 k8s_version: "1.33.6"
@@ -63,6 +66,12 @@ ngc_registry_password: ""
 ## This is most likely an NGC email
 ngc_registry_email: ""
 ngc_registry_username: "$oauthtoken"
+
+# Docker Hub Values
+## Optional authenticated Docker Hub pulls to avoid anonymous pull rate limits
+## (e.g. for Calico/CNI images). Leave blank to pull anonymously as before.
+dockerhub_registry_username: ""
+dockerhub_registry_password: ""
 
 # Network Operator Values
 ## If the Network Operator is yes then make sure enable_rdma as well yes

@@ -74,6 +74,7 @@
     loadbalancer_ip: ""
     kubernetes_host_ip: ""
     volcano: yes
+    device_pod_recovery: no
   tasks:
     - name: Checking Nouveau is disabled
       become: true

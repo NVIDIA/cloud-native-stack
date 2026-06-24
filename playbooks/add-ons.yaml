@@ -480,3 +480,75 @@
      delay: 5
      register: apply_ingress_config
      until: apply_ingress_config is succeeded
+
+   - name: check Device Plugin Pod Recovery CronJob installed
+     shell: kubectl get cronjob -n kube-system device-plugin-pod-recovery 2>/dev/null | grep device-plugin-pod-recovery | wc -l | tr -d '\n'
+     failed_when: false
+     ignore_errors: true
+     register: device_pod_recovery_installed
+
+   - name: Deploy GPU/SRIOV Device Plugin Pod Recovery CronJob
+     when: device_pod_recovery == true and device_pod_recovery_installed.stdout != '1'
+     shell: |
+       kubectl apply -f - <<'EOF'
+       apiVersion: v1
+       kind: ServiceAccount
+       metadata:
+         name: device-plugin-pod-recovery
+         namespace: kube-system
+       ---
+       apiVersion: rbac.authorization.k8s.io/v1
+       kind: ClusterRole
+       metadata:
+         name: device-plugin-pod-recovery
+       rules:
+       - apiGroups: [""]
+         resources: ["pods"]
+         verbs: ["get", "list", "delete"]
+       ---
+       apiVersion: rbac.authorization.k8s.io/v1
+       kind: ClusterRoleBinding
+       metadata:
+         name: device-plugin-pod-recovery
+       roleRef:
+         apiGroup: rbac.authorization.k8s.io
+         kind: ClusterRole
+         name: device-plugin-pod-recovery
+       subjects:
+       - kind: ServiceAccount
+         name: device-plugin-pod-recovery
+         namespace: kube-system
+       ---
+       apiVersion: batch/v1
+       kind: CronJob
+       metadata:
+         name: device-plugin-pod-recovery
+         namespace: kube-system
+       spec:
+         schedule: "*/2 * * * *"
+         concurrencyPolicy: Forbid
+         jobTemplate:
+           spec:
+             template:
+               spec:
+                 serviceAccountName: device-plugin-pod-recovery
+                 restartPolicy: OnFailure
+                 containers:
+                 - name: pod-recovery
+                   image: "docker.io/bitnami/kubectl:latest"
+                   command: ["/bin/sh", "-c"]
+                   args:
+                     - |
+                       STUCK=$(kubectl get pods -A -o go-template='{% raw %}{{range .items}}{{if and (eq .status.phase "Failed") (eq .status.reason "UnexpectedAdmissionError")}}{{.metadata.namespace}} {{.metadata.name}}{{"\n"}}{{end}}{{end}}{% endraw %}')
+                       if [ -n "$STUCK" ]; then
+                         echo "$STUCK" | while read -r ns name; do
+                           [ -z "$ns" ] && continue
+                           echo "Deleting stuck pod $ns/$name (UnexpectedAdmissionError) to allow rescheduling onto a now-healthy device"
+                           kubectl delete pod -n "$ns" "$name" --ignore-not-found
+                         done
+                       fi
+       EOF
+     retries: 5
+     delay: 5
+     register: install_device_pod_recovery
+     until: install_device_pod_recovery is succeeded

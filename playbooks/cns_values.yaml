@@ -123,6 +123,10 @@ kubernetes_host_ip: ""
 # Enable Volcano Scheduler
 volcano: no
 
+# Automatically delete pods stuck Failed/UnexpectedAdmissionError (e.g. GPU/SRIOV
+# device not yet healthy after a node restart) so they get rescheduled
+device_pod_recovery: no
+
 ## Cloud Native Stack Validation
 cns_validation: no
 

@@ -1,4 +1,4 @@
-cns_version: 16.1
+cns_version: 17.2
 
 ## MicroK8s cluster
 microk8s: no
@@ -16,9 +16,9 @@ nvidia_container_toolkit_version: "1.18.1"
 docker_ce_version: "29.4.3"
 docker_ce_apt_version: "5:{{ docker_ce_version }}-1~ubuntu.{{ ansible_distribution_version }}~{{ ansible_distribution_release }}"
 docker_apt_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
-crio_version: "1.33.6"
+crio_version: "1.35.4"
 cri_dockerd_version: "0.4.0"
-k8s_version: "1.33.6"
+k8s_version: "1.35.6"
 calico_version: "3.31.3"
 flannel_version: "0.25.6"
 helm_version: "4.0.4"
@@ -88,8 +88,8 @@ cns_nvidia_driver: no
 nvidia_driver_mig: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key"
-k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.33/rpm/repodata/repomd.xml.key"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.35/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.35/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
@@ -113,6 +113,7 @@ monitoring: no
 
 # Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
 kserve: no
+
 
 # Install MetalLB
 loadbalancer: no

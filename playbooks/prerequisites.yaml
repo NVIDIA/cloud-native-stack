@@ -31,7 +31,7 @@
 
     - name: Create a APT KeyRing directory
       become: true
-      when: "ansible_distribution == 'Ubuntu' and ansible_distribution_major_version <= '20' and 'running' not in k8sup.stdout"
+      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
       file:
         path: /etc/apt/keyrings
         state: directory
@@ -41,29 +41,55 @@
       register: create_keyring
       until: create_keyring is succeeded
 
-    - name: Create a APT KeyRing directory
+    - name: Install APT signing key dependencies for Ubuntu
       become: true
       when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
-      file:
-        path: /etc/apt/trusted.gpg
-        state: touch
-        mode: '0755'
+      apt:
+        name: ['ca-certificates', 'curl', 'gnupg']
+        state: present
+        update_cache: true
       retries: 5
       delay: 5
-      register: create_trusted_gpg
-      until: create_trusted_gpg is succeeded
+      register: install_apt_key_deps
+      until: install_apt_key_deps is succeeded
         
-    - name: Add an Kubernetes apt signing key for Ubuntu
+    - name: Download Kubernetes apt signing key for Ubuntu
       become: true
       when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
-      apt_key:
+      get_url:
         url: "{{ k8s_apt_key }}"
-        keyring: "{{ k8s_apt_ring }}"
-        state: present
+        dest: /tmp/kubernetes-apt-keyring.asc
+        mode: '0644'
+      retries: 5
+      delay: 5
+      register: download_k8s_key
+      until: download_k8s_key is succeeded
+
+    - name: Check Kubernetes apt signing keyring for Ubuntu
+      become: true
+      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      stat:
+        path: "{{ k8s_apt_ring }}"
+      register: k8s_keyring
+
+    - name: Add Kubernetes apt signing key for Ubuntu
+      become: true
+      when:
+        - ansible_distribution == 'Ubuntu'
+        - "'running' not in k8sup.stdout"
+        - download_k8s_key.changed or not k8s_keyring.stat.exists
+      command: "gpg --dearmor --yes -o {{ k8s_apt_ring }} /tmp/kubernetes-apt-keyring.asc"
       retries: 5
       delay: 5
       register: add_k8s_key
       until: add_k8s_key is succeeded
+
+    - name: Set Kubernetes apt signing key permissions for Ubuntu
+      become: true
+      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      file:
+        path: "{{ k8s_apt_ring }}"
+        mode: '0644'
 
     - name: change apt repo
       shell: "echo {{ k8s_apt_key }} | rev  | cut -c12- | rev"
@@ -599,24 +625,33 @@
           register: set_cri_version
           until: set_cri_version is succeeded
 
-        - name: Adding CRI-O apt key
-          apt_key:
+        - name: Download CRI-O apt signing key
+          get_url:
             url: "https://download.opensuse.org/repositories/isv:/cri-o:/stable:/v{{ version }}/deb/Release.key"
-            keyring: /etc/apt/keyrings/cri-o-apt-keyring.gpg
-            state: present
+            dest: /tmp/cri-o-apt-keyring.asc
+            mode: '0644'
+          retries: 5
+          delay: 5
+          register: download_crio_key
+          until: download_crio_key is succeeded
+
+        - name: Check CRI-O apt signing keyring
+          stat:
+            path: /etc/apt/keyrings/cri-o-apt-keyring.gpg
+          register: crio_keyring
+
+        - name: Add CRI-O apt signing key
+          when: download_crio_key.changed or not crio_keyring.stat.exists
+          command: "gpg --dearmor --yes -o /etc/apt/keyrings/cri-o-apt-keyring.gpg /tmp/cri-o-apt-keyring.asc"
           retries: 5
           delay: 5
           register: add_crio_key
           until: add_crio_key is succeeded
 
-        - name: copy the apt keys
-          shell: "{{ item }}"
-          with_items:
-            - cp /etc/apt/trusted.gpg /etc/apt/trusted.gpg.d
-          retries: 5
-          delay: 5
-          register: copy_apt_keys
-          until: copy_apt_keys is succeeded
+        - name: Set CRI-O apt signing key permissions
+          file:
+            path: /etc/apt/keyrings/cri-o-apt-keyring.gpg
+            mode: '0644'
 
         - name: Add CRIO repository
           apt_repository:
@@ -820,25 +855,25 @@
       register: install_docker_deps_rhel
       until: install_docker_deps_rhel is succeeded
 
-    - name: Create a Docker APT KeyRing
+    - name: Create Docker APT KeyRing directory
       become: true
       when: "ansible_distribution == 'Ubuntu'"
       file:
-        path: /etc/apt/keyrings/docker.asc
-        state: touch
+        path: /etc/apt/keyrings
+        state: directory
         mode: '0755'
       retries: 5
       delay: 5
-      register: create_docker_asc
-      until: create_docker_asc is succeeded
+      register: create_docker_keyring_dir
+      until: create_docker_keyring_dir is succeeded
 
     - name: Add Docker APT signing key
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
-      ansible.builtin.apt_key:
+      ansible.builtin.get_url:
         url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
-        keyring: /etc/apt/keyrings/docker.asc
-        state: present
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
       retries: 5
       delay: 5
       register: add_docker_key
@@ -848,7 +883,7 @@
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [arch={{ docker_apt_arch }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
       retries: 5
@@ -929,9 +964,15 @@
     - name: Install Docker on Ubuntu
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
-      package:
-        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin'] 
-        state: latest
+      ansible.builtin.apt:
+        name:
+          - "docker-ce={{ docker_ce_apt_version }}"
+          - "docker-ce-cli={{ docker_ce_apt_version }}"
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+        allow_downgrades: true
       register: docker_status
       retries: 5
       delay: 5

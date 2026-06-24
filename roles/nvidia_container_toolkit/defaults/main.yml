@@ -1,0 +1,14 @@
+---
+# Version of nvidia-container-toolkit / libnvidia-container to install (Ubuntu apt pin
+# uses "<version>-1"; RHEL yum installs the latest available unless you pin it yourself).
+nvidia_container_toolkit_version: "1.18.1"
+
+# Which container runtime to configure CDI for: docker, containerd, cri-docker, or cri-o.
+nvidia_container_toolkit_runtime: "containerd"
+
+# Configure CDI (Container Device Interface) and set NVIDIA as the default runtime.
+nvidia_container_toolkit_enable_cdi: true
+
+# Remove any previously installed nvidia-container-toolkit/libnvidia-container packages
+# before installing the pinned version above.
+nvidia_container_toolkit_remove_existing: true

@@ -552,6 +552,37 @@
           until: restart_containerd is succeeded
       when: "cns_version >= 4.1 and ansible_system == 'Linux' and container_runtime == 'containerd' or cns_version >= 4.1 and ansible_system == 'Linux' and container_runtime == 'cri-dockerd'"
 
+    - name: Configure node-level Docker Hub registry credentials for kubelet
+      become: true
+      when: "dockerhub_registry_password != ''"
+      block:
+        - name: Create /var/lib/kubelet
+          file:
+            path: /var/lib/kubelet
+            state: directory
+            mode: '0700'
+          retries: 5
+          delay: 5
+          register: create_kubelet_dir
+          until: create_kubelet_dir is succeeded
+
+        - name: Write Docker Hub credentials for kubelet image pulls
+          copy:
+            dest: /var/lib/kubelet/config.json
+            mode: '0600'
+            content: |
+              {
+                "auths": {
+                  "https://index.docker.io/v1/": {
+                    "auth": "{{ (dockerhub_registry_username + ':' + dockerhub_registry_password) | b64encode }}"
+                  }
+                }
+              }
+          retries: 5
+          delay: 5
+          register: write_kubelet_dockerhub_creds
+          until: write_kubelet_dockerhub_creds is succeeded
+
     - name: Add Containerd Proxy configuration
       become: true
       block:

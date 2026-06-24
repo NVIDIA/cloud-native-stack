@@ -67,6 +67,12 @@ ngc_registry_password: ""
 ngc_registry_email: ""
 ngc_registry_username: "$oauthtoken"
 
+# Docker Hub Values
+## Optional authenticated Docker Hub pulls to avoid anonymous pull rate limits
+## (e.g. for Calico/CNI images). Leave blank to pull anonymously as before.
+dockerhub_registry_username: ""
+dockerhub_registry_password: ""
+
 # Network Operator Values
 ## If the Network Operator is yes then make sure enable_rdma as well yes
 enable_network_operator: no

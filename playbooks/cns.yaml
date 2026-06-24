@@ -54,6 +54,8 @@
     ngc_registry_password: ""
     ngc_registry_email: ""
     ngc_registry_username: "$oauthtoken"
+    dockerhub_registry_username: ""
+    dockerhub_registry_password: ""
     enable_network_operator: no
     enable_rdma: no
     deploy_ofed: no

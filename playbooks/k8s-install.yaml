@@ -347,7 +347,7 @@
 
    - name: Update Network plugin for Calico on NVIDIA Cloud Native Stack
      when: "cns_version >= 3.1 and release != 'tegra'"
-     shell: "sleep 25; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*"
+     shell: "sleep 25; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*,enP*"
      retries: 5
      delay: 5
      register: update_network_plugin_calico

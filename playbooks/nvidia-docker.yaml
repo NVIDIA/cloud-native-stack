@@ -75,10 +75,9 @@
 
     - name: Add Docker APT signing key
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
-      ansible.builtin.apt_key:
-        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
-        keyring: /etc/apt/keyrings/docker.asc
-        state: present
+      shell: "curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.asc"
+      args:
+        creates: /etc/apt/keyrings/docker.asc
       retries: 5
       delay: 5
       register: add_docker_key
@@ -235,10 +234,9 @@
 
     - name: Add NVIDIA Docker apt signing key for Ubuntu
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
-      apt_key:
-        url: https://nvidia.github.io/libnvidia-container/gpgkey
-        keyring: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-        state: present
+      shell: "curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg"
+      args:
+        creates: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
       retries: 5
       delay: 5
       register: add_nvidia_docker_key

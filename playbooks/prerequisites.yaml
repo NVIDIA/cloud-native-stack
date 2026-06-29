@@ -56,10 +56,9 @@
     - name: Add an Kubernetes apt signing key for Ubuntu
       become: true
       when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
-      apt_key:
-        url: "{{ k8s_apt_key }}"
-        keyring: "{{ k8s_apt_ring }}"
-        state: present
+      shell: "curl -fsSL {{ k8s_apt_key }} | gpg --dearmor -o {{ k8s_apt_ring }}"
+      args:
+        creates: "{{ k8s_apt_ring }}"
       retries: 5
       delay: 5
       register: add_k8s_key
@@ -600,10 +599,9 @@
           until: set_cri_version is succeeded
 
         - name: Adding CRI-O apt key
-          apt_key:
-            url: "https://download.opensuse.org/repositories/isv:/cri-o:/stable:/v{{ version }}/deb/Release.key"
-            keyring: /etc/apt/keyrings/cri-o-apt-keyring.gpg
-            state: present
+          shell: "curl -fsSL https://download.opensuse.org/repositories/isv:/cri-o:/stable:/v{{ version }}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg"
+          args:
+            creates: /etc/apt/keyrings/cri-o-apt-keyring.gpg
           retries: 5
           delay: 5
           register: add_crio_key
@@ -835,10 +833,9 @@
     - name: Add Docker APT signing key
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
-      ansible.builtin.apt_key:
-        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
-        keyring: /etc/apt/keyrings/docker.asc
-        state: present
+      shell: "curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.asc"
+      args:
+        creates: /etc/apt/keyrings/docker.asc
       retries: 5
       delay: 5
       register: add_docker_key

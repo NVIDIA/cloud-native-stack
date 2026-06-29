@@ -1,4 +1,4 @@
-- hosts: all
+﻿- hosts: all
   gather_facts: yes
   vars:
     cns_version: 14.1
@@ -445,10 +445,9 @@
     - name: Add an Kubernetes apt signing key for Ubuntu
       become: true
       when: "ansible_distribution == 'Ubuntu' "
-      apt_key:
-        url: "{{ k8s_apt_key }}"
-        keyring: "{{ k8s_apt_ring }}"
-        state: present
+      shell: "curl -fsSL {{ k8s_apt_key }} | gpg --dearmor -o {{ k8s_apt_ring }}"
+      args:
+        creates: "{{ k8s_apt_ring }}"
       retries: 5
       delay: 5
       register: add_k8s_key
@@ -987,10 +986,9 @@
           until: set_cri_version is succeeded
 
         - name: Adding CRI-O apt key
-          apt_key:
-            url: "https://pkgs.k8s.io/addons:/cri-o:/stable:/v{{ version }}/deb/Release.key"
-            keyring: "/etc/apt/keyrings/cri-o-apt-keyring.gpg"
-            state: present
+          shell: "curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/stable:/v{{ version }}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg"
+          args:
+            creates: /etc/apt/keyrings/cri-o-apt-keyring.gpg
           retries: 5
           delay: 5
           register: add_crio_key
@@ -1071,20 +1069,18 @@
           until: set_cri_version_22 is succeeded
 
         - name: Adding CRI-O apt key
-          apt_key:
-            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_22.04/Release.key"
-            keyring: /etc/apt/keyrings/libcontainers-archive-keyring.gpg
-            state: present
+          shell: "curl -fsSL https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_22.04/Release.key | gpg --dearmor -o /etc/apt/keyrings/libcontainers-archive-keyring.gpg"
+          args:
+            creates: /etc/apt/keyrings/libcontainers-archive-keyring.gpg
           retries: 5
           delay: 5
           register: add_crio_key_22
           until: add_crio_key_22 is succeeded
 
         - name: Adding CRI-O apt key
-          apt_key:
-            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/x{{ ansible_distribution }}_22.04/Release.key"
-            keyring: /etc/apt/keyrings/libcontainers-crio-archive-keyring.gpg
-            state: present
+          shell: "curl -fsSL https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/x{{ ansible_distribution }}_22.04/Release.key | gpg --dearmor -o /etc/apt/keyrings/libcontainers-crio-archive-keyring.gpg"
+          args:
+            creates: /etc/apt/keyrings/libcontainers-crio-archive-keyring.gpg
           retries: 5
           delay: 5
           register: add_crio_key_22_2
@@ -1139,18 +1135,18 @@
           until: set_cri_version_20 is succeeded
 
         - name: Adding CRI-O apt key
-          apt_key:
-            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_20.04/Release.key"
-            state: present
+          shell: "curl -fsSL https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_20.04/Release.key | gpg --dearmor -o /etc/apt/keyrings/libcontainers-archive-keyring.gpg"
+          args:
+            creates: /etc/apt/keyrings/libcontainers-archive-keyring.gpg
           retries: 5
           delay: 5
           register: add_crio_key_20
           until: add_crio_key_20 is succeeded
 
         - name: Adding CRI-O apt key
-          apt_key:
-            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/x{{ ansible_distribution }}_20.04/Release.key"
-            state: present
+          shell: "curl -fsSL https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/x{{ ansible_distribution }}_20.04/Release.key | gpg --dearmor -o /etc/apt/keyrings/libcontainers-crio-archive-keyring.gpg"
+          args:
+            creates: /etc/apt/keyrings/libcontainers-crio-archive-keyring.gpg
           retries: 5
           delay: 5
           register: add_crio_key_20_2
@@ -1452,9 +1448,9 @@
     - name: Add Docker APT signing key
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
-      ansible.builtin.apt_key:
-        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
-        state: present
+      shell: "curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.asc"
+      args:
+        creates: /etc/apt/keyrings/docker.asc
       retries: 5
       delay: 5
       register: add_docker_key
@@ -1464,7 +1460,7 @@
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_repository:
-        repo: "deb https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
       retries: 5
@@ -1927,10 +1923,9 @@
     - name: Add Docker APT signing key
       become: true
       when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and cns_docker == true
-      ansible.builtin.apt_key:
-        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
-        keyring: /etc/apt/keyrings/docker.asc
-        state: present
+      shell: "curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.asc"
+      args:
+        creates: /etc/apt/keyrings/docker.asc
 
     - name: Add Docker repository into sources list
       become: true
@@ -2055,10 +2050,9 @@
     - name: Add NVIDIA Docker apt signing key for Ubuntu
       become: true
       when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and cns_docker == true
-      apt_key:
-        url: https://nvidia.github.io/libnvidia-container/gpgkey
-        keyring: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-        state: present
+      shell: "curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg"
+      args:
+        creates: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
 
     - name: Get NVIDIA Container Toolkit Apt list
       become: true
@@ -2345,7 +2339,7 @@
 
     - name: Update Network plugin for Calico on NVIDIA Cloud Native Stack
       when: "cns_version >= 3.1 and release != 'tegra'"
-      shell: "sleep 5; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*"
+      shell: "sleep 5; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*,enP*"
 
     - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
       when: "release == 'tegra'"
@@ -2746,7 +2740,7 @@
           until: install_cc_runtime is succeeded
 
         - name: Install NVIDIA GPU Operator for Confidential Computing
-          shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --wait --generate-name -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set sandboxWorkloads.enabled=true --set kataManager.enabled=true --set ccManager.enabled=true --set nfd.nodefeaturerules=true
+          shell: helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --wait -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set sandboxWorkloads.enabled=true --set kataManager.enabled=true --set ccManager.enabled=true --set nfd.nodefeaturerules=true
           retries: 5
           delay: 5
           register: install_gpu_operator_confidential
@@ -2772,7 +2766,7 @@
 
     - name: Installing the GPU Operator with NVIDIA Docker on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == true and cns_nvidia_driver == false and  enable_mig == false and enable_vgpu == false and enable_rdma == false and ngc_registry_password == ''"
-      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set toolkit.enabled=false --wait --generate-name
+      shell: helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set toolkit.enabled=false --wait
       retries: 5
       delay: 5
       register: install_gpu_operator_docker
@@ -2780,7 +2774,7 @@
 
     - name: Installing the GPU Operator with NVIDIA Host Driver on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and ngc_registry_password == ''"
-      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false --wait --generate-name
+      shell: helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false --wait
       retries: 5
       delay: 5
       register: install_gpu_operator_host_driver
@@ -2788,7 +2782,7 @@
 
     - name: Installing the GPU Operator with Docker and NVIDIA Host Driver on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == true and cns_nvidia_driver == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and ngc_registry_password == ''"
-      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+      shell: helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false,toolkit.enabled=false --wait
       retries: 5
       delay: 5
       register: install_gpu_operator_docker_host_driver
@@ -2796,7 +2790,7 @@
 
     - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_cdi == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+      shell: "helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait"
       retries: 5
       delay: 5
       register: install_gpu_operator_default
@@ -2804,7 +2798,7 @@
 
     - name: Installing the GPU Operator with CDI on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_cdi == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set cdi.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+      shell: "helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set cdi.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait"
       retries: 5
       delay: 5
       register: install_gpu_operator_cdi
@@ -2812,7 +2806,7 @@
 
     - name: Installing the GPU Operator with Open RM on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait --generate-name"
+      shell: "helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait"
       retries: 5
       delay: 5
       register: install_gpu_operator_open_rm
@@ -2822,7 +2816,7 @@
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == true and cns_nvidia_driver == false and ngc_registry_password == ''"
       shell: "{{ item }}"
       with_items:
-        - helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel {{ gpu_operator_helm_chart }} --set driver.version={{ driver_version }},driver.usePrecompiled=true,driver.repository={{ gpu_operator_driver_registry }} --wait --generate-name
+        - helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel {{ gpu_operator_helm_chart }} --set driver.version={{ driver_version }},driver.usePrecompiled=true,driver.repository={{ gpu_operator_driver_registry }} --wait
         - sleep 20
         - kubectl patch clusterpolicy/cluster-policy --type='json' -p='[{"op":"replace", "path":"/spec/driver/usePrecompiled", "value":true},{"op":"replace", "path":"/spec/driver/version", "value":"{{ driver_version }}"}]'
       retries: 5
@@ -2836,7 +2830,7 @@
       with_items:
           - kubectl create configmap licensing-config -n nvidia-gpu-operator --from-file={{lookup('pipe', 'pwd')}}/files/gridd.conf --from-file={{lookup('pipe', 'pwd')}}/files/client_configuration_token.tok
           - kubectl create secret docker-registry registry-secret --docker-server='https://nvcr.io' --docker-username='{{ ngc_registry_username }}' --docker-password='{{ ngc_registry_password }}' --docker-email='{{ ngc_registry_email }}' -n nvidia-gpu-operator
-          - helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
+          - helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait
       retries: 5
       delay: 5
       register: install_gpu_operator_vgpu
@@ -2844,7 +2838,7 @@
 
     - name: Installing the GPU Operator with MIG and Network Operator on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == true and enable_mig == true and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+      shell: "helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait"
       retries: 5
       delay: 5
       register: install_gpu_operator_mig_network
@@ -2852,7 +2846,7 @@
 
     - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+      shell: "helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait"
       retries: 5
       delay: 5
       register: install_gpu_operator_network
@@ -2860,7 +2854,7 @@
 
     - name: Installing the GPU Operator with Network Operator and RDMA and GDS on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false  and ngc_registry_password == ''"
-      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,gds.enabled=true --wait --generate-name
+      shell: helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,gds.enabled=true --wait
       retries: 5
       delay: 5
       register: install_gpu_operator_network_rdma_gds
@@ -2868,7 +2862,7 @@
 
     - name: Installing the Open RM GPU Operator with Network Operator and RDMA and GDS on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and enable_cdi == false and use_open_kernel_module == true and deploy_ofed == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false  and ngc_registry_password == ''"
-      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,gds.enabled=true,driver.useOpenKernelModules=true --wait --generate-name
+      shell: helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,gds.enabled=true,driver.useOpenKernelModules=true --wait
       retries: 5
       delay: 5
       register: install_open_rm_gpu_operator_network_rdma_gds
@@ -2876,7 +2870,7 @@
 
     - name: Installing the Open RM GPU Operator with Network Operator and RDMA and GDS on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and enable_cdi == true and use_open_kernel_module == true and deploy_ofed == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false  and ngc_registry_password == ''"
-      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set cdi.enabled=true,driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,gds.enabled=true,driver.useOpenKernelModules=true --wait --generate-name
+      shell: helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set cdi.enabled=true,driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,gds.enabled=true,driver.useOpenKernelModules=true --wait
       retries: 5
       delay: 5
       register: install_open_rm_gpu_operator_network_rdma_gds_cdi
@@ -2884,7 +2878,7 @@
 
     - name: Installing the GPU Operator with RDMA and Host MOFED and MIG on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == false and enable_mig == true and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell:  helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}'driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name
+      shell:  helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}'driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait
       retries: 5
       delay: 5
       register: install_gpu_operator_rdma_host_mofed_yes_mig
@@ -2892,7 +2886,7 @@
 
     - name: Installing the Open RM GPU Operator with RDMA and Host MOFED with MIG on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == true and deploy_ofed == false and enable_mig == true and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell:  helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait --generate-name
+      shell:  helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait
       retries: 5
       delay: 5
       register: install_open_rm_gpu_operator_rdma_host_mofed_yes_mig
@@ -2900,7 +2894,7 @@
 
     - name: Installing the GDS with Open RM GPU Operator on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == true and deploy_ofed == false and enable_mig == false and  enable_rdma == false and enable_vgpu == false and enable_gds == true and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell:  helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait --generate-name
+      shell:  helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait
       retries: 5
       delay: 5
       register: install_gds_open_rm_gpu_operator
@@ -2908,7 +2902,7 @@
 
     - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == false and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell:  helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name
+      shell:  helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait
       retries: 5
       delay: 5
       register: install_gpu_operator_rdma_host_mofed
@@ -2916,7 +2910,7 @@
 
     - name: Installing the Open RM GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == true and deploy_ofed == false and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell:  helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait --generate-name
+      shell:  helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait
       retries: 5
       delay: 5
       register: install_open_rm_gpu_operator_rdma_host_mofed
@@ -2924,7 +2918,7 @@
 
     - name: Installing the GPU Operator with GDS and RDMA and Host MOFED on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == false and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+      shell: "helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait"
       retries: 5
       delay: 5
       register: install_gpu_operator_gds_rdma_host_mofed
@@ -2932,7 +2926,7 @@
 
     - name: Installing the Open RM GPU Operator with GDS and RDMA and Host MOFED on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == true and deploy_ofed == false and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait --generate-name"
+      shell: "helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait"
       retries: 5
       delay: 5
       register: install_open_rm_gpu_operator_gds_rdma_host_mofed
@@ -2940,7 +2934,7 @@
 
     - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Stack
       when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+      shell: "helm upgrade --install gpu-operator --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait"
       retries: 5
       delay: 5
       register: install_gpu_operator_mig

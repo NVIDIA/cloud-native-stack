@@ -1,4 +1,4 @@
-cns_version: 16.0
+cns_version: 15.1
 
 ## MicroK8s cluster
 microk8s: no
@@ -13,12 +13,9 @@ runc_version: "1.3.0"
 cni_plugins_version: "1.7.1"
 containerd_max_concurrent_downloads: "5"
 nvidia_container_toolkit_version: "1.17.8"
-docker_ce_version: "29.4.3"
-docker_ce_apt_version: "5:{{ docker_ce_version }}-1~ubuntu.{{ ansible_facts['distribution_version'] }}~{{ ansible_facts['distribution_release'] }}"
-docker_apt_arch: "{{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }}"
-crio_version: "1.33.2"
+crio_version: "1.32.6"
 cri_dockerd_version: "0.3.18"
-k8s_version: "1.33.2"
+k8s_version: "1.32.6"
 calico_version: "3.30.2"
 flannel_version: "0.25.6"
 helm_version: "3.18.3"
@@ -89,8 +86,8 @@ cns_nvidia_driver: no
 nvidia_driver_mig: no
 
 ## Kubernetes resources
-k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key"
-k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.33/rpm/repodata/repomd.xml.key"
+k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key"
+k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key"
 k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 k8s_registry: "registry.k8s.io"
 
@@ -140,3 +137,24 @@ cns_validation: no
 bmc_ip:
 bmc_username:
 bmc_password:
+
+# CSP values
+## AWS EKS values
+aws_region: us-east-2
+aws_cluster_name: cns-cluster-1
+aws_gpu_instance_type: g4dn.2xlarge
+
+## Google Cloud GKE Values
+#https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
+gke_project_id:
+#https://cloud.google.com/compute/docs/regions-zones#available
+gke_region: us-west1
+gke_node_zones: ["us-west1-b"]
+gke_cluster_name: gke-cluster-1
+
+## Azure AKS Values
+aks_cluster_name: aks-cluster-1
+#https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/#geographies
+aks_cluster_location: "West US 2"
+#https://learn.microsoft.com/en-us/partner-center/marketplace/find-tenant-object-id
+azure_object_id: [""]

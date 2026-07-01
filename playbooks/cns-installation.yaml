@@ -19,6 +19,65 @@
         loadbalancer: "{{ loadbalancer }}"
         install_k8s: "{{ install_k8s}}"
 
+    - name: Use host NVIDIA driver on Ubuntu 26.04
+      when:
+        - ansible_facts['distribution'] == 'Ubuntu'
+        - ansible_facts['distribution_version'] == '26.04'
+        - enable_gpu_operator | bool
+        - not (cns_nvidia_driver | bool)
+      set_fact:
+        cns_nvidia_driver: true
+
+    # Print a warning (do NOT fail) when the host OS doesn't match the expected
+    # Ubuntu release for the chosen cns_version. CNS 18.0 / 19.0 are validated on
+    # Ubuntu 24.04 / 26.04; CNS 16.x / 17.x are validated on Ubuntu 22.04 / 24.04.
+    - name: Warn if Ubuntu version mismatches cns_version
+      when:
+        - ansible_facts['distribution'] == 'Ubuntu'
+        - (cns_version | string in ['18.0', '19.0'] and ansible_facts['distribution_version'] not in ['24.04', '26.04'])
+          or
+          (cns_version | string in ['16.0', '16.1', '16.2', '17.0', '17.1'] and ansible_facts['distribution_version'] not in ['22.04', '24.04'])
+      debug:
+        msg: |
+          ============================================================
+          WARNING: Ubuntu {{ ansible_facts['distribution_version'] }} is not the
+          recommended OS for CNS {{ cns_version }}.
+            CNS 18.0 / 19.0  -> Ubuntu 24.04 or 26.04
+            CNS 16.x / 17.x  -> Ubuntu 22.04 or 24.04
+          Continuing anyway. Proceed at your own risk.
+          ============================================================
+
+    # Sudoers bootstrap (Ubuntu 26.04). The default sudo config requires a
+    # password on every invocation; ansible's `become: true` over
+    # `connection: local` has no TTY to type one. This task installs a
+    # NOPASSWD drop-in so subsequent `become: true` tasks run cleanly.
+    #
+    # Works for both inventory shapes:
+    #   - REMOTE host (e.g. `10.x.x.x ansible_ssh_user=... ansible_sudo_pass=...`):
+    #     this very task's `become: true` uses ansible_sudo_pass from the
+    #     inventory to authenticate sudo and write the file. Once written,
+    #     all later become tasks skip the password prompt entirely.
+    #   - LOCAL (`connection: local`, no ansible_sudo_pass): setup.sh's
+    #     pre-ansible bootstrap step has already installed this entry
+    #     (chicken-and-egg avoided), so the copy is idempotent / no-op.
+    #
+    # If running ansible-playbook directly against connection=local without
+    # setup.sh AND without --ask-become-pass: this task will hang on the
+    # sudo prompt (no password source). Re-run via `bash setup.sh install`
+    # or install /etc/sudoers.d/<user> manually.
+    - name: Sudoers | Ensure NOPASSWD entry exists (Ubuntu 26.04)
+      when:
+        - ansible_facts['distribution'] == 'Ubuntu'
+        - ansible_facts['distribution_version'] == '26.04'
+      become: true
+      copy:
+        content: "{{ ansible_facts['user_id'] }} ALL=(ALL) NOPASSWD:ALL\n"
+        dest: "/etc/sudoers.d/{{ ansible_facts['user_id'] }}"
+        owner: root
+        group: root
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
     - name: Checking Nouveau is disabled
       become: true
       shell: "lsmod | grep nouveau"
@@ -51,11 +110,11 @@
 
     - name: Update cgroup2
       shell: grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=1"
-      when: ansible_os_family == 'RedHat'
+      when: ansible_facts['os_family'] == 'RedHat'
       become: true
 
     - name: check and update RHEL version
-      when: "ansible_distribution_version != '8.10' and ansible_os_family == 'RedHat'"
+      when: "ansible_facts['distribution_version'] != '8.10' and ansible_facts['os_family'] == 'RedHat'"
       shell: subscription-manager release --set 8.10; sudo yum update -y -q
       become: true
 
@@ -63,36 +122,96 @@
       shell: uname -r | awk -F'-' '{print $3}'
       register: snp
 
+    # Detect CPU vendor early so both SNP (AMD) and TDX (Intel) blocks can gate properly.
+    - name: CC | Detect CPU vendor
+      when: confidential_computing == true
+      shell: grep -m1 vendor_id /proc/cpuinfo | awk '{print $3}'
+      register: cpu_vendor
+      changed_when: false
+
+    # Check whether the running kernel already has AMD SEV-SNP host support.
+    # Modern kernels (Ubuntu 25.10+ generic, recent RHEL, etc.) ship SNP support
+    # upstream — kvm_amd loaded with sev_snp=Y is sufficient. In that case, the
+    # legacy AMDSEV custom-kernel build (conf_compu_snp_install.sh) is unnecessary
+    # and actively breaks on newer userland (Python 3.13+, missing qemu metapackage).
+    - name: CC | Probe kernel SEV-SNP support (AMD)
+      when: confidential_computing == true and cpu_vendor.stdout == 'AuthenticAMD'
+      shell: cat /sys/module/kvm_amd/parameters/sev_snp 2>/dev/null
+      register: sev_snp_param
+      changed_when: false
+      failed_when: false
+
     - name: conf_compu_snp_install script
       become: true
-      when: "confidential_computing == true and snp.stdout != 'snp'"
+      when: "confidential_computing == true and snp.stdout != 'snp' and cpu_vendor.stdout == 'AuthenticAMD' and sev_snp_param.stdout != 'Y'"
       copy:
         src: "{{lookup('pipe', 'pwd')}}/files/conf_compu_snp_install.sh"
-        dest: "{{ ansible_user_dir }}"
+        dest: "{{ ansible_facts['user_dir'] }}"
         mode: 0777
 
     - name: Run conf_compu_snp_install script, please wait
       become: true
-      when: "confidential_computing == true and snp.stdout != 'snp'"
-      shell: "bash {{ ansible_user_dir }}/conf_compu_snp_install.sh >> {{ ansible_user_dir }}/snp_install.log"
+      when: "confidential_computing == true and snp.stdout != 'snp' and cpu_vendor.stdout == 'AuthenticAMD' and sev_snp_param.stdout != 'Y'"
+      shell: "bash {{ ansible_facts['user_dir'] }}/conf_compu_snp_install.sh >> {{ ansible_facts['user_dir'] }}/snp_install.log"
+
+    - name: SNP | Already-enabled message (modern kernel)
+      when: confidential_computing == true and cpu_vendor.stdout == 'AuthenticAMD' and sev_snp_param.stdout == 'Y'
+      debug:
+        msg: "AMD SEV-SNP is already active in the running kernel (kvm_amd.sev_snp=Y). Skipping legacy AMDSEV build/install — not needed."
+
+    # ============================================================
+    # Confidential Computing — Intel TDX host setup (Step 3)
+    # Auto-selected when CPU is GenuineIntel.
+    # AMD SNP is handled by the conf_compu_snp_install.sh block above.
+    # Ref: https://nvidia.atlassian.net/wiki/spaces/~fguillier/pages/3331881069
+    # ============================================================
+    - name: TDX | Check whether nohibernate is in current kernel cmdline
+      when: confidential_computing == true and cpu_vendor.stdout == 'GenuineIntel'
+      shell: grep -q nohibernate /proc/cmdline
+      register: tdx_nohibernate_check
+      changed_when: false
+      failed_when: false
+
+    - name: TDX | Append nohibernate to GRUB_CMDLINE_LINUX_DEFAULT
+      when: confidential_computing == true and cpu_vendor.stdout == 'GenuineIntel' and tdx_nohibernate_check.rc != 0
+      become: true
+      ansible.builtin.replace:
+        path: /etc/default/grub
+        regexp: '^(GRUB_CMDLINE_LINUX_DEFAULT=")(.*)(")$'
+        replace: '\1\2 nohibernate\3'
+        backup: yes
+
+    - name: TDX | update-grub after adding nohibernate
+      when: confidential_computing == true and cpu_vendor.stdout == 'GenuineIntel' and tdx_nohibernate_check.rc != 0
+      become: true
+      command: update-grub
+
+    - name: TDX | Persist kvm_intel tdx=1 in /etc/modprobe.d/tdx.conf
+      when: confidential_computing == true and cpu_vendor.stdout == 'GenuineIntel'
+      become: true
+      copy:
+        dest: /etc/modprobe.d/tdx.conf
+        content: "options kvm_intel tdx=1\n"
+        mode: '0644'
+      register: tdx_modprobe_changed
 
     - name: update-initramfs-ubuntu
       become: true
       command: update-initramfs -u
-      when: ansible_os_family == "Debian" and nouveau_result.rc == 0
+      when: ansible_facts['os_family'] == "Debian" and nouveau_result.rc == 0
 
     - name: update-initramfs-rhel
       become: true
       command: dracut --force
-      when: ansible_os_family == "RedHat" and nouveau_result.rc == 0
+      when: ansible_facts['os_family'] == "RedHat" and nouveau_result.rc == 0
 
     - name: Check SELinux Status on RedHat
-      when: ansible_distribution == 'RedHat'
+      when: ansible_facts['distribution'] == 'RedHat'
       shell: sestatus | grep -i 'Current mode' | awk '{print $3}'
       register: selinuxstatus
 
     - name: Update SELinux Status on RHEL system
-      when: ansible_distribution == 'RedHat' and selinuxstatus.stdout == 'enforcing'
+      when: ansible_facts['distribution'] == 'RedHat' and selinuxstatus.stdout == 'enforcing'
       become: true
       shell: sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 
@@ -191,11 +310,11 @@
         (
           nouveau_result.rc == 0
           or
-          (ansible_os_family == 'RedHat' and selinuxstatus.stdout == 'enforcing')
+          (ansible_facts['os_family'] == 'RedHat' and selinuxstatus.stdout == 'enforcing')
           or
-          (snp.stdout != 'snp' and confidential_computing == true)
+          (snp.stdout != 'snp' and confidential_computing == true and cpu_vendor.stdout == 'AuthenticAMD' and sev_snp_param.stdout != 'Y')
           or
-          (cgroup.stdout != 'cgroup2fs' and ansible_os_family == 'RedHat')
+          (cgroup.stdout != 'cgroup2fs' and ansible_facts['os_family'] == 'RedHat')
           or
           (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and iommu_passthrough_check.rc != 0)
           or
@@ -210,6 +329,10 @@
           (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '31c2' and numa_balancing_check.rc != 0)
           or
           (nvidia_uvm_conf.rc != 0 and nvidia_id.stdout == '2bb5')
+          or
+          (confidential_computing == true and cpu_vendor.stdout == 'GenuineIntel' and tdx_nohibernate_check.rc != 0)
+          or
+          (confidential_computing == true and cpu_vendor.stdout == 'GenuineIntel' and tdx_modprobe_changed.changed)
         )
       become: true
       reboot:
@@ -217,8 +340,69 @@
         msg: "Rebooting the system to apply the changes"
         post_reboot_delay: 60
 
+    # ============================================================
+    # Confidential Computing — post-reboot validation
+    # Step 3: Verify TDX module initialized (Intel only)
+    # Step 4: Verify IOMMU groups present (any CC vendor)
+    # Ref Step 4: https://nvidia.atlassian.net/wiki/spaces/~fguillier/pages/3331881168
+    # Warnings only — do not block CNS install.
+    # ============================================================
+    - name: "TDX | Validate 'virt/tdx: module initialized' in dmesg"
+      when: confidential_computing == true and cpu_vendor.stdout == 'GenuineIntel'
+      become: true
+      shell: 'dmesg | grep -q "virt/tdx: module initialized"'
+      register: tdx_module_check
+      changed_when: false
+      failed_when: false
+
+    - name: TDX | WARN if module not initialized
+      when: confidential_computing == true and cpu_vendor.stdout == 'GenuineIntel' and tdx_module_check.rc != 0
+      debug:
+        msg: |
+          WARNING: TDX module did not initialize after reboot.
+          Possible causes:
+            - BIOS: Enable TDX, TME-MT Key Split >= 1, SEAM Loader, SGX
+            - Memory: 8 or 16 DIMMs per socket required
+            - Kernel: needs CONFIG_INTEL_TDX_HOST=y (typically 6.x+)
+            - Try manually: sudo modprobe -r kvm_intel && sudo modprobe kvm_intel tdx=1
+          Ref: https://docs.nvidia.com/cc-deployment-guide-tdx.pdf
+
+    - name: TDX | Validate /sys/module/kvm_intel/parameters/tdx is Y
+      when: confidential_computing == true and cpu_vendor.stdout == 'GenuineIntel'
+      shell: cat /sys/module/kvm_intel/parameters/tdx
+      register: tdx_param_check
+      changed_when: false
+      failed_when: false
+
+    - name: TDX | WARN if kvm_intel.tdx parameter != Y
+      when: confidential_computing == true and cpu_vendor.stdout == 'GenuineIntel' and tdx_param_check.stdout != 'Y'
+      debug:
+        msg: "WARNING: /sys/module/kvm_intel/parameters/tdx is '{{ tdx_param_check.stdout | default('') }}' (expected 'Y'). TDX not active for KVM guests."
+
+    - name: IOMMU | Count IOMMU groups (Step 4)
+      when: confidential_computing == true
+      shell: ls /sys/kernel/iommu_groups 2>/dev/null | wc -l
+      register: iommu_groups_count
+      changed_when: false
+      failed_when: false
+
+    - name: IOMMU | WARN if no IOMMU groups present
+      when: confidential_computing == true and iommu_groups_count.stdout | int == 0
+      debug:
+        msg: |
+          WARNING: /sys/kernel/iommu_groups is empty — IOMMU not enabled.
+          Fixes:
+            - Intel: enable VT-d in BIOS; add intel_iommu=on to GRUB cmdline
+            - AMD:   enable IOMMU in BIOS;  add amd_iommu=on   to GRUB cmdline
+          Ref: https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/gpu-operator-confidential-containers.html
+
+    - name: IOMMU | Report IOMMU group count
+      when: confidential_computing == true and iommu_groups_count.stdout | int > 0
+      debug:
+        msg: "IOMMU OK: {{ iommu_groups_count.stdout }} IOMMU groups detected."
+
     - name: Install PreRequisites dependencies
-      when: ansible_distribution == 'Ubuntu'
+      when: ansible_facts['distribution'] == 'Ubuntu'
       become: true
       apt:
         name: ['mokutil']
@@ -226,7 +410,7 @@
         update_cache: yes
 
     - name: Install PreRequisites dependencies
-      when: ansible_distribution == 'RedHat'
+      when: ansible_facts['distribution'] == 'RedHat'
       become: true
       yum:
         name: ['mokutil', 'lsof']
@@ -241,19 +425,29 @@
 
     - name: Get jq pacakge
       become: true
-      when: ansible_architecture == 'x86_64'
+      when: ansible_facts['architecture'] == 'x86_64'
       get_url:
         url: https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-linux-amd64
         dest: /usr/local/bin/jq
         mode: '0777'
+        timeout: 60
+      register: jq_download
+      retries: 3
+      delay: 10
+      until: jq_download is succeeded
 
     - name: Get jq pacakge
       become: true
-      when: ansible_architecture == 'aarch64'
+      when: ansible_facts['architecture'] == 'aarch64'
       get_url:
         url: https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-linux-arm64
         dest: /usr/local/bin/jq
         mode: '0777'
+        timeout: 60
+      register: jq_download
+      retries: 3
+      delay: 10
+      until: jq_download is succeeded
 
     - name: Check Internet Speed
       ignore_errors: true
@@ -277,14 +471,14 @@
     - name: check enough storage
       shell: df --block-size 1g / --output=avail | tail -1 | sed "s/ //g"
       register: size
-      failed_when: " size.stdout | int <= 40 and ansible_architecture == 'x86_64'"
+      failed_when: " size.stdout | int <= 40 and ansible_facts['architecture'] == 'x86_64'"
 
     - name: Check Number of CPU's
-      failed_when: ansible_processor_vcpus < 2
+      failed_when: ansible_facts['processor_vcpus'] < 2
       shell: "echo 'minimum 2 CPUs required'"
 
     - name: Check memory requirements
-      failed_when: ansible_memtotal_mb < 4096
+      failed_when: ansible_facts['memtotal_mb'] < 4096
       shell: "echo 'minimum 4GB memory required'"
 
     - name: Clean up kube config
@@ -302,7 +496,7 @@
 
     - name: Check CNS Version support for RHEL
       shell: "echo 'Not a Valid Installation please use CNS Version 10.0 above and retry'"
-      failed_when: "cns_version < 10.0 and ansible_distribution in ['RedHat', 'CentOS']"
+      failed_when: "cns_version < 10.0 and ansible_facts['distribution'] in ['RedHat', 'CentOS']"
 
     - name: check dgx
       stat:
@@ -315,7 +509,7 @@
       register: l4t
 
     - name: NVIDIA Driver Clean Up on DGX 
-      when:  dgx.stat.exists == True and ansible_distribution == 'Ubuntu' and enable_rdma == true or dgx.stat.exists == True and ansible_distribution == 'Ubuntu' and enable_gds == true or l4t.stat.exists == True and ansible_distribution == 'Ubuntu' and enable_rdma == true or l4t.stat.exists == True and ansible_distribution == 'Ubuntu' and enable_gds == true
+      when:  dgx.stat.exists == True and ansible_facts['distribution'] == 'Ubuntu' and enable_rdma == true or dgx.stat.exists == True and ansible_facts['distribution'] == 'Ubuntu' and enable_gds == true or l4t.stat.exists == True and ansible_facts['distribution'] == 'Ubuntu' and enable_rdma == true or l4t.stat.exists == True and ansible_facts['distribution'] == 'Ubuntu' and enable_gds == true
       become: true
       block:
         - name: Remove Ubuntu unattended upgrades to prevent apt lock

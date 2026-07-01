@@ -1,76 +1,66 @@
 - hosts: all
   gather_facts: yes
   vars:
-    cns_version: 14.1
+    cns_version: 19.0
     microk8s: no
-    k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key"
-    k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.31/rpm/repodata/repomd.xml.key"
+    k8s_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key"
+    k8s_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.36/rpm/repodata/repomd.xml.key"
     k8s_apt_ring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
     k8s_registry: "registry.k8s.io"
     container_runtime: "cri-dockerd"
-    containerd_version: "2.2.0"
-    runc_version: "1.4.0"
-    cni_plugins_version: "1.7.1"
+    containerd_version: "2.3.0"
+    runc_version: "1.4.2"
+    cni_plugins_version: "1.9.1"
     containerd_max_concurrent_downloads: "5"
-    nvidia_container_toolkit_version: "1.18.1"
-    crio_version: "1.33.6"
-    cri_dockerd_version: "0.4.0"
-    k8s_version: "1.33.6"
-    calico_version: "3.29.3"
-    flannel_version: "0.25.6"
-    helm_version: "4.0.2"
-    gpu_operator_version: "25.10.1"
-    network_operator_version: "25.7.0"
-    nim_operator_version: "3.0.2"
-    nsight_operator_version: "1.1.2"
+    nvidia_container_toolkit_version: "1.19.0"
+    crio_version: "1.36.0"
+    cri_dockerd_version: "0.4.3"
+    k8s_version: "1.36.0"
+    calico_version: "3.32.0"
+    flannel_version: "0.28.4"
+    helm_version: "4.1.4"
+    gpu_operator_version: "26.3.1"
+    network_operator_version: "26.4.0"
+    nim_operator_version: "3.1.0"
+    nsight_operator_version: "26.2.1"
     kai_scheduler_version: "0.10.2"
-    local_path_provisioner: "0.0.31"
+    local_path_provisioner: "0.0.35"
     nfs_provisioner: "4.0.18"
     metallb_version: "0.15.3"
-    kserve_version: "0.16.0"
-    prometheus_stack: "79.9.0"
-    prometheus_adapter: "5.2.0"
-    grafana_operator: "5.18.0"
-    elastic_stack: "9.2.1"
-    lws_version: "0.7.0"
-    volcano_version: "1.13.0"
-    confidential_computing: no
-    gpu_driver_version: "580.105.08"
-    use_open_kernel_module: no
-    enable_mig: no
-    mig_profile: all-disabled
-    mig_strategy: single
-    enable_gds: no
-    enable_secure_boot: no
-    enable_cdi: no
-    enable_vgpu: no
-    vgpu_license_server: ""
+    kserve_version: "0.18.0"
+    prometheus_stack: "84.5.0"
+    prometheus_adapter: "5.3.0"
+    grafana_operator: "5.22.2"
+    elastic_stack: "9.4.0"
+    lws_version: "0.8.0"
+    volcano_version: "1.14.1"
+    ingress_controller_version: "4.15.1"
+    dra_driver_version: "25.8.1"
+    dynamo_release_version: "0.8.0"
+    gpu_driver_version: "580.126.20"
     helm_repository: "https://helm.ngc.nvidia.com/nvidia"
     gpu_operator_helm_chart: nvidia/gpu-operator
     gpu_operator_driver_registry: "nvcr.io/nvidia"
-    ngc_registry_password: ""
-    ngc_registry_email: ""
-    ngc_registry_username: "$oauthtoken"
     enable_network_operator: no
     enable_rdma: no
+    enable_gds: no
     deploy_ofed: no
-    proxy: no
-    http_proxy: ""
-    https_proxy: ""
     cns_docker: yes
-    cns_nvidia_driver: yes
-    nvidia_driver_mig: no
+    cns_nvidia_driver: no
     enable_gpu_operator: yes
-    enable_nsight_operator: no
-    enable_nim_operator: yes
     lws: yes
     storage: yes
     monitoring: yes
     kserve: yes
     loadbalancer: yes
-    loadbalancer_ip: ""
+    loadbalancer_ip: []
     kubernetes_host_ip: ""
     volcano: yes
+    enable_kai_scheduler: yes
+    enable_nsight_operator: no
+    enable_nim_operator: yes
+    enable_dynamo_cloud: yes
+    enable_dra_driver: no
   tasks:
     - name: Checking Nouveau is disabled
       become: true
@@ -106,28 +96,6 @@
       shell: grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=1"
       when: ansible_os_family == 'RedHat'
       become: true
-
-    - name: check and update RHEL version
-      when: "ansible_distribution_version != '8.10' and ansible_os_family == 'RedHat'"
-      shell: subscription-manager release --set 8.10; sudo yum update -y -q
-      become: true
-
-    - name: check for Kernel SNP release
-      shell: uname -r | awk -F'-' '{print $3}'
-      register: snp
-
-    - name: conf_compu_snp_install script
-      become: true
-      when: "confidential_computing == true and snp.stdout != 'snp'"
-      copy:
-        src: "{{lookup('pipe', 'pwd')}}/files/conf_compu_snp_install.sh"
-        dest: "{{ ansible_user_dir }}"
-        mode: 0777
-
-    - name: Run conf_compu_snp_install script, please wait
-      become: true
-      when: "confidential_computing == true and snp.stdout != 'snp'"
-      shell: "bash {{ ansible_user_dir }}/conf_compu_snp_install.sh >> {{ ansible_user_dir }}/snp_install.log"
 
     - name: update-initramfs-ubuntu
       become: true
@@ -246,8 +214,6 @@
           or
           (ansible_os_family == 'RedHat' and selinuxstatus.stdout == 'enforcing')
           or
-          (snp.stdout != 'snp' and confidential_computing == true)
-          or
           (cgroup.stdout != 'cgroup2fs' and ansible_os_family == 'RedHat')
           or
           (nvidia_kernel == 'nvidia' and nvidia_id.stdout == '2941' and iommu_passthrough_check.rc != 0)
@@ -359,7 +325,7 @@
         path: /etc/l4t-release
       register: l4t
 
-    - name: NVIDIA Driver Clean Up on DGX 
+    - name: NVIDIA Driver Clean Up on DGX
       when:  dgx.stat.exists == True and ansible_distribution == 'Ubuntu' and enable_rdma == true or dgx.stat.exists == True and ansible_distribution == 'Ubuntu' and enable_gds == true or l4t.stat.exists == True and ansible_distribution == 'Ubuntu' and enable_rdma == true or l4t.stat.exists == True and ansible_distribution == 'Ubuntu' and enable_gds == true
       become: true
       block:
@@ -441,7 +407,7 @@
       delay: 5
       register: create_trusted_gpg
       until: create_trusted_gpg is succeeded
-        
+
     - name: Add an Kubernetes apt signing key for Ubuntu
       become: true
       when: "ansible_distribution == 'Ubuntu' "
@@ -625,6 +591,17 @@
       register: disable_firewall
       until: disable_firewall is succeeded
 
+    - name: disable UFW
+      become: true
+      when: "'running' not in k8sup.stdout and ansible_distribution == 'Ubuntu'"
+      service:
+        state: stopped
+        name: ufw
+      retries: 5
+      delay: 5
+      register: disable_ufw
+      until: disable_ufw is succeeded
+
 #    - name: Firewall Rules
 #      become: true
 #     when: "'running' not in k8sup.stdout and ansible_distribution == 'RedHat'"
@@ -679,6 +656,8 @@
             - {name: "net.bridge.bridge-nf-call-ip6tables", value: "1", reload: no}
             - {name: "net.bridge.bridge-nf-call-iptables", value: "1", reload: no}
             - {name: "net.ipv4.ip_forward", value: "1", reload: yes}
+            - {name: "net.ipv4.conf.all.rp_filter", value: "0", reload: yes}
+            - {name: "net.ipv4.conf.default.rp_filter", value: "0", reload: yes}
             - {name: "fs.inotify.max_user_watches", value: "2099999999", reload: no}
             - {name: "fs.inotify.max_user_instances", value: "2099999999", reload: no}
             - {name: "fs.inotify.max_queued_events", value: "2099999999", reload: yes}
@@ -686,31 +665,6 @@
           delay: 5
           register: add_sysctl
           until: add_sysctl is succeeded
-      when: "cns_version >= 4.0"
-
-    - name: Setup Containerd for Ubuntu
-      become: true
-      lineinfile:
-        line: KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:/run/containerd/containerd.sock"
-        path: /etc/default/kubelet
-        create: yes
-      when: "cns_version < 10.0 and container_runtime == 'containerd'"
-      retries: 5
-      delay: 5
-      register: setup_containerd
-      until: setup_containerd is succeeded
-
-    - name: Setup Kubelet Parameters
-      become: true
-      lineinfile:
-        line: KUBELET_EXTRA_ARGS=--serialize-image-pulls=true"
-        path: /etc/default/kubelet
-        create: yes
-      when: "cns_version >= 10.0"
-      retries: 5
-      delay: 5
-      register: setup_kubelet
-      until: setup_kubelet is succeeded
 
     - name: Install Containerd for NVIDIA Cloud Native Stack
       become: true
@@ -913,60 +867,6 @@
           until: restart_containerd is succeeded
       when: "cns_version >= 4.1 and ansible_system == 'Linux' and container_runtime == 'containerd' or cns_version >= 4.1 and ansible_system == 'Linux' and container_runtime == 'cri-dockerd'"
 
-    - name: Add Containerd Proxy configuration
-      become: true
-      block:
-        - name: Get Host IP
-          shell: interface=$(ip a | grep 'state UP' |  egrep 'enp*|ens*|eno*|enc*|eth*|bond*|wlan*' | awk '{print $2}' | sed 's/://g'); for i in $interface; do ifconfig $i | grep -iw inet | awk '{print $2}'; done
-          register: network
-          retries: 5
-          delay: 5
-          until: network is succeeded
-
-        - name: subnet
-          shell: echo {{ network.stdout_lines[0] }} | cut -d. -f1-3
-          register: subnet
-          retries: 5
-          delay: 5
-          until: subnet is succeeded
-
-        - name: Create containerd.service.d
-          file:
-            path: /etc/systemd/system/containerd.service.d
-            state: directory
-            recurse: yes
-          retries: 5
-          delay: 5
-          register: create_containerd_service_dir
-          until: create_containerd_service_dir is succeeded
-
-        - name: create http-proxy.conf
-          lineinfile:
-            create: yes
-            mode: 666
-            path: /etc/systemd/system/containerd.service.d/http-proxy.conf
-            line: "{{ item }}"
-          loop:
-          - "[Service]"
-          - "Environment='NO_PROXY={{ network.stdout_lines[0] }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24'"
-          - "Environment='HTTPS_PROXY={{ https_proxy }}'"
-          - "Environment='HTTP_PROXY={{ http_proxy }}'"
-          retries: 5
-          delay: 5
-          register: create_proxy_conf
-          until: create_proxy_conf is succeeded
-
-        - name: restart containerd
-          systemd_service:
-            name: containerd
-            state: restarted
-            daemon_reload: yes
-          retries: 5
-          delay: 5
-          register: restart_containerd_proxy
-          until: restart_containerd_proxy is succeeded
-      when: "proxy == true and cns_version >= 6.1 and container_runtime == 'containerd'"
-
     - name: Install CRI-O on Ubuntu
       when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and cns_version >= 12.0"
       become: true
@@ -1039,6 +939,18 @@
           register: create_overlay_dir
           until: create_overlay_dir is succeeded
 
+        - name: Ensure CRI-O drop-in config directory exists
+          file:
+            path: /etc/crio/crio.conf.d
+            state: directory
+            mode: '0755'
+
+        - name: Ensure CRI-O drop-in config exists
+          file:
+            path: /etc/crio/crio.conf.d/10-crio.conf
+            state: touch
+            mode: '0644'
+
         - name: Update crio.conf
           blockinfile:
             path: /etc/crio/crio.conf.d/10-crio.conf
@@ -1052,7 +964,7 @@
           until: update_crio_conf is succeeded
 
     - name: Install CRI-O on Ubuntu 22.04
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '22' and cns_version < 12.0"
+      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '22' and cns_version < 12.0"  
       become: true
       block:
         - name: trim CRI-O version
@@ -1072,7 +984,7 @@
 
         - name: Adding CRI-O apt key
           apt_key:
-            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_22.04/Release.key"
+            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_22.04/Release.key"        
             keyring: /etc/apt/keyrings/libcontainers-archive-keyring.gpg
             state: present
           retries: 5
@@ -1120,7 +1032,7 @@
           until: add_crio_repo_22_2 is succeeded
 
     - name: Install CRI-O on Ubuntu 20.04
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version <= '20' and cns_version < 12.0"
+      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu' and ansible_distribution_major_version <= '20' and cns_version < 12.0"  
       become: true
       block:
         - name: trim CRI-O version
@@ -1140,7 +1052,7 @@
 
         - name: Adding CRI-O apt key
           apt_key:
-            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_20.04/Release.key"
+            url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x{{ ansible_distribution }}_20.04/Release.key"        
             state: present
           retries: 5
           delay: 5
@@ -1192,7 +1104,7 @@
         - name: Setup CRI-O for Ubuntu
           become: true
           lineinfile:
-            line: KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:///var/run/crio/crio.sock"
+            line: KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint="unix:///var/run/crio/crio.sock"  
             path: /etc/default/kubelet
             create: yes
           retries: 5
@@ -1355,6 +1267,18 @@
           register: create_overlay_dir_rhel_12
           until: create_overlay_dir_rhel_12 is succeeded
 
+        - name: Ensure CRI-O drop-in config directory exists
+          file:
+            path: /etc/crio/crio.conf.d
+            state: directory
+            mode: '0755'
+
+        - name: Ensure CRI-O drop-in config exists
+          file:
+            path: /etc/crio/crio.conf.d/10-crio.conf
+            state: touch
+            mode: '0644'
+
         - name: Update crio.conf
           blockinfile:
             path: /etc/crio/crio.conf.d/10-crio.conf
@@ -1449,11 +1373,24 @@
       register: install_docker_deps_rhel
       until: install_docker_deps_rhel is succeeded
 
+    - name: Create a Docker APT KeyRing
+      become: true
+      when: "ansible_distribution == 'Ubuntu'"
+      file:
+        path: /etc/apt/keyrings/docker.asc
+        state: touch
+        mode: '0755'
+      retries: 5
+      delay: 5
+      register: create_docker_asc
+      until: create_docker_asc is succeeded
+
     - name: Add Docker APT signing key
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_key:
         url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+        keyring: /etc/apt/keyrings/docker.asc
         state: present
       retries: 5
       delay: 5
@@ -1464,7 +1401,7 @@
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_repository:
-        repo: "deb https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
       retries: 5
@@ -1487,7 +1424,7 @@
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_system == 'Linux' and ansible_architecture == 'x86_64'
       unarchive:
-        src: https://github.com/Mirantis/cri-dockerd/releases/download/v{{ cri_dockerd_version }}/cri-dockerd-{{ cri_dockerd_version }}.amd64.tgz
+        src: https://github.com/Mirantis/cri-dockerd/releases/download/v{{ cri_dockerd_version }}/cri-dockerd-{{ cri_dockerd_version }}.amd64.tgz      
         dest: /usr/local/bin/
         remote_src: yes
         mode: 0777
@@ -1501,7 +1438,7 @@
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_system == 'Linux' and ansible_architecture == 'aarch64'
       unarchive:
-        src: https://github.com/Mirantis/cri-dockerd/releases/download/v{{ cri_dockerd_version }}/cri-dockerd-{{ cri_dockerd_version }}.arm64.tgz
+        src: https://github.com/Mirantis/cri-dockerd/releases/download/v{{ cri_dockerd_version }}/cri-dockerd-{{ cri_dockerd_version }}.arm64.tgz      
         dest: /usr/local/bin/
         remote_src: yes
         mode: 0777
@@ -1546,7 +1483,7 @@
       become: true
       when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
       package:
-        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin'] 
+        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
         state: latest
       register: docker_status
       retries: 5
@@ -1565,7 +1502,7 @@
       delay: 5
       until: docker_status_rhel is succeeded
 
-    - name: Update docker service 
+    - name: Update docker service
       when: container_runtime == 'cri-dockerd'
       shell: sed -i 's/\/usr\/bin\/dockerd/\/usr\/bin\/dockerd -H unix:\/\/\/var\/run\/docker.sock/g' /lib/systemd/system/docker.service; systemctl daemon-reload; systemctl restart docker
       become: true
@@ -1574,6 +1511,14 @@
       delay: 5
       register: update_docker_service
       until: update_docker_service is succeeded
+
+    - name: Add current user to docker group
+      when: container_runtime == 'cri-dockerd'
+      become: true
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
 
     - name: Starting and enabling the required services
       become: true
@@ -1593,7 +1538,7 @@
       delay: 5
       register: start_services
       until: start_services is succeeded
-         
+
     - name: "Install Helm on NVIDIA Cloud Native Stack"
       become: true
       command: "{{ item }}"
@@ -1622,30 +1567,6 @@
       register: install_helm_arm
       until: install_helm_arm is succeeded
 
-    - name: Update Containerd Runtime for NVIDIA Cloud Native Stack
-      become: true
-      block:
-        - name: Create /etc/containerd
-          file:
-            path: /etc/containerd
-            state: directory
-
-        - name: Write defaults to config.toml
-          copy:
-            src: "{{lookup('pipe', 'pwd')}}/files/config.toml"
-            dest: /etc/containerd/config.toml
-            mode: 0664
-
-        - name: Enable systemd cgroups
-          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
-
-        - name: restart containerd
-          service:
-            name: containerd
-            state: restarted
-            daemon_reload: yes
-      when: "cns_docker == true and microk8s == false and container_runtime == 'containerd'"
-
     - name: Check NVIDIA Driver Modules are loaded
       shell: "lsmod | grep -i nvidia"
       register: nvidia_mod
@@ -1673,7 +1594,7 @@
 
     - name: NVIDIA Driver Clean Up
       become: true
-      when:  nvidia_mod.rc >= 1 and ansible_distribution == 'Ubuntu' and cns_nvidia_driver == true or nvidia_smi.rc == 0 and ansible_distribution == 'Ubuntu' and cns_nvidia_driver == true 
+      when:  nvidia_mod.rc >= 1 and ansible_distribution == 'Ubuntu' and cns_nvidia_driver == true or nvidia_smi.rc == 0 and ansible_distribution == 'Ubuntu' and cns_nvidia_driver == true
       block:
         - name: Remove Ubuntu unattended upgrades to prevent apt lock
           ansible.builtin.apt:
@@ -1801,6 +1722,37 @@
         - name: Install driver packages
           shell: "BASE_URL=https://us.download.nvidia.com/tesla; curl -fSsl -O $BASE_URL/{{ gpu_driver_version }}/NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; chmod +x ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; sh ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run --silent"
 
+    - name: Resolve NVIDIA Utils packages on Ubuntu
+      become: true
+      when: "ansible_distribution == 'Ubuntu'"
+      shell: |
+        set -e
+        for pkg in nvidia-compute-utils-{{ driver_version }} libnvidia-cfg1-{{ driver_version }}; do
+          version=$(apt-cache madison "$pkg" | awk -v target="{{ gpu_driver_version }}" '$3 ~ "^" target {print $3; exit}')
+          if [ -n "$version" ]; then
+            printf '%s=%s\n' "$pkg" "$version"
+          fi
+        done
+      changed_when: false
+      register: nvidia_utils_ubuntu_packages
+      retries: 5
+      delay: 5
+      until: nvidia_utils_ubuntu_packages is succeeded
+
+    - name: Install NVIDIA Utils on Ubuntu
+      become: true
+      when: "ansible_distribution == 'Ubuntu' and nvidia_utils_ubuntu_packages.stdout_lines | length > 0"
+      ignore_errors: true
+      apt:
+        name: "{{ nvidia_utils_ubuntu_packages.stdout_lines }}"
+        state: present
+        update_cache: true
+        force: yes
+      retries: 5
+      delay: 5
+      register: install_nvidia_utils_ubuntu
+      until: install_nvidia_utils_ubuntu is succeeded
+
     - name: check if NVSwitches
       shell: ls -A /proc/driver/nvidia-nvswitch/devices | wc -l | tr -d '\n'
       when: cns_nvidia_driver == true
@@ -1853,7 +1805,7 @@
 
     - name: Install NVIDIA Fabric Manager for NVSwitch on RHEL
       become: true
-      when: "ansible_distribution == 'RedHat' and dgx.stat.exists == True and cns_nvidia_driver == true or ansible_distribution == 'RedHat' and l4t.stat.exists == True and cns_nvidia_driver == true or ansible_distribution == 'RedHat' and nvswitch.stdout | int > 0 and cns_nvidia_driver == true"
+      when: "ansible_distribution == 'RedHat' and dgx.stat.exists == True and cns_nvidia_driver == true or ansible_distribution == 'RedHat' and l4t.stat.exists == True and cns_nvidia_driver == true or ansible_distribution == 'RedHat' and nvswitch.stdout | int > 0 and cns_nvidia_driver == true"        
       ignore_errors: true
       yum:
         name: "nvidia-fabric-manager-{{ gpu_driver_version}}-1"
@@ -1917,35 +1869,48 @@
         update_cache: true
 
     - name: create docker.asc file
-      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and cns_docker == true
+      when: ansible_distribution == 'Ubuntu'
       become: true
-      file: 
+      file:
         path: /etc/apt/keyrings/docker.asc
         mode: '0644'
         state: touch
+      retries: 5
+      delay: 5
+      register: create_docker_asc
+      until: create_docker_asc is succeeded
 
     - name: Add Docker APT signing key
-      become: true
-      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and cns_docker == true
+      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_key:
         url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
         keyring: /etc/apt/keyrings/docker.asc
         state: present
+      retries: 5
+      delay: 5
+      register: add_docker_key
+      until: add_docker_key is succeeded
 
     - name: Add Docker repository into sources list
-      become: true
-      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and cns_docker == true
+      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
       ansible.builtin.apt_repository:
         repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
+      retries: 5
+      delay: 5
+      register: add_docker_repo
+      until: add_docker_repo is succeeded
 
     - name: Add Docker repo on RHEL
-      become: true
-      when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat' and cns_docker == true
+      when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
       get_url:
         url: https://download.docker.com/linux/centos/docker-ce.repo
         dest: /etc/yum.repos.d/docer-ce.repo
+      retries: 5
+      delay: 5
+      register: add_docker_repo_rhel
+      until: add_docker_repo_rhel is succeeded
 
     - name: Create docker systemd file
       when: docker_exists.rc >= 1 and microk8s == true
@@ -2069,7 +2034,7 @@
         filename: libnvidia-container.list
       with_items:
         - deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/ubuntu18.04/$(ARCH) /
-        - deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH) /
+        - deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH) /   
 
     - name: add NVIDIA Container Toolkit repo on RHEL
       become: true
@@ -2106,40 +2071,6 @@
         state: present
         update_cache: yes
 
-    - name: Update docker default runtime
-      become: true
-      when: nvidia_docker_exists.rc >= 1 and cns_docker == true
-      copy:
-        content: "{{ daemon_json | to_nice_json }}"
-        dest: /etc/docker/daemon.json
-        owner: root
-        group: root
-        mode: 0644
-
-    - name: Update Containerd Runtime for NVIDIA Cloud Native Stack
-      become: true
-      block:
-        - name: Create /etc/containerd
-          file:
-            path: /etc/containerd
-            state: directory
-
-        - name: Write defaults to config.toml
-          copy:
-            src: "{{lookup('pipe', 'pwd')}}/files/config.toml"
-            dest: /etc/containerd/config.toml
-            mode: 0664
-
-        - name: Enable systemd cgroups
-          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
-
-        - name: restart containerd
-          systemd_service:
-            name: containerd
-            state: restarted
-            daemon_reload: yes
-      when: "container_runtime == 'containerd' and microk8s == false"
-
     - name: Create "docker" group
       when: docker_exists.rc >= 1 and cns_docker == true
       become: true
@@ -2152,47 +2083,230 @@
       become: true
       user:
         name: "{{ ansible_user_id }}"
-        group: docker
+        groups: docker
         append: yes
 
     - name: Configure CDI
-      shell: nvidia-ctk runtime configure --runtime containerd --cdi.enabled; nvidia-ctk runtime configure --runtime docker --cdi.enabled; nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+      shell: "nvidia-ctk runtime configure --runtime docker --cdi.enabled --nvidia-set-as-default; nvidia-ctk runtime configure --runtime containerd --cdi.enabled --nvidia-set-as-default; nvidia-ctk config --config-file /usr/local/nvidia/toolkit/.config/nvidia-container-runtime/config.toml --in-place --set accept-nvidia-visible-devices-as-volume-mounts=true"
       become: true
       when: nvidia_docker_exists.rc >= 1 and cns_docker == true
       ignore_errors: true
 
+    - name: Configure GPU Operator NVIDIA Driver for Nvidia Container Runtime
+      become: true
+      when: cns_nvidia_driver == false
+      ignore_errors: true
+      lineinfile:
+        path: /etc/nvidia-container-runtime/config.toml
+        regexp: '#root = "/run/nvidia/driver"'
+        line: 'root = "/run/nvidia/driver"'
+      retries: 5
+      delay: 5
+      register: configure_nvidia_driver
+      until: configure_nvidia_driver is succeeded
+
+
+    - name: Download NGC CLI
+      when: ansible_architecture == 'x86_64'
+      get_url:
+        url: https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.10.0/files/ngccli_linux.zip
+        dest: /tmp/ngccli_linux.zip
+        mode: 0664
+      retries: 5
+      delay: 5
+      register: download_ngc_cli
+      until: download_ngc_cli is succeeded
+
+    - name: Download NGC CLI
+      when: ansible_architecture == 'aarch64'
+      get_url:
+        url: https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.10.0/files/ngccli_arm64.zip
+        dest: /tmp/ngccli_linux.zip
+        mode: 0664
+      retries: 5
+      delay: 5
+      register: download_ngc_cli
+      until: download_ngc_cli is succeeded
+
     - name: NGC CLI Setup
       block:
-        - name: Download CLI
-          get_url:
-            url: https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/3.51.0/files/ngccli_linux.zip
-            dest: /tmp/ngccli_linux.zip
-            mode: 0664
-
         - name: Install NGC CLI
           unarchive:
             src: /tmp/ngccli_linux.zip
-            dest: "{{ ansible_user_dir }}"
+            dest: "{{ ansible_user_dir }}/"
             remote_src: yes
+          retries: 5
+          delay: 5
+          register: install_ngc_cli
+          until: install_ngc_cli is succeeded
 
-        - name: change ngc file permission
+        - name: Ensure ngc file is executable
           file:
             path: "{{ ansible_user_dir }}/ngc-cli/ngc"
-            mode: '0777'
+            mode: '0755'
+            state: file
+          retries: 5
+          delay: 5
+          register: change_ngc_permission
+          until: change_ngc_permission is succeeded
 
-        - name: Add Path to bashrc
+        - name: Ensure ngc-cli path is in bashrc
           lineinfile:
             path: "{{ ansible_user_dir }}/.bashrc"
-            insertafter: '^PATH='
-            line: 'PATH=$PATH:{{ ansible_user_dir }}/ngc-cli'
+            insertafter: EOF
+            regexp: '^(export )?PATH=.*{{ ansible_user_dir }}/ngc-cli/?(:|$)'
+            line: 'export PATH=$PATH:{{ ansible_user_dir }}/ngc-cli'
             state: present
+          retries: 5
+          delay: 5
+          register: add_path_to_bashrc
+          until: add_path_to_bashrc is succeeded
 
-    - name: Get Nvidia Tegra Release
-      shell: uname -r | awk -F'-' '{print $2}'
-      register: release
+    - name: Starting and enabling the required services
+      become: true
+      ignore_errors: true
+      failed_when: false
+      when: container_runtime == 'containerd' or container_runtime == 'cri-dockerd'
+      lineinfile:
+        path: /etc/systemd/system/containerd.service
+        insertafter: 'LimitCORE=infinity'
+        line: "{{ item }}"
+      loop:
+        - "LimitNOFILE=1048576"
+        - "LimitNPROC=1048576"
 
-    - set_fact:
-        release: "{{ release.stdout }}"
+    - name: Check if /etc/docker/daemon.json exists
+      ignore_errors: true
+      failed_when: false
+      when: container_runtime == 'cri-dockerd' or cns_docker == true
+      become: true
+      stat:
+        path: /etc/docker/daemon.json
+      register: daemon_json_stat
+
+    - name: Read existing daemon.json if present
+      ignore_errors: true
+      failed_when: false
+      become: true
+      slurp:
+        path: /etc/docker/daemon.json
+      when: daemon_json_stat.stat.exists and container_runtime == 'cri-dockerd' or  daemon_json_stat.stat.exists and cns_docker == true
+      register: daemon_json_content
+
+    - name: Set existing config or default
+      ignore_errors: true
+      failed_when: false
+      when: container_runtime == 'cri-dockerd' or cns_docker == true
+      become: true
+      set_fact:
+        daemon_json_config: "{{ daemon_json_content.content | b64decode | from_json if daemon_json_stat.stat.exists else {} }}"
+
+    - name: Merge 'default-ulimits' config
+      when: container_runtime == 'cri-dockerd' or cns_docker == true
+      ignore_errors: true
+      failed_when: false
+      become: true
+      set_fact:
+        daemon_json_config: >
+          {{
+            daemon_json_config | combine({
+              'default-ulimits': {
+                'nofile': {
+                  'Name': 'nofile',
+                  'Soft': 1048576,
+                  'Hard': 1048576
+                }
+              }
+            }, recursive=True)
+          }}
+
+    - name: Write updated daemon.json
+      when: container_runtime == 'cri-dockerd' or cns_docker == true
+      ignore_errors: true
+      failed_when: false
+      become: true
+      copy:
+        dest: /etc/docker/daemon.json
+        content: "{{ daemon_json_config | to_nice_json }}"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload the configurations
+      become: true
+      systemd_service:
+       daemon_reload: true
+      failed_when: false
+      retries: 5
+      delay: 5
+      register: reload_daemon
+      until: reload_daemon is succeeded
+
+    - name: reset failed Docker units
+      when: container_runtime == 'cri-dockerd' or cns_docker == true
+      failed_when: false
+      command: systemctl reset-failed docker.service docker.socket cri-docker.service cri-docker.socket
+      retries: 5
+      delay: 5
+      register: reset_failed_docker_units
+      until: reset_failed_docker_units is succeeded
+
+    - name: restart docker service
+      when: container_runtime == 'cri-dockerd' or cns_docker == true
+      failed_when: false
+      systemd_service:
+        name: docker
+        state: restarted
+      retries: 5
+      delay: 5
+      register: restart_docker
+      until: restart_docker is succeeded
+
+    - name: restart cri-docker service
+      when: container_runtime == 'cri-dockerd'
+      failed_when: false
+      systemd_service:
+        name: cri-docker
+        state: restarted
+      retries: 5
+      delay: 5
+      register: restart_cri_docker
+      until: restart_cri_docker is succeeded
+
+    - name: restart containerd service
+      when: container_runtime == 'containerd'
+      failed_when: false
+      systemd_service:
+        name: containerd
+        state: restarted
+      retries: 5
+      delay: 5
+      register: restart_containerd
+      until: restart_containerd is succeeded
+
+    - name: restart CRI-O services
+      when: container_runtime == 'cri-o'
+      failed_when: false
+      systemd_service:
+        name: "{{ item }}"
+        state: restarted
+      with_items:
+        - crio
+        - cri-o
+      retries: 5
+      delay: 5
+      register: restart_crio_services
+      until: restart_crio_services is succeeded
+
+    - name: restart kubelet service
+      failed_when: false
+      systemd_service:
+        name: kubelet
+        state: restarted
+      retries: 5
+      delay: 5
+      register: restart_kubelet
+      until: restart_kubelet is succeeded
 
     - name: Reset Kubernetes component
       when: container_runtime == 'cri-o'
@@ -2200,7 +2314,7 @@
       become: true
       failed_when: false
       no_log: True
-      
+
     - name: Reset Kubernetes component
       when: container_runtime == 'cri-dockerd'
       shell: "timeout 45 kubeadm reset --cri-socket=unix:///run/cri-dockerd.sock --force"
@@ -2227,92 +2341,50 @@
         path: "/var/lib/etcd"
         state: absent
 
-    - name: Check proxy conf exists
-      when: proxy == true
-      lineinfile:
-        path: /etc/environment
-        regexp: '^http_proxy=*'
-        state: absent
-      check_mode: yes
-      changed_when: false
-      register: proxyconf
-
     - name: Get Host IP
-      shell: interface=$(ip a | grep 'state UP' |  egrep 'enp*|ens*|eno*|enc*|eth*|bond*|wlan*' | awk '{print $2}' | sed 's/://g'); for i in $interface; do ifconfig $i | grep -iw inet | awk '{print $2}'; done
+      shell: ip route get 1 | awk '{print $7; exit}' | tr -d '\n'
       register: network
 
     - name: subnet information
       shell: "echo {{ network.stdout_lines[0] }} | cut -d. -f1-3"
       register: subnet
 
-    - name: add proxy lines to environment
-      when: proxy == true and not proxyconf.found
-      become: true
-      lineinfile:
-        dest: /etc/environment
-        insertafter: "PATH="
-        line: "{{ item }}"
-      loop:
-        - http_proxy={{ http_proxy }}
-        - HTTP_PROXY={{ http_proxy }}
-        - https_proxy={{ https_proxy }}
-        - HTTPS_PROXY={{ https_proxy }}
-        - no_proxy={{ network.stdout_lines[0] }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24
-        - NO_PROXY={{ network.stdout_lines[0] }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24
-
-    - name: source the env
-      when: proxy == true and not proxyconf.found
-      shell: source /etc/environment
-      args:
-        executable: /bin/bash
-
-    - name: check default gateway
-      shell: ip r | grep default
-      failed_when: false
-      register: gateway
-      when: proxy == true
-
-    - name: add default gateway
-      shell: route add -net 0.0.0.0/0 gw {{ network.stdout_lines[0] }}
-      when: gateway.rc | default ('') == 1 and proxy == true
-
-    - name: subnet
-      set_fact:
-        subnet: "{% if release != 'tegra' %}192.168.32.0/22{% elif release == 'tegra' %}10.244.0.0/16{% endif %}"
-
     - name: CRI Socket
       set_fact:
         cri_socket: "{% if container_runtime == 'containerd' %}unix:///run/containerd/containerd.sock{% elif container_runtime == 'cri-o' %}unix:///var/run/crio/crio.sock{%elif container_runtime == 'cri-dockerd' %}unix:///run/cri-dockerd.sock{% endif %}"
 
-    - name: Iniitialize the Kubernetes cluster using kubeadm and containerd for Cloud Native Stack
-      block:
-        - name: Generate kubeadm init config
-          file:
-            path: /tmp/kubeadm-init-config.yaml
-            state: touch
+    - name: subnet
+      set_fact:
+        subnet: "192.168.32.0/22"
+      retries: 5
+      delay: 5
+      register: set_subnet
+      until: set_subnet is succeeded
 
-        - name: update
-          copy:
-            dest: /tmp/kubeadm-init-config.yaml
-            content: |
-              apiVersion: kubeadm.k8s.io/v1beta3
-              kind: InitConfiguration
-              nodeRegistration:
-                criSocket: "{{ cri_socket }}"
-              localAPIEndpoint:
-                advertiseAddress: "{{ network.stdout_lines[0] }}"
-              ---
-              apiVersion: kubeadm.k8s.io/v1beta3
-              kind: ClusterConfiguration
-              networking:
-                podSubnet: "{{ subnet }}"
-              kubernetesVersion: "v{{ k8s_version }}"
-              imageRepository: "{{ k8s_registry }}"
+    - name: Kubernetes Host IP
+      set_fact:
+        kubernetes_host_ip: "{% if kubernetes_host_ip == '' %}{{ network.stdout_lines[0] }}{% else %}{{ kubernetes_host_ip }}{% endif %}"
+      retries: 5
+      delay: 5
+      register: set_kubernetes_host_ip
+      until: set_kubernetes_host_ip is succeeded
 
-        - name: Run kubeadm init
-          command: 'kubeadm init --config=/tmp/kubeadm-init-config.yaml'
-          become: true
-          register: kubeadm
+    - name: Generate kubeadm init config
+      template:
+        src: kubeadm-init-config-new.template
+        dest: /tmp/kubeadm-init-config.yaml
+      retries: 5
+      delay: 5
+      register: generate_kubeadm_config
+      until: generate_kubeadm_config is succeeded
+
+    - name: Run kubeadm init
+      command: 'kubeadm init --config=/tmp/kubeadm-init-config.yaml'
+      become: true
+      register: kubeadm
+      retries: 5
+      delay: 5
+      until: kubeadm is succeeded
 
     - name: Create kube directory
       file:
@@ -2336,73 +2408,27 @@
         seconds: 15
 
     - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
-      when: "cns_version >= 7.1 and release != 'tegra' or cns_version == 6.4 and release != 'tegra'"
-      command: "kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/calico.yaml"
-
-    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
-      when: "cns_version <= 6.3 and ansible_distribution_major_version == '20' and release != 'tegra' or cns_version == 7.0 and release != 'tegra' and ansible_distribution_major_version == '22'"
-      command: "kubectl apply -f https://projectcalico.docs.tigera.io/archive/v{{ calico_version }}/manifests/calico.yaml"
+      shell: |
+         curl -s https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/calico.yaml | sed 's/192.168.0.0\/16/192.168.32.0\/22/g' | kubectl apply -f -
+      retries: 5
+      delay: 5
+      register: install_networking_plugin_calico
+      until: install_networking_plugin_calico is succeeded
 
     - name: Update Network plugin for Calico on NVIDIA Cloud Native Stack
-      when: "cns_version >= 3.1 and release != 'tegra'"
-      shell: "sleep 5; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*"
-
-    - name: Install networking plugin to kubernetes cluster on NVIDIA Cloud Native Stack
-      when: "release == 'tegra'"
-      command: "kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v{{ flannel_version }}/Documentation/kube-flannel.yml"
-
-    - name: Taint the Kubernetes Control Plane node
-      when: "cns_version < 7.0"
-      failed_when: false
-      command: kubectl taint nodes --all node-role.kubernetes.io/master-
+      shell: "sleep 25; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*"
+      retries: 5
+      delay: 5
+      register: update_network_plugin_calico
+      until: update_network_plugin_calico is succeeded
 
     - name: Taint the Kubernetes Control Plane node
-      when: "cns_version == 7.0 or cns_version == 7.1 or cns_version == 7.2 or cns_version == 7.3 or cns_version == 7.4 or cns_version == 7.5"
-      command: kubectl taint nodes --all node-role.kubernetes.io/master- node-role.kubernetes.io/control-plane-
-
-    - name: Taint the Kubernetes Control Plane node
-      when: "cns_version >= 8.0 or cns_version == 6.4"
       failed_when: false
       command: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
-
-    - name: Generate join token IP
-      become: true
-      shell: kubeadm token create --print-join-command | awk '{print $3}'
-      register: kubeadm_join_ip
-
-    - name: Generate join token
-      become: true
-      shell: kubeadm token create --print-join-command | awk '{print $5}'
-      register: kubeadm_join_token
-
-    - name: Generate join token hash
-      become: true
-      shell: kubeadm token create --print-join-command | awk '{print $7}'
-      register: kubeadm_join_hash
-
-    - set_fact:
-        api_endpoint: "{{ kubeadm_join_ip.stdout }}"
-        kubeadm_token: "{{ kubeadm_join_token.stdout }}"
-        ca_cert_hash: "{{ kubeadm_join_hash.stdout }}"
-
-    - name: Generate kubeadm init config
-      template:
-        src: kubeadm-join.template
-        dest: /tmp/kubeadm-join.yaml
-
-    - name: Get the Active Mellanox NIC on nodes
-      when: "enable_network_operator == true and cns_version >= 4.1"
-      become: true
-      shell: "for device in `sudo lshw -class network -short | grep -i ConnectX | awk '{print $2}' | egrep -v 'Device|path' | sed '/^$/d'`;do echo -n $device; sudo ethtool $device | grep -i 'Link detected'; done | grep yes | awk '{print $1}' > /tmp/$(hostname)-nic"
-      register: node_nic
-
-    - name: Copy Mellanox NIC Active File to master
-      when: "enable_network_operator == true and cns_version >= 4.1"
-      become: true
-      fetch:
-        src: "/tmp/{{ ansible_nodename }}-nic"
-        dest: "/tmp/"
-        flat: yes
+      retries: 5
+      delay: 5
+      register: taint_control_plane
+      until: taint_control_plane is succeeded
 
     - name: Validate whether Kubernetes cluster installed
       shell: kubectl cluster-info
@@ -2442,7 +2468,7 @@
           sleep 10
           status=$(kubectl get pods dnsutils | awk '{print $3}' | grep -v STATUS)
         done
-        kubectl exec -i -t dnsutils -- nslookup archive.ubuntu.com | grep 'Name:' | uniq | awk '{print $NF}' | head -n1
+        kubectl exec -i dnsutils -- nslookup archive.ubuntu.com | grep 'Name:' | uniq | awk '{print $NF}' | head -n1
       register: dns_check
       retries: 5
       delay: 5
@@ -2528,6 +2554,19 @@
       delay: 5
       until: network_operator is succeeded
 
+    - name: Validate Network Operator Kubernetes support
+      when: "enable_network_operator == true"
+      assert:
+        that:
+          - k8s_version is version('1.31.0', '>=')
+          - k8s_version is version('1.36.0', '<')
+        fail_msg: "Network Operator {{ network_operator_version }} supports Kubernetes >= 1.31 and <= 1.35. CNS {{ cns_version }} uses Kubernetes {{ k8s_version }}, so Network Operator installation is not supported for this CNS/Kubernetes combination."
+        success_msg: "Network Operator {{ network_operator_version }} is supported with Kubernetes {{ k8s_version }}."
+      retries: 5
+      delay: 5
+      register: validate_network_operator_k8s_support
+      until: validate_network_operator_k8s_support is succeeded
+
     - name: Get the Active Mellanox NIC on master
       when: "enable_network_operator == true"
       become: true
@@ -2563,19 +2602,32 @@
       register: copy_network_files
       until: copy_network_files is succeeded
 
-    - name: Update Active mellanox NIC in network-operator-values.yaml
-      when: "enable_network_operator == true and network_operator_version < '24.10.1'"
-      failed_when: false
-      shell: 'sed -i "s/devices: \[.*\]/devices: \\[ {{ active_nic.stdout }}\]/g" {{ ansible_user_dir }}/network-operator-values.yaml'
+    - name: Download Mellanox NIC Cluster Policy YAML
+      when: "enable_network_operator == true"
+      ansible.builtin.get_url:
+        url: "https://raw.githubusercontent.com/Mellanox/network-operator/refs/tags/v{{ network_operator_version }}/example/crs/mellanox.com_v1alpha1_nicclusterpolicy_cr.yaml"
+        dest: "/tmp/mellanox_nic_policy.yaml"
+        mode: '0666'
+      register: download_mellanox_nic_policy
+      until: download_mellanox_nic_policy is succeeded
       retries: 5
       delay: 5
-      register: update_mellanox_nic
-      until: update_mellanox_nic is succeeded
+
+    - name: Update Mellanox Cluster Policy
+      when: "enable_network_operator == true"
+      ansible.builtin.shell: |
+        sed -i 's/nvstaging/nvidia/g' /tmp/mellanox_nic_policy.yaml
+        sed -i '/^spec:$/a\{% raw %}{% if deploy_ofed %}{% endraw %}' /tmp/mellanox_nic_policy.yaml
+        sed -i '/^  rdmaSharedDevicePlugin:/i\{% raw %}{% endif %}{% endraw %}' /tmp/mellanox_nic_policy.yaml
+      retries: 5
+      delay: 5
+      register: update_mellanox_cluster_policy
+      until: update_mellanox_cluster_policy is succeeded
 
     - name: Generate NIC Cluster Policy template
-      when: "enable_network_operator == true and network_operator_version >= '24.10.1'"
+      when: "enable_network_operator == true"
       copy:
-        src: "{{lookup('pipe', 'pwd')}}/files/nic-cluster-policy.yaml"
+        src: "/tmp/mellanox_nic_policy.yaml"
         dest: "{{ ansible_user_dir }}/nic-cluster-policy.yaml.j2"
       retries: 5
       delay: 5
@@ -2583,7 +2635,7 @@
       until: generate_nic_policy is succeeded
 
     - name: Create final NIC Cluster Policy configuration
-      when: "enable_network_operator == true and network_operator_version >= '24.10.1'"
+      when: "enable_network_operator == true"
       ansible.builtin.template:
         src: "{{ ansible_user_dir }}/nic-cluster-policy.yaml.j2"
         dest: "{{ ansible_user_dir }}/nic-cluster-policy.yaml"
@@ -2591,15 +2643,6 @@
       delay: 5
       register: create_nic_policy
       until: create_nic_policy is succeeded
-
-    - name: Update Active mellanox NIC in network-operator-values.yaml
-      when: "enable_network_operator == true and cns_version >= 4.1"
-      failed_when: false
-      shell: 'sed -i "s/              \"ifNames\": \[.*\]/              \"ifNames\": \\[\"{{ active_nic.stdout }}\"\]/g" {{ ansible_user_dir }}/nic-cluster-policy.yaml'
-      retries: 5
-      delay: 5
-      register: update_mellanox_nic_cns
-      until: update_mellanox_nic_cns is succeeded
 
     - name: Installing the Network Operator on NVIDIA Cloud Native Stack
       when: "enable_network_operator == true and cns_version >= 4.1"
@@ -2614,15 +2657,7 @@
       until: install_network_operator is succeeded
 
     - name: Installing the Network Operator on NVIDIA Cloud Native Stack
-      when: "enable_network_operator == true and ansible_architecture == 'x86_64' and  network_operator_version < '24.10.1'"
-      shell: "helm install --version {{ network_operator_version }} -f {{ ansible_user_dir }}/network-operator-values.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator"
-      retries: 5
-      delay: 5
-      register: install_network_operator_x86
-      until: install_network_operator_x86 is succeeded
-
-    - name: Installing the Network Operator on NVIDIA Cloud Native Stack
-      when: "enable_network_operator == true and ansible_architecture == 'x86_64' and  network_operator_version >= '24.10.1'"
+      when: "enable_network_operator == true"
       shell: "helm install --version {{ network_operator_version }} -f {{ ansible_user_dir }}/network-operator-value.yaml -n network-operator --create-namespace --wait network-operator mellanox/network-operator"
       retries: 5
       delay: 5
@@ -2630,7 +2665,7 @@
       until: install_network_operator_x86_new is succeeded
 
     - name: Applying the NIC Cluster Policy on NVIDIA Cloud Native Stack
-      when: "enable_network_operator == true and ansible_architecture == 'x86_64' and network_operator_version >= '24.10.1'"
+      when: "enable_network_operator == true"
       shell: "kubectl apply -f {{ ansible_user_dir }}/nic-cluster-policy.yaml"
       retries: 5
       delay: 5
@@ -2666,17 +2701,6 @@
       register: add_nvidia_helm_repo
       until: add_nvidia_helm_repo is succeeded
 
-    - name: Add custom Helm repo
-      shell: " {{ item }}"
-      with_items:
-          - helm repo add nvidia '{{ helm_repository }}' --force-update --username=\$oauthtoken --password='{{ ngc_registry_password }}'
-          - helm repo update
-      when: 'ngc_registry_password != ""'
-      retries: 5
-      delay: 5
-      register: add_custom_helm_repo
-      until: add_custom_helm_repo is succeeded
-
     - name: Get the GPU Operator Values.yaml
       shell: helm show --version=v{{ gpu_operator_version }} values '{{ gpu_operator_helm_chart }}' > {{ ansible_user_dir }}/values.yaml
       when: "enable_gpu_operator == true"
@@ -2684,17 +2708,6 @@
       delay: 5
       register: get_gpu_operator_values
       until: get_gpu_operator_values is succeeded
-
-    - name: create GPU Custom Values for proxy
-      when: proxy == true
-      replace:
-        dest: "{{ ansible_user_dir }}/values.yaml"
-        regexp: '  env: \[\]'
-        replace: "  env:\n    - name: HTTPS_PROXY\n      value: {{ https_proxy }}\n    - name: HTTP_PROXY\n      value: {{ http_proxy }}\n    - name: https_proxy\n      value: {{ https_proxy }}\n    - name: http_proxy\n      value: {{ http_proxy }}\n    - name: NO_PROXY\n      value: {{ network.stdout }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24\n    - name: no_proxy\n      value: {{ network.stdout }},localhost,127.0.0.0/8,10.96.0.1/24,10.244.0.0/16,192.168.32.0/22,{{ subnet.stdout }}.0/24"
-      retries: 5
-      delay: 5
-      register: create_gpu_proxy_values
-      until: create_gpu_proxy_values is succeeded
 
     - name: Trim the GPU Driver Version
       shell: "echo {{ gpu_driver_version }} | awk -F'.' '{print $1}'"
@@ -2710,148 +2723,40 @@
       register: set_driver_version
       until: set_driver_version is succeeded
 
-    - name: Install GPU Operator with Confidential Computing
-      when: "confidential_computing == true and enable_gpu_operator == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false"
-      block:
-        - name: Label Nodes with vm-passthrough for Confidential Computing
-          shell: kubectl label nodes --all nvidia.com/gpu.workload.config=vm-passthrough
-          retries: 5
-          delay: 5
-          register: label_vm_passthrough
-          until: label_vm_passthrough is succeeded
-
-        - name: Install Confidential Containers
-          shell: "export VERSION=v0.10.0; kubectl apply -k \"github.com/confidential-containers/operator/config/release?ref=${VERSION}\"; kubectl apply --dry-run=client -o yaml -k \"github.com/confidential-containers/operator/config/samples/ccruntime/default?ref=${VERSION}\" > {{ ansible_user_dir }}/ccruntime.yaml"
-          retries: 5
-          delay: 5
-          register: install_confidential_containers
-          until: install_confidential_containers is succeeded
-
-        - name: Replace node selector with nvidia.com for CC Runtime
-          replace:
-            path: "{{ ansible_user_dir }}/ccruntime.yaml"
-            regexp: 'node.kubernetes.io/worker: ""'
-            replace: 'nvidia.com/gpu.workload.config: "vm-passthrough"'
-            backup: yes
-          retries: 5
-          delay: 5
-          register: replace_node_selector
-          until: replace_node_selector is succeeded
-
-        - name: Install CC Runtime
-          shell: "kubectl apply -f {{ ansible_user_dir }}/ccruntime.yaml"
-          retries: 5
-          delay: 5
-          register: install_cc_runtime
-          until: install_cc_runtime is succeeded
-
-        - name: Install NVIDIA GPU Operator for Confidential Computing
-          shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --wait --generate-name -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set sandboxWorkloads.enabled=true --set kataManager.enabled=true --set ccManager.enabled=true --set nfd.nodefeaturerules=true
-          retries: 5
-          delay: 5
-          register: install_gpu_operator_confidential
-          until: install_gpu_operator_confidential is succeeded
-
-        - name: Setting the Node Level Mode
-          shell: kubectl label nodes --all nvidia.com/cc.mode=on --overwrite
-          retries: 5
-          delay: 5
-          register: set_node_level_mode
-          until: set_node_level_mode is succeeded
-
-    - name: Create namespace and registry secret
-      when: "confidential_computing == false and enable_gpu_operator == true and cns_nvidia_driver == false and ngc_registry_password != ''"
-      shell: "{{ item }}"
-      with_items:
-        - kubectl create namespace nvidia-gpu-operator
-        - kubectl create secret docker-registry ngc-secret --docker-server='https://nvcr.io' --docker-username='{{ ngc_registry_username }}' --docker-password='{{ ngc_registry_password }}' -n nvidia-gpu-operator
-      retries: 5
-      delay: 5
-      register: create_namespace_secret
-      until: create_namespace_secret is succeeded
-
     - name: Installing the GPU Operator with NVIDIA Docker on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == true and cns_nvidia_driver == false and  enable_mig == false and enable_vgpu == false and enable_rdma == false and ngc_registry_password == ''"
-      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set toolkit.enabled=false --wait --generate-name
+      when: "container_runtime == 'cri-dockerd' and enable_gpu_operator == true and cns_docker == true and cns_nvidia_driver == false"
+      shell: "helm install --version v{{ gpu_operator_version }}  gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[0].value=nvidia  --set toolkit.env[1].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[1].value=false --set toolkit.env[2].name=NVIDIA_RUNTIME_SET_AS_DEFAULT --set-string toolkit.env[2].value=true --wait --generate-name"
       retries: 5
       delay: 5
       register: install_gpu_operator_docker
       until: install_gpu_operator_docker is succeeded
 
     - name: Installing the GPU Operator with NVIDIA Host Driver on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and ngc_registry_password == ''"
-      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false --wait --generate-name
+      when: "container_runtime == 'cri-dockerd' and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == true"
+      shell: helm install --version v{{ gpu_operator_version }}  gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[0].value=nvidia  --set toolkit.env[1].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[1].value=false --set toolkit.env[2].name=NVIDIA_RUNTIME_SET_AS_DEFAULT --set-string toolkit.env[2].value=true --set driver.enabled=false --wait --generate-name
       retries: 5
       delay: 5
       register: install_gpu_operator_host_driver
       until: install_gpu_operator_host_driver is succeeded
 
     - name: Installing the GPU Operator with Docker and NVIDIA Host Driver on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and cns_docker == true and cns_nvidia_driver == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and ngc_registry_password == ''"
-      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator '{{ gpu_operator_helm_chart }}' --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+      when: "container_runtime == 'cri-dockerd' and enable_gpu_operator == true and cns_docker == true and cns_nvidia_driver == true"
+      shell: "helm install --version v{{ gpu_operator_version }}  gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[0].value=nvidia  --set toolkit.env[1].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[1].value=false --set toolkit.env[2].name=NVIDIA_RUNTIME_SET_AS_DEFAULT --set-string toolkit.env[2].value=true --set driver.enabled=false,toolkit.enabled=false --wait --generate-name"
       retries: 5
       delay: 5
       register: install_gpu_operator_docker_host_driver
       until: install_gpu_operator_docker_host_driver is succeeded
 
     - name: Installing the GPU Operator on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_cdi == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
+      when: "container_runtime == 'cri-dockerd' and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == false"
+      shell: "helm install --version v{{ gpu_operator_version }}  gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[0].value=nvidia  --set toolkit.env[1].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[1].value=false --set toolkit.env[2].name=NVIDIA_RUNTIME_SET_AS_DEFAULT --set-string toolkit.env[2].value=true"
       retries: 5
       delay: 5
       register: install_gpu_operator_default
       until: install_gpu_operator_default is succeeded
 
-    - name: Installing the GPU Operator with CDI on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_cdi == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set cdi.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
-      retries: 5
-      delay: 5
-      register: install_gpu_operator_cdi
-      until: install_gpu_operator_cdi is succeeded
-
-    - name: Installing the GPU Operator with Open RM on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == true and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait --generate-name"
-      retries: 5
-      delay: 5
-      register: install_gpu_operator_open_rm
-      until: install_gpu_operator_open_rm is succeeded
-
-    - name: Installing the Signed GPU Operator on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == true and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "{{ item }}"
-      with_items:
-        - helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel {{ gpu_operator_helm_chart }} --set driver.version={{ driver_version }},driver.usePrecompiled=true,driver.repository={{ gpu_operator_driver_registry }} --wait --generate-name
-        - sleep 20
-        - kubectl patch clusterpolicy/cluster-policy --type='json' -p='[{"op":"replace", "path":"/spec/driver/usePrecompiled", "value":true},{"op":"replace", "path":"/spec/driver/version", "value":"{{ driver_version }}"}]'
-      retries: 5
-      delay: 5
-      register: install_signed_gpu_operator_new
-      until: install_signed_gpu_operator_new is succeeded
-
-    - name: Install GPU Operator with vGPU on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_vgpu == true and cns_nvidia_driver == false and ngc_registry_password != ''"
-      shell: "{{ item }}"
-      with_items:
-          - kubectl create configmap licensing-config -n nvidia-gpu-operator --from-file={{lookup('pipe', 'pwd')}}/files/gridd.conf --from-file={{lookup('pipe', 'pwd')}}/files/client_configuration_token.tok
-          - kubectl create secret docker-registry registry-secret --docker-server='https://nvcr.io' --docker-username='{{ ngc_registry_username }}' --docker-password='{{ ngc_registry_password }}' --docker-email='{{ ngc_registry_email }}' -n nvidia-gpu-operator
-          - helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}',driver.imagePullSecrets[0]=registry-secret,driver.licensingConfig.configMapName=licensing-config --wait --generate-name
-      retries: 5
-      delay: 5
-      register: install_gpu_operator_vgpu
-      until: install_gpu_operator_vgpu is succeeded
-
-    - name: Installing the GPU Operator with MIG and Network Operator on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == true and enable_mig == true and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
-      retries: 5
-      delay: 5
-      register: install_gpu_operator_mig_network
-      until: install_gpu_operator_mig_network is succeeded
-
     - name: Installing the GPU Operator with Network Operator on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
+      when: "enable_gpu_operator == true and deploy_ofed == true and enable_rdma == true and cns_docker == false and cns_nvidia_driver == false"
       shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
       retries: 5
       delay: 5
@@ -2859,100 +2764,12 @@
       until: install_gpu_operator_network is succeeded
 
     - name: Installing the GPU Operator with Network Operator and RDMA and GDS on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false  and ngc_registry_password == ''"
+      when: "enable_gpu_operator == true and deploy_ofed == true and enable_rdma == true and enable_gds == true and cns_docker == false and cns_nvidia_driver == false"
       shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,gds.enabled=true --wait --generate-name
       retries: 5
       delay: 5
       register: install_gpu_operator_network_rdma_gds
       until: install_gpu_operator_network_rdma_gds is succeeded
-
-    - name: Installing the Open RM GPU Operator with Network Operator and RDMA and GDS on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and enable_cdi == false and use_open_kernel_module == true and deploy_ofed == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false  and ngc_registry_password == ''"
-      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,gds.enabled=true,driver.useOpenKernelModules=true --wait --generate-name
-      retries: 5
-      delay: 5
-      register: install_open_rm_gpu_operator_network_rdma_gds
-      until: install_open_rm_gpu_operator_network_rdma_gds is succeeded
-
-    - name: Installing the Open RM GPU Operator with Network Operator and RDMA and GDS on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and enable_cdi == true and use_open_kernel_module == true and deploy_ofed == true and enable_mig == false and enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false  and ngc_registry_password == ''"
-      shell: helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set cdi.enabled=true,driver.rdma.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.imagePullSecrets[0]=ngc-secret,gds.enabled=true,driver.useOpenKernelModules=true --wait --generate-name
-      retries: 5
-      delay: 5
-      register: install_open_rm_gpu_operator_network_rdma_gds_cdi
-      until: install_open_rm_gpu_operator_network_rdma_gds_cdi is succeeded
-
-    - name: Installing the GPU Operator with RDMA and Host MOFED and MIG on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == false and enable_mig == true and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell:  helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}'driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name
-      retries: 5
-      delay: 5
-      register: install_gpu_operator_rdma_host_mofed_yes_mig
-      until: install_gpu_operator_rdma_host_mofed_yes_mig is succeeded
-
-    - name: Installing the Open RM GPU Operator with RDMA and Host MOFED with MIG on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == true and deploy_ofed == false and enable_mig == true and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell:  helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait --generate-name
-      retries: 5
-      delay: 5
-      register: install_open_rm_gpu_operator_rdma_host_mofed_yes_mig
-      until: install_open_rm_gpu_operator_rdma_host_mofed_yes_mig is succeeded
-
-    - name: Installing the GDS with Open RM GPU Operator on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == true and deploy_ofed == false and enable_mig == false and  enable_rdma == false and enable_vgpu == false and enable_gds == true and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell:  helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait --generate-name
-      retries: 5
-      delay: 5
-      register: install_gds_open_rm_gpu_operator
-      until: install_gds_open_rm_gpu_operator is succeeded
-
-    - name: Installing the GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == false and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell:  helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name
-      retries: 5
-      delay: 5
-      register: install_gpu_operator_rdma_host_mofed
-      until: install_gpu_operator_rdma_host_mofed is succeeded
-
-    - name: Installing the Open RM GPU Operator with RDMA and Host MOFED on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == true and deploy_ofed == false and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell:  helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait --generate-name
-      retries: 5
-      delay: 5
-      register: install_open_rm_gpu_operator_rdma_host_mofed
-      until: install_open_rm_gpu_operator_rdma_host_mofed is succeeded
-
-    - name: Installing the GPU Operator with GDS and RDMA and Host MOFED on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and deploy_ofed == false and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
-      retries: 5
-      delay: 5
-      register: install_gpu_operator_gds_rdma_host_mofed
-      until: install_gpu_operator_gds_rdma_host_mofed is succeeded
-
-    - name: Installing the Open RM GPU Operator with GDS and RDMA and Host MOFED on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == true and deploy_ofed == false and enable_mig == false and  enable_rdma == true and enable_vgpu == false and enable_gds == true and enable_secure_boot == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true,gds.enabled=true,driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}',driver.useOpenKernelModules=true --wait --generate-name"
-      retries: 5
-      delay: 5
-      register: install_open_rm_gpu_operator_gds_rdma_host_mofed
-      until: install_open_rm_gpu_operator_gds_rdma_host_mofed is succeeded
-
-    - name: Installing the GPU Operator with MIG on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == true and  enable_rdma == false  and enable_vgpu == false and cns_nvidia_driver == false and ngc_registry_password == ''"
-      shell: "helm install --version {{ gpu_operator_version }} --values {{ ansible_user_dir }}/values.yaml --create-namespace --namespace nvidia-gpu-operator --devel '{{ gpu_operator_helm_chart }}' --set mig.strategy='{{ mig_strategy }}',driver.version='{{ gpu_driver_version }}',driver.repository='{{ gpu_operator_driver_registry }}' --wait --generate-name"
-      retries: 5
-      delay: 5
-      register: install_gpu_operator_mig
-      until: install_gpu_operator_mig is succeeded
-
-    - name: Enable MIG profile with GPU Operator on NVIDIA Cloud Native Stack
-      when: "confidential_computing == false and cns_nvidia_driver == false and enable_gpu_operator == true and use_open_kernel_module == false and enable_mig == true and enable_vgpu == false"
-      shell: "kubectl label nodes --all nvidia.com/mig.config={{ mig_profile }} --overwrite"
-      retries: 5
-      delay: 5
-      register: enable_mig_profile
-      until: enable_mig_profile is succeeded
 
     - name: GPU Operator Changes with CRI Docker Runtime
       shell: 'sleep 60; kubectl get clusterpolicy cluster-policy -o yaml | sed "/validator:/a\    driver:\n      env:\n      - name: DISABLE_DEV_CHAR_SYMLINK_CREATION\n        value: \"true\"" | kubectl apply -f -'
@@ -2969,6 +2786,18 @@
       delay: 5
       register: container_networking_changes
       until: container_networking_changes is succeeded
+
+    - name: add nvidia-smi alias
+      when: "cns_nvidia_driver == false"
+      lineinfile:
+        path: '{{ ansible_user_dir }}/.bashrc'
+        regexp: '^alias nvidia-smi='
+        line: "alias nvidia-smi='sudo chroot /run/nvidia/driver nvidia-smi'"
+        state: present
+      retries: 5
+      delay: 5
+      register: add_nvidia_smi_alias
+      until: add_nvidia_smi_alias is succeeded
 
     - name: Install NIM Operator
       shell: "helm install --version {{ nim_operator_version }} --create-namespace --namespace nim-operator nim-operator nvidia/k8s-nim-operator -n nim-operator"
@@ -2995,6 +2824,10 @@
       delay: 5
       register: install_nsight_operator
       until: install_nsight_operator is succeeded
+
+    - name: Install NVIDIA Kubernetes AI Scheduler
+      shell: helm upgrade -i kai-scheduler oci://ghcr.io/nvidia/kai-scheduler/kai-scheduler -n kai-scheduler --create-namespace --version v{{ kai_scheduler_version }} --set "global.gpuSharing=true"
+      when: enable_kai_scheduler == true
 
     - name: Install Local Path Provisoner on NVIDIA Cloud Native Stack
       shell: kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v{{ local_path_provisioner }}/deploy/local-path-storage.yaml
@@ -3109,15 +2942,6 @@
       register: copy_monitoring_files
       until: copy_monitoring_files is succeeded
 
-    - name: Install Kserve on Kubernetes
-      when: kserve == true
-      retries: 5
-      delay: 5
-      until: kserve_check.stdout == 'Successfully installed KServe'
-      shell: curl -s "https://raw.githubusercontent.com/kserve/kserve/release-{{ kserve_version }}/hack/quick_install.sh" | bash > /tmp/kserve-install.log; cat /tmp/kserve-install.log | tail -1f | cut -d " " -f2-
-      register: kserve_check
-      failed_when: false
-      ignore_errors: true
 
     - name: Apply Nginx IngressClass Name for Kserve
       when: kserve == true
@@ -3256,7 +3080,7 @@
         - "kubectl get secrets -n monitoring cloud-native-es-elastic-user -o yaml | sed \"s/  elastic: .*/  elastic: Y25zLXN0YWNr/g\"  | kubectl apply -f -"
         - kubectl delete pod $(kubectl get pod -n monitoring | grep cloud-native | awk '{print $1}') -n monitoring --force
         - "helm install -f {{ ansible_user_dir }}/fluent-values.yaml fluent/fluent-bit -n monitoring --generate-name"
-        - "curl -u 'elastic:cns-stack' -X POST -k \"https://$(kubectl get svc -n monitoring | grep cloud-native-kb-http | awk '{print $3}'):5601/api/data_views/data_view\" -H 'kbn-xsrf: true' -H 'Content-Type: application/json' -d' {  \"data_view\": { \"title\": \"logs*\", \"name\": \"My Logs\"}}'"
+        - "curl -u 'elastic:cns-stack' -X POST -k \"https://$(kubectl get svc -n monitoring | grep cloud-native-kb-http | awk '{print $3}'):5601/api/data_views/data_view\" -H 'kbn-xsrf: true' -H 'Content-Type: application/json' -d' {  \"data_view\": { \"title\": \"logs*\", \"name\": \"My Logs\"}}'"   
         - kubectl patch svc $(kubectl get svc -n monitoring | grep cloud-native-kb-http | awk '{print $1}') --type='json' -p '[{"op":"replace","path":"/spec/type","value":"NodePort"},{"op":"replace","path":"/spec/ports/0/nodePort","value":32221}]' -n monitoring
       retries: 5
       delay: 5
@@ -3291,7 +3115,7 @@
           until: install_prometheus is succeeded
 
         - name: Install Grafana Operator
-          shell: "helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version {{ grafana_operator }} -n monitoring"
+          shell: "helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version {{ grafana_operator }} -n monitoring"  
           retries: 5
           delay: 5
           register: install_grafana_operator
@@ -3349,3 +3173,120 @@
       delay: 5
       register: install_lws
       until: install_lws is succeeded
+
+    - name: check StorageClass is installed
+      shell: kubectl get sc | tr -d '\n'
+      failed_when: false
+      ignore_errors: true
+      register: storageclass
+
+    - name: Check Dynamo Cloud is installed
+      shell: kubectl get pods -A | grep dynamo | awk '{print $2}' | head -n 1 | wc -l | tr -d '\n'
+      failed_when: false
+      ignore_errors: true
+      register: dynamo_cloud_install
+
+    - name: Install Dynamo Cloud
+      when: "enable_dynamo_cloud == true and storageclass.stdout != 'No resources found' and dynamo_cloud_install.stdout != '1'"
+      shell: |
+        helm fetch https://helm.ngc.nvidia.com/nvidia/ai-dynamo/charts/dynamo-crds-{{ dynamo_release_version }}.tgz
+        helm fetch https://helm.ngc.nvidia.com/nvidia/ai-dynamo/charts/dynamo-platform-{{ dynamo_release_version }}.tgz
+        helm install dynamo-crds {{ ansible_user_dir }}/dynamo-crds-{{ dynamo_release_version }}.tgz  --namespace dynamo-platform --create-namespace --wait
+        helm install dynamo-platform {{ ansible_user_dir }}/dynamo-platform-{{ dynamo_release_version }}.tgz --namespace dynamo-platform
+      retries: 5
+      delay: 5
+      register: install_dynamo_cloud
+      until: install_dynamo_cloud is succeeded
+
+    - name: check Volcano Scheduler is installed
+      shell: kubectl get pods -A | grep volcano | awk '{print $2}' | head -n 1 | wc -l | tr -d '\n'
+      failed_when: false
+      ignore_errors: true
+      register: volcano_scheduler
+
+    - name: Install Volcano Scheduler
+      when: volcano == true and volcano_scheduler.stdout != '1'
+      shell: |
+        helm repo add volcano-sh https://volcano-sh.github.io/helm-charts
+        helm repo update
+        helm install volcano volcano-sh/volcano --version {{ volcano_version }} --namespace volcano-system --create-namespace --force
+      retries: 5
+      delay: 5
+      register: install_volcano_scheduler
+      until: install_volcano_scheduler is succeeded
+
+    - name: check Kserve is Installed
+      shell: kubectl get pods -A | grep kserve | awk '{print $2}' | head -n 1 | wc -l | tr -d '\n'
+      failed_when: false
+      ignore_errors: true
+      register: kserve_install
+
+    - name: Install Kserve on Kubernetes
+      when: kserve == true and kserve_install.stdout != '1'
+      retries: 5
+      delay: 30
+      until: install_kserve is succeeded
+      shell: |
+        kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${GATEWAY_API_VERSION}/standard-install.yaml
+        helm repo add istio https://istio-release.storage.googleapis.com/charts --force-update
+        helm install istio-base istio/base -n istio-system --wait --set defaultRevision=default --create-namespace --version ${ISTIO_VERSION}
+        helm install istiod istio/istiod -n istio-system --wait --version ${ISTIO_VERSION} --set proxy.autoInject=disabled --set-string pilot.podAnnotations."cluster-autoscaler\.kubernetes\.io/safe-to-evict"=true
+        helm install istio-ingressgateway istio/gateway -n istio-system --version ${ISTIO_VERSION} --set-string podAnnotations."cluster-autoscaler\.kubernetes\.io/safe-to-evict"=true
+        sleep 20
+        helm repo add jetstack https://charts.jetstack.io --force-update
+        helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace  --version ${CERT_MANAGER_VERSION}  --set crds.enabled=true
+        helm install knative-operator --namespace knative-serving --create-namespace --wait https://github.com/knative/operator/releases/download/knative-${KNATIVE_OPERATOR_VERSION}/knative-operator-${KNATIVE_OPERATOR_VERSION}.tgz
+        kubectl apply -f - <<EOF
+        apiVersion: operator.knative.dev/v1beta1
+        kind: KnativeServing
+        metadata:
+          name: knative-serving
+          namespace: knative-serving
+        spec:
+          version: "${KNATIVE_SERVING_VERSION}"
+          config:
+            domain:
+          # Patch the external domain as the default domain svc.cluster.local is not exposed on ingress (from knative 1.8)
+              example.com: ""
+        EOF
+        helm install kserve-crd oci://ghcr.io/kserve/charts/kserve-crd --version ${KSERVE_VERSION} --namespace kserve --create-namespace --wait        
+        helm install kserve oci://ghcr.io/kserve/charts/kserve --version ${KSERVE_VERSION} --namespace kserve --create-namespace --wait --set-string kserve.controller.deploymentMode="Serverless"
+      register: install_kserve
+      failed_when: false
+      ignore_errors: true
+      environment:
+        ISTIO_VERSION: "1.28.0"
+        KNATIVE_OPERATOR_VERSION: "v1.20.0"
+        KNATIVE_SERVING_VERSION: "1.20.0"
+        KSERVE_VERSION: "v0.16.0"
+        CERT_MANAGER_VERSION: "v1.19.1"
+        GATEWAY_API_VERSION: "v1.4.0"
+
+    - name: Patch Knative Serving CRD
+      when: kserve == true
+      shell: |
+        sleep 15; kubectl patch configmap config-features -n knative-serving --type merge -p '{"data":{"kubernetes.podspec-nodeselector":"enabled"}}'  
+
+        kubectl patch configmap config-features -n knative-serving --type merge -p '{"data":{"kubernetes.podspec-persistent-volume-claim":"enabled","kubernetes.podspec-persistent-volume-write":"enabled"}}'
+      retries: 5
+      delay: 5
+      ignore_errors: true
+      failed_when: false
+      register: patch_knative_serving_crd
+      until: patch_knative_serving_crd is succeeded
+
+    - name: Apply Nginx IngressClass Name for Kserve
+      when: kserve == true and kserve_install.stdout != '1'
+      shell: |
+        kubectl apply -f - <<EOF
+        apiVersion: networking.k8s.io/v1
+        kind: IngressClass
+        metadata:
+          name: nginx
+        spec:
+          controller: istio.io/ingress-controller
+        EOF
+      retries: 5
+      delay: 5
+      register: apply_ingress_config
+      until: apply_ingress_config is succeeded

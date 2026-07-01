@@ -5,6 +5,8 @@
   environment:
     http_proxy: "{{ http_proxy }}"
     https_proxy: "{{ https_proxy }}"
+    DEBIAN_FRONTEND: noninteractive
+    NEEDRESTART_MODE: a
   tasks:
     - name: Get Nvidia Tegra Release
       shell: uname -r | awk -F'-' '{print $2}'
@@ -31,7 +33,7 @@
 
     - name: Create a APT KeyRing directory
       become: true
-      when: "ansible_distribution == 'Ubuntu' and ansible_distribution_major_version <= '20' and 'running' not in k8sup.stdout"
+      when: "ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_major_version'] <= '20'"
       file:
         path: /etc/apt/keyrings
         state: directory
@@ -43,7 +45,7 @@
 
     - name: Create a APT KeyRing directory
       become: true
-      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      when: "ansible_facts['distribution'] == 'Ubuntu'"
       file:
         path: /etc/apt/trusted.gpg
         state: touch
@@ -54,12 +56,18 @@
       until: create_trusted_gpg is succeeded
         
     - name: Add an Kubernetes apt signing key for Ubuntu
+      # Ubuntu 22.04+ deprecates apt-key. Download Release.key, dearmor it
+      # into /etc/apt/keyrings/<file>.gpg so apt's signed-by mechanism finds it.
+      # Replaces the legacy apt_key module which requires the apt-key binary.
       become: true
-      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
-      apt_key:
-        url: "{{ k8s_apt_key }}"
-        keyring: "{{ k8s_apt_ring }}"
-        state: present
+      when: "ansible_facts['distribution'] == 'Ubuntu'"
+      ansible.builtin.shell: |
+        set -e
+        install -d -m 0755 /etc/apt/keyrings
+        curl -fsSL "{{ k8s_apt_key }}" -o /tmp/k8s-release.key
+        gpg --batch --yes --dearmor -o "{{ k8s_apt_ring }}" /tmp/k8s-release.key
+        chmod 0644 "{{ k8s_apt_ring }}"
+        rm -f /tmp/k8s-release.key
       retries: 5
       delay: 5
       register: add_k8s_key
@@ -81,7 +89,7 @@
 
     - name: Adding Kubernetes apt repository for Ubuntu
       become: true
-      when: "ansible_distribution == 'Ubuntu' and 'running' not in k8sup.stdout"
+      when: "ansible_facts['distribution'] == 'Ubuntu'"
       apt_repository:
         repo: "deb [signed-by={{ k8s_apt_ring }}] {{ k8s_apt_repository.stdout }} /"
         state: present
@@ -93,7 +101,7 @@
 
     - name: Add kubernetes repo for RHEL
       become: true
-      when: "ansible_distribution == 'RedHat' and 'running' not in k8sup.stdout"
+      when: "ansible_facts['distribution'] == 'RedHat'"
       yum_repository:
         name: kubernetes
         description: Kubernetes repo
@@ -107,15 +115,44 @@
       register: add_rhel_repo
       until: add_rhel_repo is succeeded
 
-    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack
+    - name: Install Kubernetes dependencies for Ubuntu on NVIDIA Cloud Native Stack
       become: true
-      when: "ansible_distribution == 'Ubuntu'"
+      when: "ansible_facts['distribution'] == 'Ubuntu'"
       apt:
-        name: ['build-essential', 'net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common', 'kubelet={{ k8s_version }}-1.1', 'kubeadm={{ k8s_version }}-1.1', 'kubectl={{ k8s_version }}-1.1']
+        name: ['build-essential', 'net-tools', 'libseccomp2', 'apt-transport-https', 'curl', 'ca-certificates', 'gnupg-agent' ,'software-properties-common']
         state: present
         update_cache: true
+      retries: 5
+      delay: 5
+      register: install_k8s_deps_ubuntu
+      until: install_k8s_deps_ubuntu is succeeded
+
+    - name: Resolve exact Kubernetes package versions for Ubuntu
+      when: "ansible_facts['distribution'] == 'Ubuntu'"
+      shell: apt-cache madison {{ item }} | awk '$3 ~ /^{{ k8s_version }}-/ {print $3; exit}'
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+      loop_control:
+        label: "{{ item }}"
+      register: k8s_pkg_versions
+      changed_when: false
+      retries: 5
+      delay: 5
+      until: k8s_pkg_versions is succeeded and k8s_pkg_versions.stdout | length > 0
+
+    - name: Install kubernetes components for Ubuntu on NVIDIA Cloud Native Stack
+      become: true
+      when: "ansible_facts['distribution'] == 'Ubuntu'"
+      apt:
+        name: "{{ item.item }}={{ item.stdout }}"
+        state: present
         allow_change_held_packages: yes
         force: yes
+      loop: "{{ k8s_pkg_versions.results }}"
+      loop_control:
+        label: "{{ item.item }}={{ item.stdout }}"
       retries: 5
       delay: 5
       register: install_k8s_ubuntu
@@ -123,7 +160,7 @@
 
     - name: Install kubernetes components for RedHat on NVIDIA Cloud Native Stack
       become: true
-      when: "ansible_distribution == 'RedHat'"
+      when: "ansible_facts['distribution'] == 'RedHat'"
       yum:
         name: ['net-tools', 'libseccomp', 'curl', 'ca-certificates', 'kubelet-{{ k8s_version }}', 'kubeadm-{{ k8s_version }}', 'kubectl-{{ k8s_version }}']
         state: present
@@ -133,7 +170,7 @@
       until: install_k8s_rhel is succeeded
 
     - name: check update GCC for build essentials
-      when: "ansible_distribution == 'Ubuntu'"
+      when: "ansible_facts['distribution'] == 'Ubuntu'"
       become: true
       block:
         - name: capture gcc expected version
@@ -179,7 +216,7 @@
 
     - name: Hold the installed Packages
       become: true
-      when: "ansible_distribution == 'Ubuntu'"
+      when: "ansible_facts['distribution'] == 'Ubuntu'"
       dpkg_selections:
         name: "{{ item }}"
         selection: hold
@@ -227,7 +264,7 @@
 
     - name: disable Firewall
       become: true
-      when: "'running' not in k8sup.stdout and ansible_distribution == 'RedHat'"
+      when: "'running' not in k8sup.stdout and ansible_facts['distribution'] == 'RedHat'"
       service:
         state: stopped
         name: firewalld
@@ -238,7 +275,7 @@
 
 #    - name: Firewall Rules
 #      become: true
-#     when: "'running' not in k8sup.stdout and ansible_distribution == 'RedHat'"
+#     when: "'running' not in k8sup.stdout and ansible_facts['distribution'] == 'RedHat'"
 #     firewalld:
 #       permanent: yes
 #        immediate: yes
@@ -399,7 +436,7 @@
           delay: 5
           register: remove_containerd_tar
           until: remove_containerd_tar is succeeded
-      when: "ansible_system == 'Linux' and ansible_architecture == 'x86_64'"
+      when: "ansible_facts['system'] == 'Linux' and ansible_facts['architecture'] == 'x86_64'"
 
     - name: Install Containerd for NVIDIA Cloud Native Stack
       become: true
@@ -475,7 +512,7 @@
           delay: 5
           register: remove_containerd_tar_arm
           until: remove_containerd_tar_arm is succeeded
-      when: "ansible_system == 'Linux' and ansible_architecture == 'aarch64'"
+      when: "ansible_facts['system'] == 'Linux' and ansible_facts['architecture'] == 'aarch64'"
 
     - name: Configure Containerd for NVIDIA Cloud Native Stack
       become: true
@@ -508,11 +545,29 @@
           until: containerd_config_default is succeeded
 
         - name: Enable systemd cgroups
-          shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml; sed -i 's/    max_concurrent_downloads = 3/    max_concurrent_downloads = {{ containerd_max_concurrent_downloads}}/g' /etc/containerd/config.toml
+          shell: |
+            sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+            sed -i 's/    max_concurrent_downloads = 3/    max_concurrent_downloads = {{ containerd_max_concurrent_downloads}}/g' /etc/containerd/config.toml
           retries: 5
           delay: 5
           register: enable_systemd_cgroups
           until: enable_systemd_cgroups is succeeded
+
+        # Force config schema down to version=3 ONLY when kata-deploy is in play.
+        # containerd 2.3 emits version=4 by default; kata-deploy 3.29.0 only knows v2/v3
+        # schemas and errors "Containerd config has no version=2 or version=3" when
+        # adding the nydus snapshotter. The plugin sections are already in v3 layout
+        # (io.containerd.cri.v1.images), so flipping just the header is safe.
+        # On non-CC installs leaving v4 alone matters: nvidia-container-toolkit-daemonset
+        # writes a v4 drop-in at /etc/containerd/conf.d/99-nvidia.toml, and containerd
+        # refuses to start with a mismatched root/drop-in version.
+        - name: CC | Downgrade containerd config to version=3 (kata-deploy compat)
+          when: confidential_computing == true
+          shell: sed -i 's/^version = 4$/version = 3/' /etc/containerd/config.toml
+          retries: 5
+          delay: 5
+          register: downgrade_containerd_v3
+          until: downgrade_containerd_v3 is succeeded
 
         - name: restart containerd
           systemd_service:
@@ -524,7 +579,7 @@
           delay: 5
           register: restart_containerd
           until: restart_containerd is succeeded
-      when: "cns_version >= 4.1 and ansible_system == 'Linux' and container_runtime == 'containerd' or cns_version >= 4.1 and ansible_system == 'Linux' and container_runtime == 'cri-dockerd'"
+      when: "cns_version >= 4.1 and ansible_facts['system'] == 'Linux' and container_runtime == 'containerd' or cns_version >= 4.1 and ansible_facts['system'] == 'Linux' and container_runtime == 'cri-dockerd'"
 
     - name: Add Containerd Proxy configuration
       become: true
@@ -581,7 +636,7 @@
       when: "proxy == true and cns_version >= 6.1 and container_runtime == 'containerd'"
 
     - name: Install CRI-O on Ubuntu
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu'"
+      when: "container_runtime == 'cri-o' and ansible_facts['distribution'] == 'Ubuntu'"
       become: true
       block:
         - name: trim CRI-O version
@@ -599,24 +654,33 @@
           register: set_cri_version
           until: set_cri_version is succeeded
 
-        - name: Adding CRI-O apt key
-          apt_key:
+        - name: Download CRI-O apt signing key
+          get_url:
             url: "https://download.opensuse.org/repositories/isv:/cri-o:/stable:/v{{ version }}/deb/Release.key"
-            keyring: /etc/apt/keyrings/cri-o-apt-keyring.gpg
-            state: present
+            dest: /tmp/cri-o-apt-keyring.asc
+            mode: '0644'
+          retries: 5
+          delay: 5
+          register: download_crio_key
+          until: download_crio_key is succeeded
+
+        - name: Check CRI-O apt signing keyring
+          stat:
+            path: /etc/apt/keyrings/cri-o-apt-keyring.gpg
+          register: crio_keyring
+
+        - name: Add CRI-O apt signing key
+          when: download_crio_key.changed or not crio_keyring.stat.exists
+          command: gpg --dearmor --yes -o /etc/apt/keyrings/cri-o-apt-keyring.gpg /tmp/cri-o-apt-keyring.asc
           retries: 5
           delay: 5
           register: add_crio_key
           until: add_crio_key is succeeded
 
-        - name: copy the apt keys
-          shell: "{{ item }}"
-          with_items:
-            - cp /etc/apt/trusted.gpg /etc/apt/trusted.gpg.d
-          retries: 5
-          delay: 5
-          register: copy_apt_keys
-          until: copy_apt_keys is succeeded
+        - name: Set CRI-O apt signing key permissions
+          file:
+            path: /etc/apt/keyrings/cri-o-apt-keyring.gpg
+            mode: '0644'
 
         - name: Add CRIO repository
           apt_repository:
@@ -629,19 +693,43 @@
           until: add_crio_repo is succeeded
 
     - name: Install CRI-O on Ubuntu
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'Ubuntu'"
+      when: "container_runtime == 'cri-o' and ansible_facts['distribution'] == 'Ubuntu'"
       become: true
       block:
+        # The original spec `cri-o={{ crio_version }}*` silently no-op'd in
+        # ansible's apt module on Ubuntu 24.04 — the wildcard suffix wasn't
+        # interpreted, so the package was never installed but the task
+        # returned ok/no-change. Two-step pattern below resolves the exact
+        # available version via apt-cache then installs it pinned.
+        - name: Resolve exact CRI-O package version available
+          shell: apt-cache madison cri-o | awk '$3 ~ /^{{ crio_version }}-/ {print $3; exit}'
+          register: crio_pkg_version
+          changed_when: false
+          retries: 5
+          delay: 5
+          until: crio_pkg_version is succeeded and crio_pkg_version.stdout | length > 0
+
         - name: install CRI-O
           apt:
-            name: ['cri-o={{ crio_version }}*']
+            name: "cri-o={{ crio_pkg_version.stdout }}"
             state: present
             update_cache: true
-            force: yes
           retries: 5
           delay: 5
           register: install_crio
           until: install_crio is succeeded
+
+        - name: Ensure CRI-O drop-in config directory exists
+          file:
+            path: /etc/crio/crio.conf.d
+            state: directory
+            mode: '0755'
+
+        - name: Ensure CRI-O drop-in config exists
+          file:
+            path: /etc/crio/crio.conf.d/10-crio.conf
+            state: touch
+            mode: '0644'
 
         - name: Create overlay-images directory
           file:
@@ -665,7 +753,7 @@
           until: update_crio_conf is succeeded
 
     - name: Install CRI-O on RHEL
-      when: "container_runtime == 'cri-o' and ansible_distribution == 'RedHat'"
+      when: "container_runtime == 'cri-o' and ansible_facts['distribution'] == 'RedHat'"
       become: true
       block:
         - name: trim CRI-O version
@@ -789,7 +877,7 @@
 
     - name: Install Docker Dependencies on Ubuntu
       become: true
-      when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
+      when: container_runtime == 'cri-dockerd' and ansible_facts['distribution'] == 'Ubuntu'
       ansible.builtin.apt:
         name:
           - apt-transport-https
@@ -807,7 +895,7 @@
 
     - name: Install Docker Dependencies on RHEL
       become: true
-      when: container_runtime == 'cri-dockerd' and ansible_distribution == 'RedHat'
+      when: container_runtime == 'cri-dockerd' and ansible_facts['distribution'] == 'RedHat'
       yum:
         name:
           - yum-utils
@@ -820,25 +908,25 @@
       register: install_docker_deps_rhel
       until: install_docker_deps_rhel is succeeded
 
-    - name: Create a Docker APT KeyRing
+    - name: Create Docker APT keyring directory
       become: true
-      when: "ansible_distribution == 'Ubuntu'"
+      when: "ansible_facts['distribution'] == 'Ubuntu'"
       file:
-        path: /etc/apt/keyrings/docker.asc
-        state: touch
+        path: /etc/apt/keyrings
+        state: directory
         mode: '0755'
       retries: 5
       delay: 5
-      register: create_docker_asc
-      until: create_docker_asc is succeeded
+      register: create_docker_keyring_dir
+      until: create_docker_keyring_dir is succeeded
 
     - name: Add Docker APT signing key
       become: true
-      when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
-      ansible.builtin.apt_key:
-        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
-        keyring: /etc/apt/keyrings/docker.asc
-        state: present
+      when: container_runtime == 'cri-dockerd' and ansible_facts['distribution'] == 'Ubuntu'
+      ansible.builtin.get_url:
+        url: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg"
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
       retries: 5
       delay: 5
       register: add_docker_key
@@ -846,9 +934,9 @@
 
     - name: Add Docker repository into sources list
       become: true
-      when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
+      when: container_runtime == 'cri-dockerd' and ansible_facts['distribution'] == 'Ubuntu'
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [arch={{ docker_apt_arch }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }} {{ ansible_facts['distribution_release'] }} stable"
         state: present
         filename: docker
       retries: 5
@@ -858,7 +946,7 @@
 
     - name: Add Docker repo on RHEL
       become: true
-      when: container_runtime == 'cri-dockerd' and ansible_distribution == 'RedHat'
+      when: container_runtime == 'cri-dockerd' and ansible_facts['distribution'] == 'RedHat'
       get_url:
         url: https://download.docker.com/linux/centos/docker-ce.repo
         dest: /etc/yum.repos.d/docer-ce.repo
@@ -869,7 +957,7 @@
 
     - name: Get CRI Dockerd
       become: true
-      when: container_runtime == 'cri-dockerd' and ansible_system == 'Linux' and ansible_architecture == 'x86_64'
+      when: container_runtime == 'cri-dockerd' and ansible_facts['system'] == 'Linux' and ansible_facts['architecture'] == 'x86_64'
       unarchive:
         src: https://github.com/Mirantis/cri-dockerd/releases/download/v{{ cri_dockerd_version }}/cri-dockerd-{{ cri_dockerd_version }}.amd64.tgz
         dest: /usr/local/bin/
@@ -883,7 +971,7 @@
 
     - name: Get CRI Dockerd
       become: true
-      when: container_runtime == 'cri-dockerd' and ansible_system == 'Linux' and ansible_architecture == 'aarch64'
+      when: container_runtime == 'cri-dockerd' and ansible_facts['system'] == 'Linux' and ansible_facts['architecture'] == 'aarch64'
       unarchive:
         src: https://github.com/Mirantis/cri-dockerd/releases/download/v{{ cri_dockerd_version }}/cri-dockerd-{{ cri_dockerd_version }}.arm64.tgz
         dest: /usr/local/bin/
@@ -928,10 +1016,16 @@
 
     - name: Install Docker on Ubuntu
       become: true
-      when: container_runtime == 'cri-dockerd' and ansible_distribution == 'Ubuntu'
-      package:
-        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin'] 
-        state: latest
+      when: container_runtime == 'cri-dockerd' and ansible_facts['distribution'] == 'Ubuntu'
+      ansible.builtin.apt:
+        name:
+          - "docker-ce={{ docker_ce_apt_version }}"
+          - "docker-ce-cli={{ docker_ce_apt_version }}"
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+        allow_downgrade: true
       register: docker_status
       retries: 5
       delay: 5
@@ -939,7 +1033,7 @@
 
     - name: Install Docker on RHEL
       become: true
-      when: container_runtime == 'cri-dockerd' and ansible_distribution == 'RedHat'
+      when: container_runtime == 'cri-dockerd' and ansible_facts['distribution'] == 'RedHat'
       yum:
         name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
         state: latest
@@ -985,6 +1079,12 @@
       delay: 5
       register: start_services
       until: start_services is succeeded
+
+    - name: Check installed Helm version
+      command: /usr/local/bin/helm version --short
+      register: installed_helm_version
+      changed_when: false
+      failed_when: false
          
     - name: "Install Helm on NVIDIA Cloud Native Stack"
       become: true
@@ -994,7 +1094,7 @@
         - tar -xvzf helm-v{{ helm_version }}-linux-amd64.tar.gz
         - cp linux-amd64/helm /usr/local/bin/
         - rm -rf helm-v{{ helm_version }}-linux-amd64.tar.gz linux-amd64
-      when: "ansible_architecture == 'x86_64'"
+      when: "ansible_facts['architecture'] == 'x86_64' and ('v' ~ helm_version) not in (installed_helm_version.stdout | default(''))"
       retries: 5
       delay: 5
       register: install_helm_x86
@@ -1008,7 +1108,7 @@
         - tar -xvzf helm-v{{ helm_version }}-linux-arm64.tar.gz
         - cp linux-arm64/helm /usr/local/bin/
         - rm -rf helm-v{{ helm_version }}-linux-arm64.tar.gz linux-arm64
-      when: "ansible_architecture == 'aarch64'"
+      when: "ansible_facts['architecture'] == 'aarch64' and ('v' ~ helm_version) not in (installed_helm_version.stdout | default(''))"
       retries: 5
       delay: 5
       register: install_helm_arm

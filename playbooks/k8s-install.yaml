@@ -33,7 +33,7 @@
      become: true
      slurp:
        path: /etc/docker/daemon.json
-     when: daemon_json_stat.stat.exists and container_runtime == 'cri-dockerd' or  daemon_json_stat.stat.exists and cns_docker == true
+     when: (daemon_json_stat.stat.exists | default(false)) and (container_runtime == 'cri-dockerd' or cns_docker == true)
      register: daemon_json_content
 
    - name: Set existing config or default
@@ -87,22 +87,71 @@
         register: reload_daemon
         until: reload_daemon is succeeded
 
-      - name: restart services
+      - name: reset failed Docker units
+        when: container_runtime == 'cri-dockerd' or cns_docker == true
+        failed_when: false
+        command: systemctl reset-failed docker.service docker.socket cri-docker.service cri-docker.socket
+        retries: 5
+        delay: 5
+        register: reset_failed_docker_units
+        until: reset_failed_docker_units is succeeded
+
+      - name: restart docker service
+        when: container_runtime == 'cri-dockerd' or cns_docker == true
+        failed_when: false
+        systemd_service:
+          name: docker
+          state: restarted
+        retries: 5
+        delay: 5
+        register: restart_docker
+        until: restart_docker is succeeded
+
+      - name: restart cri-docker service
+        when: container_runtime == 'cri-dockerd'
+        failed_when: false
+        systemd_service:
+          name: cri-docker
+          state: restarted
+        retries: 5
+        delay: 5
+        register: restart_cri_docker
+        until: restart_cri_docker is succeeded
+
+      - name: restart containerd service
+        when: container_runtime == 'containerd'
+        failed_when: false
+        systemd_service:
+          name: containerd
+          state: restarted
+        retries: 5
+        delay: 5
+        register: restart_containerd
+        until: restart_containerd is succeeded
+
+      - name: restart CRI-O services
+        when: container_runtime == 'cri-o'
         failed_when: false
         systemd_service:
           name: "{{ item }}"
           state: restarted
         with_items:
-          - cri-docker
-          - docker
-          - kubelet
-          - containerd
           - crio
           - cri-o
         retries: 5
         delay: 5
-        register: restart_services
-        until: restart_services is succeeded
+        register: restart_crio_services
+        until: restart_crio_services is succeeded
+
+      - name: restart kubelet service
+        failed_when: false
+        systemd_service:
+          name: kubelet
+          state: restarted
+        retries: 5
+        delay: 5
+        register: restart_kubelet
+        until: restart_kubelet is succeeded
 
 - hosts: master
   vars_files:
@@ -177,6 +226,35 @@
      delay: 5
      register: remove_etcd
      until: remove_etcd is succeeded
+
+   - name: Remove stale Kubernetes static pod manifests
+     become: true
+     file:
+       path: "{{ item }}"
+       state: absent
+     with_items:
+       - /etc/kubernetes/manifests/kube-apiserver.yaml
+       - /etc/kubernetes/manifests/kube-controller-manager.yaml
+       - /etc/kubernetes/manifests/kube-scheduler.yaml
+       - /etc/kubernetes/manifests/etcd.yaml
+     retries: 5
+     delay: 5
+     register: remove_static_pod_manifests
+     until: remove_static_pod_manifests is succeeded
+
+   - name: Remove stale Network Operator CNI files
+     become: true
+     file:
+       path: "{{ item }}"
+       state: absent
+     with_items:
+       - /etc/cni/net.d/00-multus.conf
+       - /etc/cni/net.d/multus.d
+       - /etc/cni/net.d/nv-ipam.d
+     retries: 5
+     delay: 5
+     register: remove_network_operator_cni
+     until: remove_network_operator_cni is succeeded
 
    - name: Check proxy conf exists
      when: proxy == true
@@ -275,6 +353,26 @@
      register: set_cri_socket
      until: set_cri_socket is succeeded
 
+   - name: Ensure CRI-O is running before kubeadm init
+     when: container_runtime == 'cri-o'
+     become: true
+     systemd_service:
+       name: crio
+       state: restarted
+       enabled: yes
+     retries: 5
+     delay: 5
+     register: restart_crio_before_init
+     until: restart_crio_before_init is succeeded
+
+   - name: Wait for CRI-O socket before kubeadm init
+     when: container_runtime == 'cri-o'
+     become: true
+     wait_for:
+       path: /var/run/crio/crio.sock
+       state: present
+       timeout: 60
+
    - name: Generate kubeadm init config
      when: "cns_version >= 16.0"
      template:
@@ -347,7 +445,7 @@
 
    - name: Update Network plugin for Calico on NVIDIA Cloud Native Stack
      when: "cns_version >= 3.1 and release != 'tegra'"
-     shell: "sleep 25; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*"
+     shell: "sleep 25; kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens*,eth*,enc*,bond*,enp*,eno*,enP*"
      retries: 5
      delay: 5
      register: update_network_plugin_calico
@@ -460,7 +558,7 @@
      when: "enable_network_operator == true and cns_version >= 4.1"
      become: true
      fetch:
-       src: "/tmp/{{ ansible_nodename }}-nic"
+       src: "/tmp/{{ ansible_facts['nodename'] }}-nic"
        dest: "/tmp/"
        flat: yes
      retries: 5

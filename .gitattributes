@@ -1,1 +1,1 @@
-** linguist-detectable=true
+playbooks/files/nvidia-cnpack-linux-x86_64 filter=lfs diff=lfs merge=lfs -text

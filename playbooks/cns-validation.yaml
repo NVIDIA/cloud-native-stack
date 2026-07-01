@@ -5,7 +5,7 @@
     - gpu_operator.yaml
   tasks:
     - name: Validate kubernetes cluster is up
-      shell:  kubectl cluster-info | grep master
+      shell: kubectl cluster-info
       register: cluster
       failed_when: false
       ignore_errors: true
@@ -90,7 +90,7 @@
       ignore_errors: true
 
     - name: Check Nvidia DCGM Exporter versions
-      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep dcgm-e | awk '{print $2}' | uniq | awk -F':' '{print $2}' | sed 's/-ubuntu22.04//'g
+      shell: kubectl get pods --all-namespaces -o=jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}" | grep dcgm-e | awk '{print $2}' | uniq | awk -F':' '{print $2}' | sed 's/-ubuntu.*//g'
       register: dcgm_exporter
       ignore_errors: true
 
@@ -191,7 +191,7 @@
       ignore_errors: true
 
     - name: Create NVIDIA-SMI yaml
-      when: "ansible_distribution == 'RedHat'"
+      when: "ansible_facts['distribution'] == 'RedHat'"
       copy:
         content:  |
                  apiVersion: v1
@@ -199,15 +199,18 @@
                  metadata:
                    name: nvidia-smi
                  spec:
-                   restartPolicy: OnFailure
+                   restartPolicy: Never
                    containers:
                      - name: nvidia-smi
                        image: "nvidia/cuda:12.6.0-base-ubi8"
                        args: ["nvidia-smi"]
+                       resources:
+                         limits:
+                           nvidia.com/gpu: 1
         dest: nvidia-smi.yaml
 
     - name: Create NVIDIA-SMI yaml
-      when: "ansible_distribution == 'Ubuntu'"
+      when: "ansible_facts['distribution'] == 'Ubuntu'"
       copy:
         content:  |
                  apiVersion: v1
@@ -215,21 +218,24 @@
                  metadata:
                    name: nvidia-smi
                  spec:
-                   restartPolicy: OnFailure
+                   restartPolicy: Never
                    containers:
                      - name: nvidia-smi
-                       image: "nvidia/cuda:12.6.0-base-ubuntu22.04"
+                       image: "nvidia/cuda:12.8.0-base-ubuntu24.04"
                        args: ["nvidia-smi"]
+                       resources:
+                         limits:
+                           nvidia.com/gpu: 1
         dest: nvidia-smi.yaml
 
     - name: Report Operating System Version of RHEL/CentOS
-      when: "ansible_distribution in ['RedHat', 'CentOS']"
+      when: "ansible_facts['distribution'] in ['RedHat', 'CentOS']"
       ignore_errors: true
       debug:
         msg: "RHEL/CentOS Operating System version {{ osversion.stdout }}"
 
     - name: Report Operating System Version of Ubuntu
-      when: "ansible_distribution == 'Ubuntu'"
+      when: "ansible_facts['distribution'] == 'Ubuntu'"
       ignore_errors: true
       debug:
         msg: "Ubuntu Operating System version {{ osversion.stdout }}"
@@ -333,6 +339,29 @@
         echo -e "Please validate between Target Version and Installed Version listed above"
 
     - name: Componenets Target Versions Vs Installed Versions
+      when: cns_docker == false and (cns_version == 19.0 or cns_version == 18.0 or cns_version == 17.1)
+      register: compare_2632
+      args:
+        executable: /bin/bash
+      shell: |
+        echo -e "==========================================================================================="
+        echo -e "  Components                          Target Version          ||     Installed Version    "
+        echo -e "==========================================================================================="
+        echo -e "GPU Operator Version                  {{ release_26_3_2['gpu_operator_version'] }}                 ||     {{ gpuoperator.stdout }}"
+        echo -e "NVIDIA Container Driver Version       {{ release_26_3_2['gpu_driver_version'] }}               ||     {{ (nvidia_driver.stdout if cns_nvidia_driver == true else nvcdriver.stdout) | default('') }}"
+        echo -e "GPU Operator NV Toolkit Driver        {{ release_26_3_2['container_toolkit'] }}                 ||     {{ nvtoolkit.stdout }}"
+        echo -e "K8sDevice Plugin Version              {{ release_26_3_2['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
+        echo -e "Data Center GPU Manager(DCGM) Version {{ release_26_3_2['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
+        echo -e "Node Feature Discovery Version        {{ release_26_3_2['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
+        echo -e "GPU Feature Discovery Version         {{ release_26_3_2['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
+        echo -e "NVIDIA validator version              {{ release_26_3_2['validator_version'] }}                 ||     {{ validator.stdout }}"
+        echo -e "NVIDIA MIG Manager version            {{ release_26_3_2['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
+        echo -e
+        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
+        echo -e
+        echo -e "Please validate between Target Version and Installed Version listed above"
+
+    - name: Componenets Target Versions Vs Installed Versions
       when:  cns_version == 14.0 and cns_docker == true or cns_version == 12.3 and cns_docker == true or cns_version == 13.2 and cns_docker == true
       register: compare_140docker
       args:
@@ -425,6 +454,29 @@
         echo -e "Please validate between Target Version and Installed Version listed above"
 
     - name: Componenets Target Versions Vs Installed Versions
+      when: cns_docker == true and (cns_version == 19.0 or cns_version == 18.0 or cns_version == 17.1)
+      register: compare_2632docker
+      args:
+        executable: /bin/bash
+      shell: |
+        echo -e "==========================================================================================="
+        echo -e "  Components                          Target Version          ||     Installed Version    "
+        echo -e "==========================================================================================="
+        echo -e "GPU Operator Version                  {{ release_26_3_2['gpu_operator_version'] }}                ||     {{ gpuoperator.stdout }}"
+        echo -e "NVIDIA Container Driver Version       {{ release_26_3_2['gpu_driver_version'] }}             ||     {{ (nvidia_driver.stdout if cns_nvidia_driver == true else nvcdriver.stdout) | default('') }}"
+        echo -e "NVIDIA Toolkit Driver                 {{ release_26_3_2['container_toolkit'] }}                 ||     {{ nvidia_ct.stdout | default('') }}"
+        echo -e "K8sDevice Plugin Version              {{ release_26_3_2['device_plugin']  }}                 ||     {{ k8sdevice.stdout }}"
+        echo -e "Data Center GPU Manager(DCGM) Version {{ release_26_3_2['dcgm_exporter_version'] }}             ||     {{ dcgm_exporter.stdout }}"
+        echo -e "Node Feature Discovery Version        {{ release_26_3_2['nfd_version'] }}                 ||     {{ nodediscover.stdout }}"
+        echo -e "GPU Feature Discovery Version         {{ release_26_3_2['gfd_version'] }}                  ||     {{ gpudiscover.stdout }}"
+        echo -e "NVIDIA validator version              {{ release_26_3_2['validator_version'] }}                 ||     {{ validator.stdout }}"
+        echo -e "NVIDIA MIG Manager version            {{ release_26_3_2['mig_manager_version'] }}                  ||     {{ mig_manager.stdout }}"
+        echo -e
+        echo -e "NOTE: NVIDIA Mig Manager is valid for only A100 and A30 and H100 GPU's"
+        echo -e
+        echo -e "Please validate between Target Version and Installed Version listed above"
+
+    - name: Componenets Target Versions Vs Installed Versions
       ignore_errors: true
       register: stack_versions
       args:
@@ -469,18 +521,23 @@
       ignore_errors: true
 
     - name: Validating the CUDA with GPU
-      shell: kubectl run cuda-vector-add --rm -t -i --restart=Never --image=k8s.gcr.io/cuda-vector-add:v0.1
-      when: ansible_architecture == 'x86_64'
+      shell: >-
+        kubectl delete pod cuda-vector-add --ignore-not-found=true;
+        kubectl run cuda-vector-add --restart=Never --image=nvidia/cuda:12.8.0-base-ubuntu24.04
+        --overrides='{"spec":{"containers":[{"name":"cuda-vector-add","image":"nvidia/cuda:12.8.0-base-ubuntu24.04","command":["/bin/bash","-lc","nvidia-smi --query-gpu=index,name,driver_version --format=csv,noheader"],"resources":{"limits":{"nvidia.com/gpu":1}}}],"restartPolicy":"Never"}}';
+        kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/cuda-vector-add --timeout=120s;
+        kubectl logs cuda-vector-add
+      when: ansible_facts['architecture'] == 'x86_64'
       register: cuda
       ignore_errors: true
-      async: 60
+      async: 180
 
     - name: Validating the nvidia-smi on NVIDIA Cloud Native Stack
-      shell: "kubectl delete -f nvidia-smi.yaml; sleep 10; kubectl apply -f nvidia-smi.yaml; sleep 25; kubectl logs nvidia-smi"
+      shell: "kubectl delete -f nvidia-smi.yaml --ignore-not-found=true; kubectl apply -f nvidia-smi.yaml; kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/nvidia-smi --timeout=120s; kubectl logs nvidia-smi"
       when: cns_version >= 7.0
       register: smi
       ignore_errors: true
-      async: 60
+      async: 180
 
     - name: Clean up pods if exists
       shell: kubectl delete pod cuda-vector-add nvidia-smi
@@ -523,6 +580,11 @@
         msg: "{{ compare_170.stdout_lines }}"
 
     - name: Report Versions
+      when: cns_docker == false and (cns_version == 19.0 or cns_version == 18.0 or cns_version == 17.1)
+      debug:
+        msg: "{{ compare_2632.stdout_lines }}"
+
+    - name: Report Versions
       when:  cns_version == 15.0 and cns_docker == true or cns_version == 13.3 and cns_docker == true or cns_version == 14.1 and cns_docker == true
       debug:
         msg: "{{ compare_150docker.stdout_lines }}"
@@ -537,6 +599,11 @@
       debug:
         msg: "{{ compare_170docker.stdout_lines }}"
 
+    - name: Report Versions
+      when: cns_docker == true and (cns_version == 19.0 or cns_version == 18.0 or cns_version == 17.1)
+      debug:
+        msg: "{{ compare_2632docker.stdout_lines }}"
+
     - name: Report Stack Version
       debug:
         msg: "{{ stack_versions.stdout_lines }}"
@@ -548,10 +615,34 @@
         msg: "{{ smi.stdout_lines }}"
 
     - name: Report Cuda Validation
-      when: ansible_architecture == 'x86_64'
+      when: ansible_facts['architecture'] == 'x86_64'
       ignore_errors: true
       debug:
         msg: "{{ cuda.stdout_lines }}"
+
+    - name: Build sanity check status
+      set_fact:
+        cuda_validation_failed: "{{ (cuda is defined) and (cuda is failed) }}"
+        smi_validation_failed: "{{ (smi is defined) and (smi is failed) }}"
+
+    - name: Sanity Check
+      assert:
+        that:
+          - cluster.rc == 0
+          - nodeready.rc == 0
+          - kubepods.rc != 0
+          - helmls.rc == 0
+          - not (enable_gpu_operator | bool) or ansible_facts['architecture'] != 'x86_64' or not cuda_validation_failed
+          - not (enable_gpu_operator | bool) or cns_version < 7.0 or not smi_validation_failed
+        fail_msg: |
+          CNS validation failed one or more sanity checks.
+          cluster_rc={{ cluster.rc | default('n/a') }}
+          nodeready_rc={{ nodeready.rc | default('n/a') }}
+          nonrunning_pods_rc={{ kubepods.rc | default('n/a') }}
+          helm_rc={{ helmls.rc | default('n/a') }}
+          cuda_failed={{ cuda_validation_failed | default('skipped') }}
+          smi_failed={{ smi_validation_failed | default('skipped') }}
+        success_msg: "CNS validation sanity checks passed."
 
     - name: Status Check
       shell: echo "All tasks should be changed or ok, if it's failed or ignoring means that validation task failed."

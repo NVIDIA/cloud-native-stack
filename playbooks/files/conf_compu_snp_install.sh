@@ -2,10 +2,18 @@
   echo "                               Build the Host Kernel for SNP                                                            "
   echo "========================================================================================================================"
 
-  sudo apt update >/dev/null 2>&1
-  sudo apt upgrade -y >/dev/null 2>&1
-  sudo apt install -y ninja-build iasl nasm  flex bison openssl dkms autoconf zlib1g-dev python3-pip libncurses-dev libssl-dev libelf-dev libudev-dev libpci-dev libiberty-dev libtool libsdl-console libsdl-console-dev libpango1.0-dev libjpeg8-dev libpixman-1-dev libcairo2-dev  libgif-dev libglib2.0-dev >/dev/null 2>&1
-  sudo pip3 install numpy flex bison >/dev/null 2>&1
+  # Force fully non-interactive package management. Without these, apt upgrade can
+  # hang indefinitely on debconf prompts (e.g. gdm3.postinst on Ubuntu 25.10/26.04)
+  # and on needrestart "which services to restart" interactive menus.
+  export DEBIAN_FRONTEND=noninteractive
+  export NEEDRESTART_MODE=a
+  export NEEDRESTART_SUSPEND=1
+  APT_OPTS="-y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold"
+
+  sudo -E apt update >/dev/null 2>&1
+  sudo -E apt upgrade $APT_OPTS >/dev/null 2>&1
+  sudo -E apt install $APT_OPTS ninja-build iasl nasm  flex bison openssl dkms autoconf zlib1g-dev python3-pip libncurses-dev libssl-dev libelf-dev libudev-dev libpci-dev libiberty-dev libtool libsdl-console libsdl-console-dev libpango1.0-dev libjpeg8-dev libpixman-1-dev libcairo2-dev  libgif-dev libglib2.0-dev >/dev/null 2>&1
+  sudo pip3 install --break-system-packages numpy flex bison >/dev/null 2>&1 || sudo pip3 install numpy flex bison >/dev/null 2>&1
   echo
   echo "========================================================================================================================"
   echo "Download the AMDSEV Pacakge"

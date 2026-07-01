@@ -1,0 +1,5 @@
+[master]
+<MASTER_IP> ansible_ssh_user=<USERNAME> ansible_ssh_pass=<PASSWORD> ansible_sudo_pass=<PASSWORD> ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+[nodes]
+<WORKER_1_IP> ansible_ssh_user=<USERNAME> ansible_ssh_pass=<PASSWORD> ansible_sudo_pass=<PASSWORD> ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+<WORKER_2_IP> ansible_ssh_user=<USERNAME> ansible_ssh_pass=<PASSWORD> ansible_sudo_pass=<PASSWORD> ansible_ssh_common_args='-o StrictHostKeyChecking=no'

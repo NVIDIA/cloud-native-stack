@@ -30,10 +30,10 @@
        purge: true
        autoremove: yes
      become: true
-     when: microk8s == true and ansible_distribution == 'Ubuntu'
+     when: microk8s == true and ansible_facts['distribution'] == 'Ubuntu'
 
    - name: Install Snapd on RHEL
-     when: ansible_distribution == 'RedHat' and microk8s == true
+     when: ansible_facts['distribution'] == 'RedHat' and microk8s == true
      shell: "{{ item }}"
      become: true
      ignore_errors: true
@@ -64,14 +64,14 @@
      when: microk8s == true
      become: false
      lineinfile:
-       path: '{{ ansible_user_dir }}/.bashrc'
+       path: "{{ ansible_facts['user_dir'] }}/.bashrc"
        regexp: '.*\/snap.*'
        state: absent
 
    - name: add nvidia-smi alias
      become: false
      lineinfile:
-       path: '{{ ansible_user_dir }}/.bashrc'
+       path: "{{ ansible_facts['user_dir'] }}/.bashrc"
        regexp: '^alias nvidia-smi='
        line: "alias nvidia-smi='sudo chroot /run/nvidia/driver nvidia-smi'"
        state: absent
@@ -99,26 +99,28 @@
        done
      when: "enable_mig == true and cns_version >= 4.1 and release != 'tegra' and microk8s == false"
      #failed_when: false
-     async: 120
+     async: 600
      args:
        executable: /bin/bash
 
    - name: Uninstall Helm Charts on NVIDIA Cloud Native Stack
      ignore_errors: true
      when:  release != 'tegra' and microk8s == false
-     async: 120
+     async: 360
      shell: |
-       count=$(helm ls -A | egrep 'gpu-operator|network-operator' | grep -v NAME | wc -l)
+       count=$(helm ls -A | egrep 'gpu-operator|network-operator|kata-deploy' | grep -v NAME | wc -l)
        if [[ $count > 0 ]]; then
         for name in `helm ls -A | awk '{print $1}' | grep -v NAME`
         do
           for namespace in `helm ls -A | grep $name |  awk '{print $2}' | grep -v NAMESPACE`
             do
-              helm del $name -n $namespace --wait
+              timeout 180s helm del $name -n $namespace --wait || timeout 60s helm del $name -n $namespace --no-hooks || true
+              attempts=0
               pods=$(kubectl get pods -n $namespace | grep -v NAME | wc -l)
-              while [ $pods != 0 ]
+              while [ $pods != 0 ] && [ $attempts -lt 12 ]
               do
                 sleep 10
+                attempts=$((attempts + 1))
                 pods=$(kubectl get pods -n $namespace | grep -v NAME | wc -l)
               done
             done
@@ -185,12 +187,11 @@
      ignore_errors: yes
      failed_when: false
      no_log: True
-     async: 120
      shell: "{{ item }}"
      with_items:
-       - docker system prune -a --volumes
-       - docker rm -vf $(docker ps -aq)
-       - docker prune --all
+       - docker system prune -af --volumes || true
+       - docker rm -vf $(docker ps -aq) || true
+       - docker image prune -af || true
 
    - name: Stopping and disable the required services
      ignore_errors: yes
@@ -210,7 +211,7 @@
        - cri-docker
 
    - name: Remove Kubernetes packages for Ubuntu
-     when: "ansible_distribution == 'Ubuntu' and cns_version >= 4.0 and microk8s == false"
+     when: "ansible_facts['distribution'] == 'Ubuntu' and cns_version >= 4.0 and microk8s == false"
      ignore_errors: yes
      apt:
        name: "{{ item }}"
@@ -225,8 +226,9 @@
        - kubectl
 
    - name: Remove CRI-O packages for Ubuntu
-     when: "ansible_distribution == 'Ubuntu' and cns_version >= 4.0 and container_runtime == 'cri-o' and microk8s == false"
+     when: "ansible_facts['distribution'] == 'Ubuntu' and cns_version >= 4.0 and container_runtime == 'cri-o' and microk8s == false"
      ignore_errors: yes
+     failed_when: false
      apt:
        name: "{{ item }}"
        state: absent
@@ -239,8 +241,9 @@
        - cri-o-runc*
 
    - name: Remove Docker and Kubernetes packages for Ubuntu
-     when: "cns_docker == true and ansible_distribution == 'Ubuntu' or cns_version <= 3.1 and ansible_distribution == 'Ubuntu' or container_runtime == 'cri-dockerd' "
+     when: "cns_docker == true and ansible_facts['distribution'] == 'Ubuntu' or cns_version <= 3.1 and ansible_facts['distribution'] == 'Ubuntu' or container_runtime == 'cri-dockerd' "
      ignore_errors: yes
+     failed_when: false
      apt:
        name: "{{ item }}"
        state: absent
@@ -258,7 +261,7 @@
        - nvidia-docker*
 
    - name: Remove NVIDIA Docker for Cloud Native Stack Developers on Ubuntu
-     when: "cns_docker == true and ansible_distribution == 'Ubuntu' and microk8s == false or cns_nvidia_driver == true and ansible_distribution == 'Ubuntu' and microk8s == false"
+     when: "cns_docker == true and ansible_facts['distribution'] == 'Ubuntu' and microk8s == false or cns_nvidia_driver == true and ansible_facts['distribution'] == 'Ubuntu' and microk8s == false"
      ignore_errors: yes
      apt:
        name: "{{ item }}"
@@ -272,11 +275,17 @@
        - nvidia-driver-*
        - nvidia-dkms-*
        - nvidia-utils-*
+       - nvidia-*
+       - libnvidia*
        - cuda
+       - cuda-*
+       - cuda-keyring
+       - libcuda*
        - nvidia-container*
+       - libnvidia-container*
 
    - name: Remove NVIDIA Docker for Cloud Native Stack Developers on Redhat
-     when: "cns_docker == true and ansible_distribution == 'RedHat' and microk8s == false or cns_nvidia_driver == true and ansible_distribution == 'RedHat' and microk8s == false"
+     when: "cns_docker == true and ansible_facts['distribution'] == 'RedHat' and microk8s == false or cns_nvidia_driver == true and ansible_facts['distribution'] == 'RedHat' and microk8s == false"
      ignore_errors: yes
      yum:
        name: "{{ item }}"
@@ -288,25 +297,55 @@
        - 'nvidia-container*'
        - 'nvidia-docker*'
 
+   - name: Unmount NVIDIA driver container mounts
+     when: microk8s == false
+     shell: |
+       if mountpoint -q /run/nvidia/driver; then
+         findmnt -Rno TARGET /run/nvidia/driver | awk '{ print length, $0 }' | sort -rn | cut -d' ' -f2- | xargs -r -n1 umount -l
+       fi
+     become: true
+     ignore_errors: yes
+     failed_when: false
+
+   - name: Cleanup orphaned CNS pod processes
+     when: microk8s == false
+     shell: |
+       for process_name in nvidia-device-plugin nvidia-mig-manager gpu-feature-discovery dcgm-exporter fluent-bit prometheus prometheus-config-reloader; do
+         pkill -9 -x "${process_name}" || true
+       done
+       pkill -9 -f '/workspace/app|k8s-nim-operator|elastic-operator|istio|knative|kserve|volcano' || true
+     become: true
+     ignore_errors: yes
+     failed_when: false
+
    - name: unload NVIDIA
-     when: cns_nvidia_driver == true
-     shell: /usr/bin/nvidia-uninstall --silent; kill -9 $(lsof /dev/nvidia* | awk '{print $2}' | grep -v PID | uniq); rmmod nvidia_uvm; rmmod nvidia_drm; rmmod nvidia_modeset; rmmod nvidia
+     when: microk8s == false
+     shell: |
+       if [ -x /usr/bin/nvidia-uninstall ]; then
+         /usr/bin/nvidia-uninstall --silent || true
+       fi
+       if command -v lsof >/dev/null 2>&1 && ls /dev/nvidia* >/dev/null 2>&1; then
+         lsof /dev/nvidia* | awk 'NR > 1 {print $2}' | sort -u | xargs -r kill -9 || true
+       fi
+       for module in nvidia_uvm nvidia_drm nvidia_modeset nvidia; do
+         rmmod "${module}" || true
+       done
      become: true
      ignore_errors: yes
      failed_when: false
 
    - name: Remove dependencies that are no longer required
-     when: "ansible_distribution == 'Ubuntu'"
+     when: "ansible_facts['distribution'] == 'Ubuntu'"
      apt:
       autoremove: yes
 
    - name: Remove dependencies that are no longer required
-     when: "ansible_distribution == 'RedHat'"
+     when: "ansible_facts['distribution'] == 'RedHat'"
      yum:
       autoremove: yes
 
    - name: Remove installed packages for RHEL/CentOS
-     when:  "ansible_distribution in ['RedHat', 'CentOS']"
+     when:  "ansible_facts['distribution'] in ['RedHat', 'CentOS']"
      ignore_errors: yes
      yum:
        name: "{{ item }}"
@@ -324,11 +363,55 @@
      failed_when: false
      ignore_errors: yes
 
+   - name: Stop lingering CRI container scopes
+     when: microk8s == false
+     shell: |
+       scopes=$(systemctl list-units --type=scope --state=running --no-legend 'cri-containerd-*' | awk '{print $1}')
+       if [ -n "${scopes}" ]; then
+         systemctl stop ${scopes} || true
+       fi
+     become: true
+     ignore_errors: yes
+     failed_when: false
+
+   - name: Stop Fluent Bit service
+     when: microk8s == false
+     systemd_service:
+       name: fluent-bit
+       state: stopped
+       enabled: false
+       daemon_reload: yes
+     become: true
+     ignore_errors: yes
+     failed_when: false
+
+   - name: Cleanup orphaned CNS pod processes after runtime stop
+     when: microk8s == false
+     shell: |
+       for process_name in nvidia-device-plugin nvidia-mig-manager gpu-feature-discovery dcgm-exporter fluent-bit prometheus prometheus-config-reloader; do
+         pkill -9 -x "${process_name}" || true
+       done
+       pkill -9 -f '/workspace/app|k8s-nim-operator|elastic-operator|istio|knative|kserve|volcano' || true
+     become: true
+     ignore_errors: yes
+     failed_when: false
+
    - name: NVIDIA FS Module Cleanup
      ignore_errors: yes
      failed_when: false
      become: true
      shell: rmmod nvidia_fs
+
+   - name: Cleanup NVIDIA runtime state directories
+     when: microk8s == false
+     ignore_errors: yes
+     file:
+       path: "{{ item }}"
+       state: absent
+     with_items:
+        - /usr/lib/nvidia
+        - /usr/local/nvidia
+        - /run/nvidia
 
    - name: Cleanup Directories for Cloud Native Stack Developers
      when: " cns_docker == true and cns_nvidia_driver == true or cns_version <= 3.1 or container_runtime == 'cri-dockerd'"
@@ -416,7 +499,46 @@
         - /var/lib/snapd/snap
         - /snap
 
+   # ============================================================
+   # Confidential Computing — Intel TDX cleanup
+   # Reverses what cns-installation.yaml's TDX block did:
+   #   - Removes 'nohibernate' from GRUB_CMDLINE_LINUX_DEFAULT
+   #   - Deletes /etc/modprobe.d/tdx.conf (kvm_intel tdx=1)
+   # ============================================================
+   - name: TDX cleanup | Detect CPU vendor
+     when: confidential_computing == true and microk8s == false
+     shell: grep -m1 vendor_id /proc/cpuinfo | awk '{print $3}'
+     register: cpu_vendor_uninstall
+     changed_when: false
+     failed_when: false
+
+   - name: TDX cleanup | Remove nohibernate from GRUB_CMDLINE_LINUX_DEFAULT
+     when: confidential_computing == true and microk8s == false and cpu_vendor_uninstall.stdout == 'GenuineIntel'
+     ansible.builtin.replace:
+       path: /etc/default/grub
+       # Strip ' nohibernate' OR 'nohibernate ' OR sole 'nohibernate' from the value.
+       regexp: '^(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*?)\s?nohibernate\s?([^"]*")$'
+       replace: '\1\2'
+       backup: yes
+     register: tdx_grub_cleanup
+
+   - name: TDX cleanup | update-grub after removing nohibernate
+     when: confidential_computing == true and microk8s == false and cpu_vendor_uninstall.stdout == 'GenuineIntel' and tdx_grub_cleanup.changed
+     command: update-grub
+
+   - name: TDX cleanup | Remove /etc/modprobe.d/tdx.conf
+     when: confidential_computing == true and microk8s == false and cpu_vendor_uninstall.stdout == 'GenuineIntel'
+     ansible.builtin.file:
+       path: /etc/modprobe.d/tdx.conf
+       state: absent
+     register: tdx_modprobe_cleanup
+
    - name: Reboot the system
-     when: "cns_nvidia_driver == true and microk8s == false"
+     when: >
+       (ansible_connection | default('ssh')) != 'local' and
+       (cns_nvidia_driver == true and microk8s == false)
+       or
+       ((ansible_connection | default('ssh')) != 'local' and
+       confidential_computing == true and microk8s == false and cpu_vendor_uninstall.stdout == 'GenuineIntel' and (tdx_grub_cleanup.changed or tdx_modprobe_cleanup.changed))
      reboot:
        reboot_timeout: 900

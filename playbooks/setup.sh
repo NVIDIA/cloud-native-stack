@@ -1,16 +1,89 @@
 #!/bin/bash
 set -a
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+
+if [[ -z "${CNS_SUDO_PASSWORD:-}" && -r hosts ]]; then
+	CNS_SUDO_PASSWORD=$(awk '
+		/^[[:space:]]*localhost[[:space:]]/ {
+			for (i = 1; i <= NF; i++) {
+				if ($i ~ /^ansible_sudo_pass=/) {
+					sub(/^ansible_sudo_pass=/, "", $i)
+					gsub(/^'\''|'\''$/, "", $i)
+					gsub(/^"|"$/, "", $i)
+					print $i
+					exit
+				}
+			}
+		}
+	' hosts)
+fi
+export -n CNS_SUDO_PASSWORD 2>/dev/null || true
+
+cns_sudo() {
+	if sudo -n true 2>/dev/null; then
+		sudo "$@"
+	elif [[ -n "${CNS_SUDO_PASSWORD:-}" ]]; then
+		printf '%s\n' "$CNS_SUDO_PASSWORD" | sudo -S -p '' "$@"
+	elif [[ -t 0 ]]; then
+		sudo "$@"
+	else
+		return 1
+	fi
+}
+
+detect_cloud_env() {
+	id=""
+	manufacturer=""
+	if command -v dmidecode >/dev/null 2>&1; then
+		id=$(cns_sudo dmidecode --string system-uuid 2>/dev/null | awk -F'-' '{print $1}' | cut -c -3)
+		manufacturer=$(cns_sudo dmidecode -s system-manufacturer 2>/dev/null | grep -E -i "microsoft corporation|Google" || true)
+	fi
+}
+
 if [ -z $1 ]; then
-	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      -h, --help, usage    : Show this help message and exit\n      install              : Install NVIDIA Cloud Native Stack\n                             Sub Options:\n                               install gke   : Install NVIDIA Cloud Native Stack on Google GKE\n                               install eks   : Install NVIDIA Cloud Native Stack on Amazon EKS\n                               install aks   : Install NVIDIA Cloud Native Stack on Azure AKS\n                               install gke   : Install NVIDIA Cloud Native Stack with Confidential Computing\n \n      validate             : Validate NVIDIA Cloud Native Stack\n      upgrade              : Upgrade NVIDIA Cloud Native Stack\n      uninstall            : Uninstall NVIDIA Cloud Native Stack\n                             Sub Options:\n                               uninstall gke   : Uninstall NVIDIA Cloud Native Stack on Google GKE\n                               uninstall eks   : Uninstall NVIDIA Cloud Native Stack on Amazon EKS\n                               uninstall aks   : Uninstall NVIDIA Cloud Native Stack on Azure AKS\n"
+	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      -h, --help, usage    : Show this help message and exit\n      install              : Install NVIDIA Cloud Native Stack\n                             Sub Options:\n                               install cc        : Install NVIDIA Cloud Native Stack with Confidential Computing\n                               install launchpad : Install NVIDIA Cloud Native Stack on NVIDIA LaunchPad\n \n      validate             : Validate NVIDIA Cloud Native Stack\n      upgrade              : Upgrade NVIDIA Cloud Native Stack\n      uninstall            : Uninstall NVIDIA Cloud Native Stack\n"
 	echo
 	exit 1
 elif [[ $1 == "help" || $1 == "-h" || $1 == "--help" || $1 == "usage" ]]; then
-	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      -h, --help, usage    : Show this help message and exit\n      install              : Install NVIDIA Cloud Native Stack\n                             Sub Options:\n                               install gke   : Install NVIDIA Cloud Native Stack on Google GKE\n                               install eks   : Install NVIDIA Cloud Native Stack on Amazon EKS\n                               install aks   : Install NVIDIA Cloud Native Stack on Azure AKS\n                               install cc   : Install NVIDIA Cloud Native Stack with Confidential Computing\n \n      validate             : Validate NVIDIA Cloud Native Stack\n      upgrade              : Upgrade NVIDIA Cloud Native Stack\n      uninstall            : Uninstall NVIDIA Cloud Native Stack\n                             Sub Options:\n                               uninstall gke   : Uninstall NVIDIA Cloud Native Stack on Google GKE\n                               uninstall eks   : Uninstall NVIDIA Cloud Native Stack on Amazon EKS\n                               uninstall aks   : Uninstall NVIDIA Cloud Native Stack on Azure AKS\n"
+	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      -h, --help, usage    : Show this help message and exit\n      install              : Install NVIDIA Cloud Native Stack\n                             Sub Options:\n                               install cc        : Install NVIDIA Cloud Native Stack with Confidential Computing\n                               install launchpad : Install NVIDIA Cloud Native Stack on NVIDIA LaunchPad\n \n      validate             : Validate NVIDIA Cloud Native Stack\n      upgrade              : Upgrade NVIDIA Cloud Native Stack\n      uninstall            : Uninstall NVIDIA Cloud Native Stack\n"
     echo
-    exit 1	 
+    exit 1
 fi
 
-sudo ls > /dev/null
+cns_sudo true > /dev/null
+
+# Bootstrap passwordless sudo for the invoking user on Ubuntu 26.04.
+# Reason: ansible runs over `connection: local` with no controlling TTY, so any
+# `become: true` task times out (12s) waiting for a sudo password prompt that
+# can't be answered. The `cns_sudo true` above warmed the credential cache for THIS
+# shell, but the cached cred doesn't propagate to the ansible-spawned process
+# tree. Install /etc/sudoers.d/<user> NOPASSWD entry once so subsequent ansible
+# become tasks work without prompting. Gated on Ubuntu 26.04.
+#
+# Scope: this only touches the box running setup.sh (i.e. the LOCAL host when
+# `connection: local` is used). For REMOTE inventory targets, the equivalent
+# bootstrap runs as an ansible task at the top of cns-installation.yaml using
+# `become: true` + ansible_sudo_pass from the inventory line. So both modes
+# are covered without any inventory parsing here.
+if [[ -r /etc/os-release ]]; then
+  . /etc/os-release
+  if [[ "${ID:-}" == "ubuntu" && "${VERSION_ID:-}" == "26.04" ]]; then
+    if ! cns_sudo grep -qE "^${USER}\s+.*NOPASSWD" /etc/sudoers /etc/sudoers.d/* 2>/dev/null; then
+      SUDOERS_FILE="/etc/sudoers.d/${USER}"
+      SUDOERS_TMP=$(mktemp)
+      echo "Ubuntu 26.04: bootstrapping passwordless sudo for ${USER} -> ${SUDOERS_FILE}"
+      echo "${USER} ALL=(ALL) NOPASSWD:ALL" > "$SUDOERS_TMP"
+      cns_sudo install -m 0440 "$SUDOERS_TMP" "$SUDOERS_FILE"
+      rm -f "$SUDOERS_TMP"
+      if ! cns_sudo visudo -cf "$SUDOERS_FILE" > /dev/null; then
+        echo "ERROR: sudoers entry $SUDOERS_FILE failed syntax check. Removing."
+        cns_sudo rm -f "$SUDOERS_FILE"
+        exit 1
+      fi
+    fi
+  fi
+fi
 
 version=$(cat cns_version.yaml | awk -F':' '{print $2}' | head -n1 | tr -d ' ' | tr -d '\n\r')
 cp cns_values_$version.yaml cns_values.yaml
@@ -20,12 +93,12 @@ cp cns_values_$version.yaml cns_values.yaml
 
 ansible_install() {
   os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
-  if [ ! command -v python 2>/dev/null || ! command -v python3 2>/dev/null ]
+  if ! command -v python >/dev/null 2>&1 || ! command -v python3 >/dev/null 2>&1
   then
     if [[ $os == "ubuntu" ]]; then
-  	  sudo apt update 2>&1 >/dev/null && sudo apt install python3 python3-pip sshpass -y 2>&1 >/dev/null
+	  cns_sudo env DEBIAN_FRONTEND=noninteractive apt-get update 2>&1 >/dev/null && cns_sudo env DEBIAN_FRONTEND=noninteractive apt-get install python3 python3-pip python3-venv sshpass -y 2>&1 >/dev/null
     elif [ $os == '"rhel"' ]; then
-      sudo yum install python39 python39-pip -y 2>&1 >/dev/null
+	      cns_sudo yum install python39 python39-pip -y 2>&1 >/dev/null
     fi
   else
     pversion=$(python3 --version | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
@@ -34,44 +107,51 @@ ansible_install() {
         if [[ $os == "ubuntu" ]]; then
 		os_version=$(cat /etc/os-release  | grep -iw 'VERSION_ID' | awk -F'=' '{print $2}')
             if [[ $os_version == '"20.04"' ]]; then
-                sudo apt update 2>&1 >/dev/null && sudo apt install python3.9 python3-pip sshpass -y 2>&1 >/dev/null
-                sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
-                sudo ln -sf /usr/bin/python3.9 /usr/bin/python
-				sudo ln -sf /usr/lib/python3/dist-packages/apt_pkg.cpython-* /usr/lib/python3/dist-packages/apt_pkg.so
-				sudo ln -sf /usr/lib/python3/dist-packages/apt_inst.cpython-* /usr/lib/python3/dist-packages/apt_inst.so
+	                cns_sudo env DEBIAN_FRONTEND=noninteractive apt-get update 2>&1 >/dev/null && cns_sudo env DEBIAN_FRONTEND=noninteractive apt-get install python3.9 python3.9-venv python3-pip sshpass -y 2>&1 >/dev/null
+	                cns_sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
+	                cns_sudo ln -sf /usr/bin/python3.9 /usr/bin/python
+					cns_sudo ln -sf /usr/lib/python3/dist-packages/apt_pkg.cpython-* /usr/lib/python3/dist-packages/apt_pkg.so
+					cns_sudo ln -sf /usr/lib/python3/dist-packages/apt_inst.cpython-* /usr/lib/python3/dist-packages/apt_inst.so
 			fi
         elif [ $os == '"rhel"' ]; then
-            sudo yum install python39 python3-pip sshpass -y 2>&1 >/dev/null
-            sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
-            sudo ln -sf /usr/bin/python3.9 /usr/bin/python
+	            cns_sudo yum install python39 python3-pip sshpass -y 2>&1 >/dev/null
+	            cns_sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
+	            cns_sudo ln -sf /usr/bin/python3.9 /usr/bin/python
         fi
     fi
   fi
 
 if [[ $os == "ubuntu" ]]; then
-    sudo apt update 2>&1 >/dev/null && sudo apt install python3-pip sshpass -y 2>&1 >/dev/null
+	    cns_sudo env DEBIAN_FRONTEND=noninteractive apt-get update 2>&1 >/dev/null && cns_sudo env DEBIAN_FRONTEND=noninteractive apt-get install python3-pip python3-venv sshpass -y 2>&1 >/dev/null
 elif [ $os == '"rhel"' ]; then
-    sudo yum install python39-pip sshpass -y 2>&1 >/dev/null
+	    cns_sudo yum install python39-pip sshpass -y 2>&1 >/dev/null
 fi
 
+  version_le() {
+          [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -n1)" = "$1" ]
+  }
+
+  ansible_venv="$HOME/.cns-ansible-venv"
   uname=$(uname -r | awk -F'-' '{print $NF}')
   if [[ $uname == 'tegra' ]]; then
-          pip3 install ansible 2>&1 >/dev/null
+          ansible_package="ansible"
    else
          pversion=$(python3 --version | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
-         p2version=$(python --version 2>&1 | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
-         if [[ $pversion < 3.10 || $pversion == 3.10 || $p2version == 3.10 || $p2version < 3.10  ]]; then
-                 python3 -m pip install ansible==8.7.0 2>&1 >/dev/null
-         elif [[ $pversion > 3.10 ]]; then
-                 python3 -m pip install ansible==11.4.0 --break-system-packages 2>&1 >/dev/null
+         if version_le "$pversion" "3.10"; then
+                 ansible_package="ansible==8.7.0"
+         else
+                 ansible_package="ansible==12.3.0"
         fi
   fi
+  python3 -m venv "$ansible_venv"
+  "$ansible_venv/bin/python" -m pip install --upgrade pip 2>&1 >/dev/null
+  "$ansible_venv/bin/python" -m pip install "$ansible_package" 2>&1 >/dev/null
+
+  export PATH=$ansible_venv/bin:$PATH:$HOME/.local/bin
   if [[ $os == "ubuntu" || $os == '"rhel"' ]]; then
-          echo PATH=$PATH:$HOME/.local/bin >> ~/.bashrc
-          source ~/.bashrc
-		  export PATH=$PATH:$HOME/.local/bin
-  else
-          export PATH=$PATH:$HOME/.local/bin
+          if ! grep -qxF 'export PATH=$HOME/.cns-ansible-venv/bin:$PATH:$HOME/.local/bin' ~/.bashrc; then
+                  echo 'export PATH=$HOME/.cns-ansible-venv/bin:$PATH:$HOME/.local/bin' >> ~/.bashrc
+          fi
   fi
   ansible-galaxy collection install community.general ansible.posix --force 2>&1 >/dev/null
 
@@ -83,10 +163,10 @@ os=$(uname -o)
 if [[ $os == 'GNU/Linux' ]]; then
 os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
       if [[ $os == "ubuntu" ]]; then
-    	sudo apt update 2>&1 >/dev/null && sudo apt install curl -y 2>&1 >/dev/null
+	    cns_sudo env DEBIAN_FRONTEND=noninteractive apt-get update 2>&1 >/dev/null && cns_sudo env DEBIAN_FRONTEND=noninteractive apt-get install curl -y 2>&1 >/dev/null
       elif [ $os == '"rhel"' ]; then
-        sudo subscription-manager release --set 8.10
-    	sudo yum install curl -y 2>&1 >/dev/null
+	        cns_sudo subscription-manager release --set 8.10
+	    cns_sudo yum install curl -y 2>&1 >/dev/null
       fi
 elif [[ $os == 'Darwin' ]]; then
 	ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
@@ -106,234 +186,34 @@ else
 fi
 }
 
-if ! command -v ansible 2>/dev/null
-then
-    prerequisites
-    ansible_install
-else
-ostype=$(uname -o)
-	if [[ $ostype == 'GNU/Linux' ]]; then
-	os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
-        if [[ $os == "ubuntu" ]]; then
-		ansible_version=$(sudo pip3 list | grep ansible | awk '{print $2}' | head -n1 | awk -F'.' '{print $1}')
-                if [[ $ansible_version -le 2 ]]; then
-                	sudo apt purge ansible -y 2>&1 >/dev/null && sudo apt autoremove -y 2>&1 >/dev/null
-	         		ansible_install
-  				fi
-		fi
-	fi
-	echo "Ansible Already Installed"
-	echo
-fi
-
-tf_install() {
-ostype=$(uname -o)
-if [[ $ostype == 'GNU/Linux' ]]; then
-        arch=$(uname -m)
-        if [[ $arch == 'x86_64' ]]; then
-                curl -s -O https://releases.hashicorp.com/terraform/1.5.3/terraform_1.5.3_linux_amd64.zip
-                unzip terraform_1.5.3_linux_amd64.zip
-        elif [[ $arch == 'aarch64' ]]; then
-                curl -s -O https://releases.hashicorp.com/terraform/1.5.3/terraform_1.5.3_linux_arm64.zip
-                unzip terraform_1.5.3_linux_arm64.zip
-        fi
-        sudo mv terraform /usr/local/bin/
-elif [[ $ostype == 'Darwin' ]]; then
-        brew tap hashicorp/tap
-        brew install hashicorp/tap/terraform
-fi
-}
-
-gke_install() {
-ostype=$(uname -o)
-if [[ $ostype == 'GNU/Linux' ]]; then
-arch=$(uname -m)
-        if [[ $arch == 'x86_64' ]]; then
-                curl -s -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-425.0.0-linux-x86_64.tar.gz
-                tar -xf google-cloud-cli-425.0.0-linux-x86_64.tar.gz
-        elif [[ $arch == 'aarch64' ]]; then
-                curl -s -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-425.0.0-linux-arm.tar.gz
-                tar -xf google-cloud-cli-425.0.0-linux-arm.tar.gz
-        fi
-        source google-cloud-sdk/path.bash.inc
-        curl -s -O https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
-        sudo mv jq-linux64 /usr/local/bin/jq
-        chmod +x /usr/local/bin/jq
-elif [[ $ostype == 'Darwin' ]]; then
-        curl -s -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-425.0.0-darwin-x86_64.tar.gz
-        tar -xf google-cloud-cli-425.0.0-darwin-x86_64.tar.gz
-        source google-cloud-sdk/path.zsh.inc
-        brew install helm jq kubectl --force
-fi
-export PATH=$PATH:./google-cloud-sdk/bin
-google-cloud-sdk/install.sh --quiet >/dev/null 2>&1
-echo
-echo "Installing Google Cloud Components please wait"
-echo
-gcloud components install beta --quiet >/dev/null 2>&1
-gcloud components install kubectl --quiet >/dev/null 2>&1
-gcloud components install gke-gcloud-auth-plugin --quiet >/dev/null 2>&1
-gcloud components update --quiet >/dev/null 2>&1
-echo
-echo "Google Cloud login"
-echo
-gcloud auth login --update-adc --no-launch-browser
-#gcloud auth application-default login --no-launch-browser
-}
-
-az_install() {
-ostype=$(uname -o)
-if [[ $ostype == 'GNU/Linux' ]]; then
-        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-        os=$(cat /etc/os-release | grep -iw ID | awk -F'=' '{print $2}')
-        if [[ $os == "ubuntu" ]]; then
-                echo "Installing Azure CLI"
-                echo
-                sudo apt-get update >/dev/null 2>&1
-                sudo apt-get install ca-certificates curl apt-transport-https lsb-release gnupg >/dev/null 2>&1
-                sudo mkdir -p /etc/apt/keyrings
-                curl -sLS https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/keyrings/microsoft.gpg > /dev/null
-                sudo chmod go+r /etc/apt/keyrings/microsoft.gpg
-                AZ_REPO=$(lsb_release -cs)
-                echo "deb [arch=`dpkg --print-architecture` signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
-                sudo apt-get update >/dev/null 2>&1
-                sudo apt-get install azure-cli -y >/dev/null 2>&1
-        elif [ $os == '"rhel"' ]; then
-                sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-                sudo dnf install -y https://packages.microsoft.com/config/rhel/9.0/packages-microsoft-prod.rpm >/dev/null 2>&1
-                sudo dnf install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm >/dev/null 2>&1
-                echo -e "[azure-cli]
-                name=Azure CLI
-                baseurl=https://packages.microsoft.com/yumrepos/azure-cli
-                enabled=1
-                gpgcheck=1
-                gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/azure-cli.repo
-                sudo dnf install azure-cli -y >/dev/null 2>&1
-        fi
-        arch=$(uname -m)
-        if [[ $arch == 'x86_64' ]]; then
-                wget -q https://github.com/Azure/kubelogin/releases/download/v0.0.31/kubelogin-linux-amd64.zip
-                unzip kubelogin-linux-amd64.zip
-                sudo mv bin/linux_amd64/kubelogin /usr/local/bin/
-                curl -LO https://dl.k8s.io/release/v1.26.0/bin/linux/amd64/kubectl 
-        elif [[ $arch == 'aarch64' ]]; then
-                wget -q https://github.com/Azure/kubelogin/releases/download/v0.0.31/kubelogin-linux-arm64.zip
-                unzip kubelogin-linux-arm64.zip
-                sudo mv bin/linux_arm64/kubelogin /usr/local/bin/
-                curl -LO https://dl.k8s.io/release/v1.26.0/bin/linux/arm64/kubectl
-        fi
-        curl -s -O https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
-        sudo mv jq-linux64 /usr/local/bin/jq
-        sudo cp kubectl /usr/local/bin/kubectl
-        sudo chmod +x /usr/local/bin/jq /usr/local/bin/kubelogin /usr/local/bin/kubectl
-elif [[ $ostype == 'Darwin' ]]; then
-        brew update && brew install azure-cli
-        brew install Azure/kubelogin/kubelogin
-        brew install helm jq kubectl --force
-        fi
-az config set core.no_color=true
-echo
-az login --use-device-code
-az aks install-cli
-}
-
-aws_install () {
-ostype=$(uname -o)
-if [[ $ostype == 'GNU/Linux' ]]; then
-arch=$(uname -m)
-        if [[ $arch == 'x86_64' ]]; then
-                curl -s -O https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-                curl -LO https://dl.k8s.io/release/v1.26.0/bin/linux/amd64/kubectl
-                unzip -q awscli-exe-linux-x86_64.zip
-        elif [[ $arch == 'aarch64' ]]; then
-                curl -s -O https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip
-                curl -LO https://dl.k8s.io/release/v1.26.0/bin/linux/arm64/kubectl
-                unzip awscli-exe-linux-aarch64.zip
-        fi
-        curl -s -O https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
-        sudo cp jq-linux64 /usr/local/bin/jq
-        sudo cp kubectl /usr/local/bin/kubectl
-        sudo chmod +x /usr/local/bin/kubectl /usr/local/bin/jq 
-        sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
-elif [[ $ostype == 'Darwin' ]]; then
-        pip3 install awscli
-        brew install helm jq kubectl --force
-fi
-mkdir -p $HOME/.aws/ && cp -r $PWD/files/aws_credentials $HOME/.aws/credentials
-}
+prerequisites
+ansible_install
 
 if [ $1 == "install" ]; then
         echo
-	if [[ $2 == 'aks' ]]; then
-		az_install
-                tf_install
-                azure_account_name=$(cat cns_values_$version.yaml | grep azure_account_name | awk -F': ' '{print $2}')
-                cluster_name=$(cat cns_values_$version.yaml | grep aks_cluster_name | awk -F': ' '{print $2}')
-                location=$(cat cns_values_$version.yaml | grep aks_cluster_location | awk -F': ' '{print $2}')
-                azure_object_id=$(cat cns_values_$version.yaml | grep azure_object_id | awk -F': ' '{print $2}')
-		rm -rf nvidia-terraform-modules
-                git clone https://github.com/NVIDIA/nvidia-terraform-modules.git
-                cd nvidia-terraform-modules/aks
-		git reset --hard 223e39fcf55f39ad714895e0a86481275fdd6623
-		echo "cluster_name           = \"$cluster_name\"" >> terraform.tfvars
-		echo "location  = $location" >> terraform.tfvars
-		echo "admin_group_object_ids = $azure_object_id" >> terraform.tfvars
-                terraform init
-                terraform apply --auto-approve
-                #az aks get-credentials --resource-group $cluster_name-rg --name $cluster_name
-	elif [[ $2 == 'gke' ]]; then
-		gke_install
-                tf_install
-                region=$(cat cns_values_$version.yaml | grep gke_region | awk -F': ' '{print $2}')
-                node_zone=$(cat cns_values_$version.yaml | grep gke_node_zones | awk -F': ' '{print $2}')
-                cluster_name=$(cat cns_values_$version.yaml | grep gke_cluster_name | awk -F': ' '{print $2}')
-                gke_project_id=$(cat cns_values_$version.yaml | grep gke_project_id | awk -F': ' '{print $2}')
-		rm -rf nvidia-terraform-modules
-                git clone https://github.com/NVIDIA/nvidia-terraform-modules.git
-                cd nvidia-terraform-modules/gke
-		git reset --hard 223e39fcf55f39ad714895e0a86481275fdd6623
-		echo "cluster_name = \"$cluster_name\"" >> terraform.tfvars
-		echo "project_id = \"$gke_project_id\"" >> terraform.tfvars
-		echo "region     = \"$region\"" >> terraform.tfvars
-		echo "node_zones =  $node_zone" >> terraform.tfvars
-                sed -i '$a num_gpu_nodes = "1"' terraform.tfvars
-		sed -i '$a gpu_min_node_count = "1"' terraform.tfvars
-                gcloud config set project $gke_project_id
-                terraform init
-                terraform apply --auto-approve
-                node_zone1=$(echo $node_zone | sed 's/\[//g;s/\]//g;s/\"//g')
-                gcloud container clusters get-credentials $cluster_name --zone $node_zone1
-        elif [[ $2 == 'eks' ]]; then
-                tf_install
-                aws_install
-                region=$(cat cns_values_$version.yaml | grep aws_region | awk -F': ' '{print $2}')
-                cluster_name=$(cat cns_values_$version.yaml | grep aws_cluster_name | awk -F': ' '{print $2}')
-                instance_type=$(cat cns_values_$version.yaml | grep aws_gpu | awk -F': ' '{print $2}')
-		rm -rf nvidia-terraform-modules
-                git clone https://github.com/NVIDIA/nvidia-terraform-modules.git
-                cd nvidia-terraform-modules/eks
-		git reset --hard 223e39fcf55f39ad714895e0a86481275fdd6623
-                aws configure set default.region $region
-		echo "cluster_name = \"$cluster_name\"" >> terraform.tfvars
-		echo "region  = \"$region\"" >> terraform.tfvars
-                echo "gpu_instance_type = \"$instance_type\"" >> terraform.tfvars
-                sed -i '$a min_gpu_nodes = "1"' terraform.tfvars
-                sed -i '$a desired_count_gpu_nodes = "1"' terraform.tfvars
-                terraform init
-                terraform apply --auto-approve
-                aws eks update-kubeconfig --name tf-$cluster_name --region $region
-        elif [[ $2 == 'cc' ]]; then
+        if [[ $2 == 'cc' ]]; then
                 ansible -c local -i localhost, all -m lineinfile -a "path={{lookup('pipe', 'pwd')}}/cns_values.yaml regexp='confidential_computing: no' line='confidential_computing: yes'"
                 ansible -c local -i localhost, all -m lineinfile -a "path={{lookup('pipe', 'pwd')}}/cns_values_"$version".yaml regexp='confidential_computing: no' line='confidential_computing: yes'"
-                ansible-playbook -c local -i localhost, cns_cc_bios.yaml
+                # Vendor-aware + BMC-aware BIOS step:
+                #   - Intel TDX  -> cns_cc_bios.yaml has no Intel attributes; BIOS must be set manually. Skip.
+                #   - AMD SNP w/ BMC creds -> run cns_cc_bios.yaml to configure BIOS via Redfish.
+                #   - AMD SNP w/o BMC creds (bmc_ip empty in cns_values.yaml) -> skip; BIOS must be set manually.
+                cpu_vendor=$(grep -m1 vendor_id /proc/cpuinfo 2>/dev/null | awk '{print $3}')
+                bmc_ip=$(awk -F': *' '/^bmc_ip:/ {gsub(/"|'\''| /,"",$2); print $2}' cns_values.yaml)
+                if [[ "$cpu_vendor" == "GenuineIntel" ]]; then
+                        echo "Intel CPU detected ($cpu_vendor) -> skipping cns_cc_bios.yaml (TDX BIOS must be set manually)."
+                elif [[ -z "$bmc_ip" ]]; then
+                        echo "AMD CPU detected but bmc_ip is not set in cns_values.yaml -> skipping cns_cc_bios.yaml. BIOS must be configured manually."
+                else
+                        ansible-playbook -c local -i localhost, cns_cc_bios.yaml
+                fi
                 ansible-playbook -i hosts cns-installation.yaml
         elif [[ $2 == 'launchpad' ]]; then
                 ansible-playbook -i hosts cns-installation.yaml
-      	elif [ -z $2 ]; then
-		echo "Installing NVIDIA Cloud Native Stack Version $version"
-		id=$(sudo dmidecode --string system-uuid | awk -F'-' '{print $1}' | cut -c -3)
-		manufacturer=$(sudo dmidecode -s system-manufacturer | egrep -i "microsoft corporation|Google")
-		if [[ $id == 'ec2' || $manufacturer == 'Microsoft Corporation' || $manufacturer == 'Google' ]]; then
+	      elif [ -z $2 ]; then
+			echo "Installing NVIDIA Cloud Native Stack Version $version"
+			detect_cloud_env
+			if [[ $id == 'ec2' || $manufacturer == 'Microsoft Corporation' || $manufacturer == 'Google' ]]; then
 			sed -ie 's/- hosts: master/- hosts: all/g' *.yaml
 			nvidia_driver=$(ls /usr/src/ | grep nvidia | awk -F'-' '{print $1}')
 			if [[ $nvidia_driver == 'nvidia' ]]; then
@@ -347,8 +227,7 @@ if [ $1 == "install" ]; then
 elif [ $1 == "upgrade" ]; then
 	echo
 	echo "Upgarding NVIDIA Cloud Native Stack"
-	id=$(sudo dmidecode --string system-uuid | awk -F'-' '{print $1}' | cut -c -3)
-	manufacturer=$(sudo dmidecode -s system-manufacturer | egrep -i "microsoft corporation|Google")
+	detect_cloud_env
 	if [[ $id == 'ec2' || $manufacturer == 'Microsoft Corporation' || $manufacturer == 'Google' ]]; then
 		sed -i 's/- hosts: master/- hosts: all/g' *.yaml
 		ansible-playbook -c local -i localhost, cns-upgrade.yaml
@@ -356,46 +235,27 @@ elif [ $1 == "upgrade" ]; then
      		ansible-playbook -i hosts cns-upgrade.yaml
 	fi
 elif [ $1 == "uninstall" ]; then
-	if [[ $2 == 'eks'  ]]; then
-		cd nvidia-terraform-modules/eks
-                terraform destroy --auto-approve
-                cd ../../
-                rm -rf terraform_1.5.3_linux_* jq-linux64 kubectl aws awscli-exe-linux-*                
-        elif [[ $2 == 'aks' ]]; then
-                cd nvidia-terraform-modules/aks
-                terraform destroy --auto-approve
-                cd ../../
-                rm -rf terraform_1.5.3_linux_amd64.zip jq-linux64 kubectl kubelogin-linux-*
-        elif [[ $2 == 'gke' ]]; then
-                cd nvidia-terraform-modules/gke
-                terraform destroy --auto-approve
-                cd ../../
-                rm -rf terraform_1.5.3_linux_* jq-linux64 kubectl
-	elif [ -z $2 ]; then
-		echo
-		echo "Unstalling NVIDIA Cloud Native Stack"
-		id=$(sudo dmidecode --string system-uuid | awk -F'-' '{print $1}' | cut -c -3)
-		manufacturer=$(sudo dmidecode -s system-manufacturer | egrep -i "microsoft corporation|Google")
-		if [[ $id == 'ec2' || $manufacturer == 'Microsoft Corporation' || $manufacturer == 'Google' ]]; then
-			sed -i 's/- hosts: master/- hosts: all/g' *.yaml
-			ansible-playbook -c local -i localhost, cns-uninstall.yaml
-		else
-			ansible-playbook -i hosts cns-uninstall.yaml
-		fi
+	echo
+	echo "Unstalling NVIDIA Cloud Native Stack"
+	detect_cloud_env
+	if [[ $id == 'ec2' || $manufacturer == 'Microsoft Corporation' || $manufacturer == 'Google' ]]; then
+		sed -i 's/- hosts: master/- hosts: all/g' *.yaml
+		ansible-playbook -c local -i localhost, cns-uninstall.yaml
+	else
+		ansible-playbook -i hosts cns-uninstall.yaml
 	fi
 elif [ $1 == "validate" ]; then
 	echo
 	echo "Validating NVIDIA Cloud Native Stack"
-	id=$(sudo dmidecode --string system-uuid | awk -F'-' '{print $1}' | cut -c -3)
-	manufacturer=$(sudo dmidecode -s system-manufacturer | egrep -i "microsoft corporation|Google")
+	detect_cloud_env
 	if [[ $id == 'ec2' || $manufacturer == 'Microsoft Corporation' || $manufacturer == 'Google' ]]; then
 		sed -i 's/- hosts: master/- hosts: all/g' *.yaml
 		ansible-playbook -c local -i localhost, cns-validation.yaml
 	else
         	ansible-playbook -i hosts cns-validation.yaml
-	fi	
+	fi
 else
-	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      -h, --help, usage    : Show this help message and exit\n      install              : Install NVIDIA Cloud Native Stack\n                             Sub Options:\n                               install gke   : Install NVIDIA Cloud Native Stack on Google GKE\n                               install eks   : Install NVIDIA Cloud Native Stack on Amazon EKS\n                               install aks   : Install NVIDIA Cloud Native Stack on Azure AKS\n                               install cc   : Install NVIDIA Cloud Native Stack with Confidential Computing\n \n      validate             : Validate NVIDIA Cloud Native Stack\n      upgrade              : Upgrade NVIDIA Cloud Native Stack\n      uninstall            : Uninstall NVIDIA Cloud Native Stack\n                             Sub Options:\n                               uninstall gke   : Uninstall NVIDIA Cloud Native Stack on Google GKE\n                               uninstall eks   : Uninstall NVIDIA Cloud Native Stack on Amazon EKS\n                               uninstall aks   : Uninstall NVIDIA Cloud Native Stack on Azure AKS\n"
+	echo -e "Usage: \n bash setup.sh [OPTIONS]\n \n Available Options: \n      -h, --help, usage    : Show this help message and exit\n      install              : Install NVIDIA Cloud Native Stack\n                             Sub Options:\n                               install cc        : Install NVIDIA Cloud Native Stack with Confidential Computing\n                               install launchpad : Install NVIDIA Cloud Native Stack on NVIDIA LaunchPad\n \n      validate             : Validate NVIDIA Cloud Native Stack\n      upgrade              : Upgrade NVIDIA Cloud Native Stack\n      uninstall            : Uninstall NVIDIA Cloud Native Stack\n"
         echo
         exit 1
 fi

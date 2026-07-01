@@ -1,22 +1,22 @@
-# NVIDIA Cloud Native Stack v15.0 - Install Guide for Developers
+# NVIDIA Cloud Native Stack v19.0 - Install Guide for Developers
 ## Introduction
 
 NVIDIA Cloud Native Stack for Developers is focused to provide the Docker based experince. This document describes how to setup the NVIDIA Cloud Native Stack collection on a single or multiple systems. NVIDIA Cloud Native Stack can be configured to create a single node Kubernetes cluster or to create/add additional worker nodes to join an existing cluster.
 
-NVIDIA Cloud Native Stack v15.0 includes:
+NVIDIA Cloud Native Stack v19.0 includes:
 - Ubuntu 24.04 LTS
-- Containerd 2.0.3
-- Kubernetes version 1.32.2
-- Helm 3.17.2
-- NVIDIA GPU Driver: 570.124.06
-- NVIDIA Container Toolkit: 1.17.5
-- NVIDIA GPU Operator 25.3.0
-  - NVIDIA K8S Device Plugin: 0.17.1
-  - NVIDIA DCGM-Exporter: 4.1.1-4.0.4
-  - NVIDIA DCGM: 4.1.1-2
-  - NVIDIA GPU Feature Discovery: 0.17.2
-  - NVIDIA K8s MIG Manager: 0.12.1
-  - Node Feature Discovery: 0.17.2
+- Containerd 2.3.0
+- Kubernetes version 1.36.0
+- Helm 4.1.4
+- NVIDIA GPU Driver: 580.126.20
+- NVIDIA Container Toolkit: 1.19.0
+- NVIDIA GPU Operator 26.3.1
+  - NVIDIA K8S Device Plugin: 0.18.1
+  - NVIDIA DCGM-Exporter: 4.4.2-4.7.0
+  - NVIDIA DCGM: 4.4.2-1
+  - NVIDIA GPU Feature Discovery: 0.18.1
+  - NVIDIA K8s MIG Manager: 0.13.1
+  - Node Feature Discovery: 0.17.3
   - NVIDIA KubeVirt GPU Device Plugin: 1.3.1
   - NVIDIA GDS Driver: 2.20.5
   - NVIDIA Kata Manager for Kubernetes: 0.2.3
@@ -37,20 +37,20 @@ NVIDIA Cloud Native Stack v15.0 includes:
 - [Adding an Additional Node to NVIDIA Cloud Native Stack](#Adding-additional-node-to-NVIDIA-Cloud-Native-Stack)
 - [Installing the GPU Operator](#Installing-the-GPU-Operator)
 - [Validating the GPU Operator](#Validating-the-GPU-Operator)
-- [Build Docker Images and Deploy on Cloud Native Stack](#Build-Docker-Images-and-Deploy-on-Cloud-Native-Stack) 
+- [Build Docker Images and Deploy on Cloud Native Stack](#Build-Docker-Images-and-Deploy-on-Cloud-Native-Stack)
 - [Validate NVIDIA Cloud Native Stack with an Application from NGC](#Validate-NVIDIA-Cloud-Native-Stack-with-an-application-from-NGC)
 - [Uninstalling the GPU Operator](#Uninstalling-the-GPU-Operator)
 
 ### Prerequisites
- 
+
 The following instructions assume the following:
 
-- You have [NVIDIA-Certified Systems](https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html) with Mellanox CX NICs for x86-64 servers 
-- You have [NVIDIA Qualified Systems](https://www.nvidia.com/en-us/data-center/data-center-gpus/qualified-system-catalog/?start=0&count=50&pageNumber=1&filters=eyJmaWx0ZXJzIjpbXSwic3ViRmlsdGVycyI6eyJwcm9jZXNzb3JUeXBlIjpbIkFSTS1UaHVuZGVyWDIiLCJBUk0tQWx0cmEiXX0sImNlcnRpZmllZEZpbHRlcnMiOnt9LCJwYXlsb2FkIjpbXX0=) for arm64 servers 
-  `NOTE:` For ARM systems, NVIDIA Network Operator is not supported yet. 
+- You have [NVIDIA-Certified Systems](https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html) with Mellanox CX NICs for x86-64 servers
+- You have [NVIDIA Qualified Systems](https://www.nvidia.com/en-us/data-center/data-center-gpus/qualified-system-catalog/?start=0&count=50&pageNumber=1&filters=eyJmaWx0ZXJzIjpbXSwic3ViRmlsdGVycyI6eyJwcm9jZXNzb3JUeXBlIjpbIkFSTS1UaHVuZGVyWDIiLCJBUk0tQWx0cmEiXX0sImNlcnRpZmllZEZpbHRlcnMiOnt9LCJwYXlsb2FkIjpbXX0=) for arm64 servers
+  `NOTE:` For ARM systems, NVIDIA Network Operator is not supported yet.
 - You will perform a clean install.
 
-To determine if your system qualifies as an NVIDIA Certified System, review the list of NVIDIA Certified Systems [here](https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html). 
+To determine if your system qualifies as an NVIDIA Certified System, review the list of NVIDIA Certified Systems [here](https://docs.nvidia.com/ngc/ngc-deploy-on-premises/nvidia-certified-systems/index.html).
 
 Please note that NVIDIA Cloud Native Stack is validated only on systems with the default kernel (not HWE).
 
@@ -59,11 +59,11 @@ These instructions require having Ubuntu Server LTS 24.04 on your system. The Ub
 
 For more information on installing Ubuntu server please reference the [Ubuntu Server Installation Guide](https://ubuntu.com/tutorials/tutorial-install-ubuntu-server#1-overview).
 
-### Installing NVIDIA Driver 
+### Installing NVIDIA Driver
 Install NVIDIA TRD Driver
 
 ```
-sudo apt update 
+sudo apt update
 ```
 ```
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
@@ -84,7 +84,7 @@ Install Cuda Drivers
 sudo apt install cuda -y
 ```
 
-Once the NVIDIA Drivers installed, please reboot the system and run the below command to validate NVIDIA drivers are loaded 
+Once the NVIDIA Drivers installed, please reboot the system and run the below command to validate NVIDIA drivers are loaded
 
 ```
 nvidia-smi
@@ -93,9 +93,9 @@ nvidia-smi
 Expected Output:
 
 ```
-Mon Mar 31 20:39:28 2025
+Mon Nov 24 20:39:28 2025
 +-----------------------------------------------------------------------------------------+
-| NVIDIA-SMI 570.124.06             Driver Version: 570.124.06     CUDA Version: 12.8     |
+| NVIDIA-SMI 580.126.20             Driver Version: 580.126.20     CUDA Version: 13.0       |
 |-----------------------------------------+------------------------+----------------------+
 | GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
@@ -113,7 +113,6 @@ Mon Mar 31 20:39:28 2025
 |=========================================================================================|
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
-
 ```
 
 ### Installing Docker and NVIDIA Container Runtime
@@ -179,11 +178,11 @@ Verify that Docker Engine - Community is installed correctly by running the hell
 sudo docker run hello-world
 ```
 
-More information on how to install Docker can be found at https://docs.docker.com/install/linux/docker-ce/ubuntu/. 
+More information on how to install Docker can be found at https://docs.docker.com/install/linux/docker-ce/ubuntu/.
 
 #### Installing NVIDIA Container Toolkit
 
-Setup the pacakge repository 
+Setup the pacakge repository
 
 ```
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
@@ -202,7 +201,7 @@ sudo apt update
 Install NVIDIA Conatiner Toolkit
 
 ```
-sudo apt install -y nvidia-container-toolkit=1.17.5-1
+sudo apt install -y nvidia-container-toolkit=1.19.0-1
 ```
 
 
@@ -215,16 +214,16 @@ Edit the docker daemon configuration to add the following line and save the file
 "default-runtime" : "nvidia"
 ```
 
-Example: 
+Example:
 ```
 $ sudo nano /etc/docker/daemon.json
- 
+
 {
    "runtimes": {
-   	"nvidia": {
-       	"path": "nvidia-container-runtime",
+       "nvidia": {
+           "path": "nvidia-container-runtime",
            "runtimeArgs": []
-   	}
+       }
    },
    "default-runtime" : "nvidia"
 }
@@ -309,30 +308,30 @@ sudo sysctl --system
 Download the Containerd for `x86-64` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v2.0.3/containerd-2.0.3-linux-amd64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v2.3.0/containerd-2.3.0-linux-amd64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf containerd-2.0.3-linux-amd64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf containerd-2.3.0-linux-amd64.tar.gz
 ```
 
 ```
-rm -rf containerd-2.0.3-linux-amd64.tar.gz
+rm -rf containerd-2.3.0-linux-amd64.tar.gz
 ```
 
 
 Download the Containerd for `ARM` system:
 
 ```
-wget https://github.com/containerd/containerd/releases/download/v2.0.3/containerd-2.0.3-linux-arm64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v2.3.0/containerd-2.3.0-linux-arm64.tar.gz
 ```
 
 ```
-sudo tar --no-overwrite-dir -C / -xzf containerd-2.0.3-linux-arm64.tar.gz
+sudo tar --no-overwrite-dir -C / -xzf containerd-2.3.0-linux-arm64.tar.gz
 ```
 
 ```
-rm -rf containerd-2.0.3-linux-arm64.tar.gz
+rm -rf containerd-2.3.0-linux-arm64.tar.gz
 ```
 
 Install the Containerd
@@ -355,16 +354,16 @@ sudo systemctl restart containerd
 Install Runc
 
 ```
-wget https://github.com/opencontainers/runc/releases/download/v1.2.6/runc.amd64
+wget https://github.com/opencontainers/runc/releases/download/v1.4.2/runc.amd64
 install -m 755 runc.amd64 /usr/local/sbin/runc
 ```
 
 Install CNI Plugins
 
 ```
-wget https://github.com/containernetworking/plugins/releases/download/v1.6.2/cni-plugins-linux-amd64-v1.6.2.tgz
+wget https://github.com/containernetworking/plugins/releases/download/v1.9.1/cni-plugins-linux-amd64-v1.9.1.tgz
 sudo mkdir -p /opt/cni/bin
-sudo tar -C /opt/cni/bin -xzvf cni-plugins-linux-amd64-v1.6.2.tgz
+sudo tar -C /opt/cni/bin -xzvf cni-plugins-linux-amd64-v1.9.1.tgz
 sudo systemctl restart containerd
 ```
 
@@ -376,16 +375,16 @@ Setup the Apt repositry for CRI-O
 
 ```
 OS=xUbuntu_24.04
-VERSION=1.31
+VERSION=1.36
 ```
-`NOTE:` VERSION (CRI-O version) is same as kubernetes major version 
+`NOTE:` VERSION (CRI-O version) is same as kubernetes major version
 
 ```
 sudo mkdir -p /usr/share/keyrings
 ```
 
 ```
-echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+echo "deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
 ```
 
 ```
@@ -393,14 +392,14 @@ curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/
 ```
 
 ```
-echo "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
+echo "deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
 ```
 
 ```
 curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/Release.key | sudo gpg --dearmor -o /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
 ```
 
-Install the CRI-O and dependencies 
+Install the CRI-O and dependencies
 
 ```
 sudo apt update && sudo apt install cri-o cri-o-runc cri-tools -y
@@ -437,13 +436,13 @@ nano /usr/share/containers/oci/hooks.d/oci-nvidia-hook.json
 ```
 
 
-Enable and Start the CRI-O service 
+Enable and Start the CRI-O service
 
 ```
 sudo systemctl enable crio.service && sudo systemctl start crio.service
 ```
 
-### Installing Kubernetes 
+### Installing Kubernetes
 
 Make sure your container runtime has been started and enabled before beginning installation:
 
@@ -458,7 +457,7 @@ Execute the following to add apt keys:
 ```
 
 ```
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 ```
 
@@ -469,8 +468,8 @@ sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 Create kubernetes.list:
 
 ```
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list 
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list
 ```
 
 Now execute the below to install kubelet, kubeadm, and kubectl:
@@ -479,7 +478,7 @@ Now execute the below to install kubelet, kubeadm, and kubectl:
  sudo apt update
 ```
 ```
- sudo apt install -y -q kubelet=1.32.2-1.1  kubectl=1.32.2-1.1  kubeadm=1.32.2-1.1 
+ sudo apt install -y -q kubelet=1.36.0-1.1  kubectl=1.36.0-1.1  kubeadm=1.36.0-1.1
 ```
 ```
  sudo apt-mark hold kubelet kubeadm kubectl
@@ -532,35 +531,35 @@ UUID=DCD4-535C /boot/efi vfat defaults 0 0
 Execute the following command for `Containerd` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.32.2"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=/run/containerd/containerd.sock --kubernetes-version="v1.36.0"
 ```
 
 Eecute the following command for `CRI-O` systems:
 
 ```
-sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.32.2"
+sudo kubeadm init --pod-network-cidr=192.168.32.0/22 --cri-socket=unix:/run/crio/crio.sock --kubernetes-version="v1.36.0"
 ```
 
 Output:
 ```
 Your Kubernetes control-plane has initialized successfully!
- 
+
 To start using your cluster, you need to run the following as a regular user:
- 
+
   mkdir -p $HOME/.kube
   sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
   sudo chown $(id -u):$(id -g) $HOME/.kube/config
- 
+
 Alternatively, if you are the root user, you can run:
- 
+
   export KUBECONFIG=/etc/kubernetes/admin.conf
- 
+
 You should now deploy a pod network to the cluster.
 Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
   https://kubernetes.io/docs/concepts/cluster-administration/addons/
- 
+
 Then you can join any number of worker nodes by running the following on each as root:
- 
+
 kubeadm join <your-host-IP>:6443 --token 489oi5.sm34l9uh7dk4z6cm \
         --discovery-token-ca-cert-hash sha256:17165b6c4a4b95d73a3a2a83749a957a10161ae34d2dfd02cd730597579b4b34
 ```
@@ -577,10 +576,10 @@ Following the instructions in the output, execute the commands as shown below:
 With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
- kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/calico.yaml 
+ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.0/manifests/calico.yaml
 ```
 
-Update the Calico Daemonset 
+Update the Calico Daemonset
 
 ```
 kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens\*,eth\*,enc\*,enp\*
@@ -617,7 +616,7 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.32.2
+#yourhost        Ready    control-plane,master   10m   v1.36.0
 ```
 
 Since we are using a single-node Kubernetes cluster, the cluster will not schedule pods on the control plane node by default. To schedule pods on the control plane node, we have to remove the taint by executing the following command:
@@ -629,45 +628,45 @@ kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 Refer to [Installing Kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
 for more information.
 
-### Installing Helm 
+### Installing Helm
 
-Execute the following command to download and install Helm 3.17.2 for `x86-64` system: 
-
-```
-wget https://get.helm.sh/helm-v3.17.2-linux-amd64.tar.gz
-```
+Execute the following command to download and install Helm 4.1.4 for `x86-64` system:
 
 ```
-tar -zxvf helm-v3.17.2-linux-amd64.tar.gz
+wget https://get.helm.sh/helm-v4.1.4-linux-amd64.tar.gz
+```
+
+```
+tar -zxvf helm-v4.1.4-linux-amd64.tar.gz
  ```
- 
+
  ```
 sudo mv linux-amd64/helm /usr/local/bin/helm
  ```
 
  ```
-rm -rf helm-v3.17.2-linux-amd64.tar.gz linux-amd64/
+rm -rf helm-v4.1.4-linux-amd64.tar.gz linux-amd64/
 ```
 
-Download and install Helm 3.17.2 for `ARM` system: 
+Download and install Helm 4.1.4 for `ARM` system:
 
 ```
-wget https://get.helm.sh/helm-v3.17.2-linux-arm64.tar.gz
+wget https://get.helm.sh/helm-v4.1.4-linux-arm64.tar.gz
 ```
 
 ```
-tar -zxvf helm-v3.17.2-linux-arm64.tar.gz
+tar -zxvf helm-v4.1.4-linux-arm64.tar.gz
  ```
- 
+
 ```
 sudo mv linux-arm64/helm /usr/local/bin/helm
 ```
 
 ```
-rm -rf helm-v3.17.2-linux-arm64.tar.gz linux-arm64/
+rm -rf helm-v4.1.4-linux-arm64.tar.gz linux-arm64/
 ```
 
-Refer to the Helm 3.17.2 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
+Refer to the Helm 4.1.4 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
 
 ### Adding an Additional Node to NVIDIA Cloud Native Stack
 
@@ -675,7 +674,7 @@ Refer to the Helm 3.17.2 [release notes](https://github.com/helm/helm/releases) 
 
 Make sure to install the Containerd and Kubernetes packages on additional nodes.
 
-Prerequisites: 
+Prerequisites:
 - [Installing Docker and NVIDIA Container Toolkit](#Installing-Docker-and-NVIDIA-Container-Toolkit)
 - [Installing Containerd](#Installing-Containerd)
 - [Installing Kubernetes](#Installing-Kubernetes)
@@ -689,10 +688,10 @@ Once the prerequisites are completed on the additional nodes, execute the below 
 
 Output:
 ```
-example: 
+example:
 sudo kubeadm join 10.110.0.34:6443 --token kg2h7r.e45g9uyrbm1c0w3k     --discovery-token-ca-cert-hash sha256:77fd6571644373ea69074dd4af7b077bbf5bd15a3ed720daee98f4b04a8f524e
 ```
-`NOTE`: control-plane node and worker node should not have the same node name. 
+`NOTE`: control-plane node and worker node should not have the same node name.
 
 The get nodes command shows that the master and worker nodes are up and ready:
 
@@ -704,8 +703,8 @@ Output:
 
 ```
 NAME             STATUS   ROLES                  AGE   VERSION
-#yourhost        Ready    control-plane,master   10m   v1.32.2
-#yourhost-worker Ready                           10m   v1.32.2
+#yourhost        Ready    control-plane,master   10m   v1.36.0
+#yourhost-worker Ready                           10m   v1.36.0
 ```
 
 ### Installing GPU Operator
@@ -727,7 +726,7 @@ Install GPU Operator:
 `NOTE:` As we are preinstalled with NVIDIA Driver and NVIDIA Container Toolkit, we need to set as `false` when installing the GPU Operator
 
 ```
- helm install --version 25.3.0 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+ helm install --version 26.3.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
 ```
 
 #### Validating the State of the GPU Operator:
@@ -755,7 +754,7 @@ nvidia-gpu-operator      nvidia-operator-validator-cw4j5                        
 
 Please refer to the [GPU Operator page](https://ngc.nvidia.com/catalog/helm-charts/nvidia:gpu-operator) on NGC for more information.
 
-For multiple worker nodes, execute the below command to fix the CoreDNS and Node Feature Discovery. 
+For multiple worker nodes, execute the below command to fix the CoreDNS and Node Feature Discovery.
 
 ```
 kubectl delete pods $(kubectl get pods -n kube-system | grep core | awk '{print $1}') -n kube-system; kubectl delete pod $(kubectl get pods -o wide -n nvidia-gpu-operator | grep node-feature-discovery | grep -v master | awk '{print $1}') -n nvidia-gpu-operator
@@ -765,7 +764,7 @@ kubectl delete pods $(kubectl get pods -n kube-system | grep core | awk '{print 
 
 `NOTE:` Only A100 and A30 GPUs are supported for GPU Operator with MIG
 
-Multi-Instance GPU (MIG) allows GPUs based on the NVIDIA Ampere architecture (such as NVIDIA A100) to be securely partitioned into separate GPU instances for CUDA applications. For more information about enabling the MIG capability, please refer to [GPU Operator with MIG](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/gpu-operator-mig.html) 
+Multi-Instance GPU (MIG) allows GPUs based on the NVIDIA Ampere architecture (such as NVIDIA A100) to be securely partitioned into separate GPU instances for CUDA applications. For more information about enabling the MIG capability, please refer to [GPU Operator with MIG](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/gpu-operator-mig.html)
 
 
 ### Validating the GPU Operator
@@ -800,10 +799,10 @@ kubectl logs nvidia-smi
 ```
 
 Output:
-``` 
-Mon Mar 31 20:39:28 2025
+```
+Mon Nov 24 20:39:28 2025
 +-----------------------------------------------------------------------------------------+
-| NVIDIA-SMI 570.124.06             Driver Version: 570.124.06     CUDA Version: 12.8     |
+| NVIDIA-SMI 580.126.20             Driver Version: 580.126.20     CUDA Version: 13.0       |
 |-----------------------------------------+------------------------+----------------------+
 | GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
@@ -851,12 +850,12 @@ Confirm the cuda-samples pod was created:
 
 ```
 $ kubectl get pods
-``` 
+```
 
 NVIDIA Cloud Native Stack works as expected if the get pods command shows the pod status as completed.
 
-### Build Docker Images and Deploy on Cloud Native Stack 
-You can build the docker images using docker CLI but you can not use them directly on Cloud Native Stack. Please find the below steps to import the docker image into Cloud Native Stack. 
+### Build Docker Images and Deploy on Cloud Native Stack
+You can build the docker images using docker CLI but you can not use them directly on Cloud Native Stack. Please find the below steps to import the docker image into Cloud Native Stack.
 
 ```
 sudo docker save test-image:0.1.0 > test-image.tgz; sudo ctr -n=k8s.io images import test-image.tgz
@@ -867,7 +866,7 @@ Another option to validate NVIDIA Cloud Native Stack is by running a demo applic
 
 NGC is NVIDIA's GPU-optimized software hub. NGC provides a curated set of GPU-optimized software for AI, HPC, and visualization. The content provided by NVIDIA and third-party ISVs simplify building, customizing, and integrating GPU-optimized software into workflows, accelerating the time to solutions for users.
 
-Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkits with software development kits (SDKs) are hosted on NGC. For more information about how to deploy an application that is hosted on NGC or the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/NVIDIA/cloud-native-stack/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information.
+Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkits with software development kits (SDKs) are hosted on NGC. For more information about how to deploy an application that is hosted on NGC or the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/NVIDIA/cloud-native-stack/blob/26.6.0/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information.
 
 The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm Chart. The application can validate the full NVIDIA Cloud Native Stack and test the connectivity of NVIDIA Cloud Native Stack to remote sensors. DeepStream delivers real-time AI-based video and image understanding and multi-sensor processing on GPUs. For more information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo).
 
@@ -878,7 +877,7 @@ There are two ways to configure the DeepStream - Intelligent Video Analytics Dem
 
 #### Using a camera
 
-##### Prerequisites: 
+##### Prerequisites:
 - RTSP Camera stream
 
 Go through the below steps to install the demo application:
@@ -898,7 +897,7 @@ Execute the following command to deploy the demo application:
 helm install video-analytics-demo --name-template iva
 ```
 
-Once the Helm chart is deployed, access the application with the VLC player. See the instructions below. 
+Once the Helm chart is deployed, access the application with the VLC player. See the instructions below.
 
 #### Using the integrated video file (no camera)
 
@@ -910,7 +909,7 @@ $ helm fetch https://helm.ngc.nvidia.com/nvidia/charts/video-analytics-demo-0.1.
 $ helm install video-analytics-demo-0.1.9.tgz --name-template iva
 ```
 
-Once the helm chart is deployed, access the application with the VLC player as per the below instructions. 
+Once the helm chart is deployed, access the application with the VLC player as per the below instructions.
 For more information about the demo application, please refer to the [application NGC page](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo)
 
 #### Access from WebUI
@@ -937,14 +936,14 @@ You should see the video output like below with the AI model detecting objects.
 `NOTE:` Video stream in VLC will change if you provide an input RTSP camera.
 
 
-### Uninstalling the GPU Operator 
+### Uninstalling the GPU Operator
 
 Execute the below commands to uninstall the GPU Operator:
 
 ```
 $ helm ls
 NAME                    NAMESPACE                      REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-gpu-operator-1606173805 nvidia-gpu-operator            1               2025-03-31 20:23:28.063421701 +0000 UTC deployed        gpu-operator-25.3.0      v25.3.0
+gpu-operator-1606173805 nvidia-gpu-operator            1               2025-11-24 20:23:28.063421701 +0000 UTC deployed        gpu-operator-26.3.1      v26.3.1
 
 $ helm del gpu-operator-1606173805 -n nvidia-gpu-operator
 ```

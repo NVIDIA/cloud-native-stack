@@ -149,7 +149,7 @@
      when: "enable_network_operator == true and cnc_version >= 4.1"
      become: true
      fetch:
-       src: "/tmp/{{ ansible_nodename }}-nic"
+       src: "/tmp/{{ ansible_facts['nodename'] }}-nic"
        dest: "/tmp/"
        flat: yes
 

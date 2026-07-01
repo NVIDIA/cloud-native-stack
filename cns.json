@@ -2,7 +2,7 @@
 	"name": "Cloud Native Stack",
 	"latest": {
 		"version": "19.0",
-		"release_date": "8 May 2026",
+		"release_date": "1 July 2026",
 		"platforms": [
 			{
 				"name": "NVIDIA Certified Server",
@@ -37,7 +37,7 @@
 	"versions": [
 		{
 			"19.0": {
-				"release_date": "8 May 2026",
+				"release_date": "1 July 2026",
 				"platforms": [
 					{
 						"name": "NVIDIA Certified Server",
@@ -70,7 +70,7 @@
 				]
 			},
 			"18.0": {
-				"release_date": "8 May 2026",
+				"release_date": "1 July 2026",
 				"platforms": [
 					{
 						"name": "NVIDIA Certified Server",
@@ -103,7 +103,7 @@
 				]
 			},
 			"17.1": {
-				"release_date": "8 May 2026",
+				"release_date": "1 July 2026",
 				"platforms": [
 					{
 						"name": "NVIDIA Certified Server",
@@ -136,7 +136,7 @@
 				]
 			},
 			"16.2": {
-				"release_date": "8 May 2026",
+				"release_date": "1 July 2026",
 				"platforms": [
 					{
 						"name": "NVIDIA Certified Server",

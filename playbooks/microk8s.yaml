@@ -55,7 +55,7 @@
           reboot_timeout: 900
 
   - name: Install snapd
-    when: ansible_distribution == 'Ubuntu' and snap_exists.rc != 0
+    when: ansible_facts['distribution'] == 'Ubuntu' and snap_exists.rc != 0
     ignore_errors: true
     apt:
       name: snapd
@@ -66,7 +66,7 @@
 
 
   - name: Update Snap Repo
-    when: ansible_distribution == 'RedHat' and snap_exists.rc != 0 and ansible_distribution_major_version == '8'
+    when: ansible_facts['distribution'] == 'RedHat' and snap_exists.rc != 0 and ansible_facts['distribution_major_version'] == '8'
     shell: "{{ item }}"
     become: true
     with_items:
@@ -74,7 +74,7 @@
       - subscription-manager release --set 8.8
 
   - name: Update Snap Repo
-    when: ansible_distribution == 'RedHat' and snap_exists.rc != 0 and ansible_distribution_major_version == '9'
+    when: ansible_facts['distribution'] == 'RedHat' and snap_exists.rc != 0 and ansible_facts['distribution_major_version'] == '9'
     shell: "{{ item }}"
     become: true
     with_items:
@@ -82,7 +82,7 @@
       - subscription-manager release --set 9.4
 
   - name: Install Snapd on RHEL
-    when: ansible_distribution == 'RedHat' and snap_exists.rc != 0
+    when: ansible_facts['distribution'] == 'RedHat' and snap_exists.rc != 0
     shell: "{{ item }}"
     become: true
     ignore_errors: true
@@ -112,15 +112,11 @@
   - name: Add MicroK8s groups to user
     become: true
     user:
-      name: '{{ ansible_user_id }}'
+      name: "{{ ansible_facts['user_id'] }}"
       state: present
       groups:
         - microk8s
       append: true
-
-  - name: Reset ssh connection to allow user changes to affect microk8s
-    ansible.builtin.meta:
-      reset_connection
 
   - name: Wait for Microk8s to start
     shell: microk8s.status --wait-ready
@@ -133,7 +129,7 @@
     become: true
 
   - name: Add Home Dir to Snap
-    shell: "home=$(echo {{ ansible_user_dir }} | awk -F'/' '{print $2}'); sudo snap set system homedirs=/$home"
+    shell: "home=$(echo {{ ansible_facts['user_dir'] }} | awk -F'/' '{print $2}'); sudo snap set system homedirs=/$home"
     async: 30
     become: true
 
@@ -167,7 +163,7 @@
   - name: add snap to bashrc
     become: false
     lineinfile:
-      path: '{{ ansible_user_dir }}/.bashrc'
+      path: "{{ ansible_facts['user_dir'] }}/.bashrc"
       insertafter: '^PATH='
       line: 'PATH=$PATH:/snap/bin'
       state: present
@@ -175,7 +171,7 @@
   - name: add kubectl alias
     become: false
     lineinfile:
-      path: '{{ ansible_user_dir }}/.bashrc'
+      path: "{{ ansible_facts['user_dir'] }}/.bashrc"
       regexp: '^alias kubectl='
       line: 'alias kubectl="microk8s kubectl"'
       state: present
@@ -183,13 +179,13 @@
   - name: add helm alias
     become: false
     lineinfile:
-      path: '{{ ansible_user_dir }}/.bashrc'
+      path: "{{ ansible_facts['user_dir'] }}/.bashrc"
       regexp: '^alias helm='
       line: 'alias helm="microk8s helm"'
       state: present
 
   - name: source profile
-    shell: source '{{ ansible_user_dir }}/.bashrc'
+    shell: source "{{ ansible_facts['user_dir'] }}/.bashrc"
     args:
       executable: /bin/bash
 
@@ -279,4 +275,3 @@
       - microk8s.kubectl label --overwrite ns nim-operator pod-security.kubernetes.io/warn=privileged pod-security.kubernetes.io/enforce=privileged
       - microk8s.helm repo update
       - microk8s.helm install --version {{ nim_operator_version }} nim-operator nvidia/k8s-nim-operator -n nim-operator
-

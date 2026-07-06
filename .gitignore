@@ -1,0 +1,5 @@
+# Local CNS test matrix helpers and generated logs.
+playbooks/cns-test-matrix.sh
+playbooks/cns-test-matrix.yaml
+playbooks/cns-test-matrix-*.log
+cns_test_matrix_results.log

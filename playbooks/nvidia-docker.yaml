@@ -30,7 +30,7 @@
       until: nvidia_docker_exists is succeeded
 
     - name: Install Docker Dependencies on Ubuntu
-      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      when: docker_exists.rc >= 1 and ansible_facts['distribution'] == 'Ubuntu' or nvidia_docker_exists.rc >= 1 and ansible_facts['distribution'] == 'Ubuntu'
       ansible.builtin.apt:
         name:
           - apt-transport-https
@@ -47,7 +47,7 @@
       until: install_docker_deps_ubuntu is succeeded
 
     - name: Install Docker Dependencies on RHEL
-      when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat' or nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
+      when: docker_exists.rc >= 1 and ansible_facts['distribution'] == 'RedHat' or nvidia_docker_exists.rc >= 1 and ansible_facts['distribution'] == 'RedHat'
       yum:
         name:
           - yum-utils
@@ -61,33 +61,34 @@
       register: install_docker_deps_rhel
       until: install_docker_deps_rhel is succeeded
 
-    - name: create docker.asc file
-      when: ansible_distribution == 'Ubuntu'
+    - name: Create Docker APT keyring directory
+      when: ansible_facts['distribution'] == 'Ubuntu'
       become: true
       file: 
-        path: /etc/apt/keyrings/docker.asc
-        mode: '0644'
-        state: touch
+        path: /etc/apt/keyrings
+        mode: '0755'
+        state: directory
       retries: 5
       delay: 5
-      register: create_docker_asc
-      until: create_docker_asc is succeeded
+      register: create_docker_keyring_dir
+      until: create_docker_keyring_dir is succeeded
 
     - name: Add Docker APT signing key
-      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
-      ansible.builtin.apt_key:
-        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
-        keyring: /etc/apt/keyrings/docker.asc
-        state: present
+      when: docker_exists.rc >= 1 and ansible_facts['distribution'] == 'Ubuntu'
+      become: true
+      ansible.builtin.get_url:
+        url: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg"
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
       retries: 5
       delay: 5
       register: add_docker_key
       until: add_docker_key is succeeded
 
     - name: Add Docker repository into sources list
-      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      when: docker_exists.rc >= 1 and ansible_facts['distribution'] == 'Ubuntu'
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [arch={{ docker_apt_arch }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }} {{ ansible_facts['distribution_release'] }} stable"
         state: present
         filename: docker
       retries: 5
@@ -96,7 +97,7 @@
       until: add_docker_repo is succeeded
 
     - name: Add Docker repo on RHEL
-      when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
+      when: docker_exists.rc >= 1 and ansible_facts['distribution'] == 'RedHat'
       get_url:
         url: https://download.docker.com/linux/centos/docker-ce.repo
         dest: /etc/yum.repos.d/docer-ce.repo
@@ -178,27 +179,39 @@
       until: create_docker_systemd is succeeded
 
     - name: Install Docker on Ubuntu
-      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and microk8s == false
-      package:
-        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
-        state: latest
+      when: docker_exists.rc >= 1 and ansible_facts['distribution'] == 'Ubuntu' and microk8s == false
+      ansible.builtin.apt:
+        name:
+          - "docker-ce={{ docker_ce_apt_version }}"
+          - "docker-ce-cli={{ docker_ce_apt_version }}"
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+        allow_downgrade: true
       retries: 5
       delay: 5
       register: install_docker_ubuntu
       until: install_docker_ubuntu is succeeded
 
     - name: Install Docker on Ubuntu
-      when: docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu' and microk8s == true
-      package:
-        name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
-        state: latest
+      when: docker_exists.rc >= 1 and ansible_facts['distribution'] == 'Ubuntu' and microk8s == true
+      ansible.builtin.apt:
+        name:
+          - "docker-ce={{ docker_ce_apt_version }}"
+          - "docker-ce-cli={{ docker_ce_apt_version }}"
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+        allow_downgrade: true
       retries: 5
       delay: 5
       register: install_docker_ubuntu_microk8s
       until: install_docker_ubuntu_microk8s is succeeded
 
     - name: Install Docker on RHEL
-      when: docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
+      when: docker_exists.rc >= 1 and ansible_facts['distribution'] == 'RedHat'
       yum:
         name: ['docker-ce', 'docker-ce-cli', 'docker-buildx-plugin', 'docker-compose-plugin']
         state: latest
@@ -210,7 +223,7 @@
       until: install_docker_rhel is succeeded
 
     - name: remove nvidia-docker on RHEL
-      when: nvidia_docker_exists.rc == 0 and ansible_distribution == 'RedHat'
+      when: nvidia_docker_exists.rc == 0 and ansible_facts['distribution'] == 'RedHat'
       yum:
         name:
           - nvidia-docker
@@ -223,7 +236,7 @@
       until: remove_nvidia_docker_rhel is succeeded
 
     - name: remove nvidia-docker v1
-      when: nvidia_docker_exists.rc == 0 and ansible_distribution == 'Ubuntu'
+      when: nvidia_docker_exists.rc == 0 and ansible_facts['distribution'] == 'Ubuntu'
       apt:
         name: nvidia-docker
         state: absent
@@ -234,18 +247,45 @@
       until: remove_nvidia_docker_ubuntu is succeeded
 
     - name: Add NVIDIA Docker apt signing key for Ubuntu
-      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
-      apt_key:
+      when: nvidia_docker_exists.rc >= 1 and ansible_facts['distribution'] == 'Ubuntu'
+      become: true
+      get_url:
         url: https://nvidia.github.io/libnvidia-container/gpgkey
-        keyring: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-        state: present
+        dest: /tmp/nvidia-container-toolkit-keyring.asc
+        mode: '0644'
+      retries: 5
+      delay: 5
+      register: download_nvidia_docker_key
+      until: download_nvidia_docker_key is succeeded
+
+    - name: Check NVIDIA Container Toolkit apt signing keyring for Ubuntu
+      when: nvidia_docker_exists.rc >= 1 and ansible_facts['distribution'] == 'Ubuntu'
+      become: true
+      stat:
+        path: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+      register: nvidia_docker_keyring
+
+    - name: Add NVIDIA Container Toolkit apt signing key for Ubuntu
+      when:
+        - nvidia_docker_exists.rc >= 1
+        - ansible_facts['distribution'] == 'Ubuntu'
+        - download_nvidia_docker_key.changed or not nvidia_docker_keyring.stat.exists
+      become: true
+      command: gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg /tmp/nvidia-container-toolkit-keyring.asc
       retries: 5
       delay: 5
       register: add_nvidia_docker_key
       until: add_nvidia_docker_key is succeeded
 
+    - name: Set NVIDIA Container Toolkit apt signing key permissions for Ubuntu
+      when: nvidia_docker_exists.rc >= 1 and ansible_facts['distribution'] == 'Ubuntu'
+      become: true
+      file:
+        path: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+        mode: '0644'
+
     - name: Get NVIDIA Container Toolkit Apt list
-      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      when: nvidia_docker_exists.rc >= 1 and ansible_facts['distribution'] == 'Ubuntu'
       apt_repository:
         repo: "{{ item }}"
         state: present
@@ -259,7 +299,7 @@
       until: get_nvidia_container_toolkit_apt is succeeded
 
     - name: add NVIDIA Container Toolkit repo on RHEL
-      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'RedHat'
+      when: nvidia_docker_exists.rc >= 1 and ansible_facts['distribution'] == 'RedHat'
       get_url:
         url:   https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo 
         dest: /etc/yum.repos.d/nvidia-container-toolkit.repo
@@ -284,7 +324,7 @@
       until: remove_old_nvidia_container_toolkit is succeeded
 
     - name: Install NVIDIA Docker and NVIDIA Container Runtime
-      when: nvidia_docker_exists.rc >= 1 and ansible_distribution == 'Ubuntu'
+      when: nvidia_docker_exists.rc >= 1 and ansible_facts['distribution'] == 'Ubuntu'
       apt:
         name: ['nvidia-container-toolkit={{ nvidia_container_toolkit_version }}-1', 'nvidia-container-toolkit-base={{ nvidia_container_toolkit_version }}-1', 'libnvidia-container-tools={{ nvidia_container_toolkit_version }}-1', 'libnvidia-container1={{ nvidia_container_toolkit_version }}-1']
         state: present
@@ -295,7 +335,7 @@
       until: install_nvidia_docker_ubuntu is succeeded
 
     - name: install NVIDIA container runtime and NVIDIA Docker on RHEL
-      when: nvidia_docker_exists.rc >= 1 and cns_version >= 10.0 and ansible_distribution == 'RedHat'
+      when: nvidia_docker_exists.rc >= 1 and cns_version >= 10.0 and ansible_facts['distribution'] == 'RedHat'
       yum:
         name: ['nvidia-container-toolkit', 'nvidia-docker2']
         state: present
@@ -304,19 +344,6 @@
       delay: 5
       register: install_nvidia_docker_rhel
       until: install_nvidia_docker_rhel is succeeded
-
-    - name: Update docker default runtime
-      when: nvidia_docker_exists.rc >= 1
-      copy:
-        content: "{{ daemon_json | to_nice_json }}"
-        dest: /etc/docker/daemon.json
-        owner: root
-        group: root
-        mode: 0644
-      retries: 5
-      delay: 5
-      register: update_docker_runtime
-      until: update_docker_runtime is succeeded
 
     - name: Create "docker" group
       when: docker_exists.rc >= 1
@@ -333,8 +360,8 @@
       when: docker_exists.rc >= 1
       become: true
       user:
-        name: "{{ ansible_user_id }}"
-        group: docker
+        name: "{{ ansible_facts['user_id'] }}"
+        groups: docker
         append: yes
       retries: 5
       delay: 5
@@ -362,6 +389,18 @@
       register: configure_cdi
       until: configure_cdi is succeeded
 
+    - name: Configure CRI-O NVIDIA runtime monitor path
+      become: true
+      when: nvidia_docker_exists.rc >= 1 and container_runtime == 'cri-o'
+      lineinfile:
+        path: /etc/crio/crio.conf.d/99-nvidia.toml
+        regexp: '^\s*monitor_path = ""'
+        line: '        monitor_path = "/usr/libexec/crio/conmon"'
+      retries: 5
+      delay: 5
+      register: configure_crio_nvidia_monitor
+      until: configure_crio_nvidia_monitor is succeeded
+
     - name: Configure GPU Operator NVIDIA Driver for Nvidia Container Runtime
       become: true
       when: cns_nvidia_driver == false
@@ -376,6 +415,7 @@
       until: configure_nvidia_driver is succeeded
 
     - name: Reload the configurations
+      when: install_k8s != true or microk8s == true
       become: true
       block:
        - name: reload daemon
@@ -387,25 +427,74 @@
          register: reload_daemon
          until: reload_daemon is succeeded
 
-       - name: restart services
+       - name: reset failed Docker units
+         when: container_runtime == 'cri-dockerd'
+         failed_when: false
+         command: systemctl reset-failed docker.service docker.socket cri-docker.service cri-docker.socket
+         retries: 5
+         delay: 5
+         register: reset_failed_docker_units
+         until: reset_failed_docker_units is succeeded
+
+       - name: restart docker service
+         when: container_runtime == 'cri-dockerd'
+         failed_when: false
+         systemd_service:
+           name: docker
+           state: restarted
+         retries: 5
+         delay: 5
+         register: restart_docker
+         until: restart_docker is succeeded
+
+       - name: restart cri-docker service
+         when: container_runtime == 'cri-dockerd'
+         failed_when: false
+         systemd_service:
+           name: cri-docker
+           state: restarted
+         retries: 5
+         delay: 5
+         register: restart_cri_docker
+         until: restart_cri_docker is succeeded
+
+       - name: restart containerd service
+         when: container_runtime == 'containerd'
+         failed_when: false
+         systemd_service:
+           name: containerd
+           state: restarted
+         retries: 5
+         delay: 5
+         register: restart_containerd
+         until: restart_containerd is succeeded
+
+       - name: restart CRI-O services
+         when: container_runtime == 'cri-o'
          failed_when: false
          systemd_service:
            name: "{{ item }}"
            state: restarted
          with_items:
-           - cri-docker
-           - docker
-           - kubelet
-           - containerd
            - crio
            - cri-o
          retries: 5
          delay: 5
-         register: restart_services
-         until: restart_services is succeeded
+         register: restart_crio_services
+         until: restart_crio_services is succeeded
+
+       - name: restart kubelet service
+         failed_when: false
+         systemd_service:
+           name: kubelet
+           state: restarted
+         retries: 5
+         delay: 5
+         register: restart_kubelet
+         until: restart_kubelet is succeeded
 
     - name: Download NGC CLI
-      when: ansible_architecture == 'x86_64'
+      when: ansible_facts['architecture'] == 'x86_64'
       get_url:
         url: https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.10.0/files/ngccli_linux.zip
         dest: /tmp/ngccli_linux.zip
@@ -416,7 +505,7 @@
       until: download_ngc_cli is succeeded
 
     - name: Download NGC CLI
-      when: ansible_architecture == 'aarch64'
+      when: ansible_facts['architecture'] == 'aarch64'
       get_url:
         url: https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.10.0/files/ngccli_arm64.zip
         dest: /tmp/ngccli_linux.zip
@@ -431,7 +520,7 @@
         - name: Install NGC CLI
           unarchive:
             src: /tmp/ngccli_linux.zip
-            dest: "{{ ansible_user_dir }}/"
+            dest: "{{ ansible_facts['user_dir'] }}/"
             remote_src: yes
           retries: 5
           delay: 5
@@ -440,7 +529,7 @@
 
         - name: Ensure ngc file is executable
           file:
-            path: "{{ ansible_user_dir }}/ngc-cli/ngc"
+            path: "{{ ansible_facts['user_dir'] }}/ngc-cli/ngc"
             mode: '0755'
             state: file
           retries: 5
@@ -450,10 +539,10 @@
 
         - name: Ensure ngc-cli path is in bashrc
           lineinfile:
-            path: "{{ ansible_user_dir }}/.bashrc"
+            path: "{{ ansible_facts['user_dir'] }}/.bashrc"
             insertafter: EOF
-            regexp: '^(export )?PATH=.*{{ ansible_user_dir }}/ngc-cli/?(:|$)'
-            line: 'export PATH=$PATH:{{ ansible_user_dir }}/ngc-cli'
+            regexp: "^(export )?PATH=.*{{ ansible_facts['user_dir'] }}/ngc-cli/?(:|$)"
+            line: "export PATH=$PATH:{{ ansible_facts['user_dir'] }}/ngc-cli"
             state: present
           retries: 5
           delay: 5

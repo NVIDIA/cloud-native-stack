@@ -5,7 +5,9 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-  - {{  loadbalancer_ip }}
+{% for ip in load_balancer_ips %}
+  - {{ ip }}
+{% endfor %}
 ---
 apiVersion: metallb.io/v1beta1
 kind: L2Advertisement

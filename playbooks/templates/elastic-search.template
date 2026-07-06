@@ -1,0 +1,37 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: cloud-native
+  namespace: monitoring
+spec:
+  version: {{ elastic_stack }}
+  nodeSets:
+  - name: default
+    count: 1
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data # Do not change this name unless you set up a volume mount for the data path.
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+        storageClassName: nfs-client
+    config:
+      node.store.allow_mmap: false
+---
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: cloud-native
+  namespace: monitoring
+spec:
+  version: {{ elastic_stack }}
+  count: 1
+  http:
+   service:
+     spec:
+       type: NodePort
+  elasticsearchRef:
+    name: cloud-native

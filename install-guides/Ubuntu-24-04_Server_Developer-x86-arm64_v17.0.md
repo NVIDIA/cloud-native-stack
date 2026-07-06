@@ -7,9 +7,9 @@ NVIDIA Cloud Native Stack v17.0 includes:
 - Ubuntu 24.04 LTS
 - Containerd 2.2.0
 - Kubernetes version 1.34.2
-- Helm 4.0.0
+- Helm 4.0.4
 - NVIDIA GPU Driver: 580.105.08
-- NVIDIA Container Toolkit: 1.18.0
+- NVIDIA Container Toolkit: 1.18.1
 - NVIDIA GPU Operator 25.10.1
   - NVIDIA K8S Device Plugin: 0.18.1
   - NVIDIA DCGM-Exporter: 4.4.2-4.7.0
@@ -354,16 +354,16 @@ sudo systemctl restart containerd
 Install Runc
 
 ```
-wget https://github.com/opencontainers/runc/releases/download/v1.2.6/runc.amd64
+wget https://github.com/opencontainers/runc/releases/download/v1.4.0/runc.amd64
 install -m 755 runc.amd64 /usr/local/sbin/runc
 ```
 
 Install CNI Plugins
 
 ```
-wget https://github.com/containernetworking/plugins/releases/download/v1.6.2/cni-plugins-linux-amd64-v1.6.2.tgz
+wget https://github.com/containernetworking/plugins/releases/download/v1.7.1/cni-plugins-linux-amd64-v1.7.1.tgz
 sudo mkdir -p /opt/cni/bin
-sudo tar -C /opt/cni/bin -xzvf cni-plugins-linux-amd64-v1.6.2.tgz
+sudo tar -C /opt/cni/bin -xzvf cni-plugins-linux-amd64-v1.7.1.tgz
 sudo systemctl restart containerd
 ```
 
@@ -576,7 +576,7 @@ Following the instructions in the output, execute the commands as shown below:
 With the following command, you install a pod-network add-on to the control plane node. We are using calico as the pod-network add-on here:
 
 ```
- kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/calico.yaml 
+ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.31.3/manifests/calico.yaml 
 ```
 
 Update the Calico Daemonset 
@@ -630,14 +630,14 @@ for more information.
 
 ### Installing Helm 
 
-Execute the following command to download and install Helm 4.0.0 for `x86-64` system: 
+Execute the following command to download and install Helm 4.0.4 for `x86-64` system: 
 
 ```
-wget https://get.helm.sh/helm-v4.0.0-linux-amd64.tar.gz
+wget https://get.helm.sh/helm-v4.0.4-linux-amd64.tar.gz
 ```
 
 ```
-tar -zxvf helm-v4.0.0-linux-amd64.tar.gz
+tar -zxvf helm-v4.0.4-linux-amd64.tar.gz
  ```
  
  ```
@@ -645,17 +645,17 @@ sudo mv linux-amd64/helm /usr/local/bin/helm
  ```
 
  ```
-rm -rf helm-v4.0.0-linux-amd64.tar.gz linux-amd64/
+rm -rf helm-v4.0.4-linux-amd64.tar.gz linux-amd64/
 ```
 
-Download and install Helm 4.0.0 for `ARM` system: 
+Download and install Helm 4.0.4 for `ARM` system: 
 
 ```
-wget https://get.helm.sh/helm-v4.0.0-linux-arm64.tar.gz
+wget https://get.helm.sh/helm-v4.0.4-linux-arm64.tar.gz
 ```
 
 ```
-tar -zxvf helm-v4.0.0-linux-arm64.tar.gz
+tar -zxvf helm-v4.0.4-linux-arm64.tar.gz
  ```
  
 ```
@@ -663,10 +663,10 @@ sudo mv linux-arm64/helm /usr/local/bin/helm
 ```
 
 ```
-rm -rf helm-v4.0.0-linux-arm64.tar.gz linux-arm64/
+rm -rf helm-v4.0.4-linux-arm64.tar.gz linux-arm64/
 ```
 
-Refer to the Helm 4.0.0 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
+Refer to the Helm 4.0.4 [release notes](https://github.com/helm/helm/releases) and the [Installing Helm guide](https://helm.sh/docs/using_helm/#installing-helm) for more information.
 
 ### Adding an Additional Node to NVIDIA Cloud Native Stack
 
@@ -866,7 +866,7 @@ Another option to validate NVIDIA Cloud Native Stack is by running a demo applic
 
 NGC is NVIDIA's GPU-optimized software hub. NGC provides a curated set of GPU-optimized software for AI, HPC, and visualization. The content provided by NVIDIA and third-party ISVs simplify building, customizing, and integrating GPU-optimized software into workflows, accelerating the time to solutions for users.
 
-Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkits with software development kits (SDKs) are hosted on NGC. For more information about how to deploy an application that is hosted on NGC or the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/NVIDIA/cloud-native-stack/blob/master/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information.
+Containers, pre-trained models, Helm charts for Kubernetes deployments, and industry-specific AI toolkits with software development kits (SDKs) are hosted on NGC. For more information about how to deploy an application that is hosted on NGC or the NGC Private Registry, please refer to this [NGC Registry Guide](https://github.com/NVIDIA/cloud-native-stack/blob/26.6.0/install-guides/NGC_Registry_Guide_v1.0.md). Visit the [public NGC documentation](https://docs.nvidia.com/ngc) for more information.
 
 The steps in this section use the publicly available DeepStream - Intelligent Video Analytics (IVA) demo application Helm Chart. The application can validate the full NVIDIA Cloud Native Stack and test the connectivity of NVIDIA Cloud Native Stack to remote sensors. DeepStream delivers real-time AI-based video and image understanding and multi-sensor processing on GPUs. For more information, please refer to the [Helm Chart](https://ngc.nvidia.com/catalog/helm-charts/nvidia:video-analytics-demo).
 

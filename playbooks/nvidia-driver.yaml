@@ -37,7 +37,7 @@
       until: set_driver_version is succeeded
 
     - name: NVIDIA Driver Clean Up
-      when:  nvidia_mod.rc >= 1 and ansible_distribution == 'Ubuntu' or nvidia_smi.rc == 0 and ansible_distribution == 'Ubuntu'
+      when:  nvidia_mod.rc >= 1 and ansible_facts['distribution'] == 'Ubuntu' or nvidia_smi.rc == 0 and ansible_facts['distribution'] == 'Ubuntu'
       block:
         - name: Remove Ubuntu unattended upgrades to prevent apt lock
           ansible.builtin.apt:
@@ -94,7 +94,7 @@
 
         - name: Remove old keyring
           shell:
-            cmd: "apt-key del 7fa2af80"
+            cmd: "if command -v apt-key >/dev/null 2>&1; then apt-key del 7fa2af80 || true; fi"
           retries: 5
           delay: 5
           register: remove_keyring
@@ -102,7 +102,7 @@
 
         - name: unload NVIDIA
           shell: /usr/bin/nvidia-uninstall --silent; kill -9 $(lsof /dev/nvidia* | awk '{print $2}' | grep -v PID | uniq); rmmod -f nvidia_uvm; rmmod -f nvidia_drm; rmmod -f nvidia_modeset; rmmod -f nvidia
-          ignore_errors: yes
+          ignore_errors: true
           failed_when: false
           retries: 5
           delay: 5
@@ -110,29 +110,31 @@
           until: unload_nvidia_force is succeeded
 
     - name: Download NVIDIA CUDA Key for Ubuntu
-      when: ansible_distribution == 'Ubuntu' and ansible_architecture == 'aarch64'
+      when: ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['architecture'] == 'aarch64'
       become: true
       get_url:
-        url: "https://developer.download.nvidia.com/compute/cuda/repos/{{ ansible_distribution | lower }}{{ ansible_distribution_version | regex_replace ('[.~]', '') }}/arm64/cuda-keyring_1.1-1_all.deb"
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/{{ ansible_facts['distribution'] | lower }}{{ ansible_facts['distribution_version'] | regex_replace ('[.~]', '') }}/arm64/cuda-keyring_1.1-1_all.deb"
         dest: /tmp/cuda-keyring_1.1-1_all.deb
-      retries: 5
+        timeout: 60
+      retries: 10
       delay: 5
       register: download_cuda_key_arm
       until: download_cuda_key_arm is succeeded
 
     - name: Download NVIDIA CUDA Key for Ubuntu
-      when: ansible_distribution == 'Ubuntu' and ansible_architecture == 'x86_64'
+      when: ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['architecture'] == 'x86_64'
       become: true
       get_url:
-        url: "https://developer.download.nvidia.com/compute/cuda/repos/{{ ansible_distribution | lower }}{{ ansible_distribution_version | regex_replace ('[.~]', '') }}/x86_64/cuda-keyring_1.1-1_all.deb"
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/{{ ansible_facts['distribution'] | lower }}{{ ansible_facts['distribution_version'] | regex_replace ('[.~]', '') }}/x86_64/cuda-keyring_1.1-1_all.deb"
         dest: /tmp/cuda-keyring_1.1-1_all.deb
-      retries: 5
+        timeout: 60
+      retries: 10
       delay: 5
       register: download_cuda_key_x86
       until: download_cuda_key_x86 is succeeded
 
     - name: Install NVIDIA CUDA keyring package for Ubuntu
-      when: ansible_distribution == 'Ubuntu'
+      when: ansible_facts['distribution'] == 'Ubuntu'
       become: true
       block:
         - name: Install CUDA keyring package
@@ -155,38 +157,38 @@
           until: cleanup_cuda_keyring is succeeded
 
     - name: Download NVIDIA CUDA keyring package for RHEL
-      when: ansible_distribution == 'RedHat' and  ansible_architecture == 'x86_64'
+      when: ansible_facts['distribution'] == 'RedHat' and  ansible_facts['architecture'] == 'x86_64'
       become: true
       get_url:
-        url: "https://developer.download.nvidia.com/compute/cuda/repos/rhel{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/cuda-rhel{{ ansible_distribution_major_version }}.repo"
-        dest: /etc/yum.repos.d/cuda-{{ ansible_distribution | lower }}.repo
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/rhel{{ ansible_facts['distribution_major_version'] }}/{{ ansible_facts['architecture'] }}/cuda-rhel{{ ansible_facts['distribution_major_version'] }}.repo"
+        dest: /etc/yum.repos.d/cuda-{{ ansible_facts['distribution'] | lower }}.repo
       retries: 5
       delay: 5
       register: download_cuda_keyring_rhel_x86
       until: download_cuda_keyring_rhel_x86 is succeeded
 
     - name: Download NVIDIA CUDA keyring package for RHEL
-      when: ansible_distribution == 'RedHat' and  ansible_architecture == 'aarch64'
+      when: ansible_facts['distribution'] == 'RedHat' and  ansible_facts['architecture'] == 'aarch64'
       become: true
       get_url:
-        url: "https://developer.download.nvidia.com/compute/cuda/repos/rhel{{ ansible_distribution_major_version }}/sbsa/cuda-rhel{{ ansible_distribution_major_version }}.repo"
-        dest: /etc/yum.repos.d/cuda-{{ ansible_distribution | lower }}.repo
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/rhel{{ ansible_facts['distribution_major_version'] }}/sbsa/cuda-rhel{{ ansible_facts['distribution_major_version'] }}.repo"
+        dest: /etc/yum.repos.d/cuda-{{ ansible_facts['distribution'] | lower }}.repo
       retries: 5
       delay: 5
       register: download_cuda_keyring_rhel_arm
       until: download_cuda_keyring_rhel_arm is succeeded
 
     - name:  ensure we have kernel-headers installed for the current kernel on RHEL
-      when:  "cns_version >= 10.0 and ansible_distribution == 'RedHat'"
+      when:  "cns_version >= 10.0 and ansible_facts['distribution'] == 'RedHat'"
       block:
         - name: attempt to install kernel support packages for current version
           yum:
             name:
-              - "kernel-headers-{{ ansible_kernel }}"
-              - "kernel-tools-{{ ansible_kernel }}"
-              - "kernel-tools-libs-{{ ansible_kernel }}"
-              - "kernel-devel-{{ ansible_kernel }}"
-              - "kernel-debug-devel-{{ ansible_kernel }}"
+              - "kernel-headers-{{ ansible_facts['kernel'] }}"
+              - "kernel-tools-{{ ansible_facts['kernel'] }}"
+              - "kernel-tools-libs-{{ ansible_facts['kernel'] }}"
+              - "kernel-devel-{{ ansible_facts['kernel'] }}"
+              - "kernel-debug-devel-{{ ansible_facts['kernel'] }}"
             state: present
           retries: 5
           delay: 5
@@ -210,7 +212,7 @@
 
     - name: Update Ubuntu System
       become: true
-      when:  "cns_version >= 6.3 and ansible_distribution == 'Ubuntu'"
+      when:  "cns_version >= 6.3 and ansible_facts['distribution'] == 'Ubuntu'"
       ignore_errors: true
       block:
         - name: Force an apt update
@@ -231,9 +233,29 @@
           delay: 5
           until: kmod_check is succeeded
 
+        # NVIDIA's .run installer compiles the kernel module on-host, so it
+        # needs linux-headers matching the running kernel + build toolchain.
+        # The RHEL prep block above already installs kernel-headers/devel —
+        # this mirrors that for Ubuntu. Without it the installer errors
+        # "Unable to find the kernel source tree for the currently running
+        # kernel" and exits 1.
+        - name: Ensure kernel headers and build tools (required by NVIDIA .run installer)
+          apt:
+            name:
+              - "linux-headers-{{ ansible_facts['kernel'] }}"
+              - "linux-modules-extra-{{ ansible_facts['kernel'] }}"
+              - "build-essential"
+              - "dkms"
+            state: present
+            update_cache: true
+          register: install_kernel_headers
+          retries: 5
+          delay: 5
+          until: install_kernel_headers is succeeded
+
     - name: Install NVIDIA TRD Driver
       become: true
-      when:  "cns_version >= 6.3 and ansible_distribution == 'Ubuntu' and use_open_kernel_module == true"
+      when:  "cns_version >= 6.3 and ansible_facts['distribution'] == 'Ubuntu' and use_open_kernel_module == true"
       ignore_errors: true
       block:
         - name: Temporarily adjust account password policy to allow for successful NVIDIA driver install
@@ -243,8 +265,20 @@
           register: adjust_password_policy
           until: adjust_password_policy is succeeded
 
+        # The NVIDIA .run installer refuses to proceed if any nvidia kernel
+        # module is already loaded (e.g. nvidia-uvm from a previous install
+        # in the same boot). Unload them defensively. Order matters: uvm
+        # and drm depend on the base nvidia module.
+        - name: Unload existing NVIDIA kernel modules before reinstall
+          shell: |
+            for m in nvidia_uvm nvidia_drm nvidia_modeset nvidia; do
+              lsmod | awk '{print $1}' | grep -qx "$m" && rmmod "$m" || true
+            done
+          changed_when: false
+          failed_when: false
+
         - name: Install driver packages
-          shell: "BASE_URL=https://us.download.nvidia.com/tesla; curl -fSsl -O $BASE_URL/{{ gpu_driver_version }}/NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; chmod +x ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; sh ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run -m=kernel-open --silent"
+          shell: "BASE_URL=https://us.download.nvidia.com/tesla; curl -fSsl -O $BASE_URL/{{ gpu_driver_version }}/NVIDIA-Linux-{{ ansible_facts['architecture'] }}-{{ gpu_driver_version }}.run; chmod +x ./NVIDIA-Linux-{{ ansible_facts['architecture'] }}-{{ gpu_driver_version }}.run; sh ./NVIDIA-Linux-{{ ansible_facts['architecture'] }}-{{ gpu_driver_version }}.run -m=kernel-open --silent"
           retries: 5
           delay: 5
           register: install_driver_packages
@@ -262,19 +296,45 @@
           register: adjust_password_policy_2
           until: adjust_password_policy_2 is succeeded
 
+        # See "Unload existing NVIDIA kernel modules" rationale above.
+        - name: Unload existing NVIDIA kernel modules before reinstall
+          shell: |
+            for m in nvidia_uvm nvidia_drm nvidia_modeset nvidia; do
+              lsmod | awk '{print $1}' | grep -qx "$m" && rmmod "$m" || true
+            done
+          changed_when: false
+          failed_when: false
+
         - name: Install driver packages
-          shell: "BASE_URL=https://us.download.nvidia.com/tesla; curl -fSsl -O $BASE_URL/{{ gpu_driver_version }}/NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; chmod +x ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run; sh ./NVIDIA-Linux-{{ ansible_architecture }}-{{ gpu_driver_version }}.run --silent"
+          shell: "BASE_URL=https://us.download.nvidia.com/tesla; curl -fSsl -O $BASE_URL/{{ gpu_driver_version }}/NVIDIA-Linux-{{ ansible_facts['architecture'] }}-{{ gpu_driver_version }}.run; chmod +x ./NVIDIA-Linux-{{ ansible_facts['architecture'] }}-{{ gpu_driver_version }}.run; sh ./NVIDIA-Linux-{{ ansible_facts['architecture'] }}-{{ gpu_driver_version }}.run --silent"
           retries: 5
           delay: 5
           register: install_driver_packages_2
           until: install_driver_packages_2 is succeeded
 
+    - name: Resolve NVIDIA Utils packages on Ubuntu
+      become: true
+      when: "ansible_facts['distribution'] == 'Ubuntu'"
+      shell: |
+        set -e
+        for pkg in nvidia-compute-utils-{{ driver_version }} libnvidia-cfg1-{{ driver_version }}; do
+          version=$(apt-cache madison "$pkg" | awk -v target="{{ gpu_driver_version }}" '$3 ~ "^" target {print $3; exit}')
+          if [ -n "$version" ]; then
+            printf '%s=%s\n' "$pkg" "$version"
+          fi
+        done
+      changed_when: false
+      register: nvidia_utils_ubuntu_packages
+      retries: 5
+      delay: 5
+      until: nvidia_utils_ubuntu_packages is succeeded
+
     - name: Install NVIDIA Utils on Ubuntu
       become: true
-      when: "ansible_distribution == 'Ubuntu'"
+      when: "ansible_facts['distribution'] == 'Ubuntu' and nvidia_utils_ubuntu_packages.stdout_lines | length > 0"
       ignore_errors: true
       apt:
-        name: ['nvidia-compute-utils-{{ driver_version }}={{ gpu_driver_version }}*', 'libnvidia-cfg1-{{ driver_version }}={{ gpu_driver_version}}*', 'nvidia-persistenced={{ gpu_driver_version}}*']
+        name: "{{ nvidia_utils_ubuntu_packages.stdout_lines }}"
         state: present
         update_cache: true
         force: yes
@@ -328,7 +388,10 @@
 
     - name: Install NVIDIA Fabric Manager on Ubuntu
       become: true
-      when: "driver_version | int <= 570 and ansible_distribution == 'Ubuntu' and dgx.stat.exists == True or driver_version | int <= 570 and ansible_distribution == 'Ubuntu' and l4t.stat.exists == True or driver_version | int <= 570 and ansible_distribution == 'Ubuntu' and nvswitch.stdout | int > 0"
+      when:
+        - driver_version | int <= 570
+        - ansible_facts['distribution'] == 'Ubuntu'
+        - (dgx.stat.exists | bool) or (l4t.stat.exists | bool) or (nvswitch.stdout | int > 0)
       ignore_errors: true
       apt:
         name: "nvidia-fabricmanager-{{ driver_version }}={{ gpu_driver_version}}-1"
@@ -342,7 +405,10 @@
 
     - name: Install NVIDIA Fabric Manager on Ubuntu
       become: true
-      when: "driver_version | int >= 580 and ansible_distribution == 'Ubuntu' and dgx.stat.exists == True or driver_version | int >= 580 and ansible_distribution == 'Ubuntu' and l4t.stat.exists == True or driver_version | int >= 580 and ansible_distribution == 'Ubuntu' and nvswitch.stdout | int > 0"
+      when:
+        - driver_version | int >= 580
+        - ansible_facts['distribution'] == 'Ubuntu'
+        - (dgx.stat.exists | bool) or (l4t.stat.exists | bool) or (nvswitch.stdout | int > 0)
       ignore_errors: true
       apt:
         name: "nvidia-fabricmanager={{ gpu_driver_version}}-1"
@@ -356,7 +422,9 @@
 
     - name: Install NVIDIA Fabric Manager for NVSwitch on RHEL
       become: true
-      when: "ansible_distribution == 'RedHat' and dgx.stat.exists == True or ansible_distribution == 'RedHat' and l4t.stat.exists == True or ansible_distribution == 'RedHat' and nvswitch.stdout | int > 0"
+      when:
+        - ansible_facts['distribution'] == 'RedHat'
+        - (dgx.stat.exists | bool) or (l4t.stat.exists | bool) or (nvswitch.stdout | int > 0)
       ignore_errors: true
       yum:
         name: "nvidia-fabric-manager-{{ gpu_driver_version}}-1"

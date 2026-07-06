@@ -32,6 +32,7 @@ prometheus_adapter: "4.13.0"
 grafana_operator: "5.17.0"
 elastic_stack: "8.17.4"
 lws_version: "0.5.1"
+ingress_controller_version: "4.14.1"
 
 # GPU Operator Values
 enable_gpu_operator: yes
@@ -112,11 +113,20 @@ monitoring: no
 # Enable Kserve on Cloud Native Stack with Istio and Cert-Manager
 kserve: no
 
+# Install Ingress Controller
+ingress_controller: no
+
 # Install MetalLB
 loadbalancer: no
-# Example input loadbalancer_ip: "10.78.17.85/32"
-loadbalancer_ip: ""
+# Example input loadbalancer_ips: ["10.78.17.85/32","10.78.17.86/32"]
+loadbalancer_ips: []
+# Kubernetes Host IP is the IP of the host where the Kubernetes cluster is running, If it is not set, the playbook will use the first IP address from the host IP list. 
+# Example input kubernetes_host_ip: "10.78.17.87"
 kubernetes_host_ip: ""
+
+# Install Knative Serving
+knative_serving: no
+runai_inference_domain: ""
 
 ## Cloud Native Stack Validation
 cns_validation: no

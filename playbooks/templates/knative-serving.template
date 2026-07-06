@@ -1,0 +1,56 @@
+apiVersion: operator.knative.dev/v1beta1
+kind: KnativeServing
+metadata:
+  name: knative-serving
+  namespace: knative-serving
+spec:
+  config:
+    config-autoscaler:
+      enable-scale-to-zero: "true"
+    config-features:
+      kubernetes.podspec-affinity: enabled
+      kubernetes.podspec-init-containers: enabled
+      kubernetes.podspec-persistent-volume-claim: enabled
+      kubernetes.podspec-persistent-volume-write: enabled
+      kubernetes.podspec-schedulername: enabled
+      kubernetes.podspec-securitycontext: enabled
+      kubernetes.podspec-tolerations: enabled
+      kubernetes.podspec-volumes-emptydir: enabled
+      kubernetes.podspec-fieldref: enabled
+      kubernetes.containerspec-addcapabilities: enabled
+      kubernetes.podspec-nodeselector: enabled
+      multi-container: enabled
+    domain:
+      runai-inference.mycorp.local: "{{ runai_inference_domain }}"
+    network:
+      domainTemplate: '{% raw %}{{.Name}}-{{.Namespace}}.{{.Domain}}{% endraw %}'
+      ingress-class: kourier.ingress.networking.knative.dev
+      default-external-scheme: https
+  high-availability:
+    replicas: 2
+  ingress:
+    kourier:
+      enabled: true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: knative-serving
+  namespace: knative-serving
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: '*.runai-inference.mycorp.local' # replace with the wildcard FQDN for Inference
+    http:
+      paths:
+      - backend:
+          service:
+            name: kourier
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - '*.runai-inference.mycorp.local' # replace with the wildcard FQDN for Inference
+    secretName: runai-cluster-inference-tls-secret

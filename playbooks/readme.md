@@ -4,13 +4,13 @@ This page describes the steps required to use Ansible to install the NVIDIA Clou
 
 ### The following Ansible Playbooks are available
 
-- [Install NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cns-installation.yaml)
+- [Install NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack/blob/26.6.0/playbooks/cns-installation.yaml)
 
-- [Upgrade NVIDIA Cloud Native Stack ](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cns-upgrade.yaml)
+- [Upgrade NVIDIA Cloud Native Stack ](https://github.com/NVIDIA/cloud-native-stack/blob/26.6.0/playbooks/cns-upgrade.yaml)
 
-- [Validate NVIDIA Cloud Native Stack ](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cns-validation.yaml)
+- [Validate NVIDIA Cloud Native Stack ](https://github.com/NVIDIA/cloud-native-stack/blob/26.6.0/playbooks/cns-validation.yaml)
 
-- [Uninstall NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/cns-uninstall.yaml)
+- [Uninstall NVIDIA Cloud Native Stack](https://github.com/NVIDIA/cloud-native-stack/blob/26.6.0/playbooks/cns-uninstall.yaml)
 
 ## Prerequisites
 
@@ -60,7 +60,7 @@ This section describes how to use the ansible playbooks.
 Run the below commands to clone the NVIDIA Cloud Native Stack ansible playbooks.
 
 ```
-git clone https://github.com/NVIDIA/cloud-native-stack.git
+git clone -b 26.6.0 https://github.com/NVIDIA/cloud-native-stack.git
 cd cloud-native-stack/playbooks
 ```
 
@@ -80,12 +80,13 @@ Cloud Native Stack Supports below versions.
 
 Available versions are:
 
+- 19.0
+- 18.0
+- 17.1
 - 17.0
+- 16.2
 - 16.1
 - 16.0
-- 15.2 
-- 15.1
-- 15.0
 
 Edit the `cns_version.yaml` and update the version you want to install
 
@@ -227,27 +228,6 @@ cns_validation: no
 bmc_ip:
 bmc_username:
 bmc_password:
-
-# CSP values
-## AWS EKS values
-aws_region: us-east-2
-aws_cluster_name: cns-cluster-1
-aws_gpu_instance_type: g4dn.2xlarge
-
-## Google Cloud GKE Values
-#https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
-gke_project_id:
-#https://cloud.google.com/compute/docs/regions-zones#available
-gke_region: us-west1
-gke_node_zones: ["us-west1-b"]
-gke_cluster_name: gke-cluster-1
-
-## Azure AKS Values
-aks_cluster_name: aks-cluster-1
-#https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/#geographies
-aks_cluster_location: "West US 2"
-#https://learn.microsoft.com/en-us/partner-center/marketplace/find-tenant-object-id
-azure_object_id: [""]
 ```
 
 Install the NVIDIA Cloud Native Stack stack by running the below command. "Skipping" in the ansible output refers to the Kubernetes cluster is up and running.
@@ -826,103 +806,88 @@ loadbalancer: no
 loadbalancer_ip: ""
 ```
 
-### Installation on CSP's
+###  Confidential Computing on CNS stack
 
-Cloud Native Stack can also support to install on CSP providers like AWS, Azure and Google Cloud. 
+CNS deploys NVIDIA Confidential Containers on top of vanilla Kubernetes (microk8s is not supported). The installation follows the upstream NVIDIA CC reference architecture (kata-deploy + GPU Operator with `sandboxWorkloads.mode=kata`) and works on both **Intel TDX** and **AMD SEV-SNP** hosts. Vendor is auto-detected.
 
-###### AWS
-  Run below command to create AWS EKS cluster and install GPU Operator on EKS
+References:
+- [Supported platforms](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/supported-platforms.html)
+- [Deployment guide](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/confidential-containers-deploy.html)
 
-  `NOTE:` Update the aws credentials in `files/aws_credentials` file before trigger the installation
-  
-  Update the AWS EKS values in the `cns_values_xx.yaml` before trigger the installation if needed.
+#### Prerequisites (one-time, manual)
 
-  ```
-  ## AWS EKS values
-  aws_region: us-east-2
-  aws_cluster_name: cns-cluster-1
-  aws_gpu_instance_type: g4dn.2xlarge
-  ```
+1. **CPU + firmware:** Intel Emerald/Granite Rapids (TDX) or AMD Genoa/Milan (SEV-SNP)
+2. **OS / kernel:** Ubuntu 25.10 with kernel 6.17+ (or newer with TDX/SNP host support)
+3. **GPU:** H100 / H200 / B200 / RTX Pro 6000 BSE (all GPUs on the host must be the same generation)
+4. **BIOS** (must be set manually; the playbook cannot configure BIOS without BMC creds):
+   - **Intel TDX:** Enable TDX, TME-MT Key Split ≥ 1, SEAM Loader, SGX, x2APIC; Disable Node Interleaving
+   - **AMD SEV-SNP:** Enable SEV-SNP, SEV-ES, IOMMU, ACS
+5. **GRUB** (typically already set on AMD; the playbook handles Intel automatically):
+   - Intel: appends `nohibernate` (TDX cannot survive ACPI S3)
+   - AMD: ensure `amd_iommu=on` is in `GRUB_CMDLINE_LINUX_DEFAULT`
 
-  ```
-  bash setup.sh install eks
-  ```
-###### Azure
-Run below command to create Azure AKS cluster and install GPU Operator on AKS
+> Optional — if you have BMC access and want to set BIOS via Redfish on AMD, populate `bmc_ip` / `bmc_username` / `bmc_password` in `cns_values_<version>.yaml`. Empty values mean "skip BIOS playbook".
 
-Update Azure Object ID's on `cns_values_xx.yaml` before trigger the installation
+#### Install
 
-  ```
-  ## Azure AKS Values
-  aks_cluster_name: cns-cluster-1
-  aks_cluster_location: "West US 2"
-  #https://learn.microsoft.com/en-us/partner-center/marketplace/find-tenant-object-id
-  azure_object_id: [""]
-  ```
+Edit `cns_values_<version>.yaml` (or rely on `cns_version.yaml` to pick the right one) and ensure `confidential_computing: yes`. Then:
 
-  ```
-  bash setup.sh install aks
-  ```
-###### Google cloud
-Run below command to create Google Cloud GKE cluster and install GPU Operator on GKE 
-
-Update the GKE Project ID `cns_values_xx.yaml` before trigger the installation
-  ```
-  ## Google Cloud GKE Values
-  #https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
-  gke_project_id: 
-  #https://cloud.google.com/compute/docs/regions-zones#available
-  gke_region: us-west1
-  gke_node_zones: ["us-west1-b"]
-  gke_cluster_name: cns-cluster-1
-  ```
-
-  ```
-  bash setup.sh install gke
-  ```
-
-`NOTE:`
-
-- After GKE cluster created run the below command to use kubectl library
-
-      ```
-      source $HOME/cloud-native-stack/playbooks/google-cloud-sdk/path.bash.inc
-      ```
-
-- If you encounter any destroy issue while uninstall you can try to run below commands which might help
-
-      ```
-      NS=`kubectl get ns |grep Terminating | awk 'NR==1 {print $1}'` && kubectl get namespace "$NS" -o json   | tr -d "\n" | sed "s/\"finalizers\": \[[^]]\+\]/\"finalizers\": []/"   | kubectl replace --raw /api/v1/namespaces/$NS/finalize -f -
-      ```
-
-      ```
-      cd nvidia-terraform-modules/aks
-      terraform destroy --auto-approve
-      ```
-###  Confidential Computing on CNS stack 
-
-You can install Cloud Native Stack with Confidentail Computing, run the below command to trigger the installation
-
-You need add the `cns_values_xx.yaml` with BMC details like below 
-```
-# BMC Details for Confidential Computing 
-bmc_ip:
-bmc_username:
-bmc_password:
-```
-Run the below command to change the BIOS configuration and Install SNP Kernel for Confidential computing and system will eventually reboot
-
-```
+```bash
 bash setup.sh install cc
 ```
-Once it's rebooted then run the below command to install the Cloud Native Stack with Confidentail Computing.
 
+What this does:
+- Auto-detects CPU vendor (Intel → TDX path, AMD → SNP path)
+- Intel: ensures `nohibernate` in GRUB and `kvm_intel tdx=1` module option, then reboots once for TDX to initialize
+- AMD: probes `kvm_amd.sev_snp` — on modern kernels, skips the legacy AMDSEV custom-kernel build
+- Installs k8s, containerd, helm
+- Installs Kata via `helm install kata-deploy oci://ghcr.io/kata-containers/kata-deploy-charts/kata-deploy --version 3.29.0`
+- Installs GPU Operator: `--set sandboxWorkloads.enabled=true --set sandboxWorkloads.mode=kata --set nfd.enabled=true --set nfd.nodefeaturerules=true --version=v26.3.1`
+- Configures kubelet `runtimeRequestTimeout: 1200s` and feature gates `KubeletPodResourcesGet=true`, `RuntimeClassInImageCriApi=true`
+- Labels the node `nvidia.com/gpu.workload.config=vm-passthrough` and the vendor-specific NFD label (`amd.feature.node.kubernetes.io/snp=true` or `intel.feature.node.kubernetes.io/tdx=true`) so kata runtime classes schedule
+
+> If Intel TDX triggers a reboot mid-install, just re-run `bash setup.sh install cc` after the host comes back. Tasks are idempotent; the second run picks up where the first left off.
+
+#### Verify
+
+```bash
+# Cluster up?
+kubectl get nodes -L nvidia.com/cc.mode.state,nvidia.com/cc.ready.state
+# Expect: cc.mode.state=on, cc.ready.state=true
+
+# Runtime classes registered?
+kubectl get runtimeclass | grep kata-qemu-nvidia-gpu
+# Expect both kata-qemu-nvidia-gpu-tdx and kata-qemu-nvidia-gpu-snp
+
+# Workload test (vendor-aware) — change runtimeClassName based on host:
+#   Intel TDX  -> kata-qemu-nvidia-gpu-tdx
+#   AMD  SNP   -> kata-qemu-nvidia-gpu-snp
+cat <<'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cuda-vectoradd-kata
+spec:
+  runtimeClassName: kata-qemu-nvidia-gpu-snp   # or kata-qemu-nvidia-gpu-tdx
+  restartPolicy: Never
+  containers:
+    - name: cuda-vectoradd
+      image: nvcr.io/nvidia/k8s/cuda-sample:vectoradd-cuda12.5.0-ubuntu22.04
+      resources:
+        limits:
+          nvidia.com/pgpu: "1"
+          memory: 16Gi
+EOF
+
+kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/cuda-vectoradd-kata --timeout=300s
+kubectl logs cuda-vectoradd-kata    # expect: "Test PASSED"
+kubectl delete pod cuda-vectoradd-kata
 ```
-bash setup.sh install
-```
-`NOTE:` 
-  - If you want to re use the system It's recommended to re install the Operating system after used for Confidential Computing installation.
-  - Currently playbooks supports only local system for confidential computing not supported for remote system installation. 
+
+`NOTE:`
+  - microk8s is **not** supported with CC (Step 7 NVIDIA doc).
+  - All GPUs on the host must be configured for CC and assigned to one CC VM (multi-vendor mixes will fail at the cc-manager step).
+  - Uninstall (`bash setup.sh uninstall`) reverses Intel TDX changes (`nohibernate` + `tdx.conf`) automatically. AMD SNP host kernel state is left untouched (it's a kernel feature, not something the playbook turned on).
 
 ### Validation
 
@@ -952,7 +917,7 @@ bash setup.sh uninstall
 ```
 
 `NOTE`
-A list of older NVIDIA Cloud Native Stack versions (formerly known as Cloud Native Core) can be found [here](https://github.com/NVIDIA/cloud-native-stack/blob/master/playbooks/older_versions/readme.md)
+A list of older NVIDIA Cloud Native Stack versions (formerly known as Cloud Native Core) can be found [here](https://github.com/NVIDIA/cloud-native-stack/blob/26.6.0/playbooks/older_versions/readme.md)
 
 <h2> Ansible Playbook Descriptions </h2>
 

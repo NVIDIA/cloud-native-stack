@@ -545,7 +545,7 @@ rdmaSharedDevicePlugin:
       devices: [ens160f0]
 ```
 
-For more information about custom network operator values.yaml, please refer [Network Operator](https://docs.mellanox.com/display/COKAN10/Network+Operator#NetworkOperator-Example2:RDMADevicePluginConfiguration)
+For more information about custom network operator values.yaml, please refer [Network Operator](https://docs.nvidia.com/networking/software/cloud-orchestration/index.html)
 
 Add the NVIDIA repo:
 ```
@@ -585,7 +585,7 @@ nvidia-network-operator-resources   sriov-device-plugin-ch7bz                   
 nvidia-network-operator-resources   whereabouts-56ngr                                                 1/1     Running            0          10m
 ```
 
-Please refer to the [Network Operator page](https://docs.mellanox.com/display/COKAN10/Network+Operator) for more information.
+Please refer to the [Network Operator page](https://docs.nvidia.com/networking/software/cloud-orchestration/index.html) for more information.
 
 ### Installing GPU Operator
 

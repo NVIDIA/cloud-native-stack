@@ -40,8 +40,8 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 
 | CNS Version               | 19.0    | 18.0    | 17.1    | 16.2    |
 | :-----:                   | :-----: | :-----: | :-----: | :-----: |
-| Platforms                 | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li><li>DGX Server</li></ul> |
-| Supported OS              | <ul><li>Ubuntu 24.04 LTS</li><li>Ubuntu 26.04 LTS</li></ul> | <ul><li>Ubuntu 24.04 LTS</li><li>Ubuntu 26.04 LTS</li></ul> | <ul><li>Ubuntu 24.04 LTS</li></ul> | <ul><li>Ubuntu 24.04 LTS</li></ul> |
+| Platforms                 | <ul><li>NVIDIA Certified Server (x86 & arm64)</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li></ul> | <ul><li>NVIDIA Certified Server (x86 & arm64)</li></ul> |
+| Supported OS              | <ul><li>Ubuntu 24.04 LTS</li><li>Ubuntu 26.04 LTS (confidential computing only)</li></ul> | <ul><li>Ubuntu 24.04 LTS</li><li>Ubuntu 26.04 LTS (confidential computing only)</li></ul> | <ul><li>Ubuntu 24.04 LTS</li></ul> | <ul><li>Ubuntu 24.04 LTS</li></ul> |
 | Containerd                | 2.3.1   | 2.3.1   | 2.3.1   | 2.3.0   |
 | NVIDIA Container Toolkit  | 1.19.1  | 1.19.1  | 1.19.1  | 1.19.0  |
 | CRI-O                     | 1.36.1  | 1.35.4  | 1.34.9  | 1.33.12 |

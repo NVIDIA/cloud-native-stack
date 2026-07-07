@@ -19,15 +19,6 @@
         loadbalancer: "{{ loadbalancer }}"
         install_k8s: "{{ install_k8s}}"
 
-    - name: Use host NVIDIA driver on Ubuntu 26.04
-      when:
-        - ansible_facts['distribution'] == 'Ubuntu'
-        - ansible_facts['distribution_version'] == '26.04'
-        - enable_gpu_operator | bool
-        - not (cns_nvidia_driver | bool)
-      set_fact:
-        cns_nvidia_driver: true
-
     # Print a warning (do NOT fail) when the host OS doesn't match the expected
     # Ubuntu release for the chosen cns_version. CNS 18.0 / 19.0 are validated on
     # Ubuntu 24.04 / 26.04; CNS 16.x / 17.x are validated on Ubuntu 22.04 / 24.04.

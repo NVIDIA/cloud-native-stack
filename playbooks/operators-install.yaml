@@ -434,6 +434,7 @@
              nvidia/gpu-operator \
              --set sandboxWorkloads.enabled=true \
              --set sandboxWorkloads.mode=kata \
+             --set sandboxWorkloads.defaultWorkload=vm-passthrough \
              --set nfd.enabled=true \
              --set nfd.nodefeaturerules=true \
              --version=v{{ gpu_operator_version }}

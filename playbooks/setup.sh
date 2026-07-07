@@ -85,9 +85,30 @@ if [[ -r /etc/os-release ]]; then
   fi
 fi
 
+existing_confidential_computing=""
+if [[ -r cns_values.yaml ]]; then
+	existing_confidential_computing=$(awk -F': *' '/^confidential_computing:/ {print $2; exit}' cns_values.yaml | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+fi
+
 version=$(cat cns_version.yaml | awk -F':' '{print $2}' | head -n1 | tr -d ' ' | tr -d '\n\r')
 cp cns_values_$version.yaml cns_values.yaml
+selected_confidential_computing=$(awk -F': *' '/^confidential_computing:/ {print $2; exit}' cns_values.yaml | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+if [[ "$1" == "uninstall" && ( "$existing_confidential_computing" == "yes" || "$existing_confidential_computing" == "true" ) ]]; then
+	sed -i 's/^confidential_computing:.*/confidential_computing: yes/' cns_values.yaml
+	echo "Preserving confidential_computing: yes for uninstall cleanup."
+fi
 #sed -i "1s/^/cns_version: $version\n/" cns_values.yaml
+
+if [[ "$1" == "install" && "${2:-}" != "cc" && "$selected_confidential_computing" != "yes" && "$selected_confidential_computing" != "true" && -r /etc/os-release ]]; then
+	. /etc/os-release
+	if [[ "${ID:-}" == "ubuntu" && "${VERSION_ID:-}" == "26.04" ]]; then
+		echo "ERROR: Standard CNS installation is not supported on Ubuntu 26.04." >&2
+		echo "CNS supports Ubuntu 26.04 only for Confidential Computing." >&2
+		echo "Run: bash setup.sh install cc" >&2
+		echo "Use Ubuntu 24.04 for the standard GPU Operator installation path." >&2
+		exit 2
+	fi
+fi
 
 # Ansible Install
 

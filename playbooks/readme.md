@@ -844,6 +844,8 @@ What this does:
 - Installs Kata via `helm install kata-deploy oci://ghcr.io/kata-containers/kata-deploy-charts/kata-deploy --version 3.29.0`
 - Installs GPU Operator: `--set sandboxWorkloads.enabled=true --set sandboxWorkloads.mode=kata --set nfd.enabled=true --set nfd.nodefeaturerules=true --version=v26.3.1`
 - Configures kubelet `runtimeRequestTimeout: 1200s` and feature gates `KubeletPodResourcesGet=true`, `RuntimeClassInImageCriApi=true`
+- Detects Hopper HGX nodes with 8 H100/H200 SXM GPUs and at least 4 NVSwitches, then sets
+  `nvidia.com/cc.mode=ppcie` before GPU Operator installation for multi-GPU passthrough
 - Labels the node `nvidia.com/gpu.workload.config=vm-passthrough` and the vendor-specific NFD label (`amd.feature.node.kubernetes.io/snp=true` or `intel.feature.node.kubernetes.io/tdx=true`) so kata runtime classes schedule
 
 > If Intel TDX triggers a reboot mid-install, just re-run `bash setup.sh install cc` after the host comes back. Tasks are idempotent; the second run picks up where the first left off.
@@ -984,5 +986,4 @@ The Ansible NVIDIA Cloud Native Stack uninstall playbook will do the following:
 ### Getting Help
 
 Please [open an issue on the GitHub project](https://github.com/NVIDIA/cloud-native-stack/issues) for any questions. Your feedback is appreciated.
-
 

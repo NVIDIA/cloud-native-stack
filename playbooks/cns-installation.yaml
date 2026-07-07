@@ -154,7 +154,6 @@
     # Confidential Computing — Intel TDX host setup (Step 3)
     # Auto-selected when CPU is GenuineIntel.
     # AMD SNP is handled by the conf_compu_snp_install.sh block above.
-    # Ref: https://nvidia.atlassian.net/wiki/spaces/~fguillier/pages/3331881069
     # ============================================================
     - name: TDX | Check whether nohibernate is in current kernel cmdline
       when: confidential_computing == true and cpu_vendor.stdout == 'GenuineIntel'
@@ -335,7 +334,6 @@
     # Confidential Computing — post-reboot validation
     # Step 3: Verify TDX module initialized (Intel only)
     # Step 4: Verify IOMMU groups present (any CC vendor)
-    # Ref Step 4: https://nvidia.atlassian.net/wiki/spaces/~fguillier/pages/3331881168
     # Warnings only — do not block CNS install.
     # ============================================================
     - name: "TDX | Validate 'virt/tdx: module initialized' in dmesg"
@@ -369,6 +367,35 @@
       when: confidential_computing == true and cpu_vendor.stdout == 'GenuineIntel' and tdx_param_check.stdout != 'Y'
       debug:
         msg: "WARNING: /sys/module/kvm_intel/parameters/tdx is '{{ tdx_param_check.stdout | default('') }}' (expected 'Y'). TDX not active for KVM guests."
+
+    - name: CoCo | Detect Hopper HGX topology for PPCIE
+      when: confidential_computing == true
+      shell: |
+        lspci -nn -d 10de: | awk '
+          /0302/ {
+            gpu_count++
+            if (/(H100|H200).*SXM/) hopper_sxm_count++
+          }
+          /0680/ { nvswitch_count++ }
+          END {
+            printf "GPUs:%d NVSwitch:%d HopperSXM:%d\\n", \
+              gpu_count, nvswitch_count, hopper_sxm_count
+            if (gpu_count == 8 && nvswitch_count >= 4 && hopper_sxm_count == gpu_count) print "HGX Hopper"
+            else print "Not Hopper HGX"
+          }'
+      register: coco_hgx_topology
+      changed_when: false
+      failed_when: false
+
+    - name: CoCo | Record Hopper HGX PPCIE eligibility
+      when: confidential_computing == true
+      set_fact:
+        coco_hgx_hopper: "{{ 'HGX Hopper' in coco_hgx_topology.stdout }}"
+
+    - name: CoCo | Report Hopper HGX PPCIE eligibility
+      when: confidential_computing == true
+      debug:
+        msg: "{{ coco_hgx_topology.stdout | default('Hopper HGX topology could not be detected') }}"
 
     - name: IOMMU | Count IOMMU groups (Step 4)
       when: confidential_computing == true

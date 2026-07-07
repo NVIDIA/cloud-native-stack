@@ -353,11 +353,7 @@
    # The install steps below are vendor-agnostic. The vendor only
    # matters at workload time (runtimeClassName), handled in the
    # Step 11 validation block. Note: microk8s is NOT supported (per Step 7).
-   # Refs:
-   #   Step 7  https://nvidia.atlassian.net/wiki/spaces/~fguillier/pages/3331881224
-   #   Step 8  https://nvidia.atlassian.net/wiki/spaces/~fguillier/pages/3331881337
-   #   Step 9  cluster-wide CC mode is ON by default — no patch needed
-   #   Step 10 https://nvidia.atlassian.net/wiki/spaces/~fguillier/pages/3336434268
+   # Cluster-wide CC mode is on by default; no patch is needed.
    # ============================================================
    - name: Install Kata + GPU Operator for Confidential Computing (Intel TDX / AMD SNP)
      when: "confidential_computing == true and enable_gpu_operator == true and microk8s == false and enable_mig == false and enable_vgpu == false and enable_rdma == false and enable_gds == false and enable_secure_boot == false and cns_nvidia_driver == false"
@@ -378,6 +374,36 @@
          when: coco_cpu_vendor.stdout != 'GenuineIntel' and coco_cpu_vendor.stdout != 'AuthenticAMD'
          debug:
            msg: "WARNING: CPU vendor '{{ coco_cpu_vendor.stdout }}' is not supported for CoCo. Expected GenuineIntel (TDX) or AuthenticAMD (SNP). Continuing install but CoCo workloads will not run."
+
+       - name: CoCo | Enable PPCIE mode on detected Hopper HGX nodes
+         when: hostvars[item].coco_hgx_hopper | default(false) | bool
+         shell: |
+           kube_node_name="$(
+             kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{" "}{range .status.addresses[*]}{.type}{"="}{.address}{" "}{end}{"\n"}{end}' | \
+               awk -v hostname="{{ hostvars[item].ansible_facts.get('hostname', '') }}" \
+                   -v ip="{{ hostvars[item].ansible_facts.get('default_ipv4', {}).get('address', '') }}" \
+                   '{
+                     for (i = 2; i <= NF; i++) {
+                       split($i, address, "=")
+                       if ((address[1] == "Hostname" && address[2] == hostname) || (address[1] == "InternalIP" && address[2] == ip)) {
+                         print $1
+                         exit
+                       }
+                     }
+                   }'
+           )"
+           test -n "$kube_node_name" || {
+             echo "Unable to map Ansible host '{{ item }}' to a Kubernetes node." >&2
+             exit 1
+           }
+           kubectl label node "$kube_node_name" nvidia.com/cc.mode=ppcie --overwrite
+         loop: "{{ groups['all'] }}"
+         loop_control:
+           label: "{{ hostvars[item].ansible_facts.get('hostname', item) }}"
+         register: label_coco_ppcie
+         retries: 5
+         delay: 5
+         until: label_coco_ppcie is succeeded
 
        - name: CoCo | Label nodes with vm-passthrough (Step 7)
          shell: kubectl label nodes --all nvidia.com/gpu.workload.config=vm-passthrough --overwrite
@@ -478,7 +504,6 @@
 
    # ============================================================
    # Confidential Computing — Validation (Step 11)
-   # Ref: https://nvidia.atlassian.net/wiki/spaces/~fguillier/pages/3331971821
    # Vendor-aware: TDX -> kata-qemu-nvidia-gpu-tdx, SNP -> kata-qemu-nvidia-gpu-snp
    # Gated on cns_validation == true. Failures soft — debug message only.
    # ============================================================

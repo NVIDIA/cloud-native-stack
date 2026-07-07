@@ -106,7 +106,6 @@
    - name: Uninstall Helm Charts on NVIDIA Cloud Native Stack
      ignore_errors: true
      when:  release != 'tegra' and microk8s == false
-     async: 360
      shell: |
        count=$(helm ls -A | egrep 'gpu-operator|network-operator|kata-deploy' | grep -v NAME | wc -l)
        if [[ $count > 0 ]]; then

@@ -53,7 +53,7 @@ For more information, Refer [Cloud Native Stack Releases](https://github.com/NVI
 | NVIDIA Nsight Operator    | 26.2.2  | 26.2.2  | 26.2.2  | 26.2.1  |
 | NVIDIA KAI Scheduler      | 0.14.2  | 0.14.2  | 0.14.2  | 0.14.2  |
 | NVIDIA Data Center Driver | 580.126.20 | 580.126.20 | 580.126.20 | 580.126.20 |
-| Helm                      | 4.2.1   | 4.2.1   | 4.2.1   | 4.1.4   |
+| Helm                      | 4.2.2   | 4.2.2   | 4.2.2   | 4.1.4   |
 
 > NOTE: CNS 18.0 and 19.0 target Ubuntu 24.04 and Ubuntu 26.04. CNS 16.2 and 17.1 target Ubuntu 24.04.
 > NOTE: NVIDIA Network Operator is N/A for CNS 19.0 because CNS 19.0 uses Kubernetes 1.36.2, while Network Operator 26.4.0 supports Kubernetes 1.31 through 1.35. NVIDIA GPU Operator 26.3.2 does not currently support RDMA with Network Operator 26.4.0. NVIDIA Network Operator 26.1.0 supports RDMA with NVIDIA GPU Operator 26.3.2; RDMA support with Network Operator 26.4.0 requires a future NVIDIA GPU Operator version.

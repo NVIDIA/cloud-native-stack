@@ -841,7 +841,7 @@ What this does:
 - Intel: ensures `nohibernate` in GRUB and `kvm_intel tdx=1` module option, then reboots once for TDX to initialize
 - AMD: probes `kvm_amd.sev_snp` — on modern kernels, skips the legacy AMDSEV custom-kernel build
 - Installs k8s, containerd, helm
-- Installs Kata via `helm install kata-deploy oci://ghcr.io/kata-containers/kata-deploy-charts/kata-deploy --version 3.29.0`
+- Installs Kata via `helm install kata-deploy oci://ghcr.io/kata-containers/kata-deploy-charts/kata-deploy --version 3.32.0`
 - Installs GPU Operator: `--set sandboxWorkloads.enabled=true --set sandboxWorkloads.mode=kata --set nfd.enabled=true --set nfd.nodefeaturerules=true --version=v26.3.1`
 - Configures kubelet `runtimeRequestTimeout: 1200s` and feature gates `KubeletPodResourcesGet=true`, `RuntimeClassInImageCriApi=true`
 - Detects Hopper HGX nodes with 8 H100/H200 SXM GPUs and at least 4 NVSwitches, then sets
@@ -986,4 +986,3 @@ The Ansible NVIDIA Cloud Native Stack uninstall playbook will do the following:
 ### Getting Help
 
 Please [open an issue on the GitHub project](https://github.com/NVIDIA/cloud-native-stack/issues) for any questions. Your feedback is appreciated.
-

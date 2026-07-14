@@ -554,8 +554,8 @@
           until: enable_systemd_cgroups is succeeded
 
         # Force config schema down to version=3 ONLY when kata-deploy is in play.
-        # containerd 2.3 emits version=4 by default; kata-deploy 3.29.0 only knows v2/v3
-        # schemas and errors "Containerd config has no version=2 or version=3" when
+        # CNS uses a v3 config for its kata-deploy and nydus setup. containerd 2.3 emits
+        # version=4 by default and errors "Containerd config has no version=2 or version=3" when
         # adding the nydus snapshotter. The plugin sections are already in v3 layout
         # (io.containerd.cri.v1.images), so flipping just the header is safe.
         # On non-CC installs leaving v4 alone matters: nvidia-container-toolkit-daemonset

@@ -14,7 +14,7 @@ for item in lines:
         print(' ')
     else:
         bmc = item.strip().split(' ')
-        if len(bmc) > 6:
+        if len(bmc) > 8:
             host = bmc[6]
             user = bmc[7]
             pas = bmc[8]

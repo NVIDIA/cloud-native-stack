@@ -582,7 +582,7 @@ With the following command, you install a pod-network add-on to the control plan
 Update the Calico Daemonset
 
 ```
-kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens\*,eth\*,enc\*,enp\*
+kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens\*,eth\*,enc\*,bond\*,enp\*,eno\*,enP\*
 ```
 
 You can execute the below commands to ensure that all pods are up and running:
@@ -726,7 +726,7 @@ Install GPU Operator:
 `NOTE:` As we are preinstalled with NVIDIA Driver and NVIDIA Container Toolkit, we need to set as `false` when installing the GPU Operator
 
 ```
- helm install --version 26.3.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait --generate-name
+ helm upgrade --install gpu-operator --version 26.3.1 --create-namespace --namespace nvidia-gpu-operator --devel nvidia/gpu-operator --set driver.enabled=false,toolkit.enabled=false --wait
 ```
 
 #### Validating the State of the GPU Operator:

@@ -376,7 +376,7 @@ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.0/
 Update the Calico Daemonset
 
 ```
-kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens\*,eth\*,enc\*,enp\*
+kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=ens\*,eth\*,enc\*,bond\*,enp\*,eno\*,enP\*
 ```
 
 You can execute the below commands to ensure that all pods are up and running:
@@ -606,7 +606,7 @@ Install GPU Operator:
 `NOTE:` If you installed Network Operator, please skip the below command and follow the [GPU Operator with RDMA](#GPU-Operator-with-RDMA)
 
 ```
-helm install --version 26.3.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.version=580.126.20 --wait --generate-name
+helm upgrade --install gpu-operator --version 26.3.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.version=580.126.20 --wait
 ```
 
 #### GPU Operator with RDMA
@@ -617,7 +617,7 @@ helm install --version 26.3.1 --create-namespace --namespace nvidia-gpu-operator
 After Network Operator installation is completed, execute the below command to install the GPU Operator to load nv_peer_mem modules:
 
 ```
- helm install --version 26.3.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.rdma.enabled=true  --wait --generate-name
+ helm upgrade --install gpu-operator --version 26.3.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator  --set driver.rdma.enabled=true  --wait
 ```
 
 #### GPU Operator with Host MOFED Driver and RDMA
@@ -625,7 +625,7 @@ After Network Operator installation is completed, execute the below command to i
 If the host is already installed MOFED driver without network operator, execute the below command to install the GPU Operator to load nv_peer_mem module
 
 ```
- helm install --version 26.3.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait --generate-name
+ helm upgrade --install gpu-operator --version 26.3.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set driver.rdma.enabled=true,driver.rdma.useHostMofed=true --wait
 
 ```
 
@@ -634,7 +634,7 @@ If the host is already installed MOFED driver without network operator, execute 
 Execute the below command to enable the GPU Direct Storage Driver on GPU Operator
 
 ```
-helm install --version 26.3.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set gds.enabled=true
+helm upgrade --install gpu-operator --version 26.3.1 --create-namespace --namespace nvidia-gpu-operator nvidia/gpu-operator --set gds.enabled=true
 ```
 For more information refer, [GPU Direct Storage](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/gpu-operator-rdma.html)
 

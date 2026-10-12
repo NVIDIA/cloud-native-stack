@@ -241,7 +241,7 @@
     shell: "{{ item }}"
     with_items:
       - microk8s.helm install --version {{ gpu_operator_version }} gpu-operator -n nvidia-gpu-operator --create-namespace nvidia/gpu-operator --set toolkit.env[0].name=CONTAINERD_CONFIG  --set toolkit.env[0].value=/var/snap/microk8s/current/args/containerd-template.toml  --set toolkit.env[1].name=CONTAINERD_SOCKET  --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia  --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT  --set-string toolkit.env[3].value=true --set driver.usePrecompiled=true,driver.repository='{{ gpu_operator_driver_registry }}',driver.version='{{ gpu_driver_version }}'
-      - driver_version=$(echo $gpu_driver_version | awk -F'.' '{print $1}'); microk8s.kubectl patch clusterpolicy/cluster-policy --type='json' -p='[{"op":"replace", "path":"/spec/driver/usePrecompiled", "value":true},{"op":"replace", "path":"/spec/driver/version", "value":"$driver_version"}]'
+      - microk8s.kubectl patch clusterpolicy/cluster-policy --type='json' -p='[{"op":"replace", "path":"/spec/driver/usePrecompiled", "value":true},{"op":"replace", "path":"/spec/driver/version", "value":"{{ gpu_driver_version.split('.')[0] }}"}]'
 
   - name: Installing the GPU Operator with Open Kernel Modules on NVIDIA Cloud Native Stack
     when: "release != 'tegra' and confidential_computing == false and enable_gpu_operator == true and cns_docker == false and cns_nvidia_driver == false and use_open_kernel_module == true and enable_mig == false and enable_rdma == false and enable_vgpu == false and enable_gds == false and enable_secure_boot == false and ngc_registry_password == ''"
